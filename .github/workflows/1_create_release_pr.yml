@@ -34,7 +34,7 @@ jobs:
         uses: cylc/release-actions/stage-1/sanitize-inputs@v1
 
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ env.BASE_REF }}
           fetch-depth: 0  # need to fetch all commits to check contributors
@@ -43,7 +43,7 @@ jobs:
         uses: cylc/release-actions/check-shortlog@v1
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.x'
 

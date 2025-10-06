@@ -7,6 +7,8 @@ on:
       - 'CONTRIBUTING.md'
       - '.github/workflows/shortlog.yml'
       - '.mailmap'
+  schedule:
+    - cron: '37 06 * * 1' # 06:37, Monday
 
 jobs:
   test:
@@ -14,7 +16,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0  # need to fetch all commits to check contributors
           ref: ${{ github.event.pull_request.head.sha }}

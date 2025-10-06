@@ -136,8 +136,8 @@ class WorkflowFilesError(CylcError):
     bullet = "\n    -"
 
 
-class ContactFileExists(CylcError):
-    """Workflow contact file exists."""
+class SchedulerAlive(CylcError):
+    """Workflow contact file exists and scheduler is alive."""
 
 
 class FileRemovalError(CylcError):
@@ -397,30 +397,34 @@ class PlatformLookupError(CylcConfigError):
 
 
 class HostSelectException(CylcError):
-    """No hosts could be selected from the provided configuration."""
+    """No hosts could be selected from the provided configuration.
 
-    def __init__(self, data: Dict[str, dict]):
+    Args:
+        data: Mapping of hostnames to error info.
+        ranking: The ranking expression used to select the host.
+    """
+
+    def __init__(self, data: Dict[str, dict], ranking: Optional[str] = None):
         self.data = data
+        self.ranking = ranking
 
     def __str__(self) -> str:
         ret = 'Could not select host from:'
         for host, data in sorted(self.data.items()):
-            if host != 'ranking':
-                ret += f'\n    {host}:'
-                for key, value in data.items():
-                    ret += f'\n        {key}: {value}'
+            ret += f'\n    {host}:'
+            for key, value in data.items():
+                ret += f'\n        {key}: {value}'
         hint = self.get_hint()
         if hint:
             ret += f'\n\n{hint}'
         return ret
 
-    def get_hint(self):
+    def get_hint(self) -> Optional[str]:
         """Return a hint to explain this error for certain cases."""
         if all(
             # all procs came back with special SSH error code 255
             datum.get('returncode') == 255
-            for key, datum in self.data.items()
-            if key != 'ranking'
+            for datum in self.data.values()
         ):
             # likely SSH issues
             return (
@@ -431,18 +435,17 @@ class HostSelectException(CylcError):
 
         if (
             # a ranking expression was used
-            self.data.get('ranking')
+            self.ranking
             # and all procs came back with special 'cylc psutil' error code 2
             # (which is used for errors relating to the extraction of metrics)
             and all(
                 datum.get('returncode') == 2
-                for key, datum in self.data.items()
-                if key != 'ranking'
+                for datum in self.data.values()
             )
         ):
             # likely an issue with the ranking expression
             lines = wrap(
-                self.data.get("ranking"),
+                self.ranking,
                 initial_indent='    ',
                 subsequent_indent='    ',
             )

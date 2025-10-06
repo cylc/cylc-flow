@@ -15,9 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-
 import pytest
 
+from cylc.flow import CYLC_LOG
 from cylc.flow.commands import (
     force_trigger_tasks,
     reload_workflow,
@@ -25,7 +25,7 @@ from cylc.flow.commands import (
     run_cmd,
 )
 from cylc.flow.cycling.integer import IntegerPoint
-from cylc.flow.flow_mgr import FLOW_ALL
+from cylc.flow.id import TaskTokens
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.task_proxy import TaskProxy
@@ -95,7 +95,7 @@ async def test_basic(
         ]
         assert get_data_store_flow_nums(schd, a1) == '[1]'
 
-        await run_cmd(remove_tasks(schd, ['1/a1'], [FLOW_ALL]))
+        await run_cmd(remove_tasks(schd, ['1/a1'], []))
         await schd.update_data_structure()
 
         assert a1 not in schd.pool.get_tasks()  # removed from pool
@@ -129,7 +129,7 @@ async def test_specific_flow(
 
     async with start(schd):
         a1 = schd.pool._get_task_by_id('1/a1')
-        schd.pool.force_trigger_tasks(['1/a1'], ['1', '2'])
+        await run_cmd(force_trigger_tasks(schd, ['1/a1'], ['1', '2']))
         schd.pool.spawn_on_output(a1, TASK_OUTPUT_SUCCEEDED)
         await schd.update_data_structure()
 
@@ -177,7 +177,7 @@ async def test_unset_prereq(example_workflow, scheduler, start):
         b = schd.pool.get_task(IntegerPoint('1'), 'b')
         assert b.prereqs_are_satisfied()
 
-        await run_cmd(remove_tasks(schd, ['1/a1'], [FLOW_ALL]))
+        await run_cmd(remove_tasks(schd, ['1/a1'], []))
 
         assert not b.prereqs_are_satisfied()
 
@@ -191,12 +191,12 @@ async def test_not_unset_prereq(
     async with start(schd):
         # This set prereq should not be unset by removing a1:
         schd.pool.set_prereqs_and_outputs(
-            ['1/b'], outputs=[], prereqs=['1/a1'], flow=[FLOW_ALL]
+            {TaskTokens('1', 'b')}, outputs=[], prereqs=['1/a1'], flow=[]
         )
         # Whereas the prereq satisfied by this set output *should* be unset
         # by removing a2:
         schd.pool.set_prereqs_and_outputs(
-            ['1/a2'], outputs=['succeeded'], prereqs=[], flow=[FLOW_ALL]
+            {TaskTokens('1', 'a2')}, outputs=['succeeded'], prereqs=[], flow=[]
         )
         await schd.update_data_structure()
 
@@ -210,7 +210,7 @@ async def test_not_unset_prereq(
             ('a3', '0'),
         ]
 
-        await run_cmd(remove_tasks(schd, ['1/a1', '1/a2'], [FLOW_ALL]))
+        await run_cmd(remove_tasks(schd, ['1/a1', '1/a2'], []))
         await schd.update_data_structure()
 
         assert sorted(
@@ -230,8 +230,8 @@ async def test_nothing_to_do(
     """Test removing an invalid task."""
     schd: Scheduler = scheduler(example_workflow)
     async with start(schd):
-        await run_cmd(remove_tasks(schd, ['1/doh'], [FLOW_ALL]))
-    assert log_filter(logging.WARNING, "No matching tasks found: doh")
+        await run_cmd(remove_tasks(schd, ['1/doh'], []))
+    assert log_filter(logging.WARNING, 'No tasks match "1/doh"')
 
 
 async def test_logging(
@@ -261,17 +261,19 @@ async def test_logging(
         # Invalid tasks:
         '2005/a', '2000/doh',
     ]
-    async with start(schd):
-        await run_cmd(remove_tasks(schd, tasks_to_remove, [FLOW_ALL]))
+    async with start(schd) as log:
+        log.set_level(logging.DEBUG, CYLC_LOG)
+        await run_cmd(remove_tasks(schd, tasks_to_remove, []))
 
     assert log_filter(
-        logging.INFO, "Removed task(s): 2000/a (flows=1), 2000/b (flows=1)"
+        logging.INFO, "Removed tasks: 2000/a (flows=1), 2000/b (flows=1)"
     )
 
-    assert log_filter(logging.WARNING, "Task(s) not removable: 2001/a, 2001/b")
-    assert log_filter(logging.WARNING, "No active tasks matching: 2002/*")
+    assert log_filter(logging.DEBUG, "Task(s) not removable: 2001/a, 2001/b")
     assert log_filter(logging.WARNING, "Invalid cycle point for task: a, 2005")
-    assert log_filter(logging.WARNING, "No matching tasks found: doh")
+    assert log_filter(
+        logging.WARNING, "No tasks match the IDs:\n* 2000/doh\n* 2005/a"
+    )
     # No tasks were submitted/running so none should have been killed:
     assert "job killed" not in caplog.text
 
@@ -281,17 +283,18 @@ async def test_logging_flow_nums(
 ):
     """Test logging of task removals involving flow numbers."""
     schd: Scheduler = scheduler(example_workflow)
-    async with start(schd):
-        schd.pool.force_trigger_tasks(['1/a1'], ['1', '2'])
+    async with start(schd) as log:
+        log.set_level(logging.DEBUG, CYLC_LOG)
+        await run_cmd(force_trigger_tasks(schd, ['1/a1'], ['1', '2']))
         # Removing from flow that doesn't exist doesn't work:
         await run_cmd(remove_tasks(schd, ['1/a1'], ['3']))
         assert log_filter(
-            logging.WARNING, "Task(s) not removable: 1/a1 (flows=3)"
+            logging.DEBUG, "Task(s) not removable: 1/a1 (flows=3)"
         )
 
         # But if a valid flow is included, it will be removed from that flow:
         await run_cmd(remove_tasks(schd, ['1/a1'], ['2', '3']))
-        assert log_filter(logging.INFO, "Removed task(s): 1/a1 (flows=2)")
+        assert log_filter(logging.INFO, "Removed tasks: 1/a1 (flows=2)")
         assert schd.pool._get_task_by_id('1/a1').flow_nums == {1}
 
 
@@ -305,7 +308,7 @@ async def test_retrigger(flow, scheduler, run, reflog, complete):
         reflog_triggers: set = reflog(schd)
         await complete(schd, '1/b')
 
-        await run_cmd(remove_tasks(schd, ['1/a', '1/b'], [FLOW_ALL]))
+        await run_cmd(remove_tasks(schd, ['1/a', '1/b'], []))
         schd.process_workflow_db_queue()
         # Removing 1/b should un-queue 1/c:
         assert len(schd.pool.task_queue_mgr.queues['default'].deque) == 0
@@ -338,7 +341,7 @@ async def test_prereqs(
     async with run(schd):
         await complete(schd, '1/a1', '1/a2', '1/b')
 
-        await run_cmd(remove_tasks(schd, ['1/a1'], [FLOW_ALL]))
+        await run_cmd(remove_tasks(schd, ['1/a1'], []))
         assert not schd.pool.is_stalled()
         assert len(schd.pool.task_queue_mgr.queues['default'].deque)
         # `cylc show` should reflect the now-unsatisfied condition:
@@ -346,7 +349,7 @@ async def test_prereqs(
             (True, {'1/a1': False, '1/a2': True, '1/b': True})
         ]
 
-        await run_cmd(remove_tasks(schd, ['1/b'], [FLOW_ALL]))
+        await run_cmd(remove_tasks(schd, ['1/b'], []))
         # Should cause stall now because 1/c prereq is unsatisfied:
         assert len(schd.pool.task_queue_mgr.queues['default'].deque) == 0
         assert schd.pool.is_stalled()
@@ -359,7 +362,7 @@ async def test_prereqs(
         ]
 
         assert schd.pool._get_task_by_id('1/x')
-        await run_cmd(remove_tasks(schd, ['1/a2'], [FLOW_ALL]))
+        await run_cmd(remove_tasks(schd, ['1/a2'], []))
         # Should cause 1/x to be removed from the pool as it no longer has
         # any satisfied prerequisite tasks:
         assert not schd.pool._get_task_by_id('1/x')
@@ -384,7 +387,7 @@ async def test_downstream_preparing(flow, scheduler, start):
         assert schd.pool.get_task_ids() == {'1/a', '1/x', '1/y'}
 
         schd.pool._get_task_by_id('1/y').state_reset('preparing')
-        await run_cmd(remove_tasks(schd, ['1/a'], [FLOW_ALL]))
+        await run_cmd(remove_tasks(schd, ['1/a'], []))
         assert schd.pool.get_task_ids() == {'1/y'}
 
 
@@ -400,7 +403,7 @@ async def test_downstream_other_flows(flow, scheduler, run, complete):
     )
     async with run(schd):
         await complete(schd, '1/a')
-        schd.pool.force_trigger_tasks(['1/c'], ['2'])
+        await run_cmd(force_trigger_tasks(schd, ['1/c'], ['2']))
         c = schd.pool._get_task_by_id('1/c')
         schd.pool.spawn_on_output(c, TASK_OUTPUT_SUCCEEDED)
         assert schd.pool._get_task_by_id('1/x').flow_nums == {1, 2}
@@ -426,7 +429,7 @@ async def test_suicide(flow, scheduler, run, reflog, complete):
     async with run(schd):
         reflog_triggers: set = reflog(schd)
         await complete(schd, '1/b')
-        await run_cmd(remove_tasks(schd, ['1/a'], [FLOW_ALL]))
+        await run_cmd(remove_tasks(schd, ['1/a'], []))
         await complete(schd)
 
     assert reflog_triggers == {
@@ -469,7 +472,7 @@ async def test_kill_running(flow, scheduler, run, complete, reflog):
         reflog_triggers = reflog(schd)
         await complete(schd, '1/b')
         a = schd.pool._get_task_by_id('1/a')
-        await run_cmd(remove_tasks(schd, ['1/a'], [FLOW_ALL]))
+        await run_cmd(remove_tasks(schd, ['1/a'], []))
         assert a.state(TASK_STATUS_FAILED, is_held=True)
         await complete(schd)
 
@@ -511,5 +514,36 @@ async def test_reload_changed_config(flow, scheduler, run, complete):
         assert schd.config.cfg['scheduling']['graph']['R1'] == 'b'
         assert schd.pool.get_task_ids() == {'1/a', '1/b'}
 
-        await run_cmd(remove_tasks(schd, ['1/a'], [FLOW_ALL]))
+        await run_cmd(remove_tasks(schd, ['1/a'], []))
         await complete(schd, '1/b')
+
+
+async def test_remove_triggered(flow, scheduler, start):
+    """It should remove tasks from pool and from to_trigger set."""
+    conf = {
+        'scheduling': {
+            'graph': {
+                'R1': 'a & b'
+            },
+        },
+    }
+    schd: Scheduler = scheduler(flow(conf))
+    async with start(schd):
+        foo, bar = schd.pool.get_tasks()
+        # trigger foo (now)
+        await run_cmd(
+            force_trigger_tasks(schd, [foo.identity], [])
+        )
+        assert foo in schd.pool.tasks_to_trigger_now
+
+        # trigger bar
+        await run_cmd(
+            force_trigger_tasks(schd, [bar.identity], [])
+        )
+        assert bar in schd.pool.tasks_to_trigger_now
+
+        await run_cmd(
+            remove_tasks(schd, [foo.identity, bar.identity], [])
+        )
+        assert not schd.pool.get_tasks()
+        assert not schd.pool.tasks_to_trigger_now

@@ -17,43 +17,38 @@
 
 """cylc trigger [OPTIONS] ARGS
 
-Force task(s) to run regardless of prerequisites, even in a paused workflow.
+Trigger a group of one or more tasks, respecting dependencies among them.
 
-Triggering a task that is not yet queued will queue it.
+Prerequisites on tasks outside of the group will be satisfied automatically.
 
-Triggering a queued task runs it immediately.
+Tasks will be removed if necessary to allow re-run without intervention, so
+triggered tasks that are preparing, submitted, or running may be killed.
 
-Cylc queues restrict the number of jobs that can be active (submitted or
-running) at once. They release tasks to run when their active task count
-drops below the queue limit.
+Tasks that lead into a group will run immediately even if the workflow is
+paused; activity will flow on from them once the workflow is resumed.
 
-Attempts to trigger active (preparing, submitted, running)
-tasks will be ignored.
+Triggering an unqueued task queues it; triggering a queued task runs it.
+
+How flow numbers are assigned to triggered tasks:
+  Active tasks (n=0) already have assigned flows; inactive tasks (n>0) do not.
+  * If an interdependent group of triggered tasks includes active tasks, the
+    flow will be assigned the existing flow numbers of those active tasks.
+  * Otherwise the flow will be assigned all current active flow numbers.
 
 Examples:
-  # trigger task foo in cycle 1234 in test
-  $ cylc trigger test//1234/foo
+  # trigger task foo in cycle 1, in workflow "test"
+  $ cylc trigger test//1/foo
 
-  # trigger all failed tasks in test
-  $ cylc trigger 'test//*:failed'
+  # trigger all failed tasks in workflow "test"
+  $ cylc trigger 'test//*:failed'  # (quotes required)
 
-  # start a new flow by triggering 1234/foo in test
-  $ cylc trigger --flow=new test//1234/foo
+  # start a new flow from 1/foo
+  # (beware of off-flow prerequisites downstream of 1/foo)
+  $ cylc trigger --flow=new test//1/foo
 
-Flows:
-  Waiting tasks in the active window (n=0) already belong to a flow.
-  * by default, if triggered, they run in the same flow
-  * or with --flow=all, they are assigned all active flows
-  * or with --flow=INT or --flow=new, the original and new flows are merged
-  * (--flow=none is ignored for active tasks)
+  # rerun sub-graph "a => b & c" in the same flow, ignoring "off => b"
+  $ cylc trigger test //1/a //1/b //1/c
 
-  Inactive tasks (n>0) do not already belong to a flow.
-  * by default they are assigned all active flows
-  * otherwise, they are assigned the --flow value
-
-  Note --flow=new increments the global flow counter with each use. If it
-  takes multiple commands to start a new flow use the actual flow number
-  after the first command (you can read it from the scheduler log).
 """
 
 from functools import partial
@@ -67,7 +62,7 @@ from cylc.flow.option_parsers import (
     CylcOptionParser as COP,
 )
 from cylc.flow.terminal import cli_function
-from cylc.flow.flow_mgr import add_flow_opts
+from cylc.flow.flow_mgr import add_flow_opts_for_trigger_and_set
 
 
 if TYPE_CHECKING:
@@ -81,7 +76,6 @@ mutation (
   $flow: [Flow!],
   $flowWait: Boolean,
   $flowDescr: String,
-  $onResume: Boolean,
 ) {
   trigger (
     workflows: $wFlows,
@@ -89,7 +83,6 @@ mutation (
     flow: $flow,
     flowWait: $flowWait,
     flowDescr: $flowDescr,
-    onResume: $onResume,
   ) {
     result
   }
@@ -106,19 +99,8 @@ def get_option_parser() -> COP:
         argdoc=[FULL_ID_MULTI_ARG_DOC],
     )
 
-    add_flow_opts(parser)
+    add_flow_opts_for_trigger_and_set(parser)
 
-    parser.add_option(
-        "--on-resume",
-        help=(
-            "If the workflow is paused, wait until it is resumed before "
-            "running the triggered task(s). DEPRECATED - this will be "
-            "removed at Cylc 8.5."
-        ),
-        action="store_true",
-        default=False,
-        dest="on_resume"
-    )
     return parser
 
 
@@ -136,7 +118,6 @@ async def run(options: 'Values', workflow_id: str, *tokens_list):
             'flow': options.flow,
             'flowWait': options.flow_wait,
             'flowDescr': options.flow_descr,
-            'onResume': options.on_resume,
         }
     }
     return await pclient.async_request('graphql', mutation_kwargs)

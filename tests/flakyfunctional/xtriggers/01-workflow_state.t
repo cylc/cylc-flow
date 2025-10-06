@@ -68,14 +68,14 @@ __END__
 # set' ('+') and later '... INFO - Broadcast cancelled:' ('-') line, where we
 # use as a test case an arbitrary task where such setting & cancellation occurs:
 contains_ok "${WORKFLOW_LOG}" << __LOG_BROADCASTS__
-${LOG_INDENT}+ [2015/f1] [environment]upstream_workflow=${WORKFLOW_NAME_UPSTREAM}
-${LOG_INDENT}+ [2015/f1] [environment]upstream_task=foo
-${LOG_INDENT}+ [2015/f1] [environment]upstream_point=2015
-${LOG_INDENT}+ [2015/f1] [environment]upstream_trigger=data_ready
-${LOG_INDENT}- [2015/f1] [environment]upstream_workflow=${WORKFLOW_NAME_UPSTREAM}
-${LOG_INDENT}- [2015/f1] [environment]upstream_task=foo
-${LOG_INDENT}- [2015/f1] [environment]upstream_point=2015
-${LOG_INDENT}- [2015/f1] [environment]upstream_trigger=data_ready
+${LOG_INDENT}+ [2014/f1] [environment]upstream_workflow=${WORKFLOW_NAME_UPSTREAM}
+${LOG_INDENT}+ [2014/f1] [environment]upstream_task=foo
+${LOG_INDENT}+ [2014/f1] [environment]upstream_point=2014
+${LOG_INDENT}+ [2014/f1] [environment]upstream_trigger=data_ready
+${LOG_INDENT}- [2014/f1] [environment]upstream_workflow=${WORKFLOW_NAME_UPSTREAM}
+${LOG_INDENT}- [2014/f1] [environment]upstream_task=foo
+${LOG_INDENT}- [2014/f1] [environment]upstream_point=2014
+${LOG_INDENT}- [2014/f1] [environment]upstream_trigger=data_ready
 __LOG_BROADCASTS__
 # ... and 2) in the DB.
 TEST_NAME="${TEST_NAME_BASE}-check-broadcast-in-db"
@@ -88,14 +88,14 @@ sqlite3 "${DB_FILE}" \
     'SELECT change, point, namespace, key, value FROM broadcast_events
      ORDER BY time, change, point, namespace, key' >"${NAME}"
 contains_ok "${NAME}" << __DB_BROADCASTS__
-+|2015|f1|[environment]upstream_workflow|${WORKFLOW_NAME_UPSTREAM}
-+|2015|f1|[environment]upstream_task|foo
-+|2015|f1|[environment]upstream_point|2015
-+|2015|f1|[environment]upstream_trigger|data_ready
--|2015|f1|[environment]upstream_workflow|${WORKFLOW_NAME_UPSTREAM}
--|2015|f1|[environment]upstream_task|foo
--|2015|f1|[environment]upstream_point|2015
--|2015|f1|[environment]upstream_trigger|data_ready
++|2014|f1|[environment]upstream_workflow|${WORKFLOW_NAME_UPSTREAM}
++|2014|f1|[environment]upstream_task|foo
++|2014|f1|[environment]upstream_point|2014
++|2014|f1|[environment]upstream_trigger|data_ready
+-|2014|f1|[environment]upstream_workflow|${WORKFLOW_NAME_UPSTREAM}
+-|2014|f1|[environment]upstream_task|foo
+-|2014|f1|[environment]upstream_point|2014
+-|2014|f1|[environment]upstream_trigger|data_ready
 __DB_BROADCASTS__
 
 purge

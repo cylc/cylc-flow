@@ -25,6 +25,10 @@ set_test_number 7
 init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduler]
     allow implicit tasks = True
+    [[events]]
+      # The third subtest will restart with an empty task pool.
+      # This ensures the workflow shuts down prompty.
+      restart timeout = PT0S
 [scheduling]
     initial cycle point = 1
     final cycle point = 2

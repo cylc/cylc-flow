@@ -18,7 +18,12 @@
 import contextlib
 import re
 from textwrap import dedent
-from typing import Any, Dict, Optional, Set
+from typing import (
+    Any,
+    Dict,
+    Optional,
+    Set,
+)
 
 from metomi.isodatetime.data import Calendar
 
@@ -26,10 +31,10 @@ from cylc.flow import LOG
 from cylc.flow.cfgspec.globalcfg import (
     DIRECTIVES_DESCR,
     DIRECTIVES_ITEM_DESCR,
-    LOG_RETR_SETTINGS,
     EVENTS_DESCR,
     EVENTS_SETTINGS,
     EXECUTION_POLL_DESCR,
+    LOG_RETR_SETTINGS,
     MAIL_DESCR,
     MAIL_FOOTER_DESCR,
     MAIL_FROM_DESCR,
@@ -47,18 +52,31 @@ from cylc.flow.cfgspec.globalcfg import (
     UTC_MODE_DESCR,
 )
 import cylc.flow.flags
-from cylc.flow.parsec.exceptions import UpgradeError
-from cylc.flow.parsec.config import ParsecConfig, ConfigNode as Conf
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
-from cylc.flow.parsec.upgrade import upgrader, converter
+from cylc.flow.parsec.config import (
+    ConfigNode as Conf,
+    ParsecConfig,
+)
+from cylc.flow.parsec.exceptions import UpgradeError
+from cylc.flow.parsec.upgrade import (
+    converter,
+    upgrader,
+)
 from cylc.flow.parsec.validate import (
-    DurationFloat, CylcConfigValidator as VDR, cylc_config_validate)
+    CylcConfigValidator as VDR,
+    DurationFloat,
+    cylc_config_validate,
+)
 from cylc.flow.platforms import (
-    fail_if_platform_and_host_conflict, get_platform_deprecated_settings,
-    is_platform_definition_subshell)
-from cylc.flow.run_modes import RunMode
+    fail_if_platform_and_host_conflict,
+    get_platform_deprecated_settings,
+    is_platform_definition_subshell,
+)
+from cylc.flow.run_modes import (
+    TASK_CONFIG_RUN_MODES,
+    RunMode,
+)
 from cylc.flow.task_events_mgr import EventData
-from cylc.flow.run_modes import TASK_CONFIG_RUN_MODES
 
 
 # Regex to check whether a string is a command
@@ -72,6 +90,29 @@ REPLACED_BY_PLATFORMS = '''
    Please set a suitable platform in
    :cylc:conf:`flow.cylc[runtime][<namespace>]platform` instead.
    :ref:`See the migration guide <MajorChangesPlatforms>`.
+'''
+
+CYCLE_POINT_CONSTRAINTS = '''
+Rules to allow only certain {0} datetime cycle points.
+
+.. admonition:: Use Case
+
+   Writing a workflow where users may change the {0}
+   cycle point, but where only some {0} cycle points are
+   reasonable.
+
+Set by defining a list of truncated time points, which
+the {0} cycle point must match.
+
+Examples:
+
+- ``T00, T06, T12, T18`` - only at 6 hourly intervals.
+- ``T-30`` - only at half-past an hour.
+- ``01T00`` - only at midnight on the first day of a month.
+
+.. seealso::
+
+   :ref:`Recurrence tutorial <tutorial-inferred-recurrence>`.
 '''
 
 
@@ -375,6 +416,41 @@ with Conf(
                The default time zone is now ``Z`` instead of the local time of
                the first workflow start.
         ''')
+        with Conf('experimental', desc='''
+            Activate experimental features.
+
+            These are preview features which will become the default in future
+            releases.
+
+            .. versionadded:: 8.6.0
+        '''):
+            Conf('all', VDR.V_BOOLEAN, False, desc='''
+                Activate all experimental features.
+
+                Encouraged for canary testing.
+
+                .. versionadded:: 8.6.0
+            ''')
+            Conf('expire triggers', VDR.V_BOOLEAN, False, desc='''
+                This reimplements "suicide triggers" as "expire triggers".
+
+                * When the condition is met, the task will generate the
+                  ``expired`` output rather than just being removed.
+                * The ``expired`` output will be marked as
+                  :term:`optional <optional output>` for the triggered task,
+                  but a custom
+                  `flow.cylc[runtime][<namespace>]completion` condition
+                  will need to be modified accordingly.
+                * This should be functionally equivalent to "suicide triggers"
+                  in that the triggered task will not run.
+                * However, the triggered task will now be left in the
+                  ``expired`` state making it clearer in the GUI/logs that
+                  the task has been triggered in this way.
+                * It is possible to trigger other tasks off of this ``expired``
+                  output for more advanced failure recovery.
+
+                .. versionadded:: 8.6.0
+            ''')
 
         with Conf(   # noqa: SIM117 (keep same format)
             'main loop',
@@ -393,9 +469,16 @@ with Conf(
                     )
                 ))
 
-        with Conf('events',
-                  desc=global_default(EVENTS_DESCR, '[scheduler][events]')):
-            for item, desc in EVENTS_SETTINGS.items():
+        with Conf(
+            'events', desc=global_default(EVENTS_DESCR, '[scheduler][events]')
+        ):
+            for item, val in EVENTS_SETTINGS.items():
+                if isinstance(val, dict):
+                    val = val.copy()
+                    desc: str = val.pop('desc')
+                else:
+                    desc = val
+                    val = {}
                 desc = global_default(desc, f"[scheduler][events]{item}")
                 vdr_type = VDR.V_STRING_LIST
                 default: Any = Conf.UNSET
@@ -426,7 +509,7 @@ with Conf(
                     vdr_type = VDR.V_BOOLEAN
                 elif item.endswith("timeout"):
                     vdr_type = VDR.V_INTERVAL
-                Conf(item, vdr_type, default, desc=desc)
+                Conf(item, vdr_type, default, desc=desc, **val)
 
             Conf('expected task failures', VDR.V_STRING_LIST, desc='''
                 (For Cylc developers writing a functional tests only)
@@ -558,45 +641,16 @@ with Conf(
             - ``+P1D`` - The initial cycle point plus one day.
             - ``2000 +P1D +P1Y`` - The year ``2000`` plus one day and one year.
         ''')
-        Conf('initial cycle point constraints', VDR.V_STRING_LIST, desc='''
-            Rules to allow only some initial datetime cycle points.
-
-            .. admonition:: Use Case
-
-               Writing a workflow where users may change the initial
-               cycle point, but where only some initial cycle points are
-               reasonable.
-
-            Set by defining a list of truncated time points, which
-            the initial cycle point must match.
-
-            Examples:
-
-            - ``T00, T06, T12, T18`` - only at 6 hourly intervals.
-            -  ``T-30`` - only at half-past an hour.
-            - ``01T00`` - only at midnight on the first day of a month.
-
-            .. seealso::
-
-               :ref:`Recurrence tutorial <tutorial-inferred-recurrence>`.
+        Conf('initial cycle point constraints', VDR.V_STRING_LIST,
+             desc=CYCLE_POINT_CONSTRAINTS.format('initial') + dedent('''
 
             .. note::
 
                This setting does not coerce :cylc:conf:`[..]
                initial cycle point = now`.
-        ''')
-        Conf('final cycle point constraints', VDR.V_STRING_LIST, desc='''
-            Rules restricting permitted final cycle points.
-
-            In a cycling workflow it is possible to restrict the final cycle
-            point by defining a list of truncated time points under the final
-            cycle point constraints.
-
-            .. seealso::
-
-               :ref:`Recurrence tutorial <tutorial-inferred-recurrence>`.
-
-        ''')
+        '''))
+        Conf('final cycle point constraints', VDR.V_STRING_LIST,
+             desc=CYCLE_POINT_CONSTRAINTS.format('final'))
         Conf('hold after cycle point', VDR.V_CYCLE_POINT, desc=f'''
             Hold all tasks that pass this cycle point.
 
@@ -1139,13 +1193,60 @@ with Conf(
                 .. versionadded:: 8.3.0
             ''')
             Conf('platform', VDR.V_STRING, desc='''
-                The name of a compute resource defined in
-                :cylc:conf:`global.cylc[platforms]` or
-                :cylc:conf:`global.cylc[platform groups]`.
+                The platform to submit jobs to.
 
-                The platform specifies the host(s) that the tasks' jobs
+                The
+                :cylc:conf:`platform <global.cylc[platforms][<platform name>]>`
+                specifies the host(s) that the tasks' jobs
                 will run on and where (if necessary) files need to be
                 installed, and what job runner will be used.
+
+                This can be:
+
+                * A :cylc:conf:`platform <global.cylc[platforms]>`,
+                * a :cylc:conf:`platform group <global.cylc[platform groups]>`,
+                * or a command which returns a platform or platform group.
+
+                To see what platforms have been configured at your site, run
+                ``cylc config --platform-names``.
+
+                .. rubric:: Commands:
+
+                The ``platform`` can be set to a command which returns the name
+                of the platform to submit jobs to using the ``$()`` syntax,
+                i.e:
+
+                .. code-block:: cylc
+
+                   platform = $(command)
+
+                The configured command will be evaluated for each job
+                submission (i.e, different submissions of the same task may
+                submit on different platforms).
+
+                Cylc batches job submissions, so when multiple jobs are
+                submitted at the same time, using a platform defined by the
+                same command, the command will be run once, and all jobs in the
+                batch will submit to the same platform.
+
+                Note: do not use a command to configure a list of login nodes.
+                Instead, define a platform and configure the login nodes it
+                can use; see
+                :ref:`config.platforms.cluster_with_multiple_login_nodes`.
+
+                .. rubric:: Examples:
+
+                .. code-block:: cylc
+
+                   # run the job on the same host the Cylc scheduler runs on
+                   platform = localhost
+
+                   # run the job on a platform (or platform group) called hpc
+                   platform = hpc
+
+                   # run a command to select the platform (or platform group):
+                   platform = $(select-platform)
+                   platform = prefix-$(select-platform)-suffix
 
                 .. versionadded:: 8.0.0
             ''')
@@ -1627,12 +1728,6 @@ with Conf(
             with Conf('events', desc=(
                 global_default(TASK_EVENTS_DESCR, "[task events]")
             )):
-                Conf('execution timeout', VDR.V_INTERVAL, desc=(
-                    global_default(
-                        TASK_EVENTS_SETTINGS['execution timeout'],
-                        "[task events]execution timeout"
-                    )
-                ))
                 Conf('handlers', VDR.V_STRING_LIST, None, desc=(
                     global_default(
                         TASK_EVENTS_SETTINGS['handlers'],
@@ -1655,6 +1750,12 @@ with Conf(
                     global_default(
                         TASK_EVENTS_SETTINGS['mail events'],
                         "[task events]mail events"
+                    )
+                ))
+                Conf('execution timeout', VDR.V_INTERVAL, desc=(
+                    global_default(
+                        TASK_EVENTS_SETTINGS['execution timeout'],
+                        "[task events]execution timeout"
                     )
                 ))
                 Conf('submission timeout', VDR.V_INTERVAL, desc=(
@@ -1977,13 +2078,20 @@ with Conf(
                 ''')
 
 
-def upg(cfg, descr):
+def upg(cfg, descr, for_cancel_broadcast=False):
     """Upgrade old workflow configuration.
 
     NOTE: We are silencing deprecation (and only deprecation) warnings
     when in Cylc 7 compat mode to help support Cylc 7/8 compatible workflows
     (which would loose Cylc 7 compatibility if users were to follow the
     warnings and upgrade the syntax).
+
+    Args:
+        for_cancel_broadcast:
+            If True, extra validation steps which inspect configuration values
+            will be skipped. This is used for "cylc broadcast --cancel" where
+            the values are not known.
+            See https://github.com/cylc/cylc-flow/issues/6950.
 
     """
     u = upgrader(cfg, descr)
@@ -2170,13 +2278,15 @@ def upg(cfg, descr):
             silent=cylc.flow.flags.cylc7_back_compat,
         )
 
-    u.obsolete('8.0.0', ['cylc', 'events', 'abort on stalled'])
-    u.obsolete('8.0.0', ['cylc', 'events', 'abort if startup handler fails'])
-    u.obsolete('8.0.0', ['cylc', 'events', 'abort if shutdown handler fails'])
-    u.obsolete('8.0.0', ['cylc', 'events', 'abort if timeout handler fails'])
-    u.obsolete('8.0.0', ['cylc', 'events',
-                         'abort if inactivity handler fails'])
-    u.obsolete('8.0.0', ['cylc', 'events', 'abort if stalled handler fails'])
+    for old in [
+        'abort on stalled',
+        'abort if startup handler fails',
+        'abort if shutdown handler fails',
+        'abort if timeout handler fails',
+        'abort if inactivity handler fails',
+        'abort if stalled handler fails',
+    ]:
+        u.obsolete('8.0.0', ['cylc', 'events', old])
 
     u.deprecate(
         '8.0.0',
@@ -2187,11 +2297,11 @@ def upg(cfg, descr):
     )
     u.upgrade()
 
-    upgrade_graph_section(cfg, descr)
-    upgrade_param_env_templates(cfg, descr)
-
-    warn_about_depr_platform(cfg)
-    warn_about_depr_event_handler_tmpl(cfg)
+    if not for_cancel_broadcast:
+        upgrade_graph_section(cfg, descr)
+        upgrade_param_env_templates(cfg, descr)
+        warn_about_depr_platform(cfg)
+        warn_about_depr_event_handler_tmpl(cfg)
 
     return u
 
@@ -2259,10 +2369,7 @@ def upgrade_param_env_templates(cfg, descr):
                 continue
             if not cylc.flow.flags.cylc7_back_compat:
                 if first_warn:
-                    LOG.warning(
-                        'deprecated items automatically upgraded in '
-                        f'"{descr}":'
-                    )
+                    LOG.warning(upgrader.DEPR_MSG)
                     first_warn = False
                 LOG.warning(
                     f' * (8.0.0) {dep % task_name} contents prepended to '

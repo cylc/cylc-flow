@@ -355,7 +355,7 @@ async def list_option_values(
             The CLI context, i.e. everything that has been typed on the CLI
             before the partial.
 
-    E.G. --flow ['all', 'new', 'none']
+    E.G. --flow ['new', 'none']
     """
     if option in OPTION_MAP:
         list_option = OPTION_MAP[option]
@@ -497,7 +497,7 @@ async def list_flows(
     _partial: t.Optional[str]
 ) -> t.List[str]:
     """List values for the --flow option."""
-    return ['all', 'none', 'new']
+    return ['none', 'new']
 
 
 async def list_colours(

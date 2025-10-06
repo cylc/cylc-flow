@@ -22,9 +22,11 @@ from typing import cast, Iterable
 
 from cylc.flow import commands
 from cylc.flow.data_messages_pb2 import PbTaskProxy
-from cylc.flow.data_store_mgr import TASK_PROXIES
+from cylc.flow.data_store_mgr import FAMILY_PROXIES, TASK_PROXIES
+from cylc.flow.id import TaskTokens
 from cylc.flow.pathutil import get_workflow_run_dir
 from cylc.flow.scheduler import Scheduler
+from cylc.flow.subprocctx import SubFuncContext
 
 
 async def test_2_xtriggers(flow, start, scheduler, monkeypatch):
@@ -125,7 +127,7 @@ async def test_1_xtrigger_2_tasks(flow, start, scheduler, mocker):
         assert spy.call_count == 1
 
         # Note on master prior to GH #5908 the call is made from the
-        # scheduler main loop when the two tasks become satisified,
+        # scheduler main loop when the two tasks become satisfied,
         # resulting in two calls to put_xtriggers. This test fails
         # on master, but with call count 0 (not 2) because the main
         # loop doesn't run in this test.
@@ -241,7 +243,7 @@ async def test_set_xtrig_prereq_restart(flow, start, scheduler, db_select):
     async with start(schd):
         # artificially set dependence of foo on x0
         schd.pool.set_prereqs_and_outputs(
-            ['1/foo'], [], ['xtrigger/x0:succeeded'], ['all']
+            {TaskTokens('1', 'foo')}, [], ['xtrigger/x0:succeeded'], []
         )
 
     # the satisfied x0 prerequisite should be written to the DB
@@ -387,7 +389,7 @@ async def test_set_xtrig_prereq_reload(flow, start, scheduler, db_select):
     async with start(schd):
         # artificially set dependence of foo on x0
         schd.pool.set_prereqs_and_outputs(
-            ['1/foo'], [], ['xtrigger/x0:succeeded'], ['all']
+            {TaskTokens('1', 'foo')}, [], ['xtrigger/x0:succeeded'], []
         )
 
         # reload the workflow
@@ -451,7 +453,7 @@ async def test_force_satisfy(flow, start, scheduler, log_filter):
         foo = schd.pool.get_tasks()[0]
 
         # check x not satisfied yet
-        assert not foo.state.xtriggers['x']  # not satisified
+        assert not foo.state.xtriggers['x']  # not satisfied
 
         # force satisfy it
         xtrigs = {
@@ -460,28 +462,156 @@ async def test_force_satisfy(flow, start, scheduler, log_filter):
         }
         schd.xtrigger_mgr.force_satisfy(foo, xtrigs)
 
-        assert foo.state.xtriggers['x']  # satisified
+        assert foo.state.xtriggers['x']  # satisfied
         assert log_filter(
-            contains=(
-                'xtrigger prerequisite satisfied (forced): x = xrandom(0)'))
+            contains=('prerequisite force-satisfied: x = xrandom(0)'))
 
         # force satisfy it again
         schd.xtrigger_mgr.force_satisfy(foo, xtrigs)
-        assert foo.state.xtriggers['x']  # satisified
+        assert foo.state.xtriggers['x']  # satisfied
         assert log_filter(
-            contains=(
-                'xtrigger prerequisite already satisfied: x = xrandom(0)'))
+            contains=('prerequisite already satisfied: x = xrandom(0)'))
 
         # force unsatisfy it
         schd.xtrigger_mgr.force_satisfy(foo, {"x": False})
-        assert not foo.state.xtriggers['x']  # not satisified
+        assert not foo.state.xtriggers['x']  # not satisfied
         assert log_filter(
-            contains=(
-                'xtrigger prerequisite unsatisfied (forced): x = xrandom(0)'))
+            contains=('prerequisite force-unsatisfied: x = xrandom(0)'))
 
         # force unsatisfy it again
         schd.xtrigger_mgr.force_satisfy(foo, {"x": False})
-        assert not foo.state.xtriggers['x']  # not satisified
-        assert log_filter(contains=(
-            'xtrigger prerequisite already unsatisfied: x = xrandom(0)'
-        ))
+        assert not foo.state.xtriggers['x']  # not satisfied
+        assert log_filter(
+            contains=('prerequisite already unsatisfied: x = xrandom(0)')
+        )
+
+
+async def test_data_store(flow, start, scheduler):
+    """It should update the data store with xtrigger state."""
+    id_ = flow({
+        'scheduling': {
+            'initial cycle point': 'previous(T00)',
+            'xtriggers': {
+                'clock1': 'wall_clock()',
+                'clock2': 'wall_clock(offset="P1Y")',
+            },
+            'graph': {
+                'R1': '''
+                    @clock1 => foo
+                    @clock2 => foo
+                '''
+            }
+        }
+    })
+    schd: Scheduler = scheduler(id_)
+    async with start(schd):
+        await schd.update_data_structure()
+        itask = schd.pool.get_tasks()[0]
+
+        # extract xtrigger entry from the data store
+        xtriggers = schd.data_store_mgr.data[
+            schd.tokens.id
+        ][TASK_PROXIES][itask.tokens.id].xtriggers
+        clock1, clock2 = sorted(x for x in xtriggers if 'wall_clock' in x)
+
+        # it should not be satisfied (yet)
+        assert xtriggers[clock1].label == 'clock1'
+        assert xtriggers[clock1].satisfied is False
+
+        # execute the xtrigger
+        schd.xtrigger_mgr.call_xtriggers_async(itask)
+
+        # an update delta should be produced
+        # NOTE: both xtriggers should be present in the update
+        # (see https://github.com/cylc/cylc-flow/issues/6307)
+        task_delta = schd.data_store_mgr.updated[TASK_PROXIES][itask.tokens.id]
+        assert task_delta.xtriggers[clock1].satisfied is True
+        assert task_delta.xtriggers[clock2].satisfied is False
+
+        # the xtrigger should be satisfied in the data store
+        await schd.update_data_structure()
+        assert xtriggers[clock1].label == 'clock1'
+        assert xtriggers[clock1].satisfied is True
+
+
+def satisfy_xtrigger_functions(schd, stdout='[true, {}]', ret_code=0):
+    """Satisfy and dequeue any xtrigger subprocesses."""
+    for item in list(schd.proc_pool.queuings):
+        ctx, _, callback, *_ = item
+        if isinstance(schd.proc_pool.queuings[0][0], SubFuncContext):
+            # dequeue from the proc pool
+            schd.proc_pool.queuings.remove(item)
+
+            # mock the xtrigger output
+            ctx.ret_code = ret_code
+            ctx.out = stdout
+
+            # run the callback
+            callback(ctx)
+
+
+async def test_xtrigger_modifiers(flow, scheduler, start):
+    """It should update xtrigger derived task modifiers."""
+    id_ = flow({
+        'scheduling': {
+            'initial cycle point': 'previous(T00)',
+            'xtriggers': {
+                'echo': 'echo("whatever", succeed=True)',
+            },
+            'graph': {
+                'R1': '''
+                    @wall_clock => foo
+                    @echo => foo
+                '''
+            },
+        },
+        'runtime': {
+            'foo': {
+                'execution retry delays': 'PT0S',
+            },
+        },
+    })
+    schd = scheduler(id_)
+    async with start(schd):
+        # configure the task to retry
+        itask = schd.pool.get_tasks()[0]
+        schd.task_events_mgr._retry_task(itask, 0)
+        await schd.update_data_structure()
+
+        # the task proxy object in the data store
+        ds_tproxy = schd.data_store_mgr.data[schd.tokens.id][TASK_PROXIES][
+            itask.tokens.id
+        ]
+
+        # the "root" family proxy object in the data store
+        ds_fproxy = schd.data_store_mgr.data[schd.tokens.id][FAMILY_PROXIES][
+            itask.tokens.duplicate(task='root').id
+        ]
+
+        # the task modifiers should be initialised on task creation
+        assert len(itask.state.xtriggers) == 3
+        assert ds_tproxy.is_retry is True
+        assert ds_tproxy.is_wallclock is True
+        assert ds_tproxy.is_xtriggered is True
+
+        # the modifiers should bubble up the family tree
+        assert ds_fproxy.is_retry is True
+        assert ds_fproxy.is_wallclock is True
+        assert ds_fproxy.is_xtriggered is True
+
+        # run the xtriggers
+        schd.xtrigger_mgr.call_xtriggers_async(itask)  # run xtrigs
+        satisfy_xtrigger_functions(schd)  # mock results
+        schd.xtrigger_mgr.call_xtriggers_async(itask)  # process callbacks
+
+        await schd.update_data_structure()
+
+        # the task modifiers should have been updated
+        assert ds_tproxy.is_retry is False
+        assert ds_tproxy.is_wallclock is False
+        assert ds_tproxy.is_xtriggered is False
+
+        # the modifiers should bubble up the family tree
+        assert ds_fproxy.is_retry is False
+        assert ds_fproxy.is_wallclock is False
+        assert ds_fproxy.is_xtriggered is False

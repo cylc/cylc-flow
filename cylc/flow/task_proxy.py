@@ -54,7 +54,7 @@ from cylc.flow.wallclock import get_unix_time_from_time_string as str2time
 if TYPE_CHECKING:
     from cylc.flow.cycling import PointBase
     from cylc.flow.flow_mgr import FlowNums
-    from cylc.flow.id import Tokens
+    from cylc.flow.id import Tokens, TaskTokens
     from cylc.flow.prerequisite import (
         PrereqTuple,
         SatisfiedState,
@@ -222,7 +222,7 @@ class TaskProxy:
         flow_nums: Optional['FlowNums'] = None,
         status: str = TASK_STATUS_WAITING,
         is_held: bool = False,
-        submit_num: int = 0,
+        submit_num: int | None = 0,
         is_late: bool = False,
         is_manual_submit: bool = False,
         flow_wait: bool = False,
@@ -243,7 +243,7 @@ class TaskProxy:
             self.flow_nums = flow_nums.copy()
         self.flow_wait = flow_wait
         self.point = start_point
-        self.tokens = scheduler_tokens.duplicate(
+        self.tokens: TaskTokens = scheduler_tokens.duplicate(
             cycle=str(self.point),
             task=self.tdef.name,
         )
@@ -315,6 +315,11 @@ class TaskProxy:
                 )
             )
 
+    @property
+    def job_tokens(self) -> 'Tokens':
+        """Return the job tokens for this task proxy."""
+        return self.tokens.duplicate(job=str(self.submit_num))
+
     def __repr__(self) -> str:
         return f"<{type(self).__name__} {self.identity} {self.state}>"
 
@@ -326,8 +331,6 @@ class TaskProxy:
         Format: "<point>/<name>/<job>{<flows>}:status".
         """
         id_ = self.identity
-        if self.transient:
-            return f"{id_}{repr_flow_nums(self.flow_nums)}"
         if not self.state(TASK_STATUS_WAITING, TASK_STATUS_EXPIRED):
             id_ += f"/{self.submit_num:02d}"
         return (
@@ -599,7 +602,7 @@ class TaskProxy:
                 if not state:
                     prereq[pre] = "force satisfied"
                     LOG.info(
-                        f"[{self}] prerequisite satisfied (forced):"
+                        f"[{self}] prerequisite force-satisfied:"
                         f" {pre.get_id(True)}"
                     )
                 else:
@@ -607,6 +610,12 @@ class TaskProxy:
                         f"[{self}] prerequisite already satisfied:"
                         f" {pre.get_id(True)}"
                     )
+
+    def force_satisfy_external_triggers(self):
+        """Set all external triggers to satisfied - via 'cylc trigger'."""
+        for ext in self.state.external_triggers:
+            LOG.info(f'[{self}] external trigger force-satisfied: "{ext}"')
+            self.state.external_triggers[ext] = True
 
     def clock_expire(self) -> bool:
         """Return True if clock expire time is up, else False."""

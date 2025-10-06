@@ -28,7 +28,6 @@ from typing import (
     List,
     Optional,
     Tuple,
-    Union,
     cast,
 )
 
@@ -48,6 +47,7 @@ from graphene import (
     String,
 )
 from graphene.types.generic import GenericScalar
+from graphene.types.schema import identity_resolve
 from graphene.utils.str_converters import to_snake_case
 from graphql.type.definition import get_named_type
 
@@ -62,41 +62,32 @@ from cylc.flow.data_store_mgr import (
     FAMILIES,
     FAMILY_PROXIES,
     JOBS,
+    RUNTIME_CFG_MAP_TO_FIELD,
     TASK_PROXIES,
     TASKS,
 )
 from cylc.flow.flow_mgr import (
-    FLOW_ALL,
     FLOW_NEW,
     FLOW_NONE,
 )
 from cylc.flow.id import Tokens
 from cylc.flow.run_modes import (
-    WORKFLOW_RUN_MODES, RunMode)
-from cylc.flow.task_outputs import SORT_ORDERS
-from cylc.flow.task_state import (
-    TASK_STATUS_DESC,
-    TASK_STATUS_EXPIRED,
-    TASK_STATUS_FAILED,
-    TASK_STATUS_PREPARING,
-    TASK_STATUS_RUNNING,
-    TASK_STATUS_SUBMIT_FAILED,
-    TASK_STATUS_SUBMITTED,
-    TASK_STATUS_SUCCEEDED,
-    TASK_STATUS_WAITING,
-    TASK_STATUSES_ORDERED,
+    WORKFLOW_RUN_MODES,
+    RunMode,
 )
+from cylc.flow.task_outputs import SORT_ORDERS
+from cylc.flow.task_state import TASK_STATUSES_ORDERED
 from cylc.flow.util import sstrip
 from cylc.flow.workflow_status import StopMode
 
 
 if TYPE_CHECKING:
     from enum import Enum
-    from graphql import ResolveInfo
+
+    from graphql import GraphQLResolveInfo
     from graphql.type.definition import (
-        GraphQLList,
         GraphQLNamedType,
-        GraphQLNonNull,
+        GraphQLType,
     )
 
     from cylc.flow.network.resolvers import BaseResolvers
@@ -288,9 +279,7 @@ NODES_EDGES_ARGS_ALL = {
 
 # Resolvers:
 
-def field_name_from_type(
-    obj_type: 'Union[GraphQLNamedType, GraphQLList, GraphQLNonNull]'
-) -> str:
+def field_name_from_type(obj_type: 'GraphQLType') -> str:
     """Return the field name for given a GraphQL type.
 
     If the type is a list or non-null, the base field is extracted.
@@ -302,19 +291,19 @@ def field_name_from_type(
         raise ValueError(f"'{named_type.name}' is not a node type") from None
 
 
-def get_resolvers(info: 'ResolveInfo') -> 'BaseResolvers':
+def get_resolvers(info: 'GraphQLResolveInfo') -> 'BaseResolvers':
     """Return the resolvers from the context."""
     return cast('dict', info.context)['resolvers']
 
 
 def process_resolver_info(
-    root: Optional[Any], info: 'ResolveInfo', args: Dict[str, Any]
+    root: Optional[Any], info: 'GraphQLResolveInfo', args: Dict[str, Any]
 ) -> Tuple[str, Optional[Any]]:
     """Set and gather info for resolver."""
     # Add the subscription id to the resolver context
     # to know which delta-store to use."""
-    if 'backend_sub_id' in info.variable_values:
-        args['sub_id'] = info.variable_values['backend_sub_id']
+    if 'sub_id' in info.context:
+        args['sub_id'] = info.context['sub_id']
 
     field_name: str = to_snake_case(info.field_name)
     # root is the parent data object.
@@ -336,7 +325,7 @@ def get_native_ids(field_ids):
     return field_ids
 
 
-async def get_workflows(root, info: 'ResolveInfo', **args):
+async def get_workflows(root, info: 'GraphQLResolveInfo', **args):
     """Get filtered workflows."""
 
     _, workflow = process_resolver_info(root, info, args)
@@ -349,7 +338,7 @@ async def get_workflows(root, info: 'ResolveInfo', **args):
     return await resolvers.get_workflows(args)
 
 
-async def get_workflow_by_id(root, info: 'ResolveInfo', **args):
+async def get_workflow_by_id(root, info: 'GraphQLResolveInfo', **args):
     """Return single workflow element."""
 
     _, workflow = process_resolver_info(root, info, args)
@@ -362,7 +351,7 @@ async def get_workflow_by_id(root, info: 'ResolveInfo', **args):
 
 
 async def get_nodes_all(
-    root: Optional[Any], info: 'ResolveInfo', **args
+    root: Optional[Any], info: 'GraphQLResolveInfo', **args
 ):
     """Resolver for returning job, task, family nodes"""
 
@@ -401,7 +390,7 @@ async def get_nodes_all(
 
 
 async def get_nodes_by_ids(
-    root: Optional[Any], info: 'ResolveInfo', **args
+    root: Optional[Any], info: 'GraphQLResolveInfo', **args
 ):
     """Resolver for returning job, task, family node"""
     field_name, field_ids = process_resolver_info(root, info, args)
@@ -438,7 +427,7 @@ async def get_nodes_by_ids(
 
 
 async def get_node_by_id(
-    root: Optional[Any], info: 'ResolveInfo', **args
+    root: Optional[Any], info: 'GraphQLResolveInfo', **args
 ):
     """Resolver for returning job, task, family node"""
 
@@ -476,7 +465,7 @@ async def get_node_by_id(
     )
 
 
-async def get_edges_all(root, info: 'ResolveInfo', **args):
+async def get_edges_all(root, info: 'GraphQLResolveInfo', **args):
     """Get all edges from the store filtered by args."""
 
     process_resolver_info(root, info, args)
@@ -491,7 +480,7 @@ async def get_edges_all(root, info: 'ResolveInfo', **args):
     return await resolvers.get_edges_all(args)
 
 
-async def get_edges_by_ids(root, info: 'ResolveInfo', **args):
+async def get_edges_by_ids(root, info: 'GraphQLResolveInfo', **args):
     """Get all edges from the store by id lookup filtered by args."""
 
     _, field_ids = process_resolver_info(root, info, args)
@@ -505,7 +494,7 @@ async def get_edges_by_ids(root, info: 'ResolveInfo', **args):
     return await resolvers.get_edges_by_ids(args)
 
 
-async def get_nodes_edges(root, info: 'ResolveInfo', **args):
+async def get_nodes_edges(root, info: 'GraphQLResolveInfo', **args):
     """Resolver for returning job, task, family nodes"""
 
     process_resolver_info(root, info, args)
@@ -545,7 +534,7 @@ def resolve_state_tasks(root, info, **args):
         if state in data}
 
 
-async def resolve_broadcasts(root, info: 'ResolveInfo', **args):
+async def resolve_broadcasts(root, info: 'GraphQLResolveInfo', **args):
     """Resolve and parse broadcasts from JSON."""
     broadcasts = json.loads(
         getattr(root, to_snake_case(info.field_name), '{}'))
@@ -637,6 +626,11 @@ TaskRunMode = graphene.Enum(
     [(k.capitalize(), k.lower()) for k in RunMode.__members__.keys()],
     description=lambda x: RunMode(x.value).describe() if x else None,
 )
+
+
+class LogRecord(ObjectType):
+    level = String()
+    message = String()
 
 
 class Workflow(ObjectType):
@@ -829,6 +823,17 @@ class Workflow(ObjectType):
             of the data-store graph window.
         '''),
     )
+    log_records = graphene.List(
+        LogRecord,
+        description=sstrip('''
+            Scheduler log messages of level WARNING and above.
+
+            Warning: This is an incrementally updated field. Each update
+            contains a list of **new** log messages, not a list of all
+            messages. It is down to the client to store / preserve previous
+            records.
+        '''),
+    )
 
 
 class RuntimeSetting(ObjectType):
@@ -866,27 +871,18 @@ class Runtime(ObjectType):
     directives = graphene.List(RuntimeSetting, resolver=resolve_json_dump)
     environment = graphene.List(RuntimeSetting, resolver=resolve_json_dump)
     outputs = graphene.List(RuntimeSetting, resolver=resolve_json_dump)
-    run_mode = TaskRunMode(default_value=TaskRunMode.Live.name)
+    run_mode = TaskRunMode(default_value=TaskRunMode.Live)
 
 
 RUNTIME_FIELD_TO_CFG_MAP = {
-    **{
-        k: k.replace('_', ' ') for k in Runtime.__dict__
-        if not k.startswith('_')
-    },
-    'init_script': 'init-script',
-    'env_script': 'env-script',
-    'err_script': 'err-script',
-    'exit_script': 'exit-script',
-    'pre_script': 'pre-script',
-    'post_script': 'post-script',
-    'work_sub_dir': 'work sub-directory',
+    v: k
+    for k, v in RUNTIME_CFG_MAP_TO_FIELD.items()
 }
-"""Map GQL Runtime fields' names to workflow config setting names."""
+"""Map Pb/GraphQL Runtime fields' names to workflow config setting names."""
 
 
 def runtime_schema_to_cfg(runtime: dict) -> dict:
-    """Covert GQL Runtime field names to workflow config setting names and
+    """Covert GraphQL Runtime field names to workflow config setting names and
     perform any necessary processing on the values."""
     # We have to manually lowercase the run_mode field because we don't define
     # a proper schema for BroadcastSetting (it's just GenericScalar) so
@@ -931,6 +927,13 @@ class Job(ObjectType):
     )
     finished_time = String(
         description='The time this job finished running (if it has yet).',
+    )
+    estimated_finish_time = String(
+        description=(
+            "The estimated time this job will finish, if applicable. "
+            "This is based on the task's mean run time, or if not available, "
+            "the execution time limit."
+        ),
     )
     job_id = ID(
         description='The ID of this job in the job runner it was submitted to.'
@@ -1124,6 +1127,18 @@ class TaskProxy(ObjectType):
     is_runahead = Boolean(
         description='True if this task is held back by the "runahead limit".',
     )
+    is_retry = Boolean(
+        description='True if this task has a scheduled retry.',
+    )
+    is_wallclock = Boolean(
+        description='True if this task has an unsatisfied wallclock trigger.',
+    )
+    is_xtriggered = Boolean(
+        description=sstrip(
+            'True if this task has an unsatisfied xtrigger'
+            ' (excluding retry and wallclock xtriggers).'
+        ),
+    )
     flow_nums = String(
         description='The flows this task instance belongs to.',
     )
@@ -1257,20 +1272,6 @@ class Family(ObjectType):
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
         resolver=get_nodes_by_ids)
-    descendants = graphene.List(
-        String,
-        description=sstrip('''
-            Linearised first-parent descendants.
-
-            Inheritance in Cylc provides two functions:
-            * Allowing tasks to inherit common configurations.
-            * Defining a family/task hierarchy for visualisation purposes.
-              (the linearised first-parent hierarchy).
-
-            The visual hierarchy follows the first-parent of a family which
-            may differ from the full inheritance hierarchy.
-        '''),
-    )
     first_parent = Field(
         lambda: Family,
         description='Family first parent.',
@@ -1304,6 +1305,23 @@ class FamilyProxy(ObjectType):
     is_queued_total = Int()
     is_runahead = Boolean()
     is_runahead_total = Int()
+    is_retry = Boolean(
+        description=(
+            'True if this family contains a task that has a scheduled retry.'
+        ),
+    )
+    is_wallclock = Boolean(
+        description=(
+            'True if this family contains a task that has an'
+            ' unsatisfied wallclock trigger.'
+        ),
+    )
+    is_xtriggered = Boolean(
+        description=sstrip(
+            'True if this family contains a task that has an unsatisfied'
+            ' xtrigger (excluding retry and wallclock xtriggers).'
+        ),
+    )
     depth = Int()
     graph_depth = Int(
         description=sstrip('''
@@ -1509,7 +1527,7 @@ class GenericResponse(ObjectType):
 
 async def mutator(
     root: Optional[Any],
-    info: 'ResolveInfo',
+    info: 'GraphQLResolveInfo',
     *,
     command: Optional[str] = None,
     workflows: Optional[List[str]] = None,
@@ -1545,6 +1563,7 @@ async def mutator(
     if kwargs.get('args', False):
         kwargs.update(kwargs.get('args', {}))
         kwargs.pop('args')
+
     resolvers = get_resolvers(info)
     meta = info.context.get('meta')  # type: ignore[union-attr]
     res = await resolvers.mutator(info, command, w_args, kwargs, meta)
@@ -1618,41 +1637,6 @@ class BroadcastCyclePoint(graphene.String):
     # (broadcast supports either of those two but not cycle point globs)
 
 
-class TaskStatus(graphene.Enum):
-    """The status of a task in a workflow."""
-
-    # NOTE: this is an enumeration purely for the GraphQL schema
-    # TODO: the task statuses should be formally declared in a Python
-    #       enumeration rendering this class unnecessary
-    Waiting = TASK_STATUS_WAITING
-    Expired = TASK_STATUS_EXPIRED
-    Preparing = TASK_STATUS_PREPARING
-    SubmitFailed = TASK_STATUS_SUBMIT_FAILED
-    Submitted = TASK_STATUS_SUBMITTED
-    Running = TASK_STATUS_RUNNING
-    Failed = TASK_STATUS_FAILED
-    Succeeded = TASK_STATUS_SUCCEEDED
-
-    @property
-    def description(self):
-        return TASK_STATUS_DESC.get(self.value, '')
-
-
-class TaskState(InputObjectType):
-    """The state of a task, a combination of status and other fields."""
-
-    status = TaskStatus()
-    is_held = Boolean(description=sstrip('''
-        If a task is held no new job submissions will be made.
-    '''))
-    is_queued = Boolean(description=sstrip('''
-        Task is queued for job submission.
-    '''))
-    is_runahead = Boolean(description=sstrip('''
-        Task is runahead limited.
-    '''))
-
-
 class TaskName(String):
     """The name a task.
 
@@ -1669,9 +1653,11 @@ class NamespaceName(String):
 class NamespaceIDGlob(String):
     """A task or family ID e.g. `2000/foo`.
 
-    Globs can be used to match active tasks or families.
+    Globs can be used to match tasks or families, e.g, `2*/foo*` might match
+    `2000/foot`. Cycle point globs will only match active cycles.
 
-    E.g `2*/foo*` might match `2000/foot`.
+    Selectors can be used to match active tasks by state, e.g, `*:failed` will
+    match all failed tasks.
     """
 
 
@@ -1701,7 +1687,6 @@ class WorkflowStopMode(graphene.Enum):
     """The mode used to stop a running workflow."""
 
     # NOTE: using a different enum because:
-    # * Graphene requires special enums.
     # * We only want to offer a subset of stop modes (REQUEST_* only).
 
     Clean = cast('Enum', StopMode.REQUEST_CLEAN.value)
@@ -1711,12 +1696,12 @@ class WorkflowStopMode(graphene.Enum):
 
     @property
     def description(self):
-        return StopMode(self.value).describe()
+        return StopMode(cast('Enum', self).value).describe()
 
 
 class Flow(String):
     __doc__ = (
-        f"""An integer or one of {FLOW_ALL}, {FLOW_NEW} or {FLOW_NONE}."""
+        f"""An integer or {FLOW_NEW} or {FLOW_NONE}."""
     )
 
 
@@ -1762,9 +1747,7 @@ class Broadcast(Mutation):
         workflows = graphene.List(WorkflowID, required=True)
 
         mode = BroadcastMode(
-            # use the enum name as the default value
-            # https://github.com/graphql-python/graphql-core-legacy/issues/166
-            default_value=BroadcastMode.Set.name,
+            default_value=BroadcastMode.Set,
             description='What type of broadcast is this?',
             required=True
         )
@@ -1794,17 +1777,6 @@ class Broadcast(Mutation):
                 ' (for use with "Expire" mode).'
             )
         )
-
-        # TODO: work out how to implement this feature, it needs to be
-        #       handled client-side which makes it slightly awkward in
-        #       api-on-the-fly land
-
-        # files = graphene.List(
-        #    String,
-        #    description=sstrip('''
-        #        File with config to broadcast. Can be used multiple times
-        #    ''')
-        # )
 
     result = GenericScalar()
 
@@ -1936,6 +1908,11 @@ class Reload(Mutation):
     class Arguments:
         workflows = graphene.List(WorkflowID, required=True)
 
+        reload_global = Boolean(
+            default_value=False,
+            required=False,
+            description="Reload global config as well as the workflow config")
+
     result = GenericScalar()
 
 
@@ -1998,9 +1975,7 @@ class Stop(Mutation):
 
     class Arguments:
         workflows = graphene.List(WorkflowID, required=True)
-        mode = WorkflowStopMode(
-            default_value=WorkflowStopMode.Clean.name
-        )
+        mode = WorkflowStopMode(default_value=WorkflowStopMode.Clean)
         cycle_point = CyclePoint(
             description='Stop after the workflow reaches this cycle.'
         )
@@ -2079,18 +2054,14 @@ class FlowMutationArguments:
         graphene.NonNull(Flow),
         default_value=[],
         description=sstrip(f'''
-            The flow(s) to trigger/set these tasks in.
+            The flow(s) to set or trigger these tasks in.
 
-            By default:
-            * active tasks (n=0) keep their existing flow assignment
-            * inactive tasks (n>0) get assigned all active flows
+            By default, active tasks (n=0) stay in their assigned flow(s) and
+            inactive tasks (n>0) will be assigned to all active flows.
 
-            Otherwise you can assign (inactive tasks) or add to (active tasks):
-            * a list of integer flow numbers
-            or one of the following strings:
-            * {FLOW_ALL} - all active flows
+            Otherwise give a list of integers or one of the following strings:
             * {FLOW_NEW} - an automatically generated new flow number
-            * {FLOW_NONE} - (ignored for active tasks): no flow
+            * {FLOW_NONE} - activity won't flow on (ignored for active tasks)
         ''')
     )
     flow_wait = Boolean(
@@ -2185,13 +2156,12 @@ class Remove(Mutation, TaskMutation):
     class Arguments(TaskMutation.Arguments):
         flow = graphene.List(
             graphene.NonNull(Flow),
-            default_value=[FLOW_ALL],
-            description=sstrip(f'''
-                "Remove the task(s) from the specified flows. "
+            default_value=[],
+            description=sstrip('''
+                "Remove the tasks from the specified flows."
 
-                This should be a list of flow numbers, or '{FLOW_ALL}'
-                to remove the task(s) from all flows they belong to
-                (which is the default).
+                This should be a list of flow numbers.
+                By default, tasks will be removed from all flows.
             ''')
         )
 
@@ -2249,12 +2219,16 @@ class Trigger(Mutation, TaskMutation):
         ''')
         resolver = partial(mutator, command='force_trigger_tasks')
 
+    # BACK COMPAT: on_resume
+    #   Arg no longer used but retained for older clients.
+    # From: 8.6
+    # Remove at: 8.7
     class Arguments(TaskMutation.Arguments, FlowMutationArguments):
         on_resume = Boolean(
             default_value=False,
             description=sstrip('''
-                If the workflow is paused, wait until it is resumed before
-                running the triggered task(s).
+                DEPRECATED: this option is no longer needed and will be
+                ignored by the scheduler.
             ''')
         )
 
@@ -2325,7 +2299,8 @@ SUB_RESOLVERS = {
 }
 
 
-def delta_subs(root, info: 'ResolveInfo', **args) -> AsyncGenerator[Any, None]:
+def delta_subs(
+        root, info: 'GraphQLResolveInfo', **args) -> AsyncGenerator[Any, None]:
     """Generates the root data from the async gen resolver."""
     return get_resolvers(info).subscribe_delta(root, info, args)
 
@@ -2337,12 +2312,12 @@ class Pruned(ObjectType):
             the store.
         ''')
     workflow = String()
-    families = graphene.List(String, default_value=[])
-    family_proxies = graphene.List(String, default_value=[])
-    jobs = graphene.List(String, default_value=[])
-    tasks = graphene.List(String, default_value=[])
-    task_proxies = graphene.List(String, default_value=[])
-    edges = graphene.List(String, default_value=[])
+    families = graphene.List(String)
+    family_proxies = graphene.List(String)
+    jobs = graphene.List(String)
+    tasks = graphene.List(String)
+    task_proxies = graphene.List(String)
+    edges = graphene.List(String)
 
 
 class Delta(Interface):
@@ -2516,6 +2491,28 @@ class Deltas(ObjectType):
     )
 
 
+# TODO: Change to use subscribe arg/default. graphql-core has a subscribe field
+# for both Meta and Field, graphene at v3.4.3 does not.. As a workaround
+# the subscribe function is looked up via the following mapping:
+# See https://github.com/cylc/cylc-flow/issues/6688
+SUB_RESOLVER_MAPPING = {
+    'deltas': delta_subs,
+    'workflows': delta_subs,
+    'job': delta_subs,
+    'jobs': delta_subs,
+    'task': delta_subs,
+    'tasks': delta_subs,
+    'taskProxy': delta_subs,
+    'taskProxies': delta_subs,
+    'family': delta_subs,
+    'families': delta_subs,
+    'familyProxy': delta_subs,
+    'familyProxies': delta_subs,
+    'edges': delta_subs,
+    'nodesEdges': delta_subs,
+}
+
+
 class Subscriptions(ObjectType):
     """Defines the subscriptions available in the schema."""
     class Meta:
@@ -2530,7 +2527,7 @@ class Subscriptions(ObjectType):
         strip_null=Boolean(default_value=False),
         initial_burst=Boolean(default_value=True),
         ignore_interval=Float(default_value=0.0),
-        resolver=delta_subs
+        resolver=identity_resolve
     )
     workflows = graphene.List(
         Workflow,
@@ -2543,7 +2540,7 @@ class Subscriptions(ObjectType):
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
         ignore_interval=Float(default_value=2.5),
-        resolver=delta_subs
+        resolver=identity_resolve
     )
     job = Field(
         Job,
@@ -2554,7 +2551,7 @@ class Subscriptions(ObjectType):
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
         ignore_interval=Float(default_value=0.0),
-        resolver=delta_subs
+        resolver=identity_resolve
     )
     jobs = graphene.List(
         Job,
@@ -2565,7 +2562,7 @@ class Subscriptions(ObjectType):
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
         ignore_interval=Float(default_value=0.0),
-        resolver=delta_subs
+        resolver=identity_resolve
     )
     task = Field(
         Task,
@@ -2576,7 +2573,7 @@ class Subscriptions(ObjectType):
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
         ignore_interval=Float(default_value=0.0),
-        resolver=delta_subs
+        resolver=identity_resolve
     )
     tasks = graphene.List(
         Task,
@@ -2587,7 +2584,7 @@ class Subscriptions(ObjectType):
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
         ignore_interval=Float(default_value=0.0),
-        resolver=delta_subs
+        resolver=identity_resolve
     )
     task_proxy = Field(
         TaskProxy,
@@ -2598,7 +2595,7 @@ class Subscriptions(ObjectType):
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
         ignore_interval=Float(default_value=0.0),
-        resolver=delta_subs
+        resolver=identity_resolve
     )
     task_proxies = graphene.List(
         TaskProxy,
@@ -2609,7 +2606,7 @@ class Subscriptions(ObjectType):
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
         ignore_interval=Float(default_value=0.0),
-        resolver=delta_subs
+        resolver=identity_resolve
     )
     family = Field(
         Family,
@@ -2620,7 +2617,7 @@ class Subscriptions(ObjectType):
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
         ignore_interval=Float(default_value=0.0),
-        resolver=delta_subs
+        resolver=identity_resolve
     )
     families = graphene.List(
         Family,
@@ -2631,7 +2628,7 @@ class Subscriptions(ObjectType):
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
         ignore_interval=Float(default_value=0.0),
-        resolver=delta_subs
+        resolver=identity_resolve
     )
     family_proxy = Field(
         FamilyProxy,
@@ -2642,7 +2639,7 @@ class Subscriptions(ObjectType):
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
         ignore_interval=Float(default_value=0.0),
-        resolver=delta_subs
+        resolver=identity_resolve
     )
     family_proxies = graphene.List(
         FamilyProxy,
@@ -2653,7 +2650,7 @@ class Subscriptions(ObjectType):
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
         ignore_interval=Float(default_value=0.0),
-        resolver=delta_subs
+        resolver=identity_resolve
     )
     edges = graphene.List(
         Edge,
@@ -2664,7 +2661,7 @@ class Subscriptions(ObjectType):
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
         ignore_interval=Float(default_value=0.0),
-        resolver=delta_subs
+        resolver=identity_resolve
     )
     nodes_edges = Field(
         NodesEdges,
@@ -2675,7 +2672,7 @@ class Subscriptions(ObjectType):
         delta_type=String(default_value=DELTA_ADDED),
         initial_burst=Boolean(default_value=True),
         ignore_interval=Float(default_value=0.0),
-        resolver=delta_subs
+        resolver=identity_resolve
     )
 
 

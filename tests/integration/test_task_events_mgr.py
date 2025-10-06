@@ -31,6 +31,12 @@ from cylc.flow.task_events_mgr import (
     EventKey,
     TaskJobLogsRetrieveContext,
 )
+from cylc.flow.task_state import (
+    TASK_STATUS_PREPARING,
+    TASK_STATUS_SUBMIT_FAILED,
+)
+
+from cylc.flow.network.resolvers import TaskMsg
 
 from .test_workflow_events import TEMPLATES
 
@@ -126,7 +132,7 @@ async def test__insert_task_job(flow, one_conf, scheduler, start, validate):
 
 
 async def test__always_insert_task_job(
-    flow, scheduler, mock_glbl_cfg, start, run
+    flow, scheduler, mock_glbl_cfg, start
 ):
     """Insert Task Job _Always_ inserts a task into the data store.
 
@@ -144,46 +150,94 @@ async def test__always_insert_task_job(
         [platforms]
             [[broken1]]
                 hosts = no-such-host-1
+                job runner = abc
             [[broken2]]
                 hosts = no-such-host-2
+                job runner = def
         [platform groups]
-            [[broken]]
+            [[broken_group]]
                 platforms = broken1
     """
     mock_glbl_cfg('cylc.flow.platforms.glbl_cfg', global_config)
 
     id_ = flow({
-        'scheduling': {'graph': {'R1': 'broken & broken2'}},
+        'scheduling': {'graph': {'R1': 'foo & bar'}},
         'runtime': {
             'root': {'submission retry delays': 'PT10M'},
-            'broken': {'platform': 'broken'},
-            'broken2': {'platform': 'broken2'}
+            'foo': {'platform': 'broken_group'},
+            'bar': {'platform': 'broken2'}
         }
     })
 
-    schd = scheduler(id_, run_mode='live')
-    schd.bad_hosts = {'no-such-host-1', 'no-such-host-2'}
+    schd: Scheduler = scheduler(id_, run_mode='live')
+    schd.bad_hosts.update({'no-such-host-1', 'no-such-host-2'})
     async with start(schd):
         schd.submit_task_jobs(schd.pool.get_tasks())
+        await schd.update_data_structure()
 
         # Both tasks are in a waiting state:
         assert all(
             i.state.status == TASK_STATUS_WAITING
-            for i in schd.pool.get_tasks())
+            for i in schd.pool.get_tasks()
+        )
 
-        # Both tasks have updated the data store with info
-        # about a failed job:
+        # Both jobs are in the data store with submit-failed state:
+        ds_jobs = schd.data_store_mgr.data[schd.id][JOBS]
         updates = {
-            k.split('//')[-1]: v.state
-            for k, v in schd.data_store_mgr.updated[JOBS].items()
+            id_.split('//')[-1]: (job.state, job.platform, job.job_runner_name)
+            for id_, job in ds_jobs.items()
         }
         assert updates == {
-            '1/broken/01': 'submit-failed',
-            '1/broken2/01': 'submit-failed'
+            '1/foo/01': ('submit-failed', 'broken_group', ''),
+            '1/bar/01': ('submit-failed', 'broken2', 'def'),
         }
+        for job in ds_jobs.values():
+            assert job.submitted_time
 
 
-async def test__process_message_failed_with_retry(one, start, log_filter):
+async def test__submit_failed_job_id(flow, scheduler, start, db_select):
+    """If a job is killed in the submitted state, the job ID should still be
+    in the DB/data store.
+
+    See https://github.com/cylc/cylc-flow/pull/6926
+    """
+    async def get_ds_job_id(schd: Scheduler):
+        await schd.update_data_structure()
+        return list(schd.data_store_mgr.data[schd.id][JOBS].values())[0].job_id
+
+    id_ = flow('foo')
+    schd: Scheduler = scheduler(id_)
+    job_id = '1234'
+    async with start(schd):
+        itask = schd.pool.get_tasks()[0]
+        itask.state_reset(TASK_STATUS_PREPARING)
+        itask.submit_num = 1
+        itask.summary['submit_method_id'] = job_id
+        schd.workflow_db_mgr.put_insert_task_jobs(itask, {})
+        schd.task_events_mgr.process_message(
+            itask, 'INFO', schd.task_events_mgr.EVENT_SUBMITTED
+        )
+        assert await get_ds_job_id(schd) == job_id
+
+        schd.task_events_mgr.process_message(
+            itask, 'CRITICAL', schd.task_events_mgr.EVENT_SUBMIT_FAILED
+        )
+        assert itask.state(TASK_STATUS_SUBMIT_FAILED)
+        assert await get_ds_job_id(schd) == job_id
+
+    assert db_select(schd, False, 'task_jobs', 'job_id', 'submit_status') == [
+        (job_id, 1)
+    ]
+
+    # Restart and check data store again:
+    schd = scheduler(id_)
+    async with start(schd):
+        assert await get_ds_job_id(schd) == job_id
+
+
+async def test__process_message_failed_with_retry(
+    one: Scheduler, start, log_filter
+):
     """Log job failure, even if a retry is scheduled.
 
     See: https://github.com/cylc/cylc-flow/pull/6169
@@ -200,13 +254,11 @@ async def test__process_message_failed_with_retry(one, start, log_filter):
             })
 
         # Process submit failed message with and without retries:
-        one.task_events_mgr._process_message_submit_failed(
-            fail_once, None, False)
+        one.task_events_mgr._process_message_submit_failed(fail_once, None)
         record = log_filter(contains='1/one:waiting(queued)] retrying in')
         assert record[0][0] == logging.WARNING
 
-        one.task_events_mgr._process_message_submit_failed(
-            fail_once, None, False)
+        one.task_events_mgr._process_message_submit_failed(fail_once, None)
         failed_record = log_filter(level=logging.ERROR)[-1]
         assert 'submission failed' in failed_record[1]
 
@@ -221,6 +273,25 @@ async def test__process_message_failed_with_retry(one, start, log_filter):
             fail_once, None, 'failed', False, 'failed/OOK')
         failed_record = log_filter(level=logging.ERROR)[-1]
         assert 'failed/OOK' in failed_record[1]
+
+
+@pytest.mark.parametrize('id_', ['1/no_such_task/01', '1/no_job'])
+async def test__unhandled_message(id_, one: Scheduler, start, log_filter):
+    """It should log unhandled messages."""
+
+    async with start(one):
+        one.message_queue.put(
+            TaskMsg(
+                Tokens(id_, relative=True), "time", 'INFO', "the quick brown"
+            )
+        )
+        one.process_queued_task_messages()
+
+        _, warning_msg = log_filter(level=logging.WARNING)[-1]
+        assert (
+            'Undeliverable task messages received and ignored:' in warning_msg
+        )
+        assert f'{id_}: INFO - "the quick brown"' in warning_msg
 
 
 @pytest.mark.parametrize('template', TEMPLATES)

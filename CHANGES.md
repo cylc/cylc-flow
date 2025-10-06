@@ -11,6 +11,180 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 <!-- towncrier release notes start -->
 
+## __cylc-8.6.0 (Released 2025-10-01)__
+
+### ⚠ Breaking Changes
+
+[#6809](https://github.com/cylc/cylc-flow/pull/6809) - Dropped support for Python 3.7-3.11. The minimum supported version is now 3.12.
+
+### 🚀 Enhancements
+
+[#6835](https://github.com/cylc/cylc-flow/pull/6835) - A new experimental feature that can be switched on in workflow config:
+Suicide triggers expire tasks rather than just remove them. This fixes
+a bug that could allow tasks to run after suicide triggering. The
+"expired" output will automatically be marked as optional for the
+task, but custom completion conditions must be adapted accordingly.
+
+[#6844](https://github.com/cylc/cylc-flow/pull/6844) - Cylc commands including `cylc trigger` now support the `^` and `$` syntax for referencing the initial and final cycle points respectively.
+
+[#6920](https://github.com/cylc/cylc-flow/pull/6920) - Cylc commands (e.g. `cylc trigger` and `cylc hold`) can now operate on tasks
+which are not "active" using globs and family IDs. E.g,
+`cylc trigger workflow//cycle/family` will now trigger all tasks in the family,
+not just the ones that are presently active.
+
+[#6944](https://github.com/cylc/cylc-flow/pull/6944) - Make CYLC_WORKFLOW_SRC_DIR available as a template variable.
+
+[#6964](https://github.com/cylc/cylc-flow/pull/6964) - Automatic broadcast expiry is now delayed to make it easier to re-trigger
+tasks from the previous cycle.
+
+[#6974](https://github.com/cylc/cylc-flow/pull/6974) - Removed obsolete trigger --on-resume option.
+
+[#6976](https://github.com/cylc/cylc-flow/pull/6976) - broadcast: Broadcasts to inactive historical cycles will no longer expire while
+the scheduler is paused. This, combined with the newly extended broadcast
+expiry limit removes the need for the "cylc trigger --on-resume" option.
+
+[#6987](https://github.com/cylc/cylc-flow/pull/6987) - Enable estimated finish times for jobs in the UI.
+
+[#6999](https://github.com/cylc/cylc-flow/pull/6999) - Don't infer task output optionality from the right hand side of graph triggers.
+
+### 🔧 Fixes
+
+[#6800](https://github.com/cylc/cylc-flow/pull/6800) - Fixed a bug where tasks could be erroneously reported as running on an uncontactable platform.
+
+[#6842](https://github.com/cylc/cylc-flow/pull/6842) - Fixed two `cylc set` bugs:
+- It was affecting job states when it should only affect _task_ states.
+- In some cases it was causing a task to go back into the waiting state.
+
+## __cylc-8.5.4 (Released 2025-09-19)__
+
+### 🔧 Fixes
+
+[#6817](https://github.com/cylc/cylc-flow/pull/6817) - Fixes two rare bugs associated with reloading the workflow configuration after removing tasks or xtriggers.
+
+[#6990](https://github.com/cylc/cylc-flow/pull/6990) - Fix a bug where setting 'batch system' and not setting host could lead to the wrong platform being selected.
+
+## __cylc-8.5.3 (Released 2025-09-09)__
+
+### 🔧 Fixes
+
+[#6590](https://github.com/cylc/cylc-flow/pull/6590) - Fix validation of conditional expressions with negative integer offsets larger than `-P1`.
+
+[#6980](https://github.com/cylc/cylc-flow/pull/6980) - Fixed a bug where the GUI views would go blank when reloading a workflow.
+
+## __cylc-8.5.2 (Released 2025-09-04)__
+
+### 🚀 Enhancements
+
+[#6892](https://github.com/cylc/cylc-flow/pull/6892) - Added `--format=json` option to `cylc broadcast` for use with the `--display` option. Deprecated the `--raw` option in favour of `--format=raw`.
+
+[#6924](https://github.com/cylc/cylc-flow/pull/6924) - Include `log/version/` files in `cylc cat-log` and the UI log view.
+
+### 🔧 Fixes
+
+[#6197](https://github.com/cylc/cylc-flow/pull/6197) - Demote errors about invalid task event names to warnings
+
+[#6768](https://github.com/cylc/cylc-flow/pull/6768) - Fix a bug causing remote tasks to stay in the preparing state if triggered when the workflow is paused.
+
+[#6836](https://github.com/cylc/cylc-flow/pull/6836) - Fix a bug causing the results of `platform = $(subshell commands)` to be cached, and preventing re-evaluation for each task with the same config.
+
+[#6848](https://github.com/cylc/cylc-flow/pull/6848) - Allow `flow.cylc[runtime][<task>]platform` setting to have a prefix/suffix around a subshell expression.
+
+[#6903](https://github.com/cylc/cylc-flow/pull/6903) - Workflows that have hit the `stop after cycle point` will no longer shut down immediately when restart according to the `restart timeout` configuration.
+
+[#6909](https://github.com/cylc/cylc-flow/pull/6909) - Fix potential timeout of the play and vr commands for workflows with contact
+  files, due to an unnecessary remote process check - now only done if the
+  workflow fails to respond on the network.
+
+[#6910](https://github.com/cylc/cylc-flow/pull/6910) - Trigger command: automatically handle already-completed outputs of triggered tasks.
+
+[#6911](https://github.com/cylc/cylc-flow/pull/6911) - Fix an issue where trigger could fail to run a task, removing it instead.
+
+[#6914](https://github.com/cylc/cylc-flow/pull/6914) - Fixed bug where jobs in the UI could regress to an earlier state.
+
+[#6926](https://github.com/cylc/cylc-flow/pull/6926) - Fixed info missing from UI for submit-failed tasks.
+
+[#6940](https://github.com/cylc/cylc-flow/pull/6940) - Fixed a scheduler crash that could occur after re-running a task in skip mode.
+
+[#6952](https://github.com/cylc/cylc-flow/pull/6952) - Fixed `cylc broadcast` failing when cancelling `[events]` settings.
+
+## __cylc-8.5.1 (Released 2025-08-08)__
+
+### 🚀 Enhancements
+
+[#6902](https://github.com/cylc/cylc-flow/pull/6902) - Invalid workflow events in the `mail events` or `handler events` configurations will result in warnings rather than errors.
+
+## __cylc-8.5.0 (Released 2025-07-24)__
+
+### 🚀 Enhancements
+
+[#6117](https://github.com/cylc/cylc-flow/pull/6117) - Create `workflow/share/cycle/<cycle>` and make it available to jobs as `$CYLC_TASK_SHARE_CYCLE_DIR`.
+
+[#6395](https://github.com/cylc/cylc-flow/pull/6395) - `cylc trigger` now respects the dependencies between tasks allowing it to be used to (re)-run a subgraph of tasks.
+
+[#6478](https://github.com/cylc/cylc-flow/pull/6478) - Major version upgrade for graphene/graphql-core dependencies.
+
+[#6509](https://github.com/cylc/cylc-flow/pull/6509) - Added --global flag to 'cylc reload' which also reloads the Cylc global config.
+
+[#6554](https://github.com/cylc/cylc-flow/pull/6554) - `cylc show` now displays when a task has been set to skip mode
+
+[#6561](https://github.com/cylc/cylc-flow/pull/6561) - Tui now displays task states and flow numbers in context menus. Tasks in flow=None will be displayed in gray.
+
+[#6570](https://github.com/cylc/cylc-flow/pull/6570) - Using `cylc set` without specifying `--out` on a task where success is optional now sets success pathway outputs instead of doing nothing.
+
+[#6611](https://github.com/cylc/cylc-flow/pull/6611) - Tui: Add ability to open log files in external tools. Configure your `$EDITOR`, `$GEDITOR` or `$PAGER` options to choose which tool is used.
+
+[#6695](https://github.com/cylc/cylc-flow/pull/6695) - Extended the "set" command to manually satisfy dependence on xtriggers.
+
+### 🔧 Fixes
+
+[#6549](https://github.com/cylc/cylc-flow/pull/6549) - Removed cylc.vim - you should use https://github.com/cylc/cylc.vim instead.
+
+[#6574](https://github.com/cylc/cylc-flow/pull/6574) - Broadcast: Report any settings that are not compatible with the scheduler Cylc version.
+
+[#6625](https://github.com/cylc/cylc-flow/pull/6625) - Efficiency improvement: avoid storing duplicate information on graph triggers.
+
+[#6753](https://github.com/cylc/cylc-flow/pull/6753) - Fixes an issue where duplicate xtrigger labels were missing from `cylc show`.
+
+[#6838](https://github.com/cylc/cylc-flow/pull/6838) - Workflow and task `handler events` and `mail events` names are now validated. Outdated Cylc 7 workflow event names are automatically upgraded.
+
+[#6852](https://github.com/cylc/cylc-flow/pull/6852) - Removed predicted (and potentially incorrect) flow numbers from n>0 window tasks.
+
+[#6856](https://github.com/cylc/cylc-flow/pull/6856) - Fix a niche bug where outputs of a task could be wiped from the database if it was subsequently suicide triggered (e.g, if a custom output was manually set before the suicide trigger occurred).
+
+## __cylc-8.4.4 (Released 2025-07-18)__
+
+### 🔧 Fixes
+
+[#6798](https://github.com/cylc/cylc-flow/pull/6798) - Prevent unintended submission retries that could result from platform connection issues in certain circumstances.
+
+[#6828](https://github.com/cylc/cylc-flow/pull/6828) - Simulation mode will no longer erroneously complain about unsatisfied custom outputs.
+
+## __cylc-8.4.3 (Released 2025-06-17)__
+
+### 🚀 Enhancements
+
+[#6730](https://github.com/cylc/cylc-flow/pull/6730) - Add SQLite detailed error codes to error logs
+
+### 🔧 Fixes
+
+[#6602](https://github.com/cylc/cylc-flow/pull/6602) - Fix a bug where suicide triggers could prevent initial cycle point tasks spawning.
+
+[#6710](https://github.com/cylc/cylc-flow/pull/6710) - Restore `rsync` output into the workflow reinstallation log.
+
+[#6711](https://github.com/cylc/cylc-flow/pull/6711) - Stop broadcast allowing `[remote]host` if `platform` set, or vice-versa
+
+[#6721](https://github.com/cylc/cylc-flow/pull/6721) - Fixed a bug that could mark satisfied xtriggers as unsatisfied after a restart, in task queries.
+
+[#6722](https://github.com/cylc/cylc-flow/pull/6722) - Fix a slow memory leak in Tui.
+
+[#6727](https://github.com/cylc/cylc-flow/pull/6727) - Fixed a memory leak affecting both scheduler and UI server.
+
+[#6733](https://github.com/cylc/cylc-flow/pull/6733) - Fix an issue where the message "Cannot tell if the workflow is running" error could appear erroneously.
+
+[#6745](https://github.com/cylc/cylc-flow/pull/6745) - Fixed a bug affecting `cylc play` with run hosts specified in the global config, but no ranking expression specified.
+
+[#6758](https://github.com/cylc/cylc-flow/pull/6758) - Fixes an issue where not all in-window graph edges were being generated.
+
 ## __cylc-8.4.2 (Released 2025-04-07)__
 
 ### 🔧 Fixes

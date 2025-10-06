@@ -212,7 +212,7 @@ async def test_broadcast_platform_change(
         # Platform = None doesn't cause this issue!
         "runtime": {"mytask": {"platform": "localhost"}}})
 
-    schd = scheduler(id_, run_mode='live')
+    schd: Scheduler = scheduler(id_, run_mode='live')
 
     async with start(schd):
         # Change the task platform with broadcast:
@@ -220,7 +220,7 @@ async def test_broadcast_platform_change(
             ['1'], ['mytask'], [{'platform': 'foo'}])
 
         # Simulate prior failure to contact hosts:
-        schd.task_job_mgr.task_remote_mgr.bad_hosts = {'food'}
+        schd.bad_hosts.add('food')
 
         # Attempt job submission:
         schd.submit_task_jobs(schd.pool.get_tasks())
@@ -247,7 +247,7 @@ async def test_poll_job_deleted_log_folder(
     async with start(schd):
         itask = schd.pool.get_tasks()[0]
         itask.submit_num = 1
-        job_id = itask.tokens.duplicate(job='01').relative_id
+        job_id = itask.job_tokens.relative_id
         schd.task_job_mgr._poll_task_job_callback(
             itask,
             cmd_ctx=Mock(),
@@ -258,3 +258,38 @@ async def test_poll_job_deleted_log_folder(
     assert log_filter(
         logging.ERROR, f"job log directory {job_id} no longer exists"
     )
+
+
+async def test__prep_submit_task_job_impl_handles_all_old_platform_settings(
+    flow: Fixture,
+    scheduler: Fixture,
+    start: Fixture,
+    mock_glbl_cfg: Fixture,
+):
+    """Ensure that if the old host/batch system settings
+    are set that task job manager will wait for the any hostname to be
+    resolved.
+
+    https://github.com/cylc/cylc-flow/pull/6990
+    """
+    mock_glbl_cfg(
+        'cylc.flow.platforms.glbl_cfg',
+        '''
+            [platforms]
+                [[bakery]]
+                    hosts = localhost
+                    job runner = loaf
+        ''',
+    )
+    id_ = flow({
+        "scheduling": {"graph": {"R1": "a"}},
+        "runtime": {"a": {"job": {"batch system": "loaf"}}}
+    })
+
+    schd = scheduler(id_, run_mode='live')
+    async with start(schd):
+        task_a = schd.pool.get_tasks()[0]
+        with suppress(FileExistsError):
+            schd.task_job_mgr._prep_submit_task_job(task_a)
+
+        assert task_a.platform['name'] == 'bakery'

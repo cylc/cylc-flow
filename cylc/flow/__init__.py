@@ -53,22 +53,12 @@ def environ_init():
 
 environ_init()
 
-__version__ = '8.5.0.dev'
+__version__ = '8.7.0.dev'
 
 
 def iter_entry_points(entry_point_name):
     """Iterate over Cylc entry points."""
-    import sys
-    if sys.version_info[:2] > (3, 11):
-        from importlib.metadata import entry_points
-    else:
-        # BACK COMPAT: importlib_metadata
-        #   importlib.metadata was added in Python 3.8. The required interfaces
-        #   were completed by 3.12. For lower versions we must use the
-        #   importlib_metadata backport.
-        # FROM: Python 3.7
-        # TO: Python: 3.12
-        from importlib_metadata import entry_points
+    from importlib.metadata import entry_points
     yield from (
         entry_point
         # for entry_point in entry_points()[entry_point_name]

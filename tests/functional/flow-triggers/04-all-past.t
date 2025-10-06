@@ -28,14 +28,14 @@ reftest_run
 # NOTE task_states table only keeps the final submit number of a task for each flow
 
 TEST_NAME="${TEST_NAME_BASE}-order-no-wait"
-QUERY="SELECT name,submit_num,flow_nums,flow_wait FROM task_states ORDER BY time_updated;"
+QUERY="SELECT name,submit_num,flow_wait FROM task_states WHERE flow_nums is '[1]' ORDER BY time_updated;"
 # (Ordering by time_updated, 'c' comes before 'a' job:02)
 run_ok "${TEST_NAME}" sqlite3 "${DB}" "$QUERY"
 cmp_ok "${TEST_NAME}.stdout" <<\__END__
-b|1|[1]|0
-c|1|[1]|0
-a|2|[1]|0
-d|1|[1]|0
+b|1|0
+c|1|0
+a|2|0
+d|1|0
 __END__
 
 export REFTEST_OPTS=--set="WAIT=1"
@@ -43,15 +43,14 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}" true
 reftest_run
 
 TEST_NAME="${TEST_NAME_BASE}-order-wait"
-QUERY="SELECT name,submit_num,flow_nums,flow_wait FROM task_states ORDER BY time_updated"
+QUERY="SELECT name,submit_num,flow_wait FROM task_states WHERE flow_nums is '[1]' ORDER BY time_updated"
 # (Ordering by time_updated, 'c' comes before 'a' job:02)
 run_ok "${TEST_NAME}" sqlite3 "${DB}" "$QUERY"
 cmp_ok "${TEST_NAME}.stdout" <<\__END__
-b|1|[1]|0
-c|1|[1]|0
-a|2|[1]|1
-d|1|[1]|0
+b|1|0
+c|1|0
+a|2|1
+d|1|0
 __END__
 
 purge
-

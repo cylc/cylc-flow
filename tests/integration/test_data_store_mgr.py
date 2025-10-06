@@ -14,16 +14,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 from logging import INFO
 from typing import (
     Iterable,
     List,
     cast,
 )
+from unittest.mock import Mock
 
 import pytest
 
+from cylc.flow import LOG
+from cylc.flow.commands import (
+    force_trigger_tasks,
+    run_cmd,
+)
 from cylc.flow.data_messages_pb2 import (
+    PbJob,
     PbPrerequisite,
     PbTaskProxy,
 )
@@ -35,7 +43,11 @@ from cylc.flow.data_store_mgr import (
     TASKS,
     WORKFLOW,
 )
-from cylc.flow.id import Tokens
+from cylc.flow.id import (
+    TaskTokens,
+    Tokens,
+)
+from cylc.flow.network.log_stream_handler import ProtobufStreamHandler
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_events_mgr import TaskEventsManager
 from cylc.flow.task_outputs import (
@@ -43,9 +55,11 @@ from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUCCEEDED,
 )
+from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
     TASK_STATUS_FAILED,
     TASK_STATUS_PREPARING,
+    TASK_STATUS_RUNNING,
     TASK_STATUS_SUCCEEDED,
     TASK_STATUS_WAITING,
 )
@@ -73,9 +87,11 @@ def job_config(schd):
         'script': 'sleep 5; echo "I come in peace"',
         'work_d': None,
         'directives': {},
-        'environment': {},
+        'environment': {"FOO": "foo"},
         'param_var': {},
         'platform': {'name': 'platform'},
+        'execution retry delays': [10.0, 20.0],
+        'execution time limit': 30.0,
     }
 
 
@@ -116,8 +132,13 @@ def get_pb_prereqs(schd: 'Scheduler') -> 'List[PbPrerequisite]':
     ]
 
 
+def get_pb_job(schd: Scheduler, itask: TaskProxy) -> PbJob:
+    """Get the protobuf job for a given task from the data store."""
+    return schd.data_store_mgr.data[schd.id][JOBS][itask.job_tokens.id]
+
+
 @pytest.fixture(scope='module')
-async def harness(mod_flow, mod_scheduler, mod_start):
+async def mod_harness(mod_flow, mod_scheduler, mod_start):
     flow_def = {
         'scheduler': {
             'allow implicit tasks': True
@@ -125,6 +146,30 @@ async def harness(mod_flow, mod_scheduler, mod_start):
         'scheduling': {
             'graph': {
                 'R1': 'foo => bar'
+            }
+        }
+    }
+    id_: str = mod_flow(flow_def)
+    schd: 'Scheduler' = mod_scheduler(id_)
+    async with mod_start(schd):
+        await schd.update_data_structure()
+        data = schd.data_store_mgr.data[schd.data_store_mgr.workflow_id]
+        yield schd, data
+
+
+@pytest.fixture(scope='module')
+async def edgeharness(mod_flow, mod_scheduler, mod_start):
+    """Graph with > n in window edge at n=1."""
+    flow_def = {
+        'scheduler': {
+            'allow implicit tasks': True
+        },
+        'scheduling': {
+            'graph': {
+                'R1': """
+                    b1 & b2 => c1 & c2
+                    c1 => c2
+                """
             }
         }
     }
@@ -146,11 +191,13 @@ async def xharness(mod_flow, mod_scheduler, mod_start):
         'scheduling': {
             'xtriggers': {
                 'x': 'xrandom(0)',
+                'x2': 'xrandom(0)',
                 'y': 'xrandom(0, _=1)'
             },
             'graph': {
                 'R1': """
                     @x => foo
+                    @x2 => foo
                     @y => foo
                     @x => bar
                 """
@@ -173,22 +220,22 @@ def collect_states(data, node_type):
     ]
 
 
-def test_generate_definition_elements(harness):
+def test_generate_definition_elements(mod_harness):
     """Test method that generates all definition elements."""
-    schd, data = harness
+    schd, data = mod_harness
     task_defs = schd.config.taskdefs.keys()
     assert len(data[TASKS]) == len(task_defs)
     assert len(data[TASK_PROXIES]) == len(task_defs)
 
 
-def test_generate_graph_elements(harness):
-    schd, data = harness
+def test_generate_graph_elements(mod_harness):
+    schd, data = mod_harness
     task_defs = schd.config.taskdefs.keys()
     assert len(data[TASK_PROXIES]) == len(task_defs)
 
 
-def test_get_data_elements(harness):
-    schd, data = harness
+def test_get_data_elements(mod_harness):
+    schd, data = mod_harness
     flow_msg = schd.data_store_mgr.get_data_elements(TASK_PROXIES)
     assert len(flow_msg.added) == len(data[TASK_PROXIES])
 
@@ -199,24 +246,31 @@ def test_get_data_elements(harness):
     assert len(none_msg.ListFields()) == 0
 
 
-def test_get_entire_workflow(harness):
+def test_get_entire_workflow(mod_harness):
     """Test method that populates the entire workflow protobuf message."""
-    schd, data = harness
+    schd, data = mod_harness
     flow_msg = schd.data_store_mgr.get_entire_workflow()
     assert len(flow_msg.task_proxies) == len(data[TASK_PROXIES])
 
 
-def test_increment_graph_window(harness):
+def test_increment_graph_window(mod_harness):
     """Test method that adds and removes elements window boundary."""
-    schd, data = harness
+    schd, data = mod_harness
     assert schd.data_store_mgr.prune_trigger_nodes
     assert len(data[TASK_PROXIES]) == 2
 
 
-def test_initiate_data_model(harness):
+def test_in_window_extra_edges(edgeharness):
+    """Test edges beyond walk but within window are generated."""
+    schd, data = edgeharness
+    w_id = schd.data_store_mgr.workflow_id
+    assert f'{w_id}//$edge|1/c1|1/c2' in data[EDGES]
+
+
+def test_initiate_data_model(mod_harness):
     """Test method that generates all data elements in order."""
     schd: Scheduler
-    schd, data = harness
+    schd, data = mod_harness
     assert len(data[WORKFLOW].task_proxies) == 2
     schd.data_store_mgr.initiate_data_model(reloaded=True)
     assert len(data[WORKFLOW].task_proxies) == 2
@@ -228,10 +282,10 @@ def test_initiate_data_model(harness):
     assert schd.data_store_mgr.n_edge_distance == 2
 
 
-async def test_delta_task_state(harness):
+async def test_delta_task_state(mod_harness):
     """Test update_data_structure. This method will generate and
     apply adeltas/updates given."""
-    schd, data = harness
+    schd, data = mod_harness
     # follow only needs to happen once .. tests working on the same object?
     w_id = schd.data_store_mgr.workflow_id
     schd.data_store_mgr.data[w_id] = data
@@ -249,12 +303,12 @@ async def test_delta_task_state(harness):
     await schd.update_data_structure()
 
 
-async def test_delta_task_held(harness):
+async def test_delta_task_held(mod_harness):
     """Test update_data_structure. This method will generate and
     apply adeltas/updates given."""
     schd: Scheduler
-    schd, data = harness
-    schd.pool.hold_tasks(['*'])
+    schd, data = mod_harness
+    schd.pool.hold_tasks({TaskTokens('*', 'root')})
     await schd.update_data_structure()
     assert True in {t.is_held for t in data[TASK_PROXIES].values()}
     for itask in schd.pool.get_tasks():
@@ -268,31 +322,35 @@ async def test_delta_task_held(harness):
     }
 
     # put things back the way we found them
-    schd.pool.release_held_tasks('*')
+    schd.pool.release_held_tasks({TaskTokens('*', 'root')})
     await schd.update_data_structure()
 
 
-def test_insert_job(harness):
+def test_insert_job(mod_harness):
     """Test method that adds a new job to the store."""
-    schd, data = harness
+    schd: Scheduler
+    schd, data = mod_harness
     assert len(schd.data_store_mgr.added[JOBS]) == 0
-    schd.data_store_mgr.insert_job('foo', '1', 'submitted', job_config(schd))
+    itask = schd.pool.get_tasks()[0]
+    schd.data_store_mgr.insert_job(itask, 'submitted', job_config(schd))
     assert len(schd.data_store_mgr.added[JOBS]) == 1
     assert ext_id(schd) in schd.data_store_mgr.added[JOBS]
 
 
-def test_insert_db_job(harness, job_db_row):
+def test_insert_db_job(mod_harness, job_db_row):
     """Test method that adds a new job from the db to the store."""
-    schd, data = harness
+    schd: Scheduler
+    schd, data = mod_harness
     assert len(schd.data_store_mgr.added[JOBS]) == 1
     schd.data_store_mgr.insert_db_job(0, job_db_row)
     assert len(schd.data_store_mgr.added[JOBS]) == 2
     assert ext_id(schd) in schd.data_store_mgr.added[JOBS]
 
 
-def test_delta_job_msg(harness):
+def test_delta_job_msg(mod_harness):
     """Test method adding messages to job element."""
-    schd, data = harness
+    schd: Scheduler
+    schd, data = mod_harness
     j_id = ext_id(schd)
     tokens = Tokens(j_id)
     # First update creation
@@ -301,22 +359,26 @@ def test_delta_job_msg(harness):
     assert schd.data_store_mgr.updated[JOBS][j_id].messages
 
 
-def test_delta_job_attr(harness):
+def test_delta_job_attr(mod_harness):
     """Test method modifying job fields to job element."""
-    schd, data = harness
+    schd: Scheduler
+    schd, data = mod_harness
     schd.data_store_mgr.delta_job_attr(
-        Tokens(ext_id(schd)), 'job_runner_name', 'at')
+        Mock(job_tokens=Tokens(ext_id(schd))), 'job_runner_name', 'at'
+    )
     assert schd.data_store_mgr.updated[JOBS][ext_id(schd)].messages != (
         schd.data_store_mgr.added[JOBS][ext_id(schd)].job_runner_name
     )
 
 
-def test_delta_job_time(harness):
+def test_delta_job_time(mod_harness):
     """Test method setting job state change time."""
-    schd, data = harness
+    schd: Scheduler
+    schd, data = mod_harness
     event_time = get_current_time_string()
     schd.data_store_mgr.delta_job_time(
-        Tokens(ext_id(schd)), 'submitted', event_time)
+        Mock(job_tokens=Tokens(ext_id(schd))), 'submitted', event_time
+    )
     job_updated = schd.data_store_mgr.updated[JOBS][ext_id(schd)]
     with pytest.raises(ValueError):
         job_updated.HasField('jumped_time')
@@ -325,18 +387,18 @@ def test_delta_job_time(harness):
     )
 
 
-async def test_update_data_structure(harness):
+async def test_update_data_structure(mod_harness):
     """Test update_data_structure. This method will generate and
     apply adeltas/updates given."""
-    schd, data = harness
+    schd, data = mod_harness
     w_id = schd.data_store_mgr.workflow_id
     schd.data_store_mgr.data[w_id] = data
-    schd.pool.hold_tasks(['*'])
+    schd.pool.hold_tasks({TaskTokens('*', 'root')})
     await schd.update_data_structure()
     assert TASK_STATUS_FAILED not in set(collect_states(data, TASK_PROXIES))
     assert TASK_STATUS_FAILED not in set(collect_states(data, FAMILY_PROXIES))
     assert TASK_STATUS_FAILED not in data[WORKFLOW].state_totals
-    assert len({t.is_held for t in data[TASK_PROXIES].values()}) == 2
+    assert len({t.id for t in data[TASK_PROXIES].values() if t.is_held}) == 2
     for itask in schd.pool.get_tasks():
         itask.state.reset(TASK_STATUS_FAILED)
         schd.data_store_mgr.delta_task_state(itask)
@@ -386,14 +448,18 @@ async def test_prune_data_store(flow, scheduler, start):
         await schd.update_data_structure()
         w_id = schd.data_store_mgr.workflow_id
         data = schd.data_store_mgr.data[w_id]
-        schd.pool.hold_tasks(['*'])
+        schd.pool.hold_tasks({TaskTokens('*', 'root')})
         await schd.update_data_structure()
-        assert len({t.is_held for t in data[TASK_PROXIES].values()}) == 2
+        assert (
+            len({t.id for t in data[TASK_PROXIES].values() if t.is_held}) == 2
+        )
 
         # Window size reduction to invoke pruning
         schd.data_store_mgr.set_graph_window_extent(0)
         schd.data_store_mgr.update_data_structure()
-        assert len({t.is_held for t in data[TASK_PROXIES].values()}) == 1
+        assert (
+            len({t.id for t in data[TASK_PROXIES].values() if t.is_held}) == 1
+        )
 
         # Test rapid addition and removal
         # bar/BAR task/family proxies not in .added
@@ -447,10 +513,10 @@ async def test_prune_data_store(flow, scheduler, start):
         }) == 0
 
 
-async def test_family_ascent_point_prune(harness):
+async def test_family_ascent_point_prune(mod_harness):
     """Test _family_ascent_point_prune. This method tries to remove
     non-existent family."""
-    schd, data = harness
+    schd, data = mod_harness
     fp_id = 'NotAFamilyProxy'
     parent_ids = {fp_id}
     checked_ids = set()
@@ -466,13 +532,13 @@ async def test_family_ascent_point_prune(harness):
     assert len(parent_ids) == 0
 
 
-def test_delta_task_prerequisite(harness):
+def test_delta_task_prerequisite(mod_harness):
     """Test delta_task_prerequisites."""
     schd: Scheduler
-    schd, data = harness
+    schd, data = mod_harness
     schd.pool.set_prereqs_and_outputs(
-        schd.pool.get_task_ids(),
-        [(TASK_STATUS_SUCCEEDED,)],
+        {itask.tokens for itask in schd.pool.get_tasks()},
+        [TASK_STATUS_SUCCEEDED],
         [],
         flow=[]
     )
@@ -493,13 +559,14 @@ def test_delta_task_xtrigger(xharness):
     foo = schd.pool._get_task_by_id('1/foo')
     bar = schd.pool._get_task_by_id('1/bar')
 
-    assert not foo.state.xtriggers['x']  # not satisfied
-    assert not foo.state.xtriggers['y']  # not satisfied
-    assert not bar.state.xtriggers['x']  # not satisfied
+    assert not foo.state.xtriggers['x']   # not satisfied
+    assert not foo.state.xtriggers['x2']  # not satisfied
+    assert not foo.state.xtriggers['y']   # not satisfied
+    assert not bar.state.xtriggers['x']   # not satisfied
 
     # satisfy foo's dependence on x
     schd.pool.set_prereqs_and_outputs(
-        ['1/foo'],
+        {TaskTokens('1', 'foo')},
         [],
         ['xtrigger/x:succeeded'],
         flow=[]
@@ -513,13 +580,13 @@ def test_delta_task_xtrigger(xharness):
     # data store should have one updated task proxy with satisfied xtrigger x
     [pbfoo] = schd.data_store_mgr.updated[TASK_PROXIES].values()
     assert pbfoo.id.endswith('foo')
-    xtrig = pbfoo.xtriggers['xrandom(0)']
+    xtrig = pbfoo.xtriggers['x=xrandom(0)']
     assert xtrig.label == 'x'
     assert xtrig.satisfied
 
     # unsatisfy it again
     schd.pool.set_prereqs_and_outputs(
-        ['1/foo'],
+        {TaskTokens('1', 'foo')},
         [],
         ['xtrigger/x:unsatisfied'],
         flow=[]
@@ -528,16 +595,16 @@ def test_delta_task_xtrigger(xharness):
     # check the task pool
     assert not foo.state.xtriggers['x']  # not satisfied
 
-    # data store should have one updated task proxy with satisfied xtrigger x
+    # data store should have one updated task proxy with unsatisfied xtrigger x
     [pbfoo] = schd.data_store_mgr.updated[TASK_PROXIES].values()
     assert pbfoo.id.endswith('foo')
-    xtrig = pbfoo.xtriggers['xrandom(0)']
+    xtrig = pbfoo.xtriggers['x=xrandom(0)']
     assert xtrig.label == 'x'
     assert not xtrig.satisfied
 
     # satisfy both of foo's xtriggers at once
     schd.pool.set_prereqs_and_outputs(
-        ['1/foo'],
+        {TaskTokens('1', 'foo')},
         [],
         ['xtrigger/all:succeeded'],
         flow=[]
@@ -551,11 +618,16 @@ def test_delta_task_xtrigger(xharness):
     [pbfoo] = schd.data_store_mgr.updated[TASK_PROXIES].values()
     assert pbfoo.id.endswith('foo')
 
-    xtrig_x = pbfoo.xtriggers['xrandom(0)']
+    xtrig_x = pbfoo.xtriggers['x=xrandom(0)']
     assert xtrig_x.label == 'x'
     assert xtrig_x.satisfied
 
-    xtrig_y = pbfoo.xtriggers['xrandom(0, _=1)']
+    # updated task proxy should also contain duplicate xtrigger labels
+    xtrig_x2 = pbfoo.xtriggers['x2=xrandom(0)']
+    assert xtrig_x2.label == 'x2'
+    assert xtrig_x2.satisfied
+
+    xtrig_y = pbfoo.xtriggers['y=xrandom(0, _=1)']
     assert xtrig_y.label == 'y'
     assert xtrig_y.satisfied
 
@@ -610,13 +682,13 @@ async def test_flow_numbers(flow, scheduler, start):
         # initialise the data store
         await schd.update_data_structure()
 
-        # the task should exist in the original flow
+        # the task should not have a flow number as it is n>0
         ds_task = schd.data_store_mgr.get_data_elements(TASK_PROXIES).added[1]
         assert ds_task.name == 'b'
-        assert ds_task.flow_nums == '[1]'
+        assert ds_task.flow_nums == '[]'
 
         # force trigger the task in a new flow
-        schd.pool.force_trigger_tasks(['1/b'], ['2'])
+        await run_cmd(force_trigger_tasks(schd, ['1/b'], ['2']))
 
         # update the data store
         await schd.update_data_structure()
@@ -672,7 +744,7 @@ async def test_delta_task_outputs(one: 'Scheduler', start):
         assert itask
         itask.submit_num += 1
         one.data_store_mgr.insert_job(
-            itask.tdef.name, itask.point, itask.state.status, {'submit_num': 1}
+            itask, itask.state.status, {'submit_num': 1}
         )
         await one.update_data_structure()
 
@@ -739,3 +811,100 @@ async def test_remove_added_jobs_of_pruned_task(one: Scheduler, start):
         one.data_store_mgr.update_data_structure()
         assert not one.data_store_mgr.data[one.id][JOBS]
         assert not one.data_store_mgr.added[JOBS]
+
+
+async def test_log_events(one: Scheduler, start):
+    """It should record log events and strip and ANSI formatting."""
+    async with start(one):
+        handler = ProtobufStreamHandler(
+            one,
+            level=logging.INFO,
+        )
+        LOG.addHandler(handler)
+
+        try:
+            # log a message with some ANSIMARKUP formatting
+            LOG.warning(
+                '<bold>here</bold> <red>hare</red> <yellow>here</yellow>'
+            )
+
+            await one.update_data_structure()
+            log_records = one.data_store_mgr.data[one.id][WORKFLOW].log_records
+
+            assert len(log_records) == 1
+            log_record = log_records[0]
+
+            # the message should be in the store, the ANSI formatting should be
+            # stripped
+            assert log_record.level == 'WARNING'
+            assert log_record.message == 'here hare here'
+        finally:
+            LOG.removeHandler(handler)
+
+
+async def test_no_backwards_job_state_change(one: Scheduler, start):
+    """It should not allow backwards job state changes."""
+    async with start(one):
+        itask = one.pool.get_tasks()[0]
+        itask.state_reset(TASK_STATUS_PREPARING)
+        itask.submit_num += 1
+        await one.update_data_structure()
+
+        one.task_events_mgr.process_message(itask, INFO, TASK_OUTPUT_STARTED)
+        await one.update_data_structure()
+        assert get_pb_job(one, itask).state == TASK_STATUS_RUNNING
+
+        # Simulate late arrival of "submitted" message
+        one.task_events_mgr.process_message(itask, INFO, TASK_OUTPUT_SUBMITTED)
+        await one.update_data_structure()
+        assert get_pb_job(one, itask).state == TASK_STATUS_RUNNING
+
+
+async def test_job_estimated_finish_time(one_conf, flow, scheduler, start):
+    """It should set estimated_finish_time on job elements along with
+    started_time."""
+    wid = flow({
+        **one_conf,
+        'scheduler': {'UTC mode': True},
+        'runtime': {
+            'one': {'execution time limit': 'PT2M'},
+        },
+    })
+    schd: Scheduler = scheduler(wid)
+    date = '2081-07-02T'
+
+    async def start_job(itask: TaskProxy, start_time: str):
+        if not schd.pool.get_task(itask.point, itask.tdef.name):
+            schd.pool.add_to_pool(itask)
+            await schd.update_data_structure()
+        itask.state_reset(TASK_STATUS_PREPARING)
+        itask.submit_num += 1
+        itask.jobs = []
+        schd.task_events_mgr.process_message(
+            itask, INFO, TASK_OUTPUT_SUBMITTED  # submit time irrelevant
+        )
+        await schd.update_data_structure()
+        schd.task_events_mgr.process_message(
+            itask, INFO, TASK_OUTPUT_STARTED, f'{date}{start_time}'
+        )
+        await schd.update_data_structure()
+
+    async with start(schd):
+        itask = schd.pool.get_tasks()[0]
+        await start_job(itask, '06:00:00Z')
+        # 1st job: estimate based on execution time limit:
+        assert (
+            get_pb_job(schd, itask).estimated_finish_time
+            == f'{date}06:02:00Z'
+        )
+
+        # Finish this job and start a new one:
+        schd.task_events_mgr.process_message(
+            itask, INFO, TASK_OUTPUT_SUCCEEDED, f'{date}06:00:40Z'
+        )
+        await start_job(itask, '06:01:00Z')
+        # >=2nd job: estimate based on mean of previous jobs:
+        assert (
+            get_pb_job(schd, itask).estimated_finish_time
+            == f'{date}06:01:40Z'
+        )

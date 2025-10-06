@@ -16,11 +16,23 @@
 
 """Test the top-level (root) GraphQL queries."""
 
+from contextlib import suppress
 import pytest
 from typing import TYPE_CHECKING
 
-from cylc.flow.id import Tokens
+from graphql import parse, MiddlewareManager
+
+from cylc.flow.data_store_mgr import create_delta_store
+from cylc.flow.id import TaskTokens, Tokens
 from cylc.flow.network.client import WorkflowRuntimeClient
+from cylc.flow.network.schema import schema, SUB_RESOLVER_MAPPING
+from cylc.flow.network.graphql import (
+    CylcExecutionContext,
+    IgnoreFieldMiddleware,
+    instantiate_middleware,
+)
+from cylc.flow.network.graphql_subscribe import subscribe
+from cylc.flow.workflow_status import get_workflow_status
 
 if TYPE_CHECKING:
     from cylc.flow.scheduler import Scheduler
@@ -50,6 +62,29 @@ def job_config(schd):
         'param_var': {},
         'platform': {'name': 'platform'},
     }
+
+
+def gather_subscription_args(schd, request_string):
+    kwargs = {
+        "variable_values": {},
+        "operation_name": None,
+        "context_value": {
+            'op_id': 1,
+            'resolvers': schd.server.resolvers,
+            'meta': {},
+        },
+        "subscribe_resolver_map": SUB_RESOLVER_MAPPING,
+        "middleware": MiddlewareManager(
+            *list(
+                instantiate_middleware(
+                    [IgnoreFieldMiddleware]
+                )
+            )
+        ),
+        "execution_context_class": CylcExecutionContext,
+    }
+    document = parse(request_string)
+    return (document, kwargs)
 
 
 @pytest.fixture
@@ -94,7 +129,7 @@ async def harness(mod_flow, mod_scheduler, mod_run):
     schd: 'Scheduler' = mod_scheduler(id_)
     async with mod_run(schd):
         client = WorkflowRuntimeClient(id_)
-        schd.pool.hold_tasks(['*'])
+        schd.pool.hold_tasks({TaskTokens('*', 'root')})
         schd.resume_workflow()
         # Think this is needed to save the data state at first start (?)
         # Fails without it.. and a test needs to overwrite schd data with this.
@@ -199,14 +234,14 @@ async def test_task_proxies(harness):
         w_tokens.duplicate(
             cycle='1',
             task=namespace,
-        ).id
+        )
         # NOTE: task "d" is not in the n=1 window yet
         for namespace in ('a', 'b', 'c')
     ]
     ret['taskProxies'].sort(key=lambda x: x['id'])
     assert ret == {
         'taskProxies': [
-            {'id': id_}
+            {'id': id_.id}
             for id_ in ids
         ]
     }
@@ -214,11 +249,25 @@ async def test_task_proxies(harness):
     # query "task"
     ret = await client.async_request(
         'graphql',
-        {'request_string': 'query { taskProxy(id: "%s") { id } }' % ids[0]}
+        {'request_string': 'query { taskProxy(id: "%s") { id } }' % ids[0].id}
     )
     assert ret == {
-        'taskProxy': {'id': ids[0]}
+        'taskProxy': {'id': ids[0].id}
     }
+
+    # query "taskProxies" fragment with null stripping
+    ret = await client.async_request(
+        'graphql',
+        {
+            'request_string': '''
+                fragment wf on Workflow {
+                    taskProxies (ids: ["%s"], stripNull: true) { id }
+                }
+                query { workflows (ids: ["%s"]) { ...wf } }
+            ''' % (ids[0].relative_id, ids[0].workflow_id)
+        }
+    )
+    assert ret == {'workflows': [{'taskProxies': [{'id': ids[0].id}]}]}
 
 
 async def test_family_proxies(harness):
@@ -317,10 +366,12 @@ async def test_edges(harness):
 
 
 async def test_jobs(harness):
+    schd: Scheduler
     schd, client, w_tokens = harness
 
     # add a job
-    schd.data_store_mgr.insert_job('a', '1', 'submitted', job_config(schd))
+    itask = schd.pool._get_task_by_id('1/a')
+    schd.data_store_mgr.insert_job(itask, 'submitted', job_config(schd))
     schd.data_store_mgr.update_data_structure()
     j_tokens = w_tokens.duplicate(
         cycle='1',
@@ -348,3 +399,94 @@ async def test_jobs(harness):
     assert ret == {
         'job': {'id': f'{j_id}'}
     }
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+# Test the GraphQL subscription infrastructure.
+# (currently only used at UIS)
+@pytest.mark.asyncio(loop_scope="module")
+async def test_subscription_basic(harness):
+    """Test a basic subscription that uses the resolver's sub_resolver code."""
+    schd, _, w_tokens = harness
+    document, kwargs = gather_subscription_args(
+        schd,
+        'subscription { workflows { id } }',
+    )
+    subscription = await subscribe(
+        schema.graphql_schema,
+        document,
+        **kwargs
+    )
+    has_item = False
+    with suppress(GeneratorExit):
+        async for response in subscription:
+            has_item = True
+            assert response.data['workflows'][0]['id'] == w_tokens.id
+            await subscription.aclose()
+    assert has_item
+
+
+@pytest.mark.asyncio(loop_scope="module")
+async def test_subscription_deltas(one, start):
+    """Test the full subscription with null-stripping and delta handling."""
+    async with start(one):
+        document, kwargs = gather_subscription_args(
+            one,
+            '''
+                subscription {
+                    deltas (stripNull: true) {
+                        id
+                        added {
+                            workflow {
+                                id
+                                host
+                                status
+                            }
+                        }
+                        updated {
+                            workflow {
+                                id
+                                host
+                                status
+                            }
+                        }
+                    }
+                }
+            ''',
+        )
+        subscription = await subscribe(
+            schema.graphql_schema,
+            document,
+            **kwargs
+        )
+        aitem = await subscription.__anext__()
+        assert aitem.data['deltas']['added']['workflow'] == {
+            'id': one.id,
+            'host': one.host,
+            'status': 'running',
+        }
+        # Workflow one is paused on start, but this hasn't been processed yet.
+        await one.update_data_structure()
+        assert (
+            one.data_store_mgr.data[one.id]['workflow'].status
+            == get_workflow_status(one).value
+        )
+        # Get the all delta, process, then add it to the subscription queue.
+        btopic, delta, _ = one.data_store_mgr.publish_deltas[-1]
+        _, sub_queue = next(
+            iter(one.data_store_mgr.delta_queues[one.id].items())
+        )
+        sub_queue.put(
+            (
+                one.id,
+                btopic.decode('utf-8'),
+                create_delta_store(delta, one.id)
+            )
+        )
+        aitem = await subscription.__anext__()
+        assert aitem.data['deltas']['updated']['workflow'] == {
+            'id': one.id,
+            'status': get_workflow_status(one).value,
+        }
+        with suppress(GeneratorExit):
+            await subscription.aclose()

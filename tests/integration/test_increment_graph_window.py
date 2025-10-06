@@ -29,7 +29,6 @@ def increment_graph_window(schd, task):
     schd.data_store_mgr.increment_graph_window(
         tokens,
         IntegerPoint('1'),
-        {1},
         is_manual_submit=False,
     )
 

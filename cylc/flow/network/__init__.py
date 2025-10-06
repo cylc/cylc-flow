@@ -21,6 +21,7 @@ from typing import (
     TYPE_CHECKING,
     Optional,
     Tuple,
+    TypedDict,
     Union,
 )
 
@@ -48,10 +49,6 @@ from cylc.flow.workflow_files import (
 
 
 if TYPE_CHECKING:
-    # BACK COMPAT: typing_extensions.TypedDict
-    # FROM: Python 3.7
-    # TO: Python 3.11
-    from typing_extensions import TypedDict
     from zmq.asyncio import Context
 
 
@@ -68,8 +65,8 @@ if TYPE_CHECKING:
         different versions of Cylc 8.
         """
         data: object
-        """For most Cylc commands that issue GQL mutations, the data field will
-        look like:
+        """For most Cylc commands that issue GraphQL mutations, the data field
+        will look like:
         data: {
         <mutationName1>: {
             result: [
@@ -109,7 +106,7 @@ def deserialize(message: str) -> 'ResponseDict':
     return json.loads(message)
 
 
-def get_location(workflow: str) -> Tuple[str, int, int]:
+def get_location(workflow: str) -> Tuple[str, int, int, str]:
     """Extract host and port from a workflow's contact file.
 
     NB: if it fails to load the workflow contact file, it will exit.
@@ -117,7 +114,7 @@ def get_location(workflow: str) -> Tuple[str, int, int]:
     Args:
         workflow: workflow ID
     Returns:
-        Tuple (host name, port number, publish port number)
+        Tuple (host name, port number, publish port number, scheduler version)
     Raises:
         WorkflowStopped: if the workflow is not running.
         CylcVersionError: if target is a Cylc 7 (or earlier) workflow.
@@ -131,12 +128,12 @@ def get_location(workflow: str) -> Tuple[str, int, int]:
     host = contact[ContactFileFields.HOST]
     host = get_fqdn_by_host(host)
     port = int(contact[ContactFileFields.PORT])
+    version = contact[ContactFileFields.VERSION]
     if ContactFileFields.PUBLISH_PORT in contact:
         pub_port = int(contact[ContactFileFields.PUBLISH_PORT])
     else:
-        version = contact.get('CYLC_VERSION', None)
         raise CylcVersionError(version=version)
-    return host, port, pub_port
+    return host, port, pub_port, version
 
 
 class ZMQSocketBase:

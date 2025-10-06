@@ -31,6 +31,7 @@ from cylc.flow.exceptions import (
     XtriggerConfigError,
 )
 from cylc.flow.parsec.exceptions import ListValueError
+from cylc.flow.parsec.fileparse import read_and_proc
 from cylc.flow.pathutil import get_workflow_run_pub_db_path
 
 Fixture = Any
@@ -597,6 +598,7 @@ async def test_glbl_cfg(monkeypatch, tmp_path, caplog):
 def test_nonlive_mode_validation(flow, validate, caplog, log_filter):
     """Nonlive tasks return a warning at validation.
     """
+    caplog.set_level(logging.INFO)
     msg1 = dedent(
         'The following tasks are set to run in skip mode:\n    * skip'
     )
@@ -668,5 +670,72 @@ async def test_invalid_starttask(one_conf, flow, scheduler, start):
     id_ = flow(one_conf)
     schd = scheduler(id_, starttask=['a///b'])
     with pytest.raises(InputError, match='a///b'):
+        async with start(schd):
+            pass
+
+
+async def test_CYLC_WORKFLOW_SRC_DIR_correctly_set(tmp_path, install, run_dir):
+    """CYLC_WORKFLOW_SRC_DIR is set correctly:
+
+    * In source dir
+    * In installed dir (Not testing different permutations of installed
+      dir as these are covered by testing of `get_workflow_source_dir`)
+    * Created directly in the run dir.
+
+    """
+    def process_file(target):
+        """Run config through read_and_proc (~= cylc view --process)
+        """
+        return read_and_proc(
+            target,
+            viewcfg={
+                'mark': False,
+                'single': False,
+                'label': False,
+                'jinja2': True,
+                'contin': True,
+                'inline': True,
+            },
+        )
+
+    # Setup a source directory:
+    (tmp_path / 'flow.cylc').write_text(
+        '#!jinja2\n{{ CYLC_WORKFLOW_SRC_DIR }}'
+    )
+
+    # Check that the CYLC_SRC_DIRECTORY
+    # points to the source directory (tmp_path):
+    processed = process_file(tmp_path / 'flow.cylc')
+    assert processed[0] == str(tmp_path)
+
+    # After installation the CYLC_WORKFLOW_SRC_DIR
+    # *still* points back to tmp_path:
+    wid = await install(tmp_path)
+    processed = process_file(run_dir / wid / 'flow.cylc')
+    assert processed[0] == str(tmp_path)
+
+
+async def test_task_event_bad_custom_template(
+    flow, validate, scheduler, start, log_filter
+):
+    """Validation fails if task event handler has a bad custom template.
+    """
+    exception = (
+        r"bad task event handler template t1: echo %\(rubbish\)s:"
+        r" KeyError\('rubbish'\)"
+    )
+    events = {
+        'handlers': 'echo %(rubbish)s',
+        'handler events': 'succeeded'
+    }
+    wid = flow({
+        'scheduling': {'graph': {'R1': 't1'}},
+        'runtime': {'t1': {'events': events}},
+    })
+    with pytest.raises(WorkflowConfigError, match=exception):
+        validate(wid)
+
+    schd = scheduler(wid)
+    with pytest.raises(WorkflowConfigError, match=exception):
         async with start(schd):
             pass

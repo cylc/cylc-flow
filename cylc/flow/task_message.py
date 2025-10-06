@@ -21,20 +21,29 @@ Send messages to:
 - The scheduler, if communication is possible.
 """
 
-from logging import getLevelName, WARNING, ERROR, CRITICAL
+from logging import (
+    CRITICAL,
+    ERROR,
+    WARNING,
+    getLevelName,
+)
 import os
 import sys
 from typing import List
 
 from cylc.flow.exceptions import WorkflowStopped
 import cylc.flow.flags
-from cylc.flow.pathutil import get_workflow_run_job_dir
 from cylc.flow.network.client_factory import (
     CommsMeth,
     get_client,
-    get_comms_method
+    get_comms_method,
 )
-from cylc.flow.task_outputs import TASK_OUTPUT_STARTED, TASK_OUTPUT_SUCCEEDED
+from cylc.flow.pathutil import get_workflow_run_job_dir
+from cylc.flow.task_outputs import (
+    TASK_OUTPUT_FAILED,
+    TASK_OUTPUT_STARTED,
+    TASK_OUTPUT_SUCCEEDED,
+)
 from cylc.flow.wallclock import get_current_time_string
 
 
@@ -44,9 +53,9 @@ CYLC_JOB_EXIT = "CYLC_JOB_EXIT"
 CYLC_JOB_EXIT_TIME = "CYLC_JOB_EXIT_TIME"
 CYLC_MESSAGE = "CYLC_MESSAGE"
 
-ABORT_MESSAGE_PREFIX = "aborted/"
-FAIL_MESSAGE_PREFIX = "failed/"
-VACATION_MESSAGE_PREFIX = "vacated/"
+ABORT_MESSAGE_PREFIX = "aborted"
+FAIL_MESSAGE_PREFIX = TASK_OUTPUT_FAILED
+VACATION_MESSAGE_PREFIX = "vacated"
 
 STDERR_LEVELS = (getLevelName(level) for level in (WARNING, ERROR, CRITICAL))
 
@@ -67,6 +76,20 @@ mutation (
   }
 }
 '''
+
+
+def split_run_signal(message: str) -> tuple[str, str | None]:
+    """Get the run signal from a message.
+
+    >>> split_run_signal('failed/ERR')
+    ('failed', 'ERR')
+    >>> split_run_signal('aborted/mission')
+    ('aborted', 'mission')
+    >>> split_run_signal('failed')
+    ('failed', None)
+    """
+    prefix, *signal = message.split('/', 1)
+    return prefix, signal[0] if signal else None
 
 
 def record_messages(workflow: str, job_id: str, messages: List[list]) -> None:
@@ -148,6 +171,7 @@ def _append_job_status_file(workflow, job_id, event_time, messages):
             traceback.print_exc()
         return
     for severity, message in messages:
+        message_prefix, signal = split_run_signal(message)
         if message == TASK_OUTPUT_STARTED:
             job_id = os.getppid()
             if job_id > 1:
@@ -159,19 +183,14 @@ def _append_job_status_file(workflow, job_id, event_time, messages):
             job_status_file.write(
                 ('%s=%s\n' % (CYLC_JOB_EXIT, TASK_OUTPUT_SUCCEEDED.upper())) +
                 ('%s=%s\n' % (CYLC_JOB_EXIT_TIME, event_time)))
-        elif message.startswith(FAIL_MESSAGE_PREFIX):
+        elif signal is not None and message_prefix in {
+            FAIL_MESSAGE_PREFIX, ABORT_MESSAGE_PREFIX
+        }:
             job_status_file.write(
-                ('%s=%s\n' % (
-                    CYLC_JOB_EXIT,
-                    message[len(FAIL_MESSAGE_PREFIX):])) +
-                ('%s=%s\n' % (CYLC_JOB_EXIT_TIME, event_time)))
-        elif message.startswith(ABORT_MESSAGE_PREFIX):
-            job_status_file.write(
-                ('%s=%s\n' % (
-                    CYLC_JOB_EXIT,
-                    message[len(ABORT_MESSAGE_PREFIX):])) +
-                ('%s=%s\n' % (CYLC_JOB_EXIT_TIME, event_time)))
-        elif message.startswith(VACATION_MESSAGE_PREFIX):
+                ('%s=%s\n' % (CYLC_JOB_EXIT, signal)) +
+                ('%s=%s\n' % (CYLC_JOB_EXIT_TIME, event_time))
+            )
+        elif signal is not None and message_prefix == VACATION_MESSAGE_PREFIX:
             # Job vacated, remove entries related to current job
             job_status_file_name = job_status_file.name
             job_status_file.close()

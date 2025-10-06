@@ -535,7 +535,7 @@ class CylcWorkflowDAO:
                 )
                 raise
             self.n_tries += 1
-            LOG.warning(
+            LOG.info(
                 "%(file)s: write attempt (%(attempt)d)"
                 " did not complete: %(error)s\n"
                 " SQLite error code: %(error_code)s\n"
@@ -560,7 +560,7 @@ class CylcWorkflowDAO:
                 table.update_queues.clear()
             # Report public database retry recovery if necessary
             if self.n_tries:
-                LOG.warning(
+                LOG.info(
                     "%(file)s: recovered after (%(attempt)d) attempt(s)\n" % {
                         "file": self.db_file_name, "attempt": self.n_tries})
             self.n_tries = 0
@@ -601,7 +601,10 @@ class CylcWorkflowDAO:
             for i, stmt_args in enumerate(stmt_args_list):
                 err_log += ("\nstmt_args[%(i)d]=%(stmt_args)s" % {
                     "i": i, "stmt_args": stmt_args})
-            LOG.warning(err_log)
+            if self.is_public:
+                LOG.info(err_log)
+            else:
+                LOG.warning(err_log)
             raise
 
     def pre_select_broadcast_states(self, order=None):
@@ -711,11 +714,12 @@ class CylcWorkflowDAO:
         for row_idx, row in enumerate(self.connect().execute(stmt)):
             callback(row_idx, list(row))
 
-    def select_task_job(self, cycle, name, submit_num=None):
+    def select_task_job(
+        self, cycle: str, name: str, submit_num: str | int | None = None
+    ) -> dict[str, Any] | None:
         """Select items from task_jobs by (cycle, name, submit_num).
 
         :return: a dict for mapping keys to the column values
-        :rtype: dict
         """
         keys = []
         for column in self.tables[self.TABLE_TASK_JOBS].columns[3:]:
@@ -734,7 +738,7 @@ class CylcWorkflowDAO:
             '''  # nosec B608
             # * table name is code constant
             # * keys are code constants
-            stmt_args = [cycle, name]
+            stmt_args: list[Any] = [cycle, name]
         else:
             stmt = rf'''
                 SELECT
@@ -749,14 +753,13 @@ class CylcWorkflowDAO:
             # * table name is code constant
             # * keys are code constants
             stmt_args = [cycle, name, submit_num]
-        try:
+        with suppress(sqlite3.DatabaseError):
             for row in self.connect().execute(stmt, stmt_args):
                 ret = {}
                 for key, value in zip(keys, row):
                     ret[key] = value
                 return ret
-        except sqlite3.DatabaseError:
-            return None
+        return None
 
     def select_jobs_for_restart(self, callback):
         """Select from task_pool+task_states+task_jobs for restart.

@@ -46,30 +46,24 @@ def pythonpath_manip():
 
 pythonpath_manip()
 
-if sys.version_info[:2] > (3, 11):
-    from importlib.metadata import (
-        entry_points,
-        files,
-    )
-else:
-    # BACK COMPAT: importlib_metadata
-    #   importlib.metadata was added in Python 3.8. The required interfaces
-    #   were completed by 3.12. For lower versions we must use the
-    #   importlib_metadata backport.
-    # FROM: Python 3.7
-    # TO: Python: 3.12
-    from importlib_metadata import (
-        entry_points,
-        files,
-    )
-
 import argparse
 from contextlib import contextmanager
-from typing import Iterator, NoReturn, Optional, Tuple
+from importlib.metadata import (
+    entry_points,
+    files,
+)
+from typing import (
+    Iterator,
+    Optional,
+    Tuple,
+)
 
 from ansimarkup import parse as cparse
 
-from cylc.flow import __version__, iter_entry_points
+from cylc.flow import (
+    __version__,
+    iter_entry_points,
+)
 from cylc.flow.option_parsers import (
     format_help_headings,
     format_shell_examples,
@@ -193,26 +187,28 @@ Patterns
       *                      # All workflows
       test*                  # All workflows starting "test".
       test/*                 # All workflows starting "test/".
-      workflow//*            # All cycles in workflow
+      workflow//*            # All active cycles in workflow
       workflow//cycle/*      # All tasks in workflow//cycle
       workflow//cycle/task/* # All jobs in workflow//cycle/job
 
     Warning:
       Quote IDs on the command line to protect them from shell expansion.
-      Patterns only match tasks in the n=0 active window (except for the
-      `cylc show` command where they match in the wider n-window).
 
-Filters
-    Filters allow you to filter for specific states.
+Selectors
+    Selectors allow you to filter for specific states.
 
-    Filters are prefixed by a colon (:).
+    Selectors are prefixed by a colon (:).
 
     Examples:
       *:running                       # All running workflows
-      workflow//*:running             # All running cycles in workflow
+      workflow//*:running             # All running tasks in workflow
       workflow//cycle/*:running       # All running tasks in workflow//cycle
       workflow//cycle/task/*:running  # All running jobs in
                                       # workflow//cycle/task
+
+    When selectors are applied to tasks, they will only match active tasks.
+    I.e, "workflow//*:failed" will only select active failed tasks, not all
+    historical failed tasks going back to the start of the workflow.
 '''
 
 
@@ -320,7 +316,7 @@ DEAD_ENDS = {
 # fmt: on
 
 
-def execute_cmd(cmd: str, *args: str) -> NoReturn:
+def execute_cmd(cmd: str, *args: str) -> int:
     """Execute a sub-command.
 
     Args:
@@ -334,8 +330,8 @@ def execute_cmd(cmd: str, *args: str) -> NoReturn:
     except ModuleNotFoundError as exc:
         msg = handle_missing_dependency(entry_point, exc)
         print(msg, file=sys.stderr)
-        sys.exit(1)
-    sys.exit()
+        return 1
+    return 0
 
 
 def match_command(command):
@@ -474,7 +470,6 @@ def cli_help():
     from colorama import init as color_init
     color_init(autoreset=True, strip=False)
     print(USAGE)
-    sys.exit(0)
 
 
 def cli_version(long_fmt=False):
@@ -482,7 +477,6 @@ def cli_version(long_fmt=False):
     print(get_version(long_fmt))
     if long_fmt:
         print(cparse(list_plugins()))
-    sys.exit(0)
 
 
 def list_plugins():
@@ -646,60 +640,70 @@ def get_arg_parser():
     return parser
 
 
-def main():
+def main() -> None:  # pragma: no cover
     opts, cmd_args = get_arg_parser().parse_known_args()
     with pycoverage(cmd_args):
-        if not cmd_args:
-            if opts.version:
-                cli_version()
-            else:
-                cli_help()
+        ret = _main(opts, cmd_args)
+    sys.exit(ret)
+
+
+def _main(opts, cmd_args) -> int:
+    """Implemnent the Cylc CLI.
+
+    Returns the exit code as an integer.
+    """
+    if not cmd_args:
+        if opts.version:
+            cli_version()
+            return 0
         else:
-            cmd_args = list(cmd_args)
-            command = cmd_args.pop(0)
+            cli_help()
+            return 0
+    else:
+        cmd_args = list(cmd_args)
+        command = cmd_args.pop(0)
 
-            if command == "version":
-                cli_version("--long" in cmd_args)
+        if command == "version":
+            cli_version("--long" in cmd_args)
+            return 0
 
-            if command == "help":
-                opts.help_ = True
-                if not len(cmd_args):
-                    cli_help()
-                elif cmd_args == ['all']:
-                    print_command_list()
-                    sys.exit(0)
-                elif cmd_args == ['id']:
-                    print_id_help()
-                    sys.exit(0)
-                if cmd_args in (['license'], ['licence']):
-                    print_license()
-                    sys.exit(0)
-                else:
-                    command = cmd_args.pop(0)
-
-            # this is an alias to a command
-            if command in ALIASES:
-                command = ALIASES.get(command)
-
-            if command in DEAD_ENDS:
-                # this command has been removed but not aliased
-                # display a helpful message and move on#
-                print(
-                    cparse(
-                        f'<red>{DEAD_ENDS[command]}</red>'
-                    )
-                )
-                sys.exit(42)
-
-            if command not in COMMANDS:
-                # check if this is a command abbreviation or exit
-                command = match_command(command)
-            if opts.help_:
-                execute_cmd(command, *cmd_args, "--help")
+        if command == "help":
+            opts.help_ = True
+            if not len(cmd_args):
+                cli_help()
+                return 0
+            elif cmd_args == ['all']:
+                print_command_list()
+                return 0
+            elif cmd_args == ['id']:
+                print_id_help()
+                return 0
+            if cmd_args in (['license'], ['licence']):
+                print_license()
+                return 0
             else:
-                if opts.version:
-                    cmd_args.append("--version")
-                execute_cmd(command, *cmd_args)
+                command = cmd_args.pop(0)
+
+        # this is an alias to a command
+        if command in ALIASES:
+            command = ALIASES.get(command)
+
+        if command in DEAD_ENDS:
+            # this command has been removed but not aliased
+            # display a helpful message and move on#
+            print(
+                cparse(
+                    f'<red>{DEAD_ENDS[command]}</red>'
+                )
+            )
+            return 42
+
+        if command not in COMMANDS:
+            # check if this is a command abbreviation or exit
+            command = match_command(command)
+        if opts.help_:
+            cmd_args.append('--help')
+        return execute_cmd(command, *cmd_args)
 
 
 def handle_missing_dependency(

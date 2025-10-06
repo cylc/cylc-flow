@@ -33,20 +33,31 @@ if TYPE_CHECKING:
     from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 
 FlowNums = Set[int]
-# Flow constants
-FLOW_ALL = "all"
 FLOW_NEW = "new"
 FLOW_NONE = "none"
 
 
-def add_flow_opts(parser):
+def add_flow_opts_for_trigger_and_set(parser):
+    """Add flow options for the trigger and set commands."""
     parser.add_option(
-        "--flow", action="append", dest="flow", metavar="FLOW",
-        help=f'Assign new tasks to all active flows ("{FLOW_ALL}");'
-             f' no flow ("{FLOW_NONE}"); a new flow ("{FLOW_NEW}");'
-             f' or a specific flow (e.g. "2"). The default is "{FLOW_ALL}".'
-             ' Specific flow numbers can be new or existing.'
-             ' Reuse the option to assign multiple flow numbers.'
+        "--flow",
+        action="append",
+        dest="flow",
+        metavar=f"INT|{FLOW_NEW}|{FLOW_NONE}",
+        default=[],
+        help=(
+            'Assign affected tasks to specified flows.'  # nosec
+            # (false positive, this is not an SQL statement Bandit!)
+            ' By default, active tasks (n=0) stay in their assigned flow(s)'
+            ' and inactive tasks (n>0) will be assigned to all active flows.'
+            ' Use this option to manually specify an integer flow to assign'
+            ' tasks to, e.g, "--flow=2". Use this option multiple times to'
+            ' select multiple flows.'
+            f' Alternatively, use "--flow={FLOW_NEW}" to start a new'
+            f' flow, or "--flow={FLOW_NONE}" to trigger an inactive task in'
+            ' no flows (this means the workflow will not run on from the'
+            ' triggered task, only works for inactive tasks).'
+        )
     )
 
     parser.add_option(
@@ -62,21 +73,20 @@ def add_flow_opts(parser):
     )
 
 
-def get_flow_nums_set(flow: List[str]) -> FlowNums:
-    """Return set of integer flow numbers from list of strings.
-
-    Returns an empty set if the input is empty or contains only "all".
-
-    >>> get_flow_nums_set(["1", "2", "3"])
-    {1, 2, 3}
-    >>> get_flow_nums_set([])
-    set()
-    >>> get_flow_nums_set(["all"])
-    set()
-    """
-    if flow == [FLOW_ALL]:
-        return set()
-    return {int(val.strip()) for val in flow}
+def add_flow_opts_for_remove(parser):
+    """Add flow options for the remove command."""
+    parser.add_option(
+        '--flow',
+        action='append',
+        dest='flow',
+        metavar='INT',
+        default=[],
+        help=(
+            "Remove the task(s) from the specified flow."
+            " Use this option multiple times to specify multiple flows."
+            " By default, the tasks will be removed from all flows."
+        ),
+    )
 
 
 def stringify_flow_nums(flow_nums: Iterable[int]) -> str:
@@ -134,21 +144,50 @@ class FlowMgr:
         self.counter: int = 0
         self._timezone = datetime.timezone.utc if utc else None
 
-    def get_flow_num(
+    def cli_to_flow_nums(
+        self,
+        flow: List[str],
+        meta: Optional[str] = None,
+    ) -> Set[int]:
+        """Convert validated --flow command options to valid int flow numbers.
+
+        Args:
+            flow:
+                Strings: [int,], or [FLOW_NEW], or [FLOW_NONE].
+            meta:
+                Flow description, for FLOW_NEW.
+
+        Returns:
+            Set of int flow nums. Note empty set can mean no-flow (FLOW_NONE);
+            or all flows or all active flows (for default empty inputs).
+
+        """
+        if flow == [FLOW_NONE]:
+            return set()
+
+        if flow == [FLOW_NEW]:
+            return {self.get_flow(meta=meta)}
+
+        return {
+            self.get_flow(flow_num=int(n), meta=meta)
+            for n in flow
+        }
+
+    def get_flow(
         self,
         flow_num: Optional[int] = None,
         meta: Optional[str] = None
     ) -> int:
-        """Return a valid flow number, and record a new flow if necessary.
+        """Record and return a valid flow number.
 
         If asked for a new flow:
-           - increment the automatic counter until we find an unused number
+           - increment the automatic counter to find an unused number
 
         If given a flow number:
            - record a new flow if the number is unused
-           - else return it, as an existing flow number.
+           - or just return it as an existing flow number
 
-        The metadata string is only used if it is a new flow.
+        The metadata string is only stored if it is a new flow.
 
         """
         if flow_num is None:
@@ -175,7 +214,7 @@ class FlowMgr:
                 "start_time": now_sec
             }
             LOG.info(
-                f"New flow: {flow_num} ({meta}) {now_sec}"
+                f"New flow: {flow_num} ({meta})"
             )
             self.db_mgr.put_insert_workflow_flows(
                 flow_num,

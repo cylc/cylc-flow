@@ -28,10 +28,13 @@ from typing import (
     Any,
     Callable,
     Dict,
+    Generator,
     List,
     Optional,
     Sequence,
+    Set,
     Tuple,
+    TypeVar,
 )
 
 
@@ -43,6 +46,45 @@ BOOL_SYMBOLS: Dict[bool, str] = {
 }
 
 _NAT_SORT_SPLIT = re.compile(r'([\d\.]+)')
+
+
+def uniq(iterable):
+    """Return a unique collection of the provided items preserving item order.
+
+    Useful for unhashable things like dicts, relies on __eq__ for testing
+    equality.
+
+    Examples:
+        >>> uniq([1, 1, 2, 3, 5, 8, 1])
+        [1, 2, 3, 5, 8]
+
+    """
+    ret = []
+    for item in iterable:
+        if item not in ret:
+            ret.append(item)
+    return ret
+
+
+def iter_uniq(iterable):
+    """Iterate over an iterable omitting any duplicate entries.
+
+    Useful for unhashable things like dicts, relies on __eq__ for testing
+    equality.
+
+    Note:
+        More efficient than "uniq" for iteration use cases.
+
+    Examples:
+        >>> list(iter_uniq([1, 1, 2, 3, 5, 8, 1]))
+        [1, 2, 3, 5, 8]
+
+    """
+    cache = set()
+    for item in iterable:
+        if item not in cache:
+            cache.add(item)
+            yield item
 
 
 def sstrip(text):
@@ -418,3 +460,56 @@ def get_variable_names(expression):
     walker = NameWalker()
     walker.visit(ast.parse(expression))
     return walker.names
+
+
+Key = TypeVar('Key')
+
+
+def get_connected_groups(
+    graph: Dict[Key, Set[Key]],
+) -> Generator[Set[Key], None, None]:
+    """Extract connected components in an undirected graph.
+
+    Args:
+        graph:
+            The graph in the form of an adjacency dictionary where each node
+            is listed against its adjacent nodes. Note, this method is for
+            undirected graphs, so this includes both upstream & downstream
+            nodes if you are using this with a directed graph.
+            e.g, {node: {adjacent_node1, adjacent_node2}, ...}
+
+    Yields:
+        Each connected group within the graph.
+
+    Example:
+        # a - b - c - d
+        # b - d
+        # e - f
+        >>> adjacency = {
+        ...     'a': {'b'},
+        ...     'b': {'a', 'c', 'd'},
+        ...     'c': {'b', 'd'},
+        ...     'd': {'c', 'b'},
+        ...     'e': {'f'},
+        ...     'f': {'e'},
+        ... }
+
+        >>> sorted(sorted(group) for group in get_connected_groups(adjacency))
+        [['a', 'b', 'c', 'd'], ['e', 'f']]
+
+    """
+    # track the nodes we have already visited
+    visited: Dict[Key, bool] = dict.fromkeys(graph, False)
+
+    def visit(key: Key, group: Set[Key]) -> Set[Key]:
+        """Visit a node in the graph (recursive)."""
+        visited[key] = True
+        group.add(key)
+        for neighbour in graph[key]:
+            if not visited[neighbour]:
+                visit(neighbour, group)
+        return group
+
+    for key in visited:
+        if not visited[key]:
+            yield visit(key, set())

@@ -20,6 +20,7 @@ import asyncio
 from copy import deepcopy
 from functools import lru_cache
 from itertools import zip_longest
+import logging
 from pathlib import Path
 from shlex import quote
 import sys
@@ -29,10 +30,11 @@ from packaging.version import Version
 
 from cylc.flow import LOG, __version__
 from cylc.flow.exceptions import (
-    ContactFileExists,
     CylcError,
     ServiceFileError,
+    WorkflowStopped,
 )
+from cylc.flow.scripts.ping import run as cylc_ping
 import cylc.flow.flags
 from cylc.flow.id import upgrade_legacy_ids
 from cylc.flow.host_select import select_workflow_host
@@ -43,6 +45,7 @@ from cylc.flow.loggingutil import (
     RotatingLogFileHandler,
 )
 from cylc.flow.network.client import WorkflowRuntimeClient
+from cylc.flow.network.log_stream_handler import ProtobufStreamHandler
 from cylc.flow.option_parsers import (
     WORKFLOW_ID_ARG_DOC,
     CylcOptionParser as COP,
@@ -58,7 +61,6 @@ from cylc.flow.run_modes import WORKFLOW_RUN_MODES
 from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 from cylc.flow.workflow_files import (
     SUITERC_DEPR_MSG,
-    detect_old_contact_file,
     get_workflow_srv_dir,
 )
 from cylc.flow.terminal import (
@@ -343,8 +345,13 @@ DEFAULT_OPTS = {
 RunOptions = Options(get_option_parser(add_std_opts=True), DEFAULT_OPTS)
 
 
-def _open_logs(id_: str, no_detach: bool, restart_num: int) -> None:
-    """Open Cylc log handlers for a flow run."""
+def _open_logs(
+    schd: Scheduler,
+    id_: str,
+    no_detach: bool,
+    restart_num: int,
+) -> None:
+    """Open Cylc log handlers for a new scheduler instance."""
     if not no_detach:
         while LOG.handlers:
             LOG.handlers[0].close()
@@ -357,6 +364,12 @@ def _open_logs(id_: str, no_detach: bool, restart_num: int) -> None:
             restart_num=restart_num
         )
     )
+    handler = ProtobufStreamHandler(
+        schd,
+        level=logging.WARNING,
+    )
+    handler.setFormatter(logging.Formatter())
+    LOG.addHandler(handler)
 
 
 async def _scheduler_cli_1(
@@ -440,6 +453,7 @@ async def _scheduler_cli_3(
     """Run the workflow (part 3 - async)."""
     # setup loggers
     _open_logs(
+        scheduler,
         workflow_id,
         options.no_detach,
         restart_num=scheduler.get_restart_num()
@@ -460,13 +474,29 @@ async def _scheduler_cli_3(
 async def _resume(workflow_id, options):
     """Resume the workflow if it is already running."""
     try:
-        detect_old_contact_file(workflow_id)
-    except ContactFileExists as exc:
-        print(f"Resuming already-running workflow\n\n{exc}")
         pclient = WorkflowRuntimeClient(
             workflow_id,
             timeout=options.comms_timeout,
         )
+    except WorkflowStopped:
+        # Not running - don't resume.
+        return
+
+    # Is it running? If yes, send resume command.
+    try:
+        await cylc_ping(options, workflow_id, pclient)
+    except WorkflowStopped:
+        # Not running, restart instead of resume.
+        # (Orphaned contact file will be removed by cylc_ping client logic).
+        return
+    except CylcError as exc:
+        # PID check failed - abort.
+        LOG.error(exc)
+        LOG.critical('Cannot tell if the workflow is running')
+        sys.exit(1)
+    else:
+        # It's running: resume it and exit.
+        print("Resuming already-running workflow")
         mutation_kwargs = {
             'request_string': RESUME_MUTATION,
             'variables': {
@@ -475,13 +505,6 @@ async def _resume(workflow_id, options):
         }
         await pclient.async_request('graphql', mutation_kwargs)
         sys.exit(0)
-    except CylcError as exc:
-        LOG.error(exc)
-        LOG.critical(
-            'Cannot tell if the workflow is running'
-            '\nNote, Cylc 8 cannot restart Cylc 7 workflows.'
-        )
-        sys.exit(1)
 
 
 def _version_check(
@@ -641,8 +664,9 @@ def _distribute(
         # Re-invoke the command
         # NOTE: has the potential to raise NoHostsError, however, this will
         # most likely have been raised during host-selection
-        cylc_server_cmd(cmd, host=host)
-        sys.exit(0)
+        sys.exit(
+            cylc_server_cmd(cmd, host=host)
+        )
 
 
 async def _setup(scheduler: Scheduler) -> None:

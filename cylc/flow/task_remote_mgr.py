@@ -143,9 +143,9 @@ class TaskRemoteMgr:
             return 'localhost'
 
         # Host selection command: $(command) or `command`
-        match = command_pattern.match(eval_str)
+        match = command_pattern.search(eval_str)
         if match:
-            cmd_str = match.groups()[1]
+            cmd_str = match.group(2)
             if cmd_str in self.remote_command_map:
                 # Command recently launched
                 value = self.remote_command_map[cmd_str]
@@ -153,7 +153,8 @@ class TaskRemoteMgr:
                     raise value  # command failed
                 if value is None:
                     return None  # command not yet ready
-                eval_str = value  # command succeeded
+                # command succeeded
+                eval_str = eval_str.replace(match.group(0), value)
             else:
                 # Command not launched (or already reset)
                 self.proc_pool.put_command(

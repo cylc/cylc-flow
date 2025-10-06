@@ -99,6 +99,7 @@ requests_).
  - Maxime Rio
  - Paul Armstrong
  - Paul Earnshaw
+ - Christopher Bennett
 <!-- end-shortlog -->
 
 (All contributors are identifiable with email addresses in the git version

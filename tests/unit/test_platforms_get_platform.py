@@ -246,18 +246,18 @@ def test_get_platform_groups_basic(mock_glbl_cfg):
         'cylc.flow.platforms.glbl_cfg',
         '''
         [platforms]
-            [[aleph, bet, startup, beta]]
+            [[aleph, bet, alpha, beta]]
 
         [platform groups]
             [[hebrew_letters]]
-                platforms = startup, beta
+                platforms = alpha, beta
                 [[[selection]]]
                     method = definition order
             [[aleph]]
             # Group with same name as platform to try and
             # trip up the platform selection logic after it
             # has processed [[.*_letters]] below
-                platforms = startup
+                platforms = alpha
             [[.*_letters]]
                 platforms = aleph, bet
                 [[[selection]]]
@@ -272,6 +272,7 @@ def test_get_platform_groups_basic(mock_glbl_cfg):
     'task_conf, expected_err_msg',
     [
         ({'platform': '$(host)'}, None),
+        ({'platform': '$(host)-suffix'}, None),
         ({'platform': '`echo ${chamber}`'}, "backticks are not supported")
     ]
 )

@@ -17,6 +17,8 @@
 from functools import partial
 from subprocess import Popen, PIPE
 
+from packaging.specifiers import SpecifierSet
+
 from cylc.flow.exceptions import (
     ClientError,
     ClientTimeout,
@@ -31,7 +33,7 @@ from cylc.flow.tui.util import (
 
 # the GraphQL query which Tui runs against each of the workflows
 # is is subscribed to
-QUERY = '''
+_QUERY = '''
   query cli($taskStates: [String]){
     workflows {
       id
@@ -47,6 +49,9 @@ QUERY = '''
         isHeld
         isQueued
         isRunahead
+        isRetry
+        isWallclock
+        isXtriggered
         flowNums
         firstParent {
           id
@@ -60,6 +65,7 @@ QUERY = '''
           jobRunnerName
           jobId
           startedTime
+          estimatedFinishTime
           finishedTime
         }
         task {
@@ -74,6 +80,9 @@ QUERY = '''
         isHeld
         isQueued
         isRunahead
+        isRetry
+        isWallclock
+        isXtriggered
         firstParent {
           id
           name
@@ -87,6 +96,9 @@ QUERY = '''
         isHeld
         isQueued
         isRunahead
+        isRetry
+        isWallclock
+        isXtriggered
         firstParent {
           id
           name
@@ -95,6 +107,32 @@ QUERY = '''
     }
   }
 '''
+
+
+# graphql queries for every version of Cylc that Tui supports:
+_COMPAT_QUERIES = (
+    (
+        # regular query for current and future scheduler versions
+        SpecifierSet('>=8.6.dev'), _QUERY
+    ),
+    (
+        # BACK COMPAT
+        # estimatedFinishTime field added at 8.6.0
+        SpecifierSet('>=8.5.0, <8.6'),
+        _QUERY.replace('estimatedFinishTime', '')
+    ),
+    (
+        # BACK COMPAT
+        # isRetry, isWallclock and isXtriggered fields added at 8.5.0
+        SpecifierSet('>=8, <8.5'),
+        _QUERY
+        .replace('isRetry', '')
+        .replace('isWallclock', '')
+        .replace('isXtriggered', '')
+        .replace('estimatedFinishTime', ''),
+    ),
+)
+
 
 # the list of mutations we can call on a running scheduler
 MUTATIONS = {
@@ -131,6 +169,32 @@ ARGUMENT_TYPES = {
     'workflow': '[WorkflowID]!',
     'task': '[NamespaceIDGlob]!',
 }
+
+
+class VersionIncompat(Exception):
+    ...
+
+
+def get_query(scheduler_version: str) -> str:
+    """Return a GraphQL query compatibile with the provided scheduler version.
+
+    Args:
+        scheduler_version: The version of the scheduler we are connecting to.
+
+    Returns:
+        The GraphQL query string.
+
+    Raises:
+        VersionIncompat:
+            If the scheduler version is not supported.
+
+    """
+    for query_version_range, query in _COMPAT_QUERIES:
+        if scheduler_version in query_version_range:
+            return query
+    raise VersionIncompat(
+        f'Scheduler version {scheduler_version} is not supported'
+    )
 
 
 def cli_cmd(*cmd, ret=False):

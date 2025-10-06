@@ -26,11 +26,12 @@ from cylc.flow.network.schema import (
     RUNTIME_FIELD_TO_CFG_MAP,
     Mutations,
     Runtime,
+    WorkflowStopMode,
     runtime_schema_to_cfg,
     sort_elements,
     SortArgs,
 )
-from cylc.flow.workflow_status import WorkflowStatus
+from cylc.flow.workflow_status import StopMode, WorkflowStatus
 
 
 @dataclass
@@ -95,15 +96,12 @@ def test_sort_args(elements, sort_args, expected_result):
         assert elements == expected_result
 
 
-@pytest.mark.parametrize(
-    'field_name', RUNTIME_FIELD_TO_CFG_MAP.keys()
-)
-def test_runtime_field_to_cfg_map(field_name: str):
+def test_runtime_field_to_cfg_map():
     """Ensure the Runtime type's fields can be mapped back to the workflow
     config."""
-    cfg_name = RUNTIME_FIELD_TO_CFG_MAP[field_name]
-    assert field_name in Runtime.__dict__
-    assert WORKFLOW_SPEC.get('runtime', '__MANY__', cfg_name)
+    assert set(RUNTIME_FIELD_TO_CFG_MAP) == set(Runtime._meta.fields)
+    for cfg_name in RUNTIME_FIELD_TO_CFG_MAP.values():
+        assert WORKFLOW_SPEC.get('runtime', '__MANY__', cfg_name)
 
 
 @pytest.mark.parametrize('runtime_dict,expected', [
@@ -138,3 +136,10 @@ def test_mutations_valid_for(mutation):
     valid_states = set(match.group(1).split(', '))
     assert valid_states
     assert not valid_states.difference(i.value for i in WorkflowStatus)
+
+
+@pytest.mark.parametrize('wflow_stop_mode', list(WorkflowStopMode))
+def test_stop_mode_enum(wflow_stop_mode):
+    """Check that WorkflowStopMode is a subset of StopMode."""
+    assert StopMode(wflow_stop_mode.value)
+    assert wflow_stop_mode.description

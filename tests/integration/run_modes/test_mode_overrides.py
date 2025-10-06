@@ -31,9 +31,14 @@ integration test framework.
 import pytest
 
 from cylc.flow.cycling.iso8601 import ISO8601Point
+from cylc.flow.id import TaskTokens
 from cylc.flow.run_modes import WORKFLOW_RUN_MODES, RunMode
 from cylc.flow.scheduler import Scheduler, SchedulerStop
 from cylc.flow.task_state import TASK_STATUS_WAITING
+from cylc.flow.commands import (
+    run_cmd,
+    force_trigger_tasks
+)
 
 
 @pytest.mark.parametrize('workflow_run_mode', sorted(WORKFLOW_RUN_MODES))
@@ -92,7 +97,7 @@ async def test_force_trigger_does_not_override_run_mode(
         foo = schd.pool.get_tasks()[0]
 
         # Force trigger task:
-        schd.pool.force_trigger_tasks('1/foo', [1])
+        await run_cmd(force_trigger_tasks(schd, ['1/foo'], ['1']))
 
         # ... but job submission will always change this to the correct mode:
         schd.submit_task_jobs([foo])
@@ -117,12 +122,12 @@ async def test_run_mode_skip_abides_by_held(flow, scheduler, run):
         assert not foo.state.is_held
 
         # Hold task, check that it's held:
-        schd.pool.hold_tasks(['1/foo'])
+        schd.pool.hold_tasks({TaskTokens('1', 'foo')})
         assert foo.state.is_held
         await schd._main_loop()
         assert foo.state(TASK_STATUS_WAITING)
 
-        schd.pool.release_held_tasks(['1/foo'])
+        schd.pool.release_held_tasks({TaskTokens('1', 'foo')})
         assert not foo.state.is_held
         with pytest.raises(SchedulerStop):
             # Will shut down as foo has run

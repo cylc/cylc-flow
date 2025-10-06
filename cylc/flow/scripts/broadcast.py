@@ -111,6 +111,11 @@ if TYPE_CHECKING:
     from optparse import Values
 
 
+RAW_DEPR_MSG = (
+    "DEPRECATED: the --raw option will be removed at Cylc 8.7; "
+    "use --format=raw instead."
+)
+
 REC_ITEM = re.compile(r'^\[([^\]]*)\](.*)$')
 
 MUTATION = '''
@@ -162,7 +167,7 @@ def get_padding(settings, level=0, padding=0):
     return padding
 
 
-def get_rdict(left, right=None):
+def get_rdict(left, right=None, for_cancel_broadcast=False):
     """Check+transform left=right into a nested dict.
 
     left can be key, [key], [key1]key2, [key1][key2], [key1][key2]key3, etc.
@@ -188,7 +193,11 @@ def get_rdict(left, right=None):
             # item = right
             cur_dict[tail.strip()] = right
             tail = None
-    upg({'runtime': {'__MANY__': rdict}}, 'test')
+    upg(
+        {'runtime': {'__MANY__': rdict}},
+        'test',
+        for_cancel_broadcast=for_cancel_broadcast,
+    )
     # Perform validation, but don't coerce the original (deepcopy).
     cylc_config_validate(deepcopy(rdict), SPEC['runtime']['__MANY__'])
     return rdict
@@ -312,11 +321,32 @@ def get_option_parser() -> COP:
         help="Use unicode box characters with -d, -k.",
         action="store_true", default=False, dest="unicode")
 
+    # BACK COMPAT: --raw
+    # From: < 8.5.1
+    # To: 8.5.1
+    # Remove at: 8.7.0
     parser.add_option(
         "-r", "--raw",
-        help="With -d/--display or -k/--display-task, write out "
-             "the broadcast config structure in raw Python form.",
+        help=(
+            "With -d/--display or -k/--display-task, write out "
+            "the broadcast config structure in raw Python form. "
+            f"{RAW_DEPR_MSG}"
+        ),
         action="store_true", default=False, dest="raw")
+
+    parser.add_option(
+        '--format',
+        help=(
+            "With -d/--display or -k/--display-task, write out "
+            "the broadcast config structure in one of the following formats: "
+            "tree, json, or raw (like json but as a Python dictionary). "
+            r"Default: %default."
+        ),
+        action='store',
+        dest='format',
+        choices=('tree', 'json', 'raw'),
+        default='tree',
+    )
 
     return parser
 
@@ -356,6 +386,9 @@ async def run(options: 'Values', workflow_id):
 
     }
 
+    if options.raw:
+        ret['stderr'].append(cparse(f"<yellow>{RAW_DEPR_MSG}</yellow>"))
+
     if options.show or options.showtask:
         if options.showtask:
             try:
@@ -369,7 +402,12 @@ async def run(options: 'Values', workflow_id):
         for wflow in result['workflows']:
             settings = wflow['broadcasts']
             padding = get_padding(settings) * ' '
-            if options.raw:
+            if options.format == 'json':
+                import json
+                ret['stdout'].append(
+                    json.dumps(settings, indent=2, sort_keys=True)
+                )
+            elif options.raw or options.format == 'raw':
                 ret['stdout'].append(str(settings))
             else:
                 ret['stdout'].extend(
@@ -399,7 +437,7 @@ async def run(options: 'Values', workflow_id):
                 raise InputError(
                     "--cancel=[SEC]ITEM does not take a value")
             option_item = option_item.strip()
-            setting = get_rdict(option_item)
+            setting = get_rdict(option_item, for_cancel_broadcast=True)
             settings.append(setting)
         files_to_settings(settings, options.cancel_files, options.cancel)
         mutation_kwargs['variables'].update(

@@ -48,7 +48,8 @@ from cylc.flow.task_state import (
     TASK_STATUSES_ORDERED,
 )
 from cylc.flow.tui.data import (
-    QUERY
+    VersionIncompat,
+    get_query,
 )
 from cylc.flow.tui.util import (
     NaturalSort,
@@ -270,11 +271,14 @@ class Updater():
             return
 
         try:
+            # get a graphql query compatible with this workflow
+            query = get_query(client.scheduler_version)
+
             # fetch the data from the workflow
             workflow_update = await client.async_request(
                 'graphql',
                 {
-                    'request_string': QUERY,
+                    'request_string': query,
                     'variables': {
                         # list of task states we want to see
                         'taskStates': [
@@ -307,6 +311,12 @@ class Updater():
                 w_id,
                 'Timeout communicating with workflow.'
                 ' Use "--comms-timeout" to increase the timeout',
+            )
+        except VersionIncompat as exc:
+            set_message(
+                data,
+                w_id,
+                str(exc),
             )
         except (CylcError, ZMQError) as exc:
             # something went wrong :(

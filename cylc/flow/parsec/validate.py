@@ -33,6 +33,7 @@ from metomi.isodatetime.dumpers import TimePointDumper
 from metomi.isodatetime.parsers import TimePointParser, DurationParser
 from metomi.isodatetime.exceptions import IsodatetimeError, ISO8601SyntaxError
 
+from cylc.flow import LOG
 from cylc.flow.parsec.exceptions import (
     ListValueError, IllegalValueError, IllegalItemError)
 from cylc.flow.subprocctx import SubFuncContext
@@ -230,13 +231,29 @@ class ParsecValidator:
                     # Item is value, coerce according to value type
                     cfg[key] = self.coercers[specval.vdr](value, keys + [key])
                     if specval.options:
-                        voptions = specval.options
-                        if (isinstance(cfg[key], list) and
-                                any(val not in voptions for val in cfg[key]) or
-                                not isinstance(cfg[key], list) and
-                                cfg[key] not in voptions):
+                        voptions = {*specval.options, *specval.depr_options}
+                        if isinstance(cfg[key], list):
+                            bad = [
+                                str(i) for i in cfg[key] if i not in voptions
+                            ]
+                            if bad:
+                                exc = IllegalValueError(
+                                    'option', [*keys, key], ', '.join(bad)
+                                )
+                                if specval.warn_options:
+                                    LOG.warning(
+                                        f'{exc}'
+                                        '\nInvalid items have been removed'
+                                    )
+                                    cfg[key] = [
+                                        x for x in cfg[key] if x not in bad
+                                    ]
+                                else:
+                                    raise exc
+                        elif cfg[key] not in voptions:
                             raise IllegalValueError(
-                                'option', keys + [key], cfg[key])
+                                'option', [*keys, key], cfg[key]
+                            )
 
     __call__ = validate
 

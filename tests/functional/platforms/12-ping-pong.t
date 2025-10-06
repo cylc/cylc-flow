@@ -14,24 +14,28 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#-------------------------------------------------------------------------------
-# Test custom task event handler bad template
-. "$(dirname "$0")/test_header"
-set_test_number 4
+#-----------------------------------------------------------------------------
 
-if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
-    create_test_global_config '' ''
-fi
+# If a task has a platform set using a subshell this should be evaluated
+# every time the task is run.
+# https://github.com/cylc/cylc-flow/issues/6808
+export REQUIRE_PLATFORM='loc:remote'
+
+. "$(dirname "$0")/test_header"
+
+set_test_number 3
+
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-run_fail "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
-cmp_ok "${TEST_NAME_BASE}-validate.stderr" <<'__ERR__'
-WorkflowConfigError: bad task event handler template t1: echo %(rubbish)s: KeyError('rubbish')
-__ERR__
-workflow_run_fail "${TEST_NAME_BASE}-run" \
-    cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
-grep_ok \
-    'WorkflowConfigError: bad task event handler template t1: echo %(rubbish)s: KeyError(.rubbish.)' \
+
+workflow_run_ok "${TEST_NAME_BASE}-run" \
+    cylc play "${WORKFLOW_NAME}" --debug --no-detach
+
+named_grep_ok "1/remote_task submits to ${CYLC_TEST_PLATFORM}" \
+    "\[1/remote_task/01:preparing\] submitted to ${CYLC_TEST_PLATFORM}" \
+    "${WORKFLOW_RUN_DIR}/log/scheduler/log"
+
+named_grep_ok "2/remote_task submits to localhost" \
+    "\[2/remote_task/01:preparing\] submitted to localhost" \
     "${WORKFLOW_RUN_DIR}/log/scheduler/log"
 
 purge
-exit

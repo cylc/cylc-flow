@@ -1,13 +1,13 @@
 # Flaky Functional Tests
 
-This directory contains tests that are sensitive to timing, server load, etc.
+This directory contains functional tests that are sensitive to timing, server
+load, etc.
+
+For more information on functional tests, see ../functional/README.md.
 
 ## How To Run These Tests
 
 ```console
-$ etc/bin/run-functional-tests tests/k
-
-# 4 tests in parallel
 $ etc/bin/run-functional-tests tests/k
 
 # split the tests into 4 "chunks" and run the first chunk

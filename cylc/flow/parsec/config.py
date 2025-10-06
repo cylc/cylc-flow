@@ -246,6 +246,13 @@ class ConfigNode(ContextNode):
         options:
             List of possible options.
             TODO: allow this to be a dict with help info
+        depr_options:
+            List of deprecated options. These are not displayed in the docs
+            but are used for backwards compatibility.
+        warn_options:
+            If True, parsec will warn if invalid options are present rather
+            than raising an exception. Any invalid options will be stripped
+            from the config.
         default:
             The default value.
         desc:
@@ -273,7 +280,14 @@ class ConfigNode(ContextNode):
     UNSET = '*value unset*'
 
     __slots__ = ContextNode.__slots__ + (
-        'vdr', 'options', 'default', 'desc', 'display_name', 'meta'
+        'vdr',
+        'options',
+        'depr_options',
+        'warn_options',
+        'default',
+        'desc',
+        'display_name',
+        'meta',
     )
 
     def __init__(
@@ -283,7 +297,9 @@ class ConfigNode(ContextNode):
         default: object = UNSET,
         options: Optional[list] = None,
         desc: Optional[str] = None,
-        meta: Optional['ConfigNode'] = None
+        meta: Optional['ConfigNode'] = None,
+        depr_options: Optional[list] = None,
+        warn_options: bool = False,
     ):
         display_name = name
         if name.startswith('<'):
@@ -306,7 +322,9 @@ class ConfigNode(ContextNode):
         self.display_name = display_name
         self.vdr = vdr
         self.default = default
-        self.options = options
+        self.options = options or []
+        self.depr_options = depr_options or []
+        self.warn_options = warn_options
         self.desc = dedent(desc).strip() if desc else None
         self.meta = meta
 
