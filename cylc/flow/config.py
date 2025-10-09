@@ -42,6 +42,7 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Literal,
     Mapping,
     Optional,
     Set,
@@ -468,7 +469,9 @@ class WorkflowConfig:
 
         # after the call to init_cyclers, we can start getting proper points.
         init_cyclers(self.cfg)
-        self.cycling_type = get_interval_cls().get_null().TYPE
+        self.cycling_type: Literal['integer', 'iso8601'] = (
+            get_interval_cls().get_null().TYPE
+        )
         self.cycle_point_dump_format = get_dump_format(self.cycling_type)
 
         # Initial point from workflow definition (or CLI override above).
@@ -756,7 +759,7 @@ class WorkflowConfig:
             if orig_icp is None:
                 orig_icp = '1'
             icp = orig_icp
-        elif self.cycling_type == ISO8601_CYCLING_TYPE:
+        else:
             if orig_icp is None:
                 raise WorkflowConfigError(
                     "This workflow requires an initial cycle point.")
