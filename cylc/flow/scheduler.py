@@ -945,7 +945,7 @@ class Scheduler:
     def _load_task_run_times(self, row_idx, row):
         """Load run times of previously succeeded task jobs."""
         if row_idx == 0:
-            LOG.info("LOADING task run times")
+            LOG.debug("LOADING task run times")
         name, run_times_str = row
         try:
             taskdef = self.config.taskdefs[name]
@@ -953,7 +953,7 @@ class Scheduler:
             for run_time_str in run_times_str.rsplit(",", maxlen)[-maxlen:]:
                 run_time = int(run_time_str)
                 taskdef.elapsed_times.append(run_time)
-            LOG.info("+ %s: %s" % (
+            LOG.debug("+ %s: %s" % (
                 name, ",".join(str(s) for s in taskdef.elapsed_times)))
         except (KeyError, ValueError, AttributeError):
             return
