@@ -711,6 +711,7 @@ class XtriggerManager:
             # General case: potentially slow asynchronous function call.
             if sig in self.sat_xtrig:
                 # Already satisfied, just update the task
+                LOG.info(f"[{itask}] satisfying xtrigger prerequisite: {sig}")
                 if not itask.state.xtriggers[label]:
                     itask.state.xtriggers[label] = True
                     res = {}
@@ -760,7 +761,10 @@ class XtriggerManager:
                 itask, sigs_only=True, unsat_only=True)
         for sig in list(self.sat_xtrig):
             if sig not in all_xtrig:
+                LOG.debug(f"Housekeeping xtrigger result: {sig}")
                 del self.sat_xtrig[sig]
+                with suppress(KeyError):
+                    del self.t_next_call[sig]
         self.do_housekeeping = False
 
     def all_task_seq_xtriggers_satisfied(self, itask: 'TaskProxy') -> bool:
