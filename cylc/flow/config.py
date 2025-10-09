@@ -250,6 +250,17 @@ def interpolate_template(tmpl, params_dict):
         raise ParamExpandError('bad template syntax') from None
 
 
+def _parse_iso_cycle_point(value: str) -> str:
+    """Helper for parsing initial/start cycle point option in
+    datetime cycling mode."""
+    if value == 'now':
+        return get_current_time_string()
+    try:
+        return ingest_time(value, get_current_time_string())
+    except IsodatetimeError as exc:
+        raise WorkflowConfigError(str(exc)) from None
+
+
 class WorkflowConfig:
     """Class for workflow configuration items and derived quantities."""
 
@@ -763,13 +774,7 @@ class WorkflowConfig:
             if orig_icp is None:
                 raise WorkflowConfigError(
                     "This workflow requires an initial cycle point.")
-            if orig_icp == "now":
-                icp = get_current_time_string()
-            else:
-                try:
-                    icp = ingest_time(orig_icp, get_current_time_string())
-                except IsodatetimeError as exc:
-                    raise WorkflowConfigError(str(exc)) from None
+            icp = _parse_iso_cycle_point(orig_icp)
         self.evaluated_icp = None
         if icp != orig_icp:
             # now/next()/previous() was used, need to store
@@ -810,8 +815,7 @@ class WorkflowConfig:
             )
         if startcp:
             # Start from a point later than initial point.
-            if self.options.startcp == 'now':
-                self.options.startcp = get_current_time_string()
+            self.options.startcp = _parse_iso_cycle_point(startcp)
             self.start_point = get_point(self.options.startcp).standardise()
         elif starttask:
             # Start from designated task(s).
