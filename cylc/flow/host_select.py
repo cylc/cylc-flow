@@ -31,6 +31,8 @@ Examples:
     True
     >>> RankingExpressionEvaluator('1 in (1, 2, 3)')
     True
+    >>> RankingExpressionEvaluator('[1,2,3][-1] ** 2')
+    9
     >>> import psutil
     >>> RankingExpressionEvaluator(
     ...     'a.available > 0',
@@ -104,11 +106,11 @@ from cylc.flow.util import restricted_evaluator
 RankingExpressionEvaluator = restricted_evaluator(
     ast.Expression,
     # variables
-    ast.Name, ast.Load, ast.Attribute, ast.Subscript, ast.Index,
+    ast.Name, ast.Load, ast.Attribute, ast.Subscript,
     # opers
     ast.BinOp, ast.operator, ast.UnaryOp, ast.unaryop,
     # types
-    ast.Num, ast.Str,
+    ast.Constant,
     # comparisons
     ast.Compare, ast.cmpop, ast.List, ast.Tuple,
 )
