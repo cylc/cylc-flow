@@ -664,7 +664,7 @@ class TaskPool:
     def load_db_task_action_timers(self, row_idx: int, row: Iterable) -> None:
         """Load a task action timer, e.g. event handlers, retry states."""
         if row_idx == 0:
-            LOG.info("LOADING task action timers")
+            LOG.debug("LOADING task action timers")
         (cycle, name, ctx_key_raw, ctx_raw, delays_raw, num, delay,
          timeout) = row
         tokens = Tokens(
@@ -701,7 +701,7 @@ class TaskPool:
                 "%(id)s: skip action timer %(ctx_key)s" %
                 {"id": id_, "ctx_key": ctx_key_raw})
             return
-        LOG.info("+ %s/%s %s" % (cycle, name, ctx_key))
+        LOG.debug("+ %s/%s %s" % (cycle, name, ctx_key))
         if ctx_key == "poll_timer":
             itask = self._get_task_by_id(id_)
             if itask is None:
@@ -721,7 +721,7 @@ class TaskPool:
                     ctx_key[1] = TimerFlags.EXECUTION_RETRY
 
                 if timeout:
-                    LOG.info(
+                    LOG.debug(
                         f'  (upgrading retrying state for {itask.identity})')
                     self.task_events_mgr._retry_task(
                         itask,
