@@ -16,7 +16,7 @@ dependencies:
   - psutil >=5.6.0
   - python
   - pyzmq >=22
-  - urwid >=2.2,<3,!=2.6.2,!=2.6.3
+  - urwid >=2.2,<4,!=2.6.2,!=2.6.3
 
 # optional dependencies
   #- pandas >=1.0,<2
