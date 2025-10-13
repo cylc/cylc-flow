@@ -1341,7 +1341,7 @@ class Scheduler:
         """
         pre_prep_tasks: Set['TaskProxy'] = set()
         if (
-            self.stop_mode is None
+            not self.stop_mode
             and self.auto_restart_time is None
             and self.reload_pending is False
         ):
@@ -1350,36 +1350,30 @@ class Scheduler:
                 pre_prep_tasks.update(self.pool.tasks_to_trigger_now)
                 self.pool.tasks_to_trigger_now = set()
 
-            if self.is_paused:
-                # finish processing preparing tasks
-                pre_prep_tasks.update({
-                    itask for itask in self.pool.get_tasks()
-                    if itask.state(TASK_STATUS_PREPARING)
-                })
-            else:
+            if not self.is_paused:
                 # release queued tasks
                 pre_prep_tasks.update(self.pool.release_queued_tasks())
 
-        elif (
-            (
-                # Need to get preparing tasks to submit before auto restart
-                self.should_auto_restart_now()
-                and self.auto_restart_mode == AutoRestartMode.RESTART_NORMAL
-            ) or (
-                # Need to get preparing tasks to submit before reload
-                self.reload_pending
-            )
+        if (
+            # Manually triggered tasks will be in preparing state and should
+            # be submitted even if paused (unless stopping).
+            self.is_paused and not self.stop_mode
+        ) or (
+            # Need to get preparing tasks to submit before auto restart
+            self.should_auto_restart_now()
+            and self.auto_restart_mode == AutoRestartMode.RESTART_NORMAL
+        ) or (
+            # Need to get preparing tasks to submit before reload
+            self.reload_pending
         ):
-            # finish processing preparing tasks first
-            pre_prep_tasks = {
-                itask for itask in self.pool.get_tasks()
+            pre_prep_tasks.update({
+                itask
+                for itask in self.pool.get_tasks()
                 if itask.state(TASK_STATUS_PREPARING)
-            }
+                and itask.waiting_on_job_prep
+            })
 
         # Return, if no tasks to submit.
-        else:
-            return False
-
         if not pre_prep_tasks:
             return False
 
