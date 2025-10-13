@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 # Test recovery of a failed host select command for a group of tasks.
 . "$(dirname "$0")/test_header"
-set_test_number 7
+set_test_number 8
 
 install_workflow "${TEST_NAME_BASE}"
 
@@ -29,24 +29,28 @@ logfile="${WORKFLOW_RUN_DIR}/log/scheduler/log"
 
 # Check that host = $(cmd) is correctly evaluated
 grep_ok \
-    "1/host_subshell/01:.* evaluated as improbable host name$" \
+    "1/host_subshell/01:.* evaluated as 'improbable host name'" \
     "${logfile}"
 grep_ok \
-    "1/localhost_subshell/01:.* evaluated as localhost$" \
+    "1/localhost_subshell/01:.* evaluated as 'localhost'" \
     "${logfile}"
 
 # Check that host = `cmd` is correctly evaluated
 grep_ok \
-    "1/host_subshell_backticks/01:.* evaluated as improbable host name$" \
+    "1/host_subshell_backticks/01:.* evaluated as 'improbable host name'" \
     "${logfile}"
 
 # Check that platform = $(cmd) correctly evaluated
 grep_ok \
-    "1/platform_subshell:.* evaluated as improbable platform name$" \
+    "1/platform_subshell:.* evaluated as 'improbable platform name'" \
     "${logfile}"
 
 grep_ok \
-    "1/platform_subshell_suffix:.* evaluated as prefix-middle-suffix$" \
+    "1/platform_subshell_empty:.* evaluated as ''" \
     "${logfile}"
 
-purge
+grep_ok \
+    "1/platform_subshell_suffix:.* evaluated as 'prefix-middle-suffix'" \
+    "${logfile}"
+
+# purge
