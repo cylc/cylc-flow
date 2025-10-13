@@ -56,7 +56,6 @@ from cylc.flow.exceptions import (
     NoPlatformsError,
     PlatformError,
     PlatformLookupError,
-    WorkflowConfigError,
 )
 from cylc.flow.hostuserutil import (
     get_host,
@@ -70,6 +69,7 @@ from cylc.flow.job_runner_mgr import (
 from cylc.flow.pathutil import get_remote_workflow_run_job_dir
 from cylc.flow.platforms import (
     FORBIDDEN_WITH_PLATFORM,
+    fail_if_platform_and_host_conflict,
     get_host_from_platform,
     get_install_target_from_platform,
     get_localhost_install_target,
@@ -1166,15 +1166,7 @@ class TaskJobManager:
         # - host exists - eval host_n
         # remove at:
         #     Cylc8.x
-        if (
-            rtconfig['platform'] is not None and
-            rtconfig['remote']['host'] is not None
-        ):
-            raise WorkflowConfigError(
-                "A mixture of Cylc 7 (host) and Cylc 8 (platform) "
-                "logic should not be used. In this case for the task "
-                f"\"{itask.identity}\" the following are not compatible:\n"
-            )
+        fail_if_platform_and_host_conflict(rtconfig, itask.tdef.name)
 
         host_name, platform_name = None, None
         try:
