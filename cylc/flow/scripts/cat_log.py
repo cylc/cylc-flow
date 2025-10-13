@@ -580,7 +580,8 @@ def _main(
             # if the log file is not present locally
             # (e.g. job is running, or job logs not retrieved)
             (not job_log_present and log_is_remote)
-            # still get remote logs if submission failed on a remote platform
+            # Don't try to get remote logs if submission failed on 
+            # remote platform - they may not exist.
             or (log_is_remote and not submit_failed)
             # don't go remote if the log should be retrieved (unless
             # --force-remote is specified)
