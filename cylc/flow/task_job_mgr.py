@@ -1196,8 +1196,8 @@ class TaskJobManager:
             )
             return False
         else:
-            # host/platform select not ready
             if host_name is None and platform_name is None:
+                # host/platform select not ready
                 return None
             elif (
                 host_name is None

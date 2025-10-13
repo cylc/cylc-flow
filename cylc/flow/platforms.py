@@ -128,7 +128,7 @@ def get_platform(
 
     Returns:
         platform: A platform definition dictionary. Uses either
-            get_platform() or platform_name_from_job_info(), but to the
+            get_platform() or _platform_name_from_job_info(), but to the
             user these look the same. This will be None if the platform
             definition uses a subshell.
 
@@ -169,7 +169,7 @@ def get_platform(
     task_job_section = task_conf['job'] if 'job' in task_conf else {}
     task_remote_section = task_conf['remote'] if 'remote' in task_conf else {}
     return platform_from_name(
-        platform_name_from_job_info(
+        _platform_name_from_job_info(
             glbl_cfg().get(['platforms']),
             task_job_section,
             task_remote_section,
@@ -329,7 +329,7 @@ def get_platform_from_group(
         return HOST_SELECTION_METHODS[method](platform_names)
 
 
-def platform_name_from_job_info(
+def _platform_name_from_job_info(
     platforms: Union[dict, 'OrderedDictWithDefaults'],
     job: Dict[str, Any],
     remote: Dict[str, Any],
@@ -407,14 +407,14 @@ def platform_name_from_job_info(
         ... }
         >>> job = {'batch system': 'slurm'}
         >>> remote = {'host': 'localhost'}
-        >>> platform_name_from_job_info(platforms, job, remote)
+        >>> _platform_name_from_job_info(platforms, job, remote)
         'sugar'
         >>> remote = {}
-        >>> platform_name_from_job_info(platforms, job, remote)
+        >>> _platform_name_from_job_info(platforms, job, remote)
         'sugar'
         >>> remote ={'host': 'desktop92'}
         >>> job = {}
-        >>> platform_name_from_job_info(platforms, job, remote)
+        >>> _platform_name_from_job_info(platforms, job, remote)
         'desktop92'
     """
 
@@ -581,9 +581,9 @@ def fail_if_platform_and_host_conflict(
     if 'platform' in task_conf and task_conf['platform']:
         fail_items = [
             f'\n * [{section}]{key}'
-            for section, keys in FORBIDDEN_WITH_PLATFORM.items()
+            for section, settings in FORBIDDEN_WITH_PLATFORM.items()
             if section in task_conf
-            for key, _ in keys.items()
+            for key in settings.keys()
             if (
                 key in task_conf[section] and
                 task_conf[section][key] is not None
