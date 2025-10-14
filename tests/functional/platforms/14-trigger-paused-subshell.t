@@ -30,7 +30,10 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 local_host_name=$(hostname)
 remote_host_name=$(cylc config -i "[platforms][${CYLC_TEST_PLATFORM}]hosts")
+remote_host_name=$(ssh -oStrictHostKeyChecking=no "$remote_host_name" hostname)
 workflow_log="${WORKFLOW_RUN_DIR}/log/scheduler/log"
+# shellcheck disable=SC2034  # LOG_SCAN_GREP_OPTS is not unused
+LOG_SCAN_GREP_OPTS="-E"
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 cylc play "${WORKFLOW_NAME}" --pause
@@ -40,21 +43,21 @@ cylc trigger "${WORKFLOW_NAME}//1/foo"
 
 log_scan "log-grep-01" "$workflow_log" 10 2 \
     "\[1/foo/01:preparing\] submitted to localhost" \
-    "\[1/foo/01:.*\] (received)${local_host_name}" \
+    "\[1/foo/01:.*\] \(received\)${local_host_name}" \
     "\[1/foo/01:.*\] => succeeded"
 
 cylc trigger "${WORKFLOW_NAME}//1/foo"
 
 log_scan "log-grep-02" "$workflow_log" 10 2 \
     "\[1/foo/02:preparing\] submitted to ${CYLC_TEST_PLATFORM}" \
-    "\[1/foo/02:.*\] (received)${remote_host_name}" \
+    "\[1/foo/02:.*\] \((received|polled)\)${remote_host_name}" \
     "\[1/foo/02:.*\] => succeeded"
 
 cylc trigger "${WORKFLOW_NAME}//1/foo"
 
 log_scan "log-grep-03" "$workflow_log" 10 2 \
     "\[1/foo/03:preparing\] submitted to localhost" \
-    "\[1/foo/03:.*\] (received)${local_host_name}" \
+    "\[1/foo/03:.*\] \(received\)${local_host_name}" \
     "\[1/foo/03:.*\] => succeeded"
 
 cylc stop "${WORKFLOW_NAME}" --now --now
