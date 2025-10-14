@@ -310,15 +310,19 @@ class TaskDef:
             raise TaskDefError(
                 "No cycling sequences defined for %s" % self.name)
 
-    def get_parent_points(self, point):
+    def get_parent_points(self, point, seq=None):
         """Return the cycle points of my parents, at point."""
         parent_points = set()
-        for seq in self.sequences:
-            if not seq.is_valid(point):
+        if seq:
+            sequences = [seq]
+        else:
+            sequences = self.sequences
+        for sequence in sequences:
+            if not sequence.is_valid(point):
                 continue
-            if seq in self.dependencies:
+            if sequence in self.dependencies:
                 # task has prereqs in this sequence
-                for dep in self.dependencies[seq]:
+                for dep in self.dependencies[sequence]:
                     if dep.suicide:
                         continue
                     for trig in dep.task_triggers:
@@ -395,9 +399,12 @@ class TaskDef:
 
     def first_point(self, icp):
         """Return the first point for this task."""
+        from cylc.flow.cycling.nocycle import NocycleSequence
         point = None
         adjusted = []
         for seq in self.sequences:
+            if type(seq) is NocycleSequence:
+                continue
             pt = seq.get_first_point(icp)
             if pt:
                 # may be None if beyond the sequence bounds
@@ -419,7 +426,7 @@ class TaskDef:
             p_next = min(adjusted)
         return p_next
 
-    def is_parentless(self, point):
+    def is_parentless(self, point, seq=None):
         """Return True if task has no parents at point.
 
         Tasks are considered parentless if they have:
@@ -438,7 +445,8 @@ class TaskDef:
         if self.sequential:
             # Implicit parents
             return False
-        parent_points = self.get_parent_points(point)
+
+        parent_points = self.get_parent_points(point, seq)
         return (
             not parent_points
             or all(x < self.start_point for x in parent_points)

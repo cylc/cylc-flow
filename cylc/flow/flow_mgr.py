@@ -214,7 +214,7 @@ class FlowMgr:
                 "start_time": now_sec
             }
             LOG.info(
-                f"New flow: {flow_num} ({meta}) {now_sec}"
+                f"New flow: {flow_num} ({meta})"
             )
             self.db_mgr.put_insert_workflow_flows(
                 flow_num,
