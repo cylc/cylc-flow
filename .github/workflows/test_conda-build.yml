@@ -33,6 +33,7 @@ jobs:
         python-version: ['3.12', '3']
     env:
       ENV_FILE: conda-environment.yml
+      # prevent pip from meddling with the conda installed dependencies (during the conda build step)
       PIP_NO_DEPS: True
     steps:
       - name: checkout cylc-flow
