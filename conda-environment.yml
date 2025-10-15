@@ -12,7 +12,7 @@ dependencies:
   - metomi-isodatetime >=1!3.0.0, <1!3.2.0
   - packaging
   # Constrain protobuf version for compatible Scheduler-UIS comms across hosts
-  - protobuf >=4.24.4,<4.25.0
+  - protobuf >=5,<8
   - psutil >=5.6.0
   - python
   - pyzmq >=22
