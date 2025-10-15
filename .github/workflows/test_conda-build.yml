@@ -42,6 +42,7 @@ jobs:
       - name: modify conda env file
         run: |
           # write environment file
+          echo "  - python = ${{ matrix.python-version }}" >> "$ENV_FILE"
           echo "  - pip"  >> "$ENV_FILE"  # list pip as a dependency
           echo "  - pip:" >> "$ENV_FILE"  # add a pip section
           echo "    - ."  >> "$ENV_FILE"  # install cylc-flow (pip install .)
@@ -50,7 +51,6 @@ jobs:
       - name: build conda env
         uses: conda-incubator/setup-miniconda@v3
         with:
-          python-version: ${{ matrix.python-version }}
           environment-file: ${{ env.ENV_FILE }}
 
       - name: check cylc installation
