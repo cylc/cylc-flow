@@ -5,6 +5,8 @@ on:
     paths:
       - 'conda-environment.yml'
       - '.github/workflows/test_conda-build.yml'
+      - 'pyproject.toml'
+      - 'setup.cfg'
   schedule:
     - cron: '17 22 * * 6'  # Every Saturday at 22:17
   workflow_dispatch:
@@ -31,6 +33,8 @@ jobs:
         python-version: ['3.12', '3']
     env:
       ENV_FILE: conda-environment.yml
+      # prevent pip from meddling with the conda installed dependencies (during the conda build step)
+      PIP_NO_DEPS: True
     steps:
       - name: checkout cylc-flow
         uses: actions/checkout@v5
@@ -38,6 +42,7 @@ jobs:
       - name: modify conda env file
         run: |
           # write environment file
+          echo "  - python = ${{ matrix.python-version }}" >> "$ENV_FILE"
           echo "  - pip"  >> "$ENV_FILE"  # list pip as a dependency
           echo "  - pip:" >> "$ENV_FILE"  # add a pip section
           echo "    - ."  >> "$ENV_FILE"  # install cylc-flow (pip install .)
@@ -46,13 +51,17 @@ jobs:
       - name: build conda env
         uses: conda-incubator/setup-miniconda@v3
         with:
-          python-version: ${{ matrix.python-version }}
           environment-file: ${{ env.ENV_FILE }}
 
       - name: check cylc installation
         shell: bash -el {0}
         run: |
+          # make sure Cylc is functioning
           conda run -n test cylc version --long
+
+          # make sure pip is happy with the packages installed
+          # (checks pip deps are compatible with conda deps)
+          conda run -n test pip check
 
       - name: check for activate scripts
         shell : bash -el {0}
