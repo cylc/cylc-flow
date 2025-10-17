@@ -41,6 +41,7 @@ import shutil
 import h5py
 from pathlib import Path
 import urllib
+import requests   # noqa: F401 - required implicitly by urllib.
 
 from mercator import get_offset, get_scale, pos_to_coord
 import util
@@ -144,6 +145,7 @@ def get_amazon_radar_data(filename, time):
         fh.write(data)
 
 
+# def process_rainfall_data(filename, resolution, domain):
 def process_rainfall_data(filename, resolution, domain):
     """get_amazon_radar_dataGenerate a 2D matrix of data from the rainfall data in the image.
 
@@ -166,15 +168,15 @@ def process_rainfall_data(filename, resolution, domain):
 
     # TODO - work out why this isn't working
     scale = get_scale(domain, width)
-    offset = get_offset(domain, scale)
-    scale = (1672.2334443981335, 3344.466888796267)
-    offset = (-1100.8461538461539, 1400.6953225710452)
+    # offset = get_offset(domain, scale)
+    # offset = (-1100.8461538461539, 1400.6953225710452)
 
     if DEBUG:
+        print(f'[INFO] {scale=}, {offset=}')
         from matplotlib import pyplot as plt
-        Path('CYLC_TASK_LOG_DIR').mkdir(parents=True, exist_ok=True)
+        Path(CYLC_TASK_LOG_DIR).mkdir(parents=True, exist_ok=True)
         plt.imshow(data)
-        plt.savefig(f'{os.environ['CYLC_TASK_LOG_DIR']}/raw.data.png')
+        plt.savefig(f'{CYLC_TASK_LOG_DIR}/raw.data.png')
 
     for itt_x in range(width):
         for itt_y in range(height):
@@ -185,6 +187,7 @@ def process_rainfall_data(filename, resolution, domain):
                 scale
             )
             val = float(data[height - 1 - itt_y][itt_x])
+            # Original data uses -1 to indicated radar mask
             val = 0 if val == -1 else val
             rainfall.add(lng, lat, val)
     data = rainfall.compute_bins()
