@@ -37,7 +37,6 @@ from typing import (
     Dict,
     List,
     NamedTuple,
-    Optional,
     Set,
     TYPE_CHECKING,
     Tuple,
@@ -120,8 +119,8 @@ class TaskRemoteMgr:
         self.server: WorkflowRuntimeServer = server
 
     def _subshell_eval(
-        self, eval_str: str, command_pattern: re.Pattern
-    ) -> Optional[str]:
+        self, eval_str: str | None, command_pattern: re.Pattern
+    ) -> str | None:
         """Evaluate a platform or host from a possible subshell string.
 
         Arguments:
@@ -175,7 +174,7 @@ class TaskRemoteMgr:
     # BACK COMPAT: references to "host"
         # remove at:
         #     Cylc8.x
-    def eval_host(self, host_str: str) -> Optional[str]:
+    def eval_host(self, host_str: str | None) -> str | None:
         """Evaluate a host from a possible subshell string.
 
         Args:
@@ -191,7 +190,7 @@ class TaskRemoteMgr:
             return 'localhost'
         return host
 
-    def eval_platform(self, platform_str: str) -> Optional[str]:
+    def eval_platform(self, platform_str: str | None) -> str | None:
         """Evaluate a platform from a possible subshell string.
 
         Args:

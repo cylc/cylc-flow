@@ -5,3 +5,4 @@
 1/host_subshell_backticks -triggered off [] in flow 1
 1/localhost_subshell -triggered off [] in flow 1
 1/platform_subshell_suffix -triggered off [] in flow 1
+1/platform_subshell_empty -triggered off [] in flow 1

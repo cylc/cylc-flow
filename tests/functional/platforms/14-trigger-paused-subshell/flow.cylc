@@ -1,0 +1,13 @@
+#!jinja2
+[scheduling]
+    [[graph]]
+        R1 = foo:never  # Allows triggering repeatedly without workflow shutting down
+
+[runtime]
+    [[foo]]
+        platform = $("${CYLC_WORKFLOW_RUN_DIR}/toggle_platform.sh" {{ CYLC_TEST_PLATFORM }})
+        # Check what host we have truly run on:
+        script = cylc message -- "$(hostname)"
+
+        [[[outputs]]]
+            never = gonna_give_u_up

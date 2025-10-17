@@ -16,22 +16,17 @@
 
 import asyncio
 import logging
-import sys
 from typing import (
     Any as Fixture,
-    Callable
+    Callable,
 )
 
-if sys.version_info[:2] >= (3, 11):
-    from asyncio import timeout as async_timeout
-else:
-    from async_timeout import timeout as async_timeout
 import pytest
 
 from cylc.flow.commands import (
     force_trigger_tasks,
-    reload_workflow,
     hold,
+    reload_workflow,
     resume,
     run_cmd,
     set_prereqs_and_outputs,
@@ -39,7 +34,6 @@ from cylc.flow.commands import (
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_state import (
-    TASK_STATUS_PREPARING,
     TASK_STATUS_FAILED,
     TASK_STATUS_RUNNING,
     TASK_STATUS_SUBMITTED,
@@ -674,7 +668,7 @@ async def test_trigger_with_sequential_task(flow, scheduler, run, log_filter):
     schd = scheduler(id_, paused_start=False)
     async with run(schd):
         # wait for 2/foo:failed
-        async with async_timeout(5):
+        async with asyncio.timeout(5):
             while True:
                 itask = schd.pool._get_task_by_id('2/foo')
                 if itask and itask.state.outputs.is_message_complete('failed'):
@@ -689,38 +683,11 @@ async def test_trigger_with_sequential_task(flow, scheduler, run, log_filter):
         )
 
         # it should re-run
-        async with async_timeout(5):
+        async with asyncio.timeout(5):
             while True:
                 if log_filter(contains='[2/foo/02:running] (received)failed'):
                     break
                 await asyncio.sleep(0)
-
-
-async def test_trigger_whilst_paused_preparing(flow, scheduler, run, complete):
-    """It should run "preparing" tasks even if the workflow is paused.
-
-    Remote init leaves tasks as preparing for a while. These must still be
-    pushed through to running, even if triggered while the workflow is paused.
-
-    See https://github.com/cylc/cylc-flow/pull/6768
-
-    """
-    id_ = flow(
-        {
-            'scheduling': {
-                'graph': {'R1': 'a'},
-            },
-        }
-    )
-    schd = scheduler(id_)
-    async with run(schd):
-
-        # Instead of triggering, artificially set it as preparing.
-        a = schd.pool.get_tasks()[0]
-        a.state_reset(TASK_STATUS_PREPARING)
-
-        # 1/a should run even though the workflow is paused.
-        await complete(schd, '1/a', allow_paused=True, timeout=1)
 
 
 async def test_trigger_with_task_selector(flow, scheduler, start, monkeypatch):

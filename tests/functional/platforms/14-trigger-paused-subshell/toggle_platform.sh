@@ -14,27 +14,24 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#-------------------------------------------------------------------------------
-# Parent and child tasks are both valid, before inheritance calculated.
-# Child function not valid after inheritance.
-# Check for task failure at job-submit.
-. "$(dirname "$0")/test_header"
-set_test_number 2
 
-create_test_global_config '' "
-# non-existent platform
-[platforms]
-    [[_wibble]]
-"
+# Script that outputs the current platform written in the hall file and changes
+# it to the other one. This ensures the platform subshell result will alternate
+# each time it is called.
 
-install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+remote_platform=$1
+hall_file="${CYLC_WORKFLOW_RUN_DIR}/pretend_hall_info"
 
-# Run the workflow
-workflow_run_fail "${TEST_NAME_BASE}-run" \
-    cylc play --no-detach "${WORKFLOW_NAME}"
+if [[ ! -f "${hall_file}" ]]; then
+    current=localhost
+else
+    current=$(cat "$hall_file")
+fi
 
-grep_ok "Task 'non-valid-child' has the following deprecated '\[runtime\]' setting(s)" \
-    "${TEST_NAME_BASE}-run.stderr"
+echo "$current"
 
-purge
-exit
+if [[ "$current" == localhost ]]; then
+    echo "$remote_platform" > "$hall_file"
+else
+    echo localhost > "$hall_file"
+fi

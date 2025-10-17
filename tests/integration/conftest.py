@@ -627,7 +627,10 @@ async def _complete(
 
     """
     if schd.is_paused and not allow_paused:
-        raise Exception("Cannot wait for completion of a paused scheduler")
+        raise Exception(
+            "You are waiting for a paused scheduler - if this is intended "
+            "then use `complete(..., allow_paused=True)`"
+        )
 
     start_time = time()
 
