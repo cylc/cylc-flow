@@ -26,14 +26,12 @@ WORKFLOW_ID=$(workflow_id)
 
 cp -r "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/flow.cylc" .
 
-run_ok "${TEST_NAME_BASE}-vip" \
-    cylc vip . \
-        --workflow-name "${WORKFLOW_ID}" \
-        --no-detach \
-        --no-run-name
+run_ok "${TEST_NAME_BASE}-vip" cylc vip . \
+    --workflow-name "${WORKFLOW_ID}" \
+    --no-detach \
+    --no-run-name \
+    --stop-cycle-point 2020
 
 echo "# Some Comment" >> flow.cylc
 
-run_ok "${TEST_NAME_BASE}-vr" \
-    cylc vr "${WORKFLOW_ID}" \
-        --stop-cycle-point 2020-01-01T00:02Z
+run_ok "${TEST_NAME_BASE}-vr" cylc vr "${WORKFLOW_ID}" --no-detach
