@@ -73,19 +73,6 @@ class NoDataException(Exception):
     ...
 
 
-def get_datapoint_data(site_id, time, api_key):
-    """Get weather data from the DataPoint service."""
-    # The URL required to get the data.
-    time = datetime.strptime(time, '%Y%m%dT%H%MZ').strftime('%Y-%m-%dT%H:%MZ')
-    url = BASE_URL.format(time=time, site_id=site_id, api_key=api_key)
-    req = requests.get(url)
-    if req.status_code != 200:
-        raise Exception(f'{url} returned exit code {req.status_code}')
-    # Get the data and parse it as JSON.
-    print('Opening URL: %s' % url)
-    return req.json()['SiteRep']['DV']['Location']
-
-
 def get_archived_data(site_id, time):
     """Return archived weather data from the workflow directory."""
     print(
@@ -202,13 +189,8 @@ def main(site_id, api_key=None):
             site_id, dist = get_nearby_site(site_id, badsites)
 
     if obs is None:
-        if api_key:
-            print('Attempting to get weather data from DataPoint...')
-            data = get_datapoint_data(site_id, cycle_point, api_key)
-        else:
-            print('No API key provided, falling back to archived data')
-            data = get_archived_data(site_id, cycle_point)
-
+        print('No API key provided, falling back to archived data')
+        data = get_archived_data(site_id, cycle_point)
         obs = extract_observations(data)
 
     # Write observations.
