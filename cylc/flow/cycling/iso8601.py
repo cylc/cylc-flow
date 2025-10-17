@@ -649,6 +649,9 @@ class ISO8601Sequence(SequenceBase):
     def __str__(self):
         return self.value
 
+    def __repr__(self) -> str:
+        return f"<{type(self).__name__} {self.value}>"
+
     def __hash__(self) -> int:
         return hash(self.value)
 
@@ -902,7 +905,7 @@ def init(num_expanded_year_digits=0, custom_dump_format=None, time_zone=None,
     return WorkflowSpecifics
 
 
-def get_dump_format():
+def get_dump_format() -> str:
     """Return cycle point string dump format."""
     return WorkflowSpecifics.DUMP_FORMAT
 
