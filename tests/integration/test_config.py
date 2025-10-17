@@ -21,6 +21,7 @@ from textwrap import dedent
 from typing import Any
 import pytest
 
+from cylc.flow import commands
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.cfgspec.globalcfg import GlobalConfig
 from cylc.flow.exceptions import (
@@ -33,6 +34,7 @@ from cylc.flow.exceptions import (
 from cylc.flow.parsec.exceptions import ListValueError
 from cylc.flow.parsec.fileparse import read_and_proc
 from cylc.flow.pathutil import get_workflow_run_pub_db_path
+from cylc.flow.scheduler import Scheduler
 
 Fixture = Any
 param = pytest.param
@@ -778,3 +780,60 @@ async def test_task_event_bad_custom_template(
     with pytest.raises(WorkflowConfigError, match=exception):
         async with start(schd):
             pass
+
+
+async def test_icp_now_reload(
+    flow, scheduler, start, monkeypatch: pytest.MonkeyPatch, log_filter
+):
+    """initial cycle point = 'now' should not change from original value on
+    reload/restart, and sequences should remain intact.
+
+    https://github.com/cylc/cylc-flow/issues/7047
+    """
+    def set_time(value):
+        monkeypatch.setattr(
+            'cylc.flow.config.get_current_time_string',
+            lambda *a, **k: f"2005-01-01T{value}Z",
+        )
+
+    wid = flow({
+        'scheduling': {
+            'initial cycle point': 'now',
+            'graph': {
+                'R1': 'cold => foo',
+                'PT15M': 'foo[-PT15M] => foo',
+            },
+        },
+    })
+    schd: Scheduler = scheduler(wid)
+
+    def main_check(icp):
+        assert str(schd.config.initial_point) == icp
+        assert schd.pool.get_task_ids() == {
+            f'{icp}/cold',
+        }
+        assert {str(seq) for seq in schd.config.sequences} == {
+            f'R1/{icp}/P0Y',
+            f'R/{icp}/PT15M',
+        }
+
+    set_time('06:00')
+    async with start(schd):
+        expected_icp = '20050101T0600Z'
+        main_check(expected_icp)
+
+        set_time('06:03')
+        await commands.run_cmd(commands.reload_workflow(schd))
+
+        main_check(expected_icp)
+
+        await commands.run_cmd(
+            commands.set_prereqs_and_outputs(
+                schd, [f'{expected_icp}/cold'], []
+            )
+        )
+        # Downstream task should have spawned on sequence:
+        assert schd.pool.get_task_ids() == {
+            f'{expected_icp}/foo',
+        }
+        assert not log_filter(level=logging.WARNING)

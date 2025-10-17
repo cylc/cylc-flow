@@ -353,11 +353,8 @@ class WorkflowDatabaseManager:
         ])
 
         # Store raw initial cycle point in the DB.
-        value = schd.config.evaluated_icp
-        value = None if value == 'reload' else value
         self.put_workflow_params_1(
-            self.KEY_INITIAL_CYCLE_POINT,
-            value or str(schd.config.initial_point)
+            self.KEY_INITIAL_CYCLE_POINT, str(schd.config.initial_point)
         )
 
         for key in (
