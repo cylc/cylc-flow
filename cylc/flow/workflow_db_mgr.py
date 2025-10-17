@@ -95,13 +95,8 @@ class WorkflowDatabaseManager:
     """Manage the workflow runtime private and public databases."""
 
     KEY_INITIAL_CYCLE_POINT = 'icp'
-    KEY_INITIAL_CYCLE_POINT_COMPATS = (
-        KEY_INITIAL_CYCLE_POINT, 'initial_point')
     KEY_START_CYCLE_POINT = 'startcp'
-    KEY_START_CYCLE_POINT_COMPATS = (
-        KEY_START_CYCLE_POINT, 'start_point')
     KEY_FINAL_CYCLE_POINT = 'fcp'
-    KEY_FINAL_CYCLE_POINT_COMPATS = (KEY_FINAL_CYCLE_POINT, 'final_point')
     KEY_STOP_CYCLE_POINT = 'stopcp'
     KEY_UUID_STR = 'uuid_str'
     KEY_CYLC_VERSION = 'cylc_version'
@@ -337,7 +332,7 @@ class WorkflowDatabaseManager:
         This method queues the relevant insert statements.
 
         Arguments:
-            schd (cylc.flow.scheduler.Scheduler): scheduler object.
+            schd: scheduler object.
         """
         self.db_deletes_map[self.TABLE_WORKFLOW_PARAMS].append({})
         self.db_inserts_map[self.TABLE_WORKFLOW_PARAMS].extend([
