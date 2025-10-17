@@ -19,10 +19,20 @@ Tasks spawn a sequence of POINTS (P) separated by INTERVALS (I).
 Each task may have multiple sequences, e.g. 12-hourly and 6-hourly.
 """
 
-from typing import Optional, Type, overload
+from typing import (
+    Literal,
+    Optional,
+    Type,
+    overload,
+)
 
-from cylc.flow.cycling import PointBase, integer, iso8601
 from metomi.isodatetime.data import Calendar
+
+from cylc.flow.cycling import (
+    PointBase,
+    integer,
+    iso8601,
+)
 
 
 ISO8601_CYCLING_TYPE = iso8601.CYCLER_TYPE_ISO8601
@@ -88,8 +98,18 @@ def get_point_cls(cycling_type: Optional[str] = None) -> Type[PointBase]:
     return POINTS[cycling_type]
 
 
-def get_dump_format(cycling_type=None):
-    """Return cycle point dump format, or None."""
+@overload
+def get_dump_format(cycling_type: Literal["integer"]) -> None:
+    ...
+
+
+@overload
+def get_dump_format(cycling_type: Literal["iso8601"]) -> str:
+    ...
+
+
+def get_dump_format(cycling_type: Literal["integer", "iso8601"]) -> str | None:
+    """Return cycle point dump format (None for integer mode)."""
     return DUMP_FORMAT_GETTERS[cycling_type]()
 
 
