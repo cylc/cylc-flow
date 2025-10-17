@@ -1036,27 +1036,27 @@ class WorkflowConfig:
                     del y2xs[y01]
             del x2ys[sx01]
 
-    def _check_sequence_bounds(self):
-        """Check bounds of sequences against the start point."""
+    def _check_sequence_bounds(self) -> None:
+        """Check bounds of sequences against the initial cycle point."""
         out_of_bounds = [
             str(seq)
             for seq in self.sequences
-            if seq.get_first_point(self.start_point) is None
+            if seq.get_first_point(self.initial_point) is None
         ]
         if out_of_bounds:
             if len(out_of_bounds) > 1:
                 # avoid spamming users with multiple warnings
                 out_of_bounds_str = '\n'.join(
-                    wrap(', '.join(out_of_bounds), 70))
+                    wrap(', '.join(out_of_bounds), 70)
+                )
                 msg = (
-                    "multiple sequences out of bounds for"
-                    " initial cycle point "
-                    f"{self.start_point}:\n{out_of_bounds_str}"
+                    "multiple sequences out of bounds for initial cycle point "
+                    f"{self.initial_point}:\n{out_of_bounds_str}"
                 )
             else:
                 msg = (
                     f"{out_of_bounds[0]}: sequence out of bounds for "
-                    f"initial cycle point {self.start_point}"
+                    f"initial cycle point {self.initial_point}"
                 )
             LOG.warning(msg)
 
