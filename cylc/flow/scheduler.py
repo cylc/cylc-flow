@@ -1240,7 +1240,7 @@ class Scheduler:
         * A flag to indicate if the workflow should be paused or not.
         * Original workflow run time zone.
         """
-        LOG.info('LOADING workflow parameters')
+        LOG.info("LOADING saved workflow parameters")
         for key, value in params:
             if key == self.workflow_db_mgr.KEY_RUN_MODE:
                 self.options.run_mode = value or RunMode.LIVE.value
