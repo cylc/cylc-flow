@@ -23,6 +23,7 @@ from cylc.flow.scripts.profiler import (parse_memory_file,
                                         stop_profiler,
                                         profile)
 import pytest
+from pathlib import Path
 from unittest import mock
 
 
@@ -56,17 +57,18 @@ def test_stop_profiler(mocker, monkeypatch):
 def test_parse_memory_file(mocker):
 
     with pytest.raises(FileNotFoundError):
-        parse_memory_file("non_existent_file.txt")
+        parse_memory_file("non_existent_file.txt", 2)
 
     # Mock the 'open' function call to return a file object.
-    mock_file = mocker.mock_open(read_data="1024")
+    mock_file = mocker.mock_open(
+        read_data="stuff=things\nanon=1024\nthings=stuff")
     mocker.patch("builtins.open", mock_file)
 
     # Test the parse_memory_file function
-    assert parse_memory_file("mocked_file.txt") == 1
+    assert parse_memory_file("mocked_file.txt", 2) == 1024
 
     # Assert that the 'open' function was called with the expected arguments.
-    mock_file.assert_called_once_with("mocked_file.txt", "r")
+    mock_file.assert_called_once_with(Path("mocked_file.txt"), "r")
 
 
 def test_parse_cpu_file(mocker):
@@ -130,7 +132,7 @@ def test_get_cgroup_paths():
 
     process = get_cgroup_paths(2, "test_location/",
                                "test_name")
-    assert process.cgroup_memory_path == "test_location/test_name/memory.peak"
+    assert process.cgroup_memory_path == "test_location/test_name/memory.stat"
     assert process.cgroup_cpu_path == "test_location/test_name/cpu.stat"
 
     process = get_cgroup_paths(1, "test_location",
