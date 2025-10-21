@@ -32,6 +32,7 @@ from logging import (
     INFO,
     getLevelName,
 )
+import logging
 import os
 from pathlib import Path
 import shlex
@@ -224,6 +225,7 @@ def log_task_job_activity(
     point: 'str | PointBase',
     name: str,
     submit_num: str | int | None = None,
+    level: int | None = None,
 ):
     """Log an activity for a task job."""
     ctx_str = str(ctx)
@@ -241,9 +243,11 @@ def log_task_job_activity(
         # selection command causes a submission failure, or if a waiting task
         # expires before a job log directory is otherwise needed.
         # (Don't log the exception content, it looks like a bug).
-        LOG.info(ctx_str)
+        level = logging.INFO
     if ctx.cmd and ctx.ret_code:
-        LOG.error(ctx_str)
+        level = logging.ERROR
+    if level is not None:
+        LOG.log(level, ctx_str)
 
 
 class EventData(Enum):
@@ -1239,6 +1243,8 @@ class TaskEventsManager():
         # Local target
         cmd.append(get_workflow_run_job_dir(schd.workflow) + "/")
 
+        expected_log_files = platform['retrieve job log expected files']
+
         # schedule command
         self.proc_pool.put_command(
             SubProcContext(
@@ -1246,11 +1252,11 @@ class TaskEventsManager():
             ),
             bad_hosts=self.bad_hosts,
             callback=self._job_logs_retrieval_callback,
-            callback_args=[schd],
-            callback_255=self._job_logs_retrieval_callback_255
+            callback_args=[schd, expected_log_files],
+            callback_255=self._job_logs_retrieval_callback_255,
         )
 
-    def _job_logs_retrieval_callback_255(self, proc_ctx, schd) -> None:
+    def _job_logs_retrieval_callback_255(self, proc_ctx, *args) -> None:
         """Call back when log job retrieval fails with a 255 error."""
         self.bad_hosts.add(proc_ctx.host)
         for _ in proc_ctx.cmd_kwargs["id_keys"]:
@@ -1258,7 +1264,12 @@ class TaskEventsManager():
                 timer = self._event_timers[key]
                 timer.reset()
 
-    def _job_logs_retrieval_callback(self, proc_ctx, schd) -> None:
+    def _job_logs_retrieval_callback(
+        self,
+        proc_ctx,
+        schd,
+        expected_log_files,
+    ) -> None:
         """Call back when log job retrieval completes."""
         if (
             (proc_ctx.ret_code and LOG.isEnabledFor(DEBUG))
@@ -1273,6 +1284,7 @@ class TaskEventsManager():
                 with suppress(TypeError):
                     if id_key.event not in 'succeeded':
                         fnames.append(JOB_LOG_ERR)
+                fnames.extend(expected_log_files or [])
                 fname_oks = {}
                 for fname in fnames:
                     fname_oks[fname] = os.path.exists(get_task_job_log(
@@ -1306,6 +1318,9 @@ class TaskEventsManager():
                     id_key.tokens['cycle'],
                     id_key.tokens['task'],
                     id_key.tokens['job'],
+                    # ensure the list of remaining files to retrieve is logged
+                    # for deubging
+                    level=logging.DEBUG
                 )
             except KeyError as exc:
                 LOG.exception(exc)

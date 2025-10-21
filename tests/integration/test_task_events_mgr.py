@@ -15,31 +15,33 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any as Fixture
 
 import pytest
 
+from cylc.flow import CYLC_LOG
 from cylc.flow.data_store_mgr import (
     JOBS,
     TASK_STATUS_WAITING,
 )
 from cylc.flow.id import Tokens
+from cylc.flow.network.resolvers import TaskMsg
 from cylc.flow.run_modes import RunMode
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_events_mgr import (
     EventKey,
+    TaskEventsManager,
     TaskJobLogsRetrieveContext,
 )
+from cylc.flow.task_job_logs import get_task_job_log
 from cylc.flow.task_state import (
     TASK_STATUS_PREPARING,
     TASK_STATUS_SUBMIT_FAILED,
 )
 
-from cylc.flow.network.resolvers import TaskMsg
-
 from .test_workflow_events import TEMPLATES
-
 
 # NOTE: we do not test custom event handlers here because these are tested
 # as a part of workflow validation (now also performed by cylc play)
@@ -368,3 +370,101 @@ async def test_event_email_body(
     assert f'host: {mod_one.host}' in email_body
     assert f'port: {mod_one.server.port}' in email_body
     assert f'owner: {mod_one.owner}' in email_body
+
+
+async def test_job_log_retrieval_success_condition(
+    one: 'Scheduler', start, caplog, mock_glbl_cfg, log_filter
+):
+    """Test the success condition for job log retrieval.
+
+    Job log retrieval may be retried automatically if configured.
+
+    It will stop when the configured list of files has been retrieved.
+    """
+    mock_glbl_cfg(
+        'cylc.flow.platforms.glbl_cfg',
+        '''
+        [platforms]
+            [[localhost]]
+                retrieve job log expected files = job.forty-two
+        '''
+    )
+    # capture event timer calls
+    _remove_event_timer_calls = []
+    _unset_waiting_event_timer_calls = []
+
+    # called if retrieval complete
+    def _remove_event_timer(id_key):
+        _remove_event_timer_calls.append(id_key)
+
+    # called if retrieval incomplete
+    def _unset_waiting_event_timer(id_key):
+        _unset_waiting_event_timer_calls.append(id_key)
+
+    def job_logs_retrieve(*retrieved_files):
+        """Run simulated job log retrieval.
+
+        Any files specified will be created on the filesystem (simulating their
+        retrieval).
+        """
+        # request job log retrieval
+        ctx = TaskJobLogsRetrieveContext(
+            TaskEventsManager.HANDLER_JOB_LOGS_RETRIEVE, 'localhost', None
+        )
+        id_key = EventKey(
+            handler='job-logs-retrieve',
+            event='succeeded',
+            message='succeeded',
+            tokens=one.pool.get_tasks()[0].tokens,
+        )
+        one.task_events_mgr._process_job_logs_retrieval(
+            one,
+            ctx,
+            [id_key],
+        )
+
+        # simulate job log retrieval
+        ctx, _, callback, callback_args, *__ = one.proc_pool.queuings.popleft()
+        for fname in ('job-activity.log', *retrieved_files):
+            # create the job log dir and any requested files
+            job_log_file = Path(get_task_job_log(
+                one.workflow,
+                id_key.tokens['cycle'],
+                id_key.tokens['task'],
+                id_key.tokens['job'],
+                fname,
+            ))
+            job_log_file.parent.mkdir(parents=True, exist_ok=True)
+            job_log_file.touch()
+        ctx.ret_code = 0
+        callback(ctx, *callback_args)
+
+    async with start(one):
+        one.task_events_mgr.remove_event_timer = _remove_event_timer
+        one.task_events_mgr.unset_waiting_event_timer = (
+            _unset_waiting_event_timer
+        )
+        caplog.set_level(logging.DEBUG, CYLC_LOG)
+
+        # run retrieval -> no files are retrieval
+        caplog.clear()
+        job_logs_retrieve()
+        assert log_filter(
+            contains='File(s) not retrieved: job.forty-two job.out'
+        )
+        assert len(_unset_waiting_event_timer_calls) == 1
+        assert len(_remove_event_timer_calls) == 0
+
+        # run retrieval -> "job.forty-two" is retrieved
+        caplog.clear()
+        job_logs_retrieve('job.forty-two')
+        assert log_filter(contains='File(s) not retrieved: job.out')
+        assert len(_unset_waiting_event_timer_calls) == 2
+        assert len(_remove_event_timer_calls) == 0
+
+        # run retrieval -> "job.out" is retrieved
+        caplog.clear()
+        job_logs_retrieve('job.out')
+        assert not log_filter(contains='File(s) not retrieved')
+        assert len(_unset_waiting_event_timer_calls) == 2
+        assert len(_remove_event_timer_calls) == 1
