@@ -1184,6 +1184,15 @@ class TaskEventsManager():
         # get a host to run retrieval on
         try:
             platform = get_platform(ctx.platform_name)
+        except PlatformLookupError:
+            log_platform_event(
+                'Unable to retrieve job logs.',
+                {'name': ctx.platform_name},
+                level='warning',
+            )
+            return
+
+        try:
             host = get_host_from_platform(platform, bad_hosts=self.bad_hosts)
         except NoHostsError:
             # All of the platforms hosts have been found to be uncontactable.
@@ -1202,13 +1211,6 @@ class TaskEventsManager():
                 for id_key in id_keys:
                     self.unset_waiting_event_timer(id_key)
                 return
-        except PlatformLookupError:
-            log_platform_event(
-                'Unable to retrieve job logs.',
-                {'name': ctx.platform_name},
-                level='warning',
-            )
-            return
 
         # construct the retrieval command
         ssh_str = str(platform["ssh command"])
