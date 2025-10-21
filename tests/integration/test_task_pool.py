@@ -1951,13 +1951,14 @@ async def test_fast_respawn(
     foo = task_pool.get_task(IntegerPoint("1"), "foo")
 
     # remove it from the pool
+    # (this is not the higher level "cylc remove" that would erase history)
     task_pool.remove(foo)
     assert foo not in task_pool.get_tasks()
 
     # attempt to spawn it again
     itask = task_pool.spawn_task("foo", IntegerPoint("1"), {1})
     assert itask is None
-    assert "Not respawning 1/foo - task was removed" in caplog.text
+    assert "Not respawning 1/foo" in caplog.text
 
 
 async def test_remove_active_task(
@@ -2576,3 +2577,31 @@ async def test_add_new_flow_rows_on_spawn(
         assert db_select(
             schd, True, 'task_outputs', 'outputs', cycle='1', name='foo'
         ) == [('{"x": "(manually completed)"}',)]
+
+
+async def test_add_to_pool(
+    flow, scheduler, start, caplog
+):
+    """It should log attempts to add the same task again."""
+    id_ = flow(
+        {
+            'scheduling': {
+                'graph': {
+                    'R1': 'a',
+                },
+            },
+        }
+    )
+    schd = scheduler(id_)
+
+    async with start(schd):
+        caplog.set_level(logging.DEBUG, CYLC_LOG)
+
+        # 1/a should be pre-spawned (parentless)
+        a_1 = schd.pool.get_task(IntegerPoint('1'), 'a')
+        assert a_1
+
+        # add it again
+        schd.pool.add_to_pool(a_1)
+
+        assert "1/a not added to n=0: already exists" in caplog.text
