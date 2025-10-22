@@ -1354,7 +1354,7 @@ class Scheduler:
                 # finish processing preparing tasks
                 pre_prep_tasks.update({
                     itask for itask in self.pool.get_tasks()
-                    if itask.state(TASK_STATUS_PREPARING)
+                    if itask.waiting_on_job_prep
                 })
             else:
                 # release queued tasks
