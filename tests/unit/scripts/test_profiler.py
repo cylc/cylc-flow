@@ -21,13 +21,14 @@ from cylc.flow.scripts.profiler import (parse_memory_file,
                                         get_cgroup_version,
                                         get_cgroup_paths,
                                         stop_profiler,
-                                        profile)
+                                        profile,
+                                        Process)
 import pytest
 from pathlib import Path
 from unittest import mock
 
 
-def test_stop_profiler(mocker, monkeypatch):
+def test_stop_profiler(mocker, monkeypatch, tmpdir):
     monkeypatch.setenv('CYLC_WORKFLOW_ID', "test_value")
 
     def mock_get_client(env_var, timeout=None):
@@ -41,51 +42,88 @@ def test_stop_profiler(mocker, monkeypatch):
             pass
 
     mocker.patch("cylc.flow.scripts.profiler.get_client", MockedClient)
-    max_rss_location = None
-    cpu_time_location = None
-    cgroup_version = 1
 
+    mem_file = tmpdir.join("memory_file.txt")
+    mem_file.write('1234')
+    cpu_file = tmpdir.join("cpu_file.txt")
+    cpu_file.write('5678')
+    mem_allocated_file = tmpdir.join("memory_allocated.txt")
+    mem_allocated_file.write('99999')
+
+    process_object = Process(
+        cgroup_memory_path=mem_file,
+        cgroup_cpu_path=cpu_file,
+        memory_allocated_path=mem_allocated_file,
+        cgroup_version=1)
     with pytest.raises(SystemExit) as excinfo:
-        stop_profiler(max_rss_location, cpu_time_location, cgroup_version)
-        assert stop_profiler.max_rss == 0
-        assert stop_profiler.cpu_time == 0
+        stop_profiler(process_object, 1)
+
 
     assert excinfo.type == SystemExit
     assert excinfo.value.code == 0
 
 
-def test_parse_memory_file(mocker):
+def test_parse_memory_file(mocker, tmpdir):
+
+    mem_file = tmpdir.join("memory_file.txt")
+    mem_file.write('1024')
+    cpu_file = tmpdir.join("cpu_file.txt")
+    cpu_file.write('5678')
+    mem_allocated_file = tmpdir.join("memory_allocated.txt")
+    mem_allocated_file.write('99999')
+
+    good_process_object = Process(
+        cgroup_memory_path=mem_file,
+        cgroup_cpu_path=cpu_file,
+        memory_allocated_path=mem_allocated_file,
+        cgroup_version=1)
+    bad_process_object = Process(
+        cgroup_memory_path='',
+        cgroup_cpu_path='',
+        memory_allocated_path='',
+        cgroup_version=1)
 
     with pytest.raises(FileNotFoundError):
-        parse_memory_file("non_existent_file.txt", 2)
-
-    # Mock the 'open' function call to return a file object.
-    mock_file = mocker.mock_open(
-        read_data="stuff=things\nanon=1024\nthings=stuff")
-    mocker.patch("builtins.open", mock_file)
+        parse_memory_file(bad_process_object)
 
     # Test the parse_memory_file function
-    assert parse_memory_file("mocked_file.txt", 2) == 1024
-
-    # Assert that the 'open' function was called with the expected arguments.
-    mock_file.assert_called_once_with(Path("mocked_file.txt"), "r")
+    assert parse_memory_file(good_process_object) == 1024
 
 
-def test_parse_cpu_file(mocker):
+
+def test_parse_cpu_file(mocker, tmpdir):
+
+    mem_file = tmpdir.join("memory_file.txt")
+    mem_file.write('1024')
+    cpu_file_v1 = tmpdir.join("cpu_file_v1.txt")
+    cpu_file_v1.write('1234567890')
+    cpu_file_v2 = tmpdir.join("cpu_file_v2.txt")
+    cpu_file_v2.write('usage_usec=1234567890')
+    mem_allocated_file = tmpdir.join("memory_allocated.txt")
+    mem_allocated_file.write('99999')
+
+    good_process_object_v1 = Process(
+        cgroup_memory_path=mem_file,
+        cgroup_cpu_path=cpu_file_v1,
+        memory_allocated_path=mem_allocated_file,
+        cgroup_version=1)
+    good_process_object_v2 = Process(
+        cgroup_memory_path=mem_file,
+        cgroup_cpu_path=cpu_file_v2,
+        memory_allocated_path=mem_allocated_file,
+        cgroup_version=2)
+    bad_process_object = Process(
+        cgroup_memory_path='',
+        cgroup_cpu_path='',
+        memory_allocated_path='',
+        cgroup_version=1)
+
     with pytest.raises(FileNotFoundError):
-        parse_cpu_file("non_existent_file.txt", 2)
+        parse_cpu_file(bad_process_object)
 
-    # Mock the 'open' function call to return a file object.
-    mock_file = mocker.mock_open(read_data="1000000")
-    mocker.patch("builtins.open", mock_file)
-    assert parse_cpu_file("mocked_file.txt", 1) == 1
-    mock_file.assert_called_once_with("mocked_file.txt", "r")
+    assert parse_cpu_file(good_process_object_v1) == 1234
 
-    mock_file = mocker.mock_open(read_data="usage_usec 1000000")
-    mocker.patch("builtins.open", mock_file)
-    assert parse_cpu_file(
-        "mocked_file.txt", 2) == 1000
-    mock_file.assert_called_once_with("mocked_file.txt", "r")
+    assert parse_cpu_file(good_process_object_v2) == 1234567
 
 
 def test_get_cgroup_name(mocker):
@@ -128,15 +166,21 @@ def test_get_cgroup_version(mocker):
                            'things')
 
 
-def test_get_cgroup_paths():
-
-    process = get_cgroup_paths(2, "test_location/",
-                               "test_name")
+def test_get_cgroup_paths(mocker):
+    mocker.patch("cylc.flow.scripts.profiler.get_cgroup_name",
+                 return_value='test_name')
+    mocker.patch("cylc.flow.scripts.profiler.get_cgroup_version",
+                 return_value=2)
+    process = get_cgroup_paths("test_location/")
     assert process.cgroup_memory_path == "test_location/test_name/memory.stat"
     assert process.cgroup_cpu_path == "test_location/test_name/cpu.stat"
 
-    process = get_cgroup_paths(1, "test_location",
-                               "/test_name")
+    mocker.patch("cylc.flow.scripts.profiler.get_cgroup_name",
+                 return_value='test_name')
+    mocker.patch("cylc.flow.scripts.profiler.get_cgroup_version",
+                 return_value=1)
+
+    process = get_cgroup_paths("test_location/")
     assert (process.cgroup_memory_path ==
             "test_location/memory/test_name/memory.max_usage_in_bytes")
     assert (process.cgroup_cpu_path ==
@@ -145,8 +189,11 @@ def test_get_cgroup_paths():
 
 def test_profile_data(mocker):
     # This test should run without error
-    process = get_cgroup_paths(1, "test_location/",
-                               "test_name")
+    mocker.patch("cylc.flow.scripts.profiler.get_cgroup_name",
+                 return_value='test_name')
+    mocker.patch("cylc.flow.scripts.profiler.get_cgroup_version",
+                 return_value=2)
+    process = get_cgroup_paths("test_location/")
 
     mock_file = mocker.mock_open(read_data="")
     mocker.patch("builtins.open", mock_file)
@@ -155,4 +202,4 @@ def test_profile_data(mocker):
     mocker.patch("cylc.flow.scripts.profiler.parse_cpu_file",
                  return_value=2048)
     run_once = mock.Mock(side_effect=[True, False])
-    profile(process, 1, 1, run_once)
+    profile(process, 1, run_once)

@@ -20,15 +20,16 @@ Profiler which periodically polls cgroups to track
 the resource usage of jobs running on the node.
 """
 
-import asyncio
-from dataclasses import dataclass
-from functools import partial
 import os
-from pathlib import Path
 import re
-import signal
 import sys
 import time
+import signal
+import asyncio
+
+from pathlib import Path
+from functools import partial
+from dataclasses import dataclass
 
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import CylcOptionParser as COP
@@ -54,9 +55,9 @@ def stop_profiler(process, comms_timeout, *args):
      to this process"""
     # If a task fails instantly, or finishes very quickly (< 1 second),
     # the get config function doesn't have time to run
-    if (process.max_rss_location is None
-            or process.cpu_time_location is None
-            or process.cgroup_version is None):
+    if (process.cgroup_memory_path is None
+            or process.cgroup_cpu_path is None
+            or process.memory_allocated_path is None):
         max_rss = 0
         cpu_time = 0
         memory_allocated = 0
@@ -101,7 +102,7 @@ def parse_memory_file(process: Process):
     cgroup_memory_path = Path(process.cgroup_memory_path)
 
     if process.cgroup_version == 2:
-        with open(cgroup_memory_path, 'r') as f:
+        with open(process.cgroup_memory_path, 'r') as f:
             for line in f:
                 if "anon" in line:
                     return int(''.join(filter(str.isdigit, line)))
@@ -114,7 +115,7 @@ def parse_memory_file(process: Process):
 def parse_memory_allocated(process: Process) -> int:
     """Open the memory stat file and copy the appropriate data"""
     if process.cgroup_version == 2:
-        cgroup_memory_path = Path(process.cgroup_memory_path)
+        cgroup_memory_path = Path(process.memory_allocated_path)
 
         for i in range(5):
             with open(cgroup_memory_path / "memory.max", 'r') as f:
@@ -194,9 +195,9 @@ def get_cgroup_paths(location) -> Process:
 
     elif cgroup_version == 1:
         return Process(
-            cgroup_memory_path=location + "/memory" +
+            cgroup_memory_path=location + "memory/" +
                                cgroup_name + "/memory.max_usage_in_bytes",
-            cgroup_cpu_path=location + "/cpu" +
+            cgroup_cpu_path=location + "cpu/" +
                             cgroup_name + "/cpuacct.usage",
             memory_allocated_path="",
             cgroup_version=cgroup_version,
