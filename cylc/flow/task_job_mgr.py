@@ -222,7 +222,9 @@ class TaskJobManager:
         self._set_retry_timers(itask)
         self._prep_submit_task_job_error(itask, '(killed in job prep)', '')
 
-    def poll_task_jobs(self, itasks, msg=None):
+    def poll_task_jobs(
+        self, itasks: 'Iterable[TaskProxy]', msg: str | None = None
+    ):
         """Poll jobs of specified tasks.
 
         This method uses _poll_task_jobs_callback() and
