@@ -97,7 +97,7 @@ def test_bad_workflow2(run_dir, brokendir, capsys):
 
 
 def test_bad_task_dir(run_dir, brokendir, capsys):
-    """Check a non existent job log dir in a valid workflow results in error.
+    """Check a non-existent job log dir in a valid workflow results in error.
     """
     parser = cat_log_gop()
     with pytest.raises(SystemExit, match='1'):
