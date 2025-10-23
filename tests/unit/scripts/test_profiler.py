@@ -24,7 +24,6 @@ from cylc.flow.scripts.profiler import (parse_memory_file,
                                         profile,
                                         Process)
 import pytest
-from pathlib import Path
 from unittest import mock
 
 
@@ -57,7 +56,6 @@ def test_stop_profiler(mocker, monkeypatch, tmpdir):
         cgroup_version=1)
     with pytest.raises(SystemExit) as excinfo:
         stop_profiler(process_object, 1)
-
 
     assert excinfo.type == SystemExit
     assert excinfo.value.code == 0
@@ -96,7 +94,6 @@ def test_parse_memory_file(mocker, tmpdir):
     # Test the parse_memory_file function
     assert parse_memory_file(good_process_object_v1) == 1024
     assert parse_memory_file(good_process_object_v2) == 666
-
 
 
 def test_parse_cpu_file(mocker, tmpdir):
