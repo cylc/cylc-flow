@@ -109,7 +109,8 @@ def parse_memory_file(process: Process):
     else:
         with open(process.cgroup_memory_path, 'r') as f:
             for line in f:
-                return int(line)
+                if "total_rss" in line:
+                    return int(''.join(filter(str.isdigit, line)))
 
 
 def parse_memory_allocated(process: Process) -> int:
@@ -132,7 +133,7 @@ def parse_memory_allocated(process: Process) -> int:
 
 
 def parse_cpu_file(process: Process) -> int:
-    """Open the memory stat file and return the appropriate data"""
+    """Open the CPU stat file and return the appropriate data"""
     if process.cgroup_version == 2:
         with open(process.cgroup_cpu_path, 'r') as f:
             for line in f:
@@ -142,7 +143,7 @@ def parse_cpu_file(process: Process) -> int:
     else:
         with open(process.cgroup_cpu_path, 'r') as f:
             for line in f:
-                # Cgroups v2 uses nanoseconds
+                # Cgroups v1 uses nanoseconds
                 return int(line) // 1000000
         raise ValueError("Unable to find cpu usage data")
 
@@ -196,7 +197,7 @@ def get_cgroup_paths(location) -> Process:
     elif cgroup_version == 1:
         return Process(
             cgroup_memory_path=location + "memory/" +
-                               cgroup_name + "/memory.max_usage_in_bytes",
+                               cgroup_name + "/memory.stat",
             cgroup_cpu_path=location + "cpu/" +
                             cgroup_name + "/cpuacct.usage",
             memory_allocated_path="",

@@ -65,18 +65,25 @@ def test_stop_profiler(mocker, monkeypatch, tmpdir):
 
 def test_parse_memory_file(mocker, tmpdir):
 
-    mem_file = tmpdir.join("memory_file.txt")
-    mem_file.write('1024')
+    mem_file_v1 = tmpdir.join("memory_file_v1.txt")
+    mem_file_v1.write('total_rss=1024')
+    mem_file_v2 = tmpdir.join("memory_file_v2.txt")
+    mem_file_v2.write('anon=666')
     cpu_file = tmpdir.join("cpu_file.txt")
     cpu_file.write('5678')
     mem_allocated_file = tmpdir.join("memory_allocated.txt")
     mem_allocated_file.write('99999')
 
-    good_process_object = Process(
-        cgroup_memory_path=mem_file,
+    good_process_object_v1 = Process(
+        cgroup_memory_path=mem_file_v1,
         cgroup_cpu_path=cpu_file,
         memory_allocated_path=mem_allocated_file,
         cgroup_version=1)
+    good_process_object_v2 = Process(
+        cgroup_memory_path=mem_file_v2,
+        cgroup_cpu_path=cpu_file,
+        memory_allocated_path=mem_allocated_file,
+        cgroup_version=2)
     bad_process_object = Process(
         cgroup_memory_path='',
         cgroup_cpu_path='',
@@ -87,7 +94,8 @@ def test_parse_memory_file(mocker, tmpdir):
         parse_memory_file(bad_process_object)
 
     # Test the parse_memory_file function
-    assert parse_memory_file(good_process_object) == 1024
+    assert parse_memory_file(good_process_object_v1) == 1024
+    assert parse_memory_file(good_process_object_v2) == 666
 
 
 
@@ -182,7 +190,7 @@ def test_get_cgroup_paths(mocker):
 
     process = get_cgroup_paths("test_location/")
     assert (process.cgroup_memory_path ==
-            "test_location/memory/test_name/memory.max_usage_in_bytes")
+            "test_location/memory/test_name/memory.stat")
     assert (process.cgroup_cpu_path ==
             "test_location/cpu/test_name/cpuacct.usage")
 
