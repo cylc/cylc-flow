@@ -266,12 +266,22 @@ class TaskPool:
         self.workflow_db_mgr.put_insert_task_outputs(itask)
 
     def add_to_pool(self, itask) -> None:
-        """Add a task to the pool."""
+        """Add a task to the pool, if not already added."""
 
         self.active_tasks.setdefault(itask.point, {})
+        if itask.identity in self.active_tasks[itask.point]:
+            # This is normal on restart with waiting parentless tasks that
+            # auto-spawned to the runahead limit before shutdown (e.g. if
+            # you shut down immediately after starting up paused). Each
+            # will be resurrected from the DB again *and* try to auto-spawn
+            # again because we don't record that parentless tasks spawned.
+            # (But debug-log it anyway for any unexpected cases).
+            LOG.debug(f"{itask.identity} not added to n=0: already exists")
+            return None
+
         self.active_tasks[itask.point][itask.identity] = itask
         self.active_tasks_changed = True
-        LOG.debug(f"[{itask}] added to the n=0 window")
+        LOG.info(f"[{itask}] added to the n=0 window")
 
         self.create_data_store_elements(itask)
 
@@ -1834,13 +1844,20 @@ class TaskPool:
         if (
             prev_status is not None
             and not itask.state.outputs.get_completed_outputs()
+            and not self.config.experimental.expire_triggers
         ):
-            # If itask has any history in this flow but no completed outputs
-            # we can infer it has just been deliberately removed (N.B. not
-            # by `cylc remove`), so don't immediately respawn it.
-            # TODO (follow-up work):
-            # - this logic fails if task removed after some outputs completed
-            LOG.info(f"Not respawning {point}/{name} - task was removed")
+            # If itask has history but no completed outputs, it was removed
+            # by suicide trigger (not by `cylc remove` which erases history).
+            # This logic fails if suicided after completion of outputs!
+
+            # NOTE: redoing suicide triggers as expire triggers fixed this.
+            # TODO: remove this code once that's no longer experimental.
+            # Until then, this code also prevents double-spawning of waiting
+            # parentless tasks at restart if experimental expire triggers are
+            # off (but that is also handled properly without this block - by
+            # not adding tasks to the pool if already added (see comments in
+            # the add_to_pool method).
+            LOG.debug(f"Not respawning {point}/{name}")
             return None
 
         if prev_status in TASK_STATUSES_FINAL:
