@@ -56,7 +56,6 @@ from cylc.flow.exceptions import (
     NoPlatformsError,
     PlatformError,
     PlatformLookupError,
-    WorkflowConfigError,
 )
 from cylc.flow.hostuserutil import (
     get_host,
@@ -70,6 +69,7 @@ from cylc.flow.job_runner_mgr import (
 from cylc.flow.pathutil import get_remote_workflow_run_job_dir
 from cylc.flow.platforms import (
     FORBIDDEN_WITH_PLATFORM,
+    fail_if_platform_and_host_conflict,
     get_host_from_platform,
     get_install_target_from_platform,
     get_localhost_install_target,
@@ -1168,15 +1168,7 @@ class TaskJobManager:
         # - host exists - eval host_n
         # remove at:
         #     Cylc8.x
-        if (
-            rtconfig['platform'] is not None and
-            rtconfig['remote']['host'] is not None
-        ):
-            raise WorkflowConfigError(
-                "A mixture of Cylc 7 (host) and Cylc 8 (platform) "
-                "logic should not be used. In this case for the task "
-                f"\"{itask.identity}\" the following are not compatible:\n"
-            )
+        fail_if_platform_and_host_conflict(rtconfig, itask.tdef.name)
 
         host_name, platform_name = None, None
         try:
@@ -1196,37 +1188,41 @@ class TaskJobManager:
                 )
 
         except PlatformError as exc:
-            itask.waiting_on_job_prep = False
-            itask.summary['platforms_used'][itask.submit_num] = ''
-            # Retry delays, needed for the try_num
-            self._create_job_log_path(itask)
-            self._set_retry_timers(itask, rtconfig)
-            self._prep_submit_task_job_error(
-                itask, '(remote host select)', exc
-            )
+            self._prep_submit_task_job_platform_error(itask, rtconfig, exc)
             return False
         else:
-            # host/platform select not ready
             if host_name is None and platform_name is None:
+                # host/platform select not ready
                 return None
             elif (
                 host_name is None
                 and rtconfig['platform']
                 and rtconfig['platform'] != platform_name
             ):
-                LOG.debug(
+                msg = (
                     f"for task {itask.identity}: platform = "
-                    f"{rtconfig['platform']} evaluated as {platform_name}"
+                    f"{rtconfig['platform']} evaluated as '{platform_name}'"
                 )
-
+                if not platform_name:
+                    self._prep_submit_task_job_platform_error(
+                        itask, rtconfig, msg
+                    )
+                    return False
+                LOG.debug(msg)
             elif (
                 platform_name is None
                 and rtconfig['remote']['host'] != host_name
             ):
-                LOG.debug(
+                msg = (
                     f"[{itask}] host = "
-                    f"{rtconfig['remote']['host']} evaluated as {host_name}"
+                    f"{rtconfig['remote']['host']} evaluated as '{host_name}'"
                 )
+                if not host_name:
+                    self._prep_submit_task_job_platform_error(
+                        itask, rtconfig, msg
+                    )
+                    return False
+                LOG.debug(msg)
 
             try:
                 platform = cast(
@@ -1292,6 +1288,20 @@ class TaskJobManager:
 
         itask.local_job_file_path = local_job_file_path
         return itask
+
+    def _prep_submit_task_job_platform_error(
+        self, itask: 'TaskProxy', rtconfig: dict, exc: Exception | str
+    ):
+        """Helper for self._prep_submit_task_job. On platform selection error.
+        """
+        itask.waiting_on_job_prep = False
+        itask.summary['platforms_used'][itask.submit_num] = ''
+        # Retry delays, needed for the try_num
+        self._create_job_log_path(itask)
+        self._set_retry_timers(itask, rtconfig)
+        self._prep_submit_task_job_error(
+            itask, '(remote host select)', exc
+        )
 
     def _prep_submit_task_job_error(
         self,

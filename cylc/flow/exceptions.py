@@ -184,13 +184,13 @@ class PlatformError(CylcError):
     def __init__(
         self,
         message: str,
-        platform_name: str,
+        platform_name: str | None,
         *,
-        ctx: 'Optional[SubFuncContext]' = None,
-        cmd: Union[str, Sequence[str], None] = None,
-        ret_code: Optional[int] = None,
-        out: Optional[str] = None,
-        err: Optional[str] = None
+        ctx: 'SubFuncContext | None' = None,
+        cmd: str | Sequence[str] | None = None,
+        ret_code: int | None = None,
+        out: str | None = None,
+        err: str | None = None
     ) -> None:
         self.msg = message
         self.platform_name = platform_name
