@@ -777,20 +777,33 @@ class TaskJobManager:
         for line in out.splitlines(True):
             for prefix, callback in handlers:
                 if line.startswith(prefix):
+                    # process one line of the output
                     line = line[len(prefix):].strip()
+                    exc = None
                     try:
                         # TODO this massive try block should be unpacked.
                         path = line.split("|", 2)[1]  # timestamp, path, status
                         point, name, submit_num = path.split(os.sep, 2)
+                    except IndexError as _exc:
+                        exc = _exc
+                    else:
                         if prefix == self.job_runner_mgr.OUT_PREFIX_SUMMARY:
-                            del bad_tasks[(point, name, submit_num)]
-                        itask = tasks[(point, name, submit_num)]
-                        callback(itask, ctx, line)
-                    except (LookupError, ValueError) as exc:
+                            try:
+                                del bad_tasks[(point, name, submit_num)]
+                            except KeyError as _exc:
+                                exc = _exc
+                            else:
+                                itask = tasks[(point, name, submit_num)]
+                                callback(itask, ctx, line)
+                    if exc:
                         # (Note this catches KeyError too).
                         LOG.warning(
-                            'Unhandled %s output: %s', ctx.cmd_key, line)
-                        LOG.warning(str(exc))
+                            'Unhandled %s output: %s\n%s: %s',
+                            ctx.cmd_key,
+                            line,
+                            exc.__class__.__name__,
+                            exc,
+                        )
         # Task jobs that are in the original command but did not get a status
         # in the output. Handle as failures.
         for key, itask in sorted(bad_tasks.items()):
