@@ -39,15 +39,22 @@
         [[[environment]]]
             # The dimensions of each grid cell in degrees.
             RESOLUTION = 0.2
+
             # The area to generate forecasts for (lng1, lat1, lng2, lat2)
-            DOMAIN = -12,48,5,61  # Do not change!
+            DOMAIN = -12,46,12,61
+
+        [[[meta]]]
+            metadata source = Met Office Observations R&D
+            ellipsiod = "Airy 1830"
+            projection = "Transverse Mercator"
+            origin = "49,2"
+            SW = 43.8341,-12.0118
+            NW = 62.9207,-17.9739
+            NE = 62.6515,16.1289
+            SE = 437009,941578
 
     [[get_observations<station>]]
         script = get-observations
-        [[[environment]]]
-            # The key required to get weather data from the DataPoint service.
-            # To use archived data comment this line out.
-            API_KEY = DATAPOINT_API_KEY
 
     [[get_observations<station=aldergrove>]]
         [[[environment]]]
@@ -68,9 +75,12 @@
     [[get_rainfall]]
         script = get-rainfall
         [[[environment]]]
-            # The key required to get weather data from the DataPoint service.
-            # To use archived data comment this line out.
-            API_KEY = DATAPOINT_API_KEY
+            # A template Map file
+            MAP_FILE = "${CYLC_TASK_LOG_ROOT}-map.html"
+            # Create the html map file in the task's log directory.
+            MAP_FILE = "${CYLC_TASK_LOG_ROOT}-map.html"
+            # The path to the template file used to generate the html map.
+            MAP_TEMPLATE = "$CYLC_WORKFLOW_RUN_DIR/lib/template/map.html"
 
     [[forecast]]
         script = forecast 60 5  # Generate 5 forecasts at 60 minute intervals.

@@ -150,11 +150,12 @@ def push_rainfall(rainfall, wind_data, step, resolution, spline_level):
                                 dim_x, dim_y, resolution, resolution,
                                 spline_level)
 
+    domain = util.parse_domain(os.environ['DOMAIN'])
+
     while True:
         out_of_bounds = []
         for itt in range(len(x_values)):
             try:
-                domain = util.parse_domain(os.environ['DOMAIN'])
                 lng = domain['lng1'] + x_values[itt]
                 lat = domain['lat1'] + y_values[itt]
 
