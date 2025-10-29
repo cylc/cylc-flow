@@ -160,6 +160,7 @@ def test_get_cgroup_name(mocker):
     mocker.patch("builtins.open", mock_file)
     assert get_cgroup_name() == "good/cgroup/place/2222222"
 
+
 def test_parse_memory_allocated(mocker, tmpdir):
     mem_allocated_file = tmpdir.join("memory.max")
     mem_allocated_file.write('99999')
