@@ -17,6 +17,7 @@
 # Tests for functions contained in cylc.flow.scripts.profiler
 from cylc.flow.scripts.profiler import (parse_memory_file,
                                         parse_cpu_file,
+                                        parse_memory_allocated,
                                         get_cgroup_name,
                                         get_cgroup_version,
                                         get_cgroup_paths,
@@ -158,6 +159,34 @@ def test_get_cgroup_name(mocker):
     mock_file = mocker.mock_open(read_data="0::good/cgroup/place/2222222")
     mocker.patch("builtins.open", mock_file)
     assert get_cgroup_name() == "good/cgroup/place/2222222"
+
+def test_parse_memory_allocated(mocker, tmpdir):
+    mem_allocated_file = tmpdir.join("memory.max")
+    mem_allocated_file.write('99999')
+
+    # We curently do not track memory allocated for cgroups v1
+    good_process_object_v1 = Process(
+        cgroup_memory_path='',
+        cgroup_cpu_path='',
+        memory_allocated_path=tmpdir,
+        cgroup_version=1)
+
+    good_process_object_v2 = Process(
+        cgroup_memory_path='',
+        cgroup_cpu_path='',
+        memory_allocated_path=tmpdir,
+        cgroup_version=2)
+
+    bad_process_object_v2 = Process(
+        cgroup_memory_path='',
+        cgroup_cpu_path='',
+        memory_allocated_path='/',
+        cgroup_version=2)
+
+    assert parse_memory_allocated(good_process_object_v1) == 0
+    assert parse_memory_allocated(good_process_object_v2) == 99999
+    with pytest.raises(FileNotFoundError):
+        parse_memory_file(bad_process_object_v2)
 
 
 def test_get_cgroup_name_file_not_found(mocker):
