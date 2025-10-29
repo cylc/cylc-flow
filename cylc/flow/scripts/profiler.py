@@ -190,9 +190,9 @@ def get_cgroup_paths(location) -> Process:
     if cgroup_version == 2:
         return Process(
             cgroup_memory_path=location +
-                cgroup_name + "/" + "memory.stat",
+            cgroup_name + "/" + "memory.stat",
             cgroup_cpu_path=location +
-                cgroup_name + "/" + "cpu.stat",
+            cgroup_name + "/" + "cpu.stat",
             memory_allocated_path=location + cgroup_name,
             cgroup_version=cgroup_version,
         )
@@ -200,9 +200,9 @@ def get_cgroup_paths(location) -> Process:
     elif cgroup_version == 1:
         return Process(
             cgroup_memory_path=location + "memory/" +
-                cgroup_name + "/memory.stat",
+            cgroup_name + "/memory.stat",
             cgroup_cpu_path=location + "cpu/" +
-                cgroup_name + "/cpuacct.usage",
+            cgroup_name + "/cpuacct.usage",
             memory_allocated_path="",
             cgroup_version=cgroup_version,
         )
