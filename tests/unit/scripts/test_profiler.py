@@ -124,7 +124,7 @@ def test_parse_cpu_file(mocker, tmpdir):
     cpu_file_v2.write('usage_usec=1234567890')
     cpu_file_v2_bad = tmpdir.join("cpu_file_v2_bad.txt")
     cpu_file_v2_bad.write('Give me fuel, give me fire, '
-                      'give me that which I desire')
+                          'give me that which I desire')
     mem_allocated_file = tmpdir.join("memory_allocated.txt")
     mem_allocated_file.write('99999')
 
@@ -156,6 +156,7 @@ def test_parse_cpu_file(mocker, tmpdir):
         parse_cpu_file(bad_process_object)
     with pytest.raises(ValueError):
         parse_cpu_file(bad_process_object_v2)
+
 
 def test_get_cgroup_name(mocker):
 
