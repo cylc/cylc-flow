@@ -78,7 +78,11 @@ def stop_profiler(process, comms_timeout, *args):
 
     graphql_request_variables = {
         "WORKFLOWS": [os.environ.get('CYLC_WORKFLOW_ID')],
-        "MESSAGES": [["DEBUG", f"cpu_time {cpu_time} max_rss {max_rss} mem_alloc {memory_allocated}"]],
+        "MESSAGES": [[
+            "DEBUG",
+            f"cpu_time {cpu_time} "
+            f"max_rss {max_rss} "
+            f"mem_alloc {memory_allocated}"]],
         "JOB": os.environ.get('CYLC_TASK_JOB'),
         "TIME": "now"
     }
@@ -99,7 +103,6 @@ def stop_profiler(process, comms_timeout, *args):
 
 def parse_memory_file(process: Process):
     """Open the memory stat file and copy the appropriate data"""
-    cgroup_memory_path = Path(process.cgroup_memory_path)
 
     if process.cgroup_version == 2:
         with open(process.cgroup_memory_path, 'r') as f:
@@ -187,9 +190,9 @@ def get_cgroup_paths(location) -> Process:
     if cgroup_version == 2:
         return Process(
             cgroup_memory_path=location +
-                               cgroup_name + "/" + "memory.stat",
+                cgroup_name + "/" + "memory.stat",
             cgroup_cpu_path=location +
-                            cgroup_name + "/" + "cpu.stat",
+                cgroup_name + "/" + "cpu.stat",
             memory_allocated_path=location + cgroup_name,
             cgroup_version=cgroup_version,
         )
@@ -197,9 +200,9 @@ def get_cgroup_paths(location) -> Process:
     elif cgroup_version == 1:
         return Process(
             cgroup_memory_path=location + "memory/" +
-                               cgroup_name + "/memory.stat",
+                cgroup_name + "/memory.stat",
             cgroup_cpu_path=location + "cpu/" +
-                            cgroup_name + "/cpuacct.usage",
+                cgroup_name + "/cpuacct.usage",
             memory_allocated_path="",
             cgroup_version=cgroup_version,
         )
