@@ -161,7 +161,7 @@ def get_cgroup_version(cgroup_location: str, cgroup_name: str) -> int:
                                 cgroup_location + cgroup_name)
 
 
-def get_cgroup_name() -> str:
+def get_cgroup_name():
     """Get the cgroup directory for the current process"""
 
     # fugly hack to allow functional tests to use test data
