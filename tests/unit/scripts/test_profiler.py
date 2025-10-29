@@ -122,6 +122,9 @@ def test_parse_cpu_file(mocker, tmpdir):
     cpu_file_v1.write('1234567890')
     cpu_file_v2 = tmpdir.join("cpu_file_v2.txt")
     cpu_file_v2.write('usage_usec=1234567890')
+    cpu_file_v2_bad = tmpdir.join("cpu_file_v2_bad.txt")
+    cpu_file_v2_bad.write('Give me fuel, give me fire, '
+                      'give me that which I desire')
     mem_allocated_file = tmpdir.join("memory_allocated.txt")
     mem_allocated_file.write('99999')
 
@@ -140,14 +143,19 @@ def test_parse_cpu_file(mocker, tmpdir):
         cgroup_cpu_path='',
         memory_allocated_path='',
         cgroup_version=1)
+    bad_process_object_v2 = Process(
+        cgroup_memory_path=mem_file,
+        cgroup_cpu_path=cpu_file_v2_bad,
+        memory_allocated_path=mem_allocated_file,
+        cgroup_version=2)
+
+    assert parse_cpu_file(good_process_object_v1) == 1234
+    assert parse_cpu_file(good_process_object_v2) == 1234567
 
     with pytest.raises(FileNotFoundError):
         parse_cpu_file(bad_process_object)
-
-    assert parse_cpu_file(good_process_object_v1) == 1234
-
-    assert parse_cpu_file(good_process_object_v2) == 1234567
-
+    with pytest.raises(ValueError):
+        parse_cpu_file(bad_process_object_v2)
 
 def test_get_cgroup_name(mocker):
 
@@ -165,7 +173,7 @@ def test_parse_memory_allocated(mocker, tmpdir):
     mem_allocated_file = tmpdir.join("memory.max")
     mem_allocated_file.write('99999')
 
-    # We curently do not track memory allocated for cgroups v1
+    # We currently do not track memory allocated for cgroups v1
     good_process_object_v1 = Process(
         cgroup_memory_path='',
         cgroup_cpu_path='',
@@ -237,6 +245,13 @@ def test_get_cgroup_paths(mocker):
             "test_location/memory/test_name/memory.stat")
     assert (process.cgroup_cpu_path ==
             "test_location/cpu/test_name/cpuacct.usage")
+
+    mocker.patch("cylc.flow.scripts.profiler.get_cgroup_name",
+                 return_value='test_name')
+    mocker.patch("cylc.flow.scripts.profiler.get_cgroup_version",
+                 return_value=3)
+    with pytest.raises(ValueError):
+        get_cgroup_paths("test_location/")
 
 
 def test_profile_data(mocker):
