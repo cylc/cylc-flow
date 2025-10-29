@@ -53,18 +53,8 @@ class Process:
 def stop_profiler(process, comms_timeout, *args):
     """This function will be executed when the SIGINT signal is sent
      to this process"""
-    # If a task fails instantly, or finishes very quickly (< 1 second),
-    # the get config function doesn't have time to run
-    if (process.cgroup_memory_path is None
-            or process.cgroup_cpu_path is None
-            or process.memory_allocated_path is None):
-        max_rss = 0
-        cpu_time = 0
-        memory_allocated = 0
-    else:
-        max_rss = parse_memory_file(process)
-        cpu_time = parse_cpu_file(process)
-        memory_allocated = parse_memory_allocated(process)
+
+    max_rss, cpu_time, memory_allocated = get_resource_usage(process)
 
     graphql_mutation = """
     mutation($WORKFLOWS: [WorkflowID]!,
@@ -99,6 +89,19 @@ def stop_profiler(process, comms_timeout, *args):
 
     asyncio.run(send_cylc_message())
     sys.exit(0)
+
+
+def get_resource_usage(process):
+    # If a task fails instantly, or finishes very quickly (< 1 second),
+    # the get config function doesn't have time to run
+    if (process.cgroup_memory_path is None
+            or process.cgroup_cpu_path is None
+            or process.memory_allocated_path is None):
+        return 0, 0, 0
+    max_rss = parse_memory_file(process)
+    cpu_time = parse_cpu_file(process)
+    memory_allocated = parse_memory_allocated(process)
+    return max_rss, cpu_time, memory_allocated
 
 
 def parse_memory_file(process: Process):
