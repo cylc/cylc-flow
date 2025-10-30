@@ -21,6 +21,7 @@ import pytest
 
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.cycling.loader import ISO8601_CYCLING_TYPE, get_point
+from cylc.flow.exceptions import TriggerExpressionError
 from cylc.flow.id import Tokens, detokenise
 from cylc.flow.prerequisite import Prerequisite, SatisfiedState
 from cylc.flow.run_modes import RunMode
@@ -259,3 +260,19 @@ def test_satisfy_me__override_truthy(
 
     prereq.satisfy_me([Tokens('//1/a:x')], forced=forced, mode=mode)
     assert prereq[('1', 'a', 'x')] == existing
+
+
+@pytest.mark.parametrize(
+    'expr, err', (
+        ('int("df")', 'invalid literal'),
+        ('7 +', 'invalid syntax'),
+    ))
+def test__eval_satisfied_raises(expr, err, monkeypatch):
+    monkeypatch.setattr(
+        'cylc.flow.prerequisite.Prerequisite.get_raw_conditional_expression',
+        lambda _: expr
+    )
+    prereq = Prerequisite(IntegerPoint('1'))
+    prereq.conditional_expression = expr
+    with pytest.raises(TriggerExpressionError, match=err):
+        prereq._eval_satisfied()
