@@ -271,3 +271,28 @@ def test_profile_data(mocker):
                  return_value=2048)
     run_once = mock.Mock(side_effect=[True, False])
     profile(process, 1, run_once)
+
+
+@pytest.fixture
+def options(mocker):
+    opts = mocker.Mock()
+    opts.cgroup_location = "/fake/path"
+    opts.comms_timeout = 10
+    opts.delay = 1
+    return opts
+
+def test_main(mocker, options):
+    mock_get_cgroup_paths = mocker.patch(
+        "cylc.flow.scripts.profiler.get_cgroup_paths"
+    )
+    mock_signal = mocker.patch("cylc.flow.scripts.profiler.signal.signal")
+    mock_profile = mocker.patch("cylc.flow.scripts.profiler.profile")
+
+    mock_get_cgroup_paths.return_value = mocker.Mock()
+
+    from cylc.flow.scripts.profiler import _main
+    _main(options)
+
+    mock_get_cgroup_paths.assert_called_once_with("/fake/path")
+    assert mock_signal.call_count == 3
+    mock_profile.assert_called_once()
