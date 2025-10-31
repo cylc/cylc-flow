@@ -36,7 +36,6 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.terminal import cli_function
 
 
-INTERNAL = True
 PID_REGEX = re.compile(r"([^:]*\d{6,}.*)")
 RE_INT = re.compile(r'\d+')
 
