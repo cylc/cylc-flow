@@ -281,6 +281,7 @@ def options(mocker):
     opts.delay = 1
     return opts
 
+
 def test_main(mocker, options):
     mock_get_cgroup_paths = mocker.patch(
         "cylc.flow.scripts.profiler.get_cgroup_paths"
