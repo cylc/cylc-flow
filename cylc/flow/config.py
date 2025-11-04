@@ -685,10 +685,10 @@ class WorkflowConfig:
             all(item in ['graph', '1', 'R1'] for item in graphdict)
         ):
             # Pure acyclic graph, assume integer cycling mode with '1' cycle
-            self.cfg['scheduling']['cycling mode'] = INTEGER_CYCLING_TYPE
             for key in ('initial cycle point', 'final cycle point'):
                 if key not in self.cfg['scheduling']:
                     self.cfg['scheduling'][key] = '1'
+            self.cfg['scheduling']['cycling mode'] = INTEGER_CYCLING_TYPE
 
     def process_utc_mode(self):
         """Set UTC mode from config or from stored value on restart.

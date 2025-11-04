@@ -381,9 +381,9 @@ cmp_ok '19.cylc' <<'__FLOW_CONFIG__'
     [[templates]]
         lang = %(lang)s
 [scheduling]
-    cycling mode = integer
     initial cycle point = 1
     final cycle point = 1
+    cycling mode = integer
     [[graph]]
         R1 = <lang=c++> => <lang = fortran-2008>
 [runtime]
