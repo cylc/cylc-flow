@@ -79,6 +79,7 @@ from cylc.flow import (
     __version__ as CYLC_VERSION,
 )
 from cylc.flow.cycling.loader import get_point
+from cylc.flow.cycling.nocycle import NOCYCLE_POINTS
 from cylc.flow.data_messages_pb2 import (
     AllDeltas,
     EDeltas,
@@ -1080,7 +1081,11 @@ class DataStoreMgr:
                             )
                         for items in graph_children.values():
                             for child_name, child_point, _ in items:
-                                if final_point and child_point > final_point:
+                                if (
+                                    final_point
+                                    and str(child_point) not in NOCYCLE_POINTS
+                                    and child_point > final_point
+                                ):
                                     continue
                                 child_tokens = self.id_.duplicate(
                                     cycle=str(child_point),
@@ -1105,7 +1110,11 @@ class DataStoreMgr:
                             taskdefs
                         ).values():
                             for parent_name, parent_point, _ in items:
-                                if final_point and parent_point > final_point:
+                                if (
+                                    str(parent_point) not in NOCYCLE_POINTS
+                                    and final_point
+                                    and (parent_point > final_point)
+                                ):
                                     continue
                                 parent_tokens = self.id_.duplicate(
                                     cycle=str(parent_point),
@@ -2353,16 +2362,20 @@ class DataStoreMgr:
             delta_set = True
 
         if self.schd.pool.active_tasks:
-            pool_points = set(self.schd.pool.active_tasks)
-
-            oldest_point = str(min(pool_points))
-            if w_data.oldest_active_cycle_point != oldest_point:
-                w_delta.oldest_active_cycle_point = oldest_point
-                delta_set = True
-            newest_point = str(max(pool_points))
-            if w_data.newest_active_cycle_point != newest_point:
-                w_delta.newest_active_cycle_point = newest_point
-                delta_set = True
+            pool_points = {
+                p for p in self.schd.pool.active_tasks
+                if str(p) not in NOCYCLE_POINTS
+            }
+            if pool_points:
+                # TODO is it OK if not set (due to nocycle points)?
+                oldest_point = str(min(pool_points))
+                if w_data.oldest_active_cycle_point != oldest_point:
+                    w_delta.oldest_active_cycle_point = oldest_point
+                    delta_set = True
+                newest_point = str(max(pool_points))
+                if w_data.newest_active_cycle_point != newest_point:
+                    w_delta.newest_active_cycle_point = newest_point
+                    delta_set = True
 
         if delta_set:
             w_delta.id = self.workflow_id
