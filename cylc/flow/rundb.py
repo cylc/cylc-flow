@@ -15,7 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Provide data access object for the workflow runtime database."""
 
-from collections import defaultdict
+from collections import (
+    defaultdict,
+    namedtuple,
+)
 from contextlib import suppress
 from dataclasses import dataclass
 from os.path import expandvars
@@ -37,7 +40,6 @@ from typing import (
 )
 
 from cylc.flow import LOG
-from cylc.flow.exceptions import PlatformLookupError
 import cylc.flow.flags
 from cylc.flow.flow_mgr import stringify_flow_nums
 from cylc.flow.util import (
@@ -57,6 +59,13 @@ DbUpdateTuple = Union[
     Tuple[DbArgDict, DbArgDict],
     Tuple[str, list]
 ]
+
+
+def namedtuple_factory(cursor: sqlite3.Cursor, row: Iterable[Any]):
+    # https://docs.python.org/3/library/sqlite3.html#sqlite3-howto-row-factory
+    fields = (col[0] for col in cursor.description)
+    cls = namedtuple('Row', fields)  # type: ignore[misc]
+    return cls._make(row)
 
 
 @dataclass
@@ -931,17 +940,8 @@ class CylcWorkflowDAO:
         for row_idx, row in enumerate(self.connect().execute(stmt)):
             callback(row_idx, list(row))
 
-    def select_task_pool_for_restart(self, callback):
-        """Select from task_pool+task_states+task_jobs for restart.
-
-        Invoke callback(row_idx, row) on each row, where each row contains:
-        the fields in the SELECT statement below.
-
-        Raises:
-            PlatformLookupError: Do not start up if platforms for running
-            tasks cannot be found in global.cylc. This exception should
-            not be caught.
-        """
+    def select_task_pool_for_restart(self) -> sqlite3.Cursor:
+        """Select from task_pool+task_states+task_jobs for restart."""
         form_stmt = r"""
             SELECT
                 %(task_pool)s.cycle,
@@ -949,7 +949,7 @@ class CylcWorkflowDAO:
                 %(task_pool)s.flow_nums,
                 %(task_states)s.flow_wait,
                 %(task_states)s.is_manual_submit,
-                %(task_late_flags)s.value,
+                %(task_late_flags)s.value AS is_late,
                 %(task_pool)s.status,
                 %(task_pool)s.is_held,
                 %(task_states)s.submit_num,
@@ -994,24 +994,9 @@ class CylcWorkflowDAO:
             "task_outputs": self.TABLE_TASK_OUTPUTS,
         }
         stmt = form_stmt % form_data
-
-        # Run the callback, collecting any platform errors to be handled later:
-        platform_errors = []
-        for row_idx, row in enumerate(self.connect().execute(stmt)):
-            platform_error = callback(row_idx, list(row))
-            if platform_error:
-                platform_errors.append(platform_error)
-
-        # If any of the platforms could not be found, raise an exception
-        # and stop trying to play this workflow:
-        if platform_errors:
-            msg = (
-                "The following platforms are not defined in"
-                " the global.cylc file:"
-            )
-            for platform in platform_errors:
-                msg += f"\n * {platform}"
-            raise PlatformLookupError(msg)
+        cursor = self.connect().execute(stmt)
+        cursor.row_factory = namedtuple_factory
+        return cursor
 
     def select_task_prerequisites(
         self, cycle: str, name: str, flow_nums: str

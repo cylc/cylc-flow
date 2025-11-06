@@ -875,8 +875,7 @@ class Scheduler:
         self.broadcast_mgr.post_load_db_coerce()
         self.workflow_db_mgr.pri_dao.select_task_job_run_times(
             self._load_task_run_times)
-        self.workflow_db_mgr.pri_dao.select_task_pool_for_restart(
-            self.pool.load_db_task_pool_for_restart)
+        self.pool.load_db_task_pool_for_restart()
         self.workflow_db_mgr.pri_dao.select_jobs_for_restart(
             self.data_store_mgr.insert_db_job)
         self.workflow_db_mgr.pri_dao.select_task_action_timers(

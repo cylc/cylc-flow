@@ -59,6 +59,7 @@ from cylc.flow.platforms import get_platform
 from cylc.flow.prerequisite import PrereqTuple
 from cylc.flow.run_modes import RunMode
 from cylc.flow.run_modes.skip import process_outputs as get_skip_mode_outputs
+from cylc.flow.scripts.set import XTRIGGER_PREREQ_PREFIX
 from cylc.flow.task_action_timer import (
     TaskActionTimer,
     TimerFlags,
@@ -92,7 +93,7 @@ from cylc.flow.task_state import (
 from cylc.flow.task_trigger import TaskTrigger
 from cylc.flow.util import deserialise_set
 from cylc.flow.workflow_status import StopMode
-from cylc.flow.scripts.set import XTRIGGER_PREREQ_PREFIX
+
 
 if TYPE_CHECKING:
     from cylc.flow.config import WorkflowConfig
@@ -292,12 +293,13 @@ class TaskPool:
         )
         self.data_store_mgr.delta_task_state(itask)
 
-    def release_runahead_tasks(self):
+    def release_runahead_tasks(self) -> bool:
         """Release tasks below the runahead limit.
 
         Return True if any tasks are released, else False.
         Call when RH limit changes.
         """
+        LOG.info("🏃🏃🏃")
         if not self.active_tasks or not self.runahead_limit_point:
             # (At start-up task pool might not exist yet)
             return False
@@ -524,141 +526,157 @@ class TaskPool:
             # no matching entries
             return False
 
-    def load_db_task_pool_for_restart(self, row_idx, row):
+    def load_db_task_pool_for_restart(self) -> None:
         """Load tasks from DB task pool/states/jobs tables.
 
         Output completion status is loaded from the DB, and tasks recorded
         as submitted or running are polled to confirm their true status.
         Tasks are added to queues again on release from runahead pool.
 
-        Returns:
-            Names of platform if attempting to look up that platform
-            has led to a PlatformNotFoundError.
+        Raises:
+            PlatformLookupError: Do not start up if platforms for running
+            tasks cannot be found in global.cylc. This exception should
+            not be caught.
         """
-        if row_idx == 0:
-            LOG.info("LOADING task proxies")
+        LOG.info("LOADING task proxies")
+        platform_errors: set[str] = set()
         # Create a task proxy corresponding to this DB entry.
-        (cycle, name, flow_nums, flow_wait, is_manual_submit, is_late, status,
-         is_held, submit_num, _, platform_name, time_submit, time_run, timeout,
-         outputs_str) = row
-        try:
-            itask = TaskProxy(
-                self.tokens,
-                self.config.get_taskdef(name),
-                get_point(cycle),
-                deserialise_set(flow_nums),
-                status=status,
-                is_held=is_held,
-                submit_num=submit_num,
-                is_late=bool(is_late),
-                flow_wait=bool(flow_wait),
-                is_manual_submit=bool(is_manual_submit),
-                sequential_xtrigger_labels=(
-                    self.xtrigger_mgr.xtriggers.sequential_xtrigger_labels
-                ),
-            )
-
-        except WorkflowConfigError:
-            LOG.exception(
-                f'ignoring task {name} from the workflow run database\n'
-                '(its task definition has probably been deleted).')
-        except Exception:
-            LOG.exception(f'could not load task {name}')
-        else:
-            if status in (
+        for row in self.workflow_db_mgr.pri_dao.select_task_pool_for_restart():
+            status: str = row.status
+            try:
+                itask = TaskProxy(
+                    self.tokens,
+                    self.config.get_taskdef(row.name),
+                    get_point(row.cycle),
+                    deserialise_set(row.flow_nums),
+                    status=status,
+                    is_held=row.is_held,
+                    submit_num=row.submit_num,
+                    is_late=bool(row.is_late),
+                    flow_wait=bool(row.flow_wait),
+                    is_manual_submit=bool(row.is_manual_submit),
+                    sequential_xtrigger_labels=(
+                        self.xtrigger_mgr.xtriggers.sequential_xtrigger_labels
+                    ),
+                )
+            except WorkflowConfigError:
+                LOG.exception(
+                    f'ignoring task {row.name} from the workflow run database '
+                    '(its task definition has probably been deleted).'
+                )
+            except Exception:
+                LOG.exception(f'could not load task {row.cycle}/{row.name}')
+            else:
+                if status in {
                     TASK_STATUS_SUBMITTED,
                     TASK_STATUS_RUNNING,
                     TASK_STATUS_FAILED,
-                    TASK_STATUS_SUCCEEDED
-            ):
-                # update the task proxy with platform
-                # If we get a failure from the platform selection function
-                # set task status to submit-failed.
-                try:
-                    itask.platform = get_platform(platform_name)
-                except PlatformLookupError:
-                    return platform_name
+                    TASK_STATUS_SUCCEEDED,
+                }:
+                    # update the task proxy with platform
+                    # If we get a failure from the platform selection function
+                    # set task status to submit-failed.
+                    try:
+                        itask.platform = get_platform(row.platform_name)
+                    except PlatformLookupError:
+                        platform_errors.add(row.platform_name)
+                        continue
 
-                if time_submit:
-                    itask.set_summary_time('submitted', time_submit)
-                if time_run:
-                    itask.set_summary_time('started', time_run)
-                if timeout is not None:
-                    itask.timeout = timeout
-            elif status == TASK_STATUS_PREPARING:
-                # put back to be readied again.
-                status = TASK_STATUS_WAITING
-                # Re-prepare same submit.
-                itask.submit_num -= 1
+                    if row.time_submit:
+                        itask.set_summary_time('submitted', row.time_submit)
+                    if row.time_run:
+                        itask.set_summary_time('started', row.time_run)
+                    if row.timeout is not None:
+                        itask.timeout = row.timeout
+                elif status == TASK_STATUS_PREPARING:
+                    # put back to be readied again.
+                    status = TASK_STATUS_WAITING
+                    # Re-prepare same submit.
+                    itask.submit_num -= 1
 
-            # Running or finished task can have completed custom outputs.
-            if itask.state(
+                # Running or finished task can have completed custom outputs.
+                if itask.state(
                     TASK_STATUS_RUNNING,
                     TASK_STATUS_FAILED,
-                    TASK_STATUS_SUCCEEDED
-            ):
-                for message in json.loads(outputs_str):
-                    itask.state.outputs.set_message_complete(message)
-                    self.data_store_mgr.delta_task_output(itask, message)
+                    TASK_STATUS_SUCCEEDED,
+                ):
+                    for message in json.loads(row.outputs):
+                        itask.state.outputs.set_message_complete(message)
+                        self.data_store_mgr.delta_task_output(itask, message)
 
-            if platform_name and status != TASK_STATUS_WAITING:
-                itask.summary['platforms_used'][
-                    int(submit_num)] = platform_name
-            LOG.info(
-                f"+ {cycle}/{name} {status}{' (held)' if is_held else ''}")
+                if row.platform_name and status != TASK_STATUS_WAITING:
+                    itask.summary['platforms_used'][
+                        int(row.submit_num)] = row.platform_name
+                LOG.info(f"+ {itask}{' (held)' if row.is_held else ''}")
 
-            # Update prerequisite satisfaction status from DB
-            sat = {}
-            for prereq_name, prereq_cycle, prereq_output_msg, satisfied in (
-                self.workflow_db_mgr.pri_dao.select_task_prerequisites(
-                    cycle, name, flow_nums,
-                )
-            ):
-                # Prereq satisfaction as recorded in the DB.
-                sat[
-                    (prereq_cycle, prereq_name, prereq_output_msg)
-                ] = satisfied if satisfied != '0' else False
+                # Update prerequisite satisfaction status from DB
+                sat = {}
+                for (
+                    prereq_name,
+                    prereq_cycle,
+                    prereq_output_msg,
+                    satisfied,
+                ) in self.workflow_db_mgr.pri_dao.select_task_prerequisites(
+                    row.cycle, row.name, row.flow_nums
+                ):
+                    # Prereq satisfaction as recorded in the DB.
+                    sat[
+                        (prereq_cycle, prereq_name, prereq_output_msg)
+                    ] = satisfied if satisfied != '0' else False
 
-            for itask_prereq in itask.state.prerequisites:
-                for key in itask_prereq:
-                    if key in sat:
-                        itask_prereq[key] = sat[key]
-                    else:
-                        # This prereq is not in the DB: new dependencies
-                        # added to an already-spawned task before restart.
-                        # Look through task outputs to see if is has been
-                        # satisfied
-                        prereq_cycle, prereq_task, prereq_output_msg = key
-                        itask_prereq[key] = (
-                            self.check_task_output(
+                for itask_prereq in itask.state.prerequisites:
+                    for key in itask_prereq:
+                        if key in sat:
+                            itask_prereq[key] = sat[key]
+                        else:
+                            # This prereq is not in the DB: new dependencies
+                            # added to an already-spawned task before restart.
+                            # Look through task outputs to see if is has been
+                            # satisfied
+                            prereq_cycle, prereq_task, prereq_output_msg = key
+                            itask_prereq[key] = self.check_task_output(
                                 prereq_cycle,
                                 prereq_task,
                                 prereq_output_msg,
                                 itask.flow_nums,
                             )
-                        )
-            for xtrigger_label in itask.state.xtriggers:
-                if ("xtrigger", xtrigger_label, TASK_OUTPUT_SUCCEEDED) in sat:
-                    itask.state.xtriggers[xtrigger_label] = True
+                for xtrigger_label in itask.state.xtriggers:
+                    if (
+                        "xtrigger",
+                        xtrigger_label,
+                        TASK_OUTPUT_SUCCEEDED,
+                    ) in sat:
+                        itask.state.xtriggers[xtrigger_label] = True
 
-            if itask.state_reset(status, is_runahead=True):
-                self.data_store_mgr.delta_task_state(itask)
-            self.add_to_pool(itask)
+                if itask.state_reset(status, is_runahead=True):
+                    self.data_store_mgr.delta_task_state(itask)
+                self.add_to_pool(itask)
 
-            # All tasks load as runahead-limited, but finished and manually
-            # triggered tasks (incl. --start-task's) can be released now.
-            if (
-                itask.state(
-                    TASK_STATUS_FAILED,
-                    TASK_STATUS_SUCCEEDED,
-                    TASK_STATUS_EXPIRED
-                )
-                or itask.is_manual_submit
-            ):
-                self.rh_release_and_queue(itask)
+                # All tasks load as runahead-limited, but finished and manually
+                # triggered tasks (incl. --start-task's) can be released now.
+                if (
+                    itask.state(
+                        TASK_STATUS_FAILED,
+                        TASK_STATUS_SUCCEEDED,
+                        TASK_STATUS_EXPIRED
+                    )
+                    or itask.is_manual_submit
+                ):
+                    self.rh_release_and_queue(itask)
 
-            self.compute_runahead()
-            self.release_runahead_tasks()
+        # If any of the platforms could not be found, raise an exception
+        # and stop trying to play this workflow:
+        if platform_errors:
+            msg = (
+                "The following platforms are not defined in"
+                " the global.cylc file:"
+            )
+            for platform in platform_errors:
+                msg += f"\n * {platform}"
+            raise PlatformLookupError(msg)
+
+        self.compute_runahead()
+        self.release_runahead_tasks()
 
     def load_db_task_action_timers(self, row_idx: int, row: Iterable) -> None:
         """Load a task action timer, e.g. event handlers, retry states."""
