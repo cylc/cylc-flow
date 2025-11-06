@@ -36,21 +36,20 @@ import os
 import pwd
 import re
 import shlex
-from sqlite3 import ProgrammingError, OperationalError
+from sqlite3 import OperationalError
 import tarfile
 from tempfile import NamedTemporaryFile
 from time import gmtime, strftime
 import traceback
-import urllib
 
-from cylc.hostuserutil import get_host
-from cylc.review_dao import CylcReviewDAO
-from cylc.task_state import (
+from cylc.flow.hostuserutil import get_host
+from cylc.flow.review_dao import CylcReviewDAO
+from cylc.flow.task_state import (
     TASK_STATUSES_ORDERED, TASK_STATUS_GROUPS)
-from cylc.url import quote
-from cylc.version import CYLC_VERSION
-from cylc.ws import get_util_home
-from cylc.suite_srv_files_mgr import SuiteSrvFilesManager
+from cylc.flow.url import quote
+from cylc.flow.version import CYLC_VERSION
+from cylc.flow.ws import get_util_home
+from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
 
 
 CYLC8_TASK_STATUSES_ORDERED = [
@@ -497,7 +496,7 @@ class CylcReviewService(object):
                 continue
             try:
                 data["entries"].append({
-                    "name": unicode(item, 'UTF-8', errors='ignore'),
+                    "name": str(item, 'UTF-8', errors='ignore'),
                     "info": {},
                     "last_activity_time": (
                         self.get_last_activity_time(user, item))})
@@ -598,16 +597,16 @@ class CylcReviewService(object):
                 return cherrypy.lib.static.serve_file(f_name, mime)
             text = open(f_name).read()
         try:
-            text = unicode(text, encoding='UTF-8', errors='replace')
+            text = str(text, encoding='UTF-8', errors='replace')
             if mode in [None, "text"]:
                 # escape HTML tags
                 # NOTE: jinja2.escape returns a Markup object which will also
                 # escape future modifications to this string. In order to
                 # allow log file syntax highlighting (DEBUG, INFO, etc) we
-                # must cast this back to a unicode to remove this functionality.
-                text = unicode(jinja2.escape(text))
+                # must cast this back to a str to remove this functionality.
+                text = str(jinja2.escape(text))
             lines = text.splitlines()
-        except UnicodeDecodeError:
+        except ValueError:
             if path_in_tar:
                 handle.seek(0)
                 # file closed by cherrypy

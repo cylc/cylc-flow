@@ -24,8 +24,8 @@ import re
 from glob import glob
 from sqlite3 import OperationalError
 
-from cylc.rundb import CylcSuiteDAO
-from cylc.task_state import TASK_STATUS_GROUPS
+from cylc.flow.rundb import CylcSuiteDAO
+from cylc.flow.task_state import TASK_STATUS_GROUPS
 """Provide data access object to the suite runtime database for Cylc Review."""
 
 
@@ -175,7 +175,7 @@ class CylcReviewDAO(object):
 
     @staticmethod
     def set_is_cylc8(user_name, suite_name):
-        from cylc.review import CylcReviewService
+        from cylc.flow.review import CylcReviewService
         suite_dir = os.path.join(
             CylcReviewService._get_user_home(user_name),
             "cylc-run",
