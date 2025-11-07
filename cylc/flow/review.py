@@ -41,15 +41,15 @@ import tarfile
 from tempfile import NamedTemporaryFile
 from time import gmtime, strftime
 import traceback
+from urllib.parse import quote
 
 from cylc.flow.hostuserutil import get_host
 from cylc.flow.review_dao import CylcReviewDAO
 from cylc.flow.task_state import (
     TASK_STATUSES_ORDERED, TASK_STATUS_GROUPS)
-from cylc.flow.url import quote
-from cylc.flow.version import CYLC_VERSION
+from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.ws import get_util_home
-from cylc.flow.suite_srv_files_mgr import SuiteSrvFilesManager
+from cylc.flow.workflow_files import WorkflowFiles
 
 
 CYLC8_TASK_STATUSES_ORDERED = [
@@ -471,7 +471,7 @@ class CylcReviewService(object):
             name_globs = shlex.split(str(names))
         # Get entries
         sub_names = [
-            SuiteSrvFilesManager.DIR_BASE_SRV,
+            WorkflowFiles.Service.DIRNAME,
             "log",
             "share",
             "work"

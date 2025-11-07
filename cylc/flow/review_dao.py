@@ -24,7 +24,7 @@ import re
 from glob import glob
 from sqlite3 import OperationalError
 
-from cylc.flow.rundb import CylcSuiteDAO
+from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.task_state import TASK_STATUS_GROUPS
 """Provide data access object to the suite runtime database for Cylc Review."""
 
@@ -105,7 +105,7 @@ class CylcReviewDAO(object):
         self.daos = {}
 
     def _db_init(self, user_name, suite_name):
-        """Initialise a named CylcSuiteDAO database connection."""
+        """Initialise a named CylcWorkflowDAO database connection."""
         key = (user_name, suite_name)
         if key not in self.daos:
             prefix = "~"
@@ -114,20 +114,20 @@ class CylcReviewDAO(object):
             for name in [os.path.join("log", "db"), "cylc-suite.db"]:
                 db_f_name = os.path.expanduser(os.path.join(
                     prefix, os.path.join("cylc-run", suite_name, name)))
-                self.daos[key] = CylcSuiteDAO(db_f_name, is_public=True)
+                self.daos[key] = CylcWorkflowDAO(db_f_name, is_public=True)
                 if os.path.exists(db_f_name):
                     break
         self.is_cylc8 = self.set_is_cylc8(user_name, suite_name)
         return self.daos[key]
 
     def _db_close(self, user_name, suite_name):
-        """Close a named CylcSuiteDAO database connection."""
+        """Close a named CylcWorkflowDAO database connection."""
         key = (user_name, suite_name)
         if self.daos.get(key) is not None:
             self.daos[key].close()
 
     def _db_exec(self, user_name, suite_name, stmt, stmt_args=None):
-        """Execute a query on a named CylcSuiteDAO database connection."""
+        """Execute a query on a named CylcWorkflowDAO database connection."""
         daos = self._db_init(user_name, suite_name)
         if stmt_args is None:
             stmt_args = []
@@ -152,7 +152,7 @@ class CylcReviewDAO(object):
         """Return broadcast states of a suite.
         [[point, name, key, value], ...]
         """
-        stmt = CylcSuiteDAO.pre_select_broadcast_states(
+        stmt = CylcWorkflowDAO.pre_select_broadcast_states(
             self._db_init(user_name, suite_name), order="ASC")[0]
         broadcast_states = []
         for row in self._db_exec(user_name, suite_name, stmt):
@@ -164,7 +164,7 @@ class CylcReviewDAO(object):
         """Return broadcast events of a suite.
         [[time, change, point, name, key, value], ...]
         """
-        stmt = CylcSuiteDAO.pre_select_broadcast_events(
+        stmt = CylcWorkflowDAO.pre_select_broadcast_events(
             self._db_init(user_name, suite_name), order="DESC")[0]
         broadcast_events = []
         for row in self._db_exec(user_name, suite_name, stmt):
