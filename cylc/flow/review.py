@@ -33,7 +33,6 @@ from jinja2 import select_autoescape
 import json
 import mimetypes
 import os
-from pathlib import Path
 import pwd
 import re
 import shlex
