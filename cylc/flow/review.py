@@ -251,7 +251,7 @@ class CylcReviewService(object):
             self.suite_dao.get_suite_cycles_summary(
                 user, suite, order, per_page, (page - 1) * per_page))
         if per_page:
-            data["n_pages"] = data["of_n_entries"] / per_page
+            data["n_pages"] = data["of_n_entries"] // per_page
             if data["of_n_entries"] % per_page != 0:
                 data["n_pages"] += 1
         else:
@@ -395,7 +395,7 @@ class CylcReviewService(object):
         data["entries"] = entries
         data["of_n_entries"] = of_n_entries
         if per_page:
-            data["n_pages"] = of_n_entries / per_page
+            data["n_pages"] = of_n_entries // per_page
             if of_n_entries % per_page != 0:
                 data["n_pages"] += 1
         else:
@@ -499,7 +499,7 @@ class CylcReviewService(object):
             data["entries"].sort(key=self._sort_summary_entries)
         data["of_n_entries"] = len(data["entries"])
         if per_page:
-            data["n_pages"] = data["of_n_entries"] / per_page
+            data["n_pages"] = data["of_n_entries"] // per_page
             if data["of_n_entries"] % per_page != 0:
                 data["n_pages"] += 1
             offset = (page - 1) * per_page
