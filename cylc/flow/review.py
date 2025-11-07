@@ -51,20 +51,24 @@ from cylc.flow.task_state import (
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.ws import get_util_home
 from cylc.flow.workflow_files import WorkflowFiles
-from cylc.flow import cylc_review
 
 
-CYLC8_TASK_STATUSES_ORDERED = [
-    'expired',
-    'failed',
-    'preparing',
-    'running',
-    'submitted',
-    'submit-failed',
-    'succeeded',
+# Cylc 7 Task states.
+CYLC7_TASK_STATUSES_ORDERED = [
+    'runahead',
     'waiting',
+    'held',
+    'queued',
+    'expired',
+    'ready',
+    'failed',
+    'submit-retrying',
+    'submitted',
+    'retrying',
+    'running',
+    'failed',
+    'succeeded',
 ]
-
 
 class CylcReviewService(object):
 
@@ -328,14 +332,14 @@ class CylcReviewService(object):
             page = 1
 
         # Set list of task states depending on Cylc version 7 or 8
-        task_statuses_ordered = TASK_STATUSES_ORDERED
+        task_statuses_ordered = CYLC7_TASK_STATUSES_ORDERED
         suite_dir = os.path.join(
             self._get_user_home(user),
             "cylc-run",
             suite)
         is_c8 = self.is_cylc8(suite_dir)
         if is_c8:
-            task_statuses_ordered = CYLC8_TASK_STATUSES_ORDERED
+            task_statuses_ordered = TASK_STATUSES_ORDERED
         # get selected task states
         if not task_status:
             # default task statuses - if updating please also change the
