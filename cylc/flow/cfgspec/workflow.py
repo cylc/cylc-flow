@@ -488,7 +488,7 @@ with Conf(
                     default = None
                 elif item.endswith("handlers"):
                     desc = desc + '\n\n' + dedent(f'''
-                        Examples:
+                        .. rubric:: Examples:
 
                         .. code-block:: cylc
 
@@ -548,7 +548,7 @@ with Conf(
         Conf('<parameter>', VDR.V_PARAMETER_LIST, desc='''
             A custom parameter to use in a workflow.
 
-            Examples:
+            .. rubric:: Examples:
 
             - ``run = control, test1, test2``
             - ``mem = 1..5``  (equivalent to ``1, 2, 3, 4, 5``).
@@ -623,6 +623,24 @@ with Conf(
 
             This item can be overridden on the command line using
             ``cylc play --initial-cycle-point`` or ``--icp``.
+
+            .. rubric:: Examples:
+
+            ``2000-01-01T00:00Z``
+               The 1st of January at midnight.
+            ``2000``
+               Shorthand for ``2000-01-01T00:00``.
+            ``now``
+               The exact time when the workflow is started. By default this is
+               to the minute, e.g: ``2001-02-03T12:34``.
+            ``previous(T-00)``
+               The hour when the workflow was started. I.e, The time when the
+               workflow is started with the minute cut off.
+            ``previous(T00)``
+               The day when the workflow was started. I.e, the time when the
+               workflow was started with the hour and minute cut off.
+            ``next(T00)``
+               The day after the workflow was started (at midnight).
         ''')
         # NOTE: final cycle point is not a V_CYCLE_POINT to allow expressions
         # such as '+P1Y' (relative to initial cycle point)
@@ -635,11 +653,16 @@ with Conf(
             This item can be overridden on the command line using
             ``cylc play --final-cycle-point`` or ``--fcp``.
 
-            Examples:
+            .. rubric:: Examples:
 
-            - ``2000`` - Shorthand for ``2000-01-01T00:00``.
-            - ``+P1D`` - The initial cycle point plus one day.
-            - ``2000 +P1D +P1Y`` - The year ``2000`` plus one day and one year.
+            ``2000-01-01T00:00Z``
+               The 1st of January at midnight.
+            ``2000``
+               Shorthand for ``2000-01-01T00:00``.
+            ``+P1D``
+               The initial cycle point plus one day.
+            ``2000 +P1D +P1Y``
+               The year ``2000`` plus one day and one year.
         ''')
         Conf('initial cycle point constraints', VDR.V_STRING_LIST,
              desc=CYCLE_POINT_CONSTRAINTS.format('initial') + dedent('''
@@ -676,7 +699,7 @@ with Conf(
                choosing not to run that part of the graph. You can play
                the workflow and continue.
 
-            Examples:
+            .. rubric:: Examples:
 
             - ``2000`` - Shorthand for ``2000-01-01T00:00``.
             - ``+P1D`` - The initial cycle point plus one day.
@@ -717,7 +740,7 @@ with Conf(
             value instead, in which case the number of cycles
             within the interval depends on the cycling intervals present.
 
-            Examples:
+            .. rubric:: Examples:
 
             ``P0``
                 Only one cycle can be active at a time.
@@ -831,7 +854,7 @@ with Conf(
 
                    :ref:`ClockExpireTasks`.
 
-                Examples:
+                .. rubric:: Examples:
 
                 ``foo(PT1H)`` - expire task ``foo`` if the current wall clock
                 time has reached 1 hour after the task's cycle point.
@@ -1035,7 +1058,7 @@ with Conf(
 
                See :ref:`task namespace rules. <namespace-names>`
 
-            Examples of legal values:
+            ..rubric:: Examples:
 
             - ``[foo]``
             - ``[foo, bar, baz]``

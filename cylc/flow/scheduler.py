@@ -1505,8 +1505,8 @@ class Scheduler:
             self.time_next_kill is not None
             and time() > self.time_next_kill
         ):
-            await commands.run_cmd(commands.poll_tasks(self, ['*/*']))
-            await commands.run_cmd(commands.kill_tasks(self, ['*/*']))
+            self.task_job_mgr.poll_task_jobs(self.pool.get_tasks())
+            self.kill_tasks(self.pool.get_tasks(), warn=False)
             self.time_next_kill = time() + self.INTERVAL_STOP_KILL
 
         # Is the workflow set to auto stop [+restart] now ...
