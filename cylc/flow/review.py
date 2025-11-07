@@ -497,7 +497,7 @@ class CylcReviewService(object):
                 continue
             try:
                 data["entries"].append({
-                    "name": str(item, 'UTF-8', errors='ignore'),
+                    "name": str(item),
                     "info": {},
                     "last_activity_time": (
                         self.get_last_activity_time(user, item))})
@@ -509,9 +509,9 @@ class CylcReviewService(object):
         elif order == "name_desc":
             data["entries"].sort(key=lambda entry: entry["name"], reverse=True)
         elif order == "time_asc":
-            data["entries"].sort(self._sort_summary_entries, reverse=True)
+            data["entries"].sort(key=self._sort_summary_entries, reverse=True)
         else:  # order == "time_desc"
-            data["entries"].sort(self._sort_summary_entries)
+            data["entries"].sort(key=self._sort_summary_entries)
         data["of_n_entries"] = len(data["entries"])
         if per_page:
             data["n_pages"] = data["of_n_entries"] / per_page
@@ -598,7 +598,7 @@ class CylcReviewService(object):
                 return cherrypy.lib.static.serve_file(f_name, mime)
             text = open(f_name).read()
         try:
-            text = str(text, encoding='UTF-8', errors='replace')
+            text = str(text)
             if mode in [None, "text"]:
                 # escape HTML tags
                 # NOTE: jinja2.escape returns a Markup object which will also
@@ -1059,8 +1059,6 @@ class CylcReviewService(object):
         return self._check_dir_access(path)
 
     @staticmethod
-    def _sort_summary_entries(suite1, suite2):
+    def _sort_summary_entries(suite1):
         """Sort suites by last_activity_time."""
-        return (cmp(suite2.get("last_activity_time"),
-                    suite1.get("last_activity_time")) or
-                cmp(suite1["name"], suite2["name"]))
+        return suite1.get("last_activity_time") or suite1["name"]

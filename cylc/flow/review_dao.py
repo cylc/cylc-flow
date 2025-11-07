@@ -19,6 +19,7 @@
 
 import sqlite3
 import os
+from pathlib import Path
 import tarfile
 import re
 from glob import glob
@@ -26,7 +27,7 @@ from sqlite3 import OperationalError
 
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.task_state import TASK_STATUS_GROUPS
-"""Provide data access object to the suite runtime database for Cylc Review."""
+from cylc.flow.workflow_files import WorkflowFiles
 
 
 class CylcReviewDAO(object):
@@ -140,10 +141,11 @@ class CylcReviewDAO(object):
             except sqlite3.OperationalError as exc:
                 # At Cylc 8.0.1+ Workflows installed but not run will not yet
                 # have a database.
-                if (os.path.exists(os.path.dirname(
-                    self.daos.values()[0].db_file_name) + '/flow.cylc') or
-                    os.path.exists(os.path.dirname(
-                        self.daos.values()[0].db_file_name) + '/suite.rc')):
+                wf_dir = Path([i for i in self.daos.values()][0].db_file_name).parent
+                if (
+                    (wf_dir / WorkflowFiles.FLOW_FILE).exists()
+                    or (wf_dir / WorkflowFiles.SUITE_RC).exists()
+                ):
                     return []
                 else:
                     raise exc
