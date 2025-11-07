@@ -25,6 +25,7 @@ ws_cli - Parse CLI. Start/Stop ad-hoc server.
 import cherrypy
 from glob import glob
 import os
+from pathlib import Path
 import signal
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
@@ -60,10 +61,12 @@ def ws_cli(service_cls, service_docstr, *args, **kwargs):
     """
 
     parser = COP(
-        service_docstr,
+        # service_docstr,
+        '',
         argdoc=[
             ("[start [PORT]]", "Start ad-hoc web service server."),
-            ("[stop]", "Stop ad-hoc web service server.")])
+            ("[stop]", "Stop ad-hoc web service server.")
+        ])
 
     parser.add_option(
         "--non-interactive", "--yes", "-y",
@@ -75,8 +78,8 @@ def ws_cli(service_cls, service_docstr, *args, **kwargs):
         help="Include web service name under root of URL (for start only).",
         action="store_true", default=False, dest="service_root_mode")
 
-    opts, args = parser.parse_args(
-        remove_opts=['--host', '--user', '--verbose', '--debug'])
+    opts, args = parser.parse_args(['start'])
+        # remove_opts=['--host', '--user', '--verbose', '--debug'])
     arg = None
     if args:
         arg = args[0]
@@ -156,7 +159,8 @@ def _configure(service_cls):
     cherrypy.config["tools.encode.on"] = True
     cherrypy.config["tools.encode.encoding"] = "utf-8"
     config = {}
-    static_lib = get_util_home("lib", "cylc", "cylc-review", "static")
+    from pathlib import Path
+    static_lib = Path(__file__).parent / 'cylc_review/static'
     for name in os.listdir(static_lib):
         path = os.path.join(static_lib, name)
         if os.path.isdir(path):
@@ -196,10 +200,4 @@ def get_util_home(*args):
     If args are specified, they are added to the end of returned path.
 
     """
-    try:
-        value = os.environ["CYLC_DIR"]
-    except KeyError:
-        value = os.path.abspath(__file__)
-        for _ in range(4):  # assume __file__ under $CYLC_DIR/lib/cylc/
-            value = os.path.dirname(value)
-    return os.path.join(value, *args)
+    return str(Path(__file__).parent / '/'.join(args))

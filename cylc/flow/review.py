@@ -33,6 +33,7 @@ from jinja2 import select_autoescape
 import json
 import mimetypes
 import os
+from pathlib import Path
 import pwd
 import re
 import shlex
@@ -50,6 +51,7 @@ from cylc.flow.task_state import (
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.ws import get_util_home
 from cylc.flow.workflow_files import WorkflowFiles
+from cylc.flow import cylc_review
 
 
 CYLC8_TASK_STATUSES_ORDERED = [
@@ -102,8 +104,7 @@ class CylcReviewService(object):
         self.cylc_version = CYLC_VERSION
         # Autoescape markup to prevent code injection from user inputs.
         template_env = jinja2.Environment(
-            loader=jinja2.FileSystemLoader(
-                get_util_home("lib", "cylc", "cylc-review", "template")),
+            loader=jinja2.PackageLoader('cylc', package_path='flow/cylc_review/template'),
             autoescape=select_autoescape(
                 enabled_extensions=('html', 'xml'), default_for_string=True),
         )
