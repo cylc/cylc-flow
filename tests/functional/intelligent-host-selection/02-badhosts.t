@@ -67,16 +67,16 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
 LOGFILE="${WORKFLOW_RUN_DIR}/log/scheduler/log"
 
 # Check that badhosttask has submit failed, but not good or mixed
-named_grep_ok "badhost task submit failed" \
+named_grep_ok "${TEST_NAME_BASE}-badhost-task-submit-failed" \
     "1/badhosttask.* submit-failed" "${LOGFILE}"
-named_grep_ok "goodhost suceeded" \
+named_grep_ok "${TEST_NAME_BASE}-goodhost-suceeded" \
     "1/mixedhosttask.* succeeded" "${LOGFILE}"
-named_grep_ok "mixedhost task suceeded" \
+named_grep_ok "${TEST_NAME_BASE}-mixedhost-task-suceeded" \
     "1/goodhosttask.* succeeded" "${LOGFILE}"
 
 # Check that when a task fail badhosts associated with that task's platform
 # are removed from the badhosts set.
-named_grep_ok "remove task platform bad hosts after submit-fail" \
+named_grep_ok "${TEST_NAME_BASE}-remove-task-platform-bad-hosts-after-submit-fail" \
     "initialisation did not complete (no hosts were reachable)" \
     "${LOGFILE}"
 

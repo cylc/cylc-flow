@@ -29,7 +29,7 @@ TEST_NAME="${TEST_NAME_BASE}-run"
 workflow_run_ok "${TEST_NAME}" \
     cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=${TEST_NAME_BASE}-ps
+TEST_NAME="${TEST_NAME_BASE}-ps"
 for DIR in "${WORKFLOW_RUN_DIR}"/work/*/t*; do
     run_fail "${TEST_NAME}.$(basename "$DIR")" ps "$(cat "${DIR}/file")"
 done

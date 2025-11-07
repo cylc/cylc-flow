@@ -42,7 +42,13 @@ run_ok "${TEST_NAME_BASE}" cylc play --no-detach "${WORKFLOW_NAME}" --debug
 
 WORKFLOW_LOG="${WORKFLOW_RUN_DIR}/log/scheduler/log"
 
-named_grep_ok 'jobs kill succeeded' "jobs-kill ret_code\] 0" "${WORKFLOW_LOG}"
-named_grep_ok 'jobs kill killed 1/foo' "jobs-kill out.*1/foo/01" "${WORKFLOW_LOG}"
+named_grep_ok \
+    "${TEST_NAME_BASE}-jobs-kill-succeeded" \
+    "jobs-kill ret_code\] 0" \
+    "${WORKFLOW_LOG}"
+named_grep_ok \
+    "${TEST_NAME_BASE}-killed-foo" \
+    "jobs-kill out.*1/foo/01" \
+    "${WORKFLOW_LOG}"
 
 purge
