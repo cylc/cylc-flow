@@ -405,25 +405,6 @@ class CylcReviewService(object):
         except jinja2.TemplateError:
             traceback.print_exc()
 
-    @cherrypy.expose
-    def jobs(self, user, suite, page=1, cycles=None, tasks=None,
-             no_status=None, order=None, per_page=None, no_fuzzy_time="0",
-             form=None):
-        """(Deprecated) Redirect to self.taskjobs.
-
-        Convert "no_status" to "task_status" argument of self.taskjobs.
-        """
-        task_status = None
-        if no_status:
-            task_status = []
-            if not isinstance(no_status, list):
-                no_status = [no_status]
-            for key, values in TASK_STATUS_GROUPS.items():
-                if key not in no_status:
-                    task_status += values
-        return self.taskjobs(
-            user, suite, page, cycles, tasks, task_status,
-            None, order, per_page, no_fuzzy_time, form)
 
     @cherrypy.expose
     def suites(self, user, names=None, page=1, order=None, per_page=None,
