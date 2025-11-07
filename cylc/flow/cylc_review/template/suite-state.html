@@ -1,0 +1,27 @@
+{% if states is defined %}
+  Suite
+  {% if states.is_failed -%}
+    <span class="label label-danger"><i
+    class="glyphicon glyphicon-remove"
+    title="failed task(s)"></i></span>
+    has failed tasks,
+  {% endif -%}
+  {% if states.is_running and states.last_activity_time -%}
+    <span class="label label-info"><i
+    class="glyphicon glyphicon-play" title="running"></i></span>
+    {% if states.server -%}
+    is running on {{states.server}},
+    {% else -%}
+    is running,
+    {% endif -%}
+    last activity
+    <abbr class="livestamp" title=
+    "{{states.last_activity_time}}">{{states.last_activity_time}}</abbr>
+  {% elif states.last_activity_time -%}
+    <i class="glyphicon glyphicon-stop" title="last active"></i>
+    is stopped, last activity
+    <abbr class="livestamp" title=
+    "{{states.last_activity_time}}">{{states.last_activity_time}}</abbr>
+  {% endif -%}
+{% endif %}
+<br><br />
