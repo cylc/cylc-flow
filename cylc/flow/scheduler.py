@@ -1355,8 +1355,8 @@ class Scheduler:
                 pre_prep_tasks.update(self.pool.release_queued_tasks())
 
         if (
-            # Manually triggered tasks will be in preparing state and should
-            # be submitted even if paused (unless stopping).
+            # Manually triggered tasks will be preparing and should
+            # be submitted even if paused (unless workflow is stopping).
             self.is_paused and not self.stop_mode
         ) or (
             # Need to get preparing tasks to submit before auto restart
@@ -1369,8 +1369,7 @@ class Scheduler:
             pre_prep_tasks.update({
                 itask
                 for itask in self.pool.get_tasks()
-                if itask.state(TASK_STATUS_PREPARING)
-                and itask.waiting_on_job_prep
+                if itask.waiting_on_job_prep
             })
 
         # Return, if no tasks to submit.

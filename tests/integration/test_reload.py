@@ -16,19 +16,20 @@
 
 """Tests for reload behaviour in the scheduler."""
 
-from contextlib import suppress
 
-from cylc.flow import commands
-from cylc.flow.data_store_mgr import TASK_PROXIES
-from cylc.flow.scheduler import Scheduler
-from cylc.flow.task_state import (
-    TASK_STATUS_WAITING,
-    TASK_STATUS_PREPARING,
-    TASK_STATUS_SUBMITTED,
+from cylc.flow import (
+    commands,
+    flags,
 )
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.data_store_mgr import TASK_PROXIES
 from cylc.flow.platforms import get_platform
-from cylc.flow import flags
+from cylc.flow.scheduler import Scheduler
+from cylc.flow.task_state import (
+    TASK_STATUS_PREPARING,
+    TASK_STATUS_SUBMITTED,
+    TASK_STATUS_WAITING,
+)
 
 
 async def test_reload_waits_for_pending_tasks(
@@ -68,8 +69,10 @@ async def test_reload_waits_for_pending_tasks(
 
         # set the task to go through some state changes
         def submit_task_jobs(*a, **k):
-            with suppress(IndexError):
+            try:
                 foo.state_reset(state_seq.pop(0))
+            except IndexError:
+                foo.waiting_on_job_prep = False
             return [foo]
 
         monkeypatch.setattr(

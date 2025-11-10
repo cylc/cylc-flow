@@ -42,7 +42,17 @@ from cylc.flow.task_state import (
 )
 
 
-async def test_trigger_workflow_paused(
+async def test_workflow_paused_simple(
+    one_conf, flow, scheduler, run, complete
+):
+    """It should run triggered tasks even if the workflow is paused."""
+    schd: Scheduler = scheduler(flow(one_conf), paused_start=True)
+    async with run(schd):
+        await run_cmd(force_trigger_tasks(schd, ['1/one'], ['1']))
+        await complete(schd, '1/one', allow_paused=True, timeout=1)
+
+
+async def test_workflow_paused_queues(
     flow: 'Fixture',
     scheduler: 'Fixture',
     start: 'Fixture',
@@ -111,7 +121,8 @@ async def test_trigger_workflow_paused(
 
 
 async def test_trigger_group_whilst_paused(flow, scheduler, run, complete):
-    """Only group start tasks should run whilst the scheduler is paused.
+    """Only group start tasks should run if the group is triggered whilst
+    the scheduler is paused.
 
     Group start tasks have only off-group dependencies.
 
@@ -119,14 +130,8 @@ async def test_trigger_group_whilst_paused(flow, scheduler, run, complete):
     prerequisites are satisfied once the workflow is resumed.
 
     """
-    id_ = flow(
-        {
-            'scheduling': {
-                'graph': {'R1': 'a => b => c => d'},
-            },
-        }
-    )
-    schd = scheduler(id_)
+    id_ = flow('a => b => c => d')
+    schd = scheduler(id_, paused_start=True)
     async with run(schd):
         # trigger the chain
         await run_cmd(force_trigger_tasks(schd, ['1/a'], []))
