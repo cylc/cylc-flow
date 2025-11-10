@@ -62,6 +62,7 @@ from cylc.flow.data_store_mgr import (
     FAMILIES,
     FAMILY_PROXIES,
     JOBS,
+    RUNTIME_CFG_MAP_TO_FIELD,
     TASK_PROXIES,
     TASKS,
 )
@@ -874,23 +875,14 @@ class Runtime(ObjectType):
 
 
 RUNTIME_FIELD_TO_CFG_MAP = {
-    **{
-        k: k.replace('_', ' ') for k in Runtime.__dict__
-        if not k.startswith('_')
-    },
-    'init_script': 'init-script',
-    'env_script': 'env-script',
-    'err_script': 'err-script',
-    'exit_script': 'exit-script',
-    'pre_script': 'pre-script',
-    'post_script': 'post-script',
-    'work_sub_dir': 'work sub-directory',
+    v: k
+    for k, v in RUNTIME_CFG_MAP_TO_FIELD.items()
 }
-"""Map GQL Runtime fields' names to workflow config setting names."""
+"""Map Pb/GraphQL Runtime fields' names to workflow config setting names."""
 
 
 def runtime_schema_to_cfg(runtime: dict) -> dict:
-    """Covert GQL Runtime field names to workflow config setting names and
+    """Covert GraphQL Runtime field names to workflow config setting names and
     perform any necessary processing on the values."""
     # We have to manually lowercase the run_mode field because we don't define
     # a proper schema for BroadcastSetting (it's just GenericScalar) so
@@ -935,6 +927,13 @@ class Job(ObjectType):
     )
     finished_time = String(
         description='The time this job finished running (if it has yet).',
+    )
+    estimated_finish_time = String(
+        description=(
+            "The estimated time this job will finish, if applicable. "
+            "This is based on the task's mean run time, or if not available, "
+            "the execution time limit."
+        ),
     )
     job_id = ID(
         description='The ID of this job in the job runner it was submitted to.'
@@ -1654,9 +1653,11 @@ class NamespaceName(String):
 class NamespaceIDGlob(String):
     """A task or family ID e.g. `2000/foo`.
 
-    Globs can be used to match active tasks or families.
+    Globs can be used to match tasks or families, e.g, `2*/foo*` might match
+    `2000/foot`. Cycle point globs will only match active cycles.
 
-    E.g `2*/foo*` might match `2000/foot`.
+    Selectors can be used to match active tasks by state, e.g, `*:failed` will
+    match all failed tasks.
     """
 
 
@@ -2218,12 +2219,16 @@ class Trigger(Mutation, TaskMutation):
         ''')
         resolver = partial(mutator, command='force_trigger_tasks')
 
+    # BACK COMPAT: on_resume
+    #   Arg no longer used but retained for older clients.
+    # From: 8.6
+    # Remove at: 8.7
     class Arguments(TaskMutation.Arguments, FlowMutationArguments):
         on_resume = Boolean(
             default_value=False,
             description=sstrip('''
-                If the workflow is paused, wait until it is resumed before
-                running the triggered task(s).
+                DEPRECATED: this option is no longer needed and will be
+                ignored by the scheduler.
             ''')
         )
 

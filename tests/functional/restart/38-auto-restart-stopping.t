@@ -17,7 +17,7 @@
 #-------------------------------------------------------------------------------
 export REQUIRE_PLATFORM='loc:remote fs:shared runner:background'
 . "$(dirname "$0")/test_header"
-set_test_number 2
+set_test_number 3
 if ${CYLC_TEST_DEBUG:-false}; then ERR=2; else ERR=1; fi
 #-------------------------------------------------------------------------------
 # ensure that workflows don't get auto stop-restarted if they are already stopping
@@ -52,7 +52,8 @@ ${BASE_GLOBAL_CONFIG}
 "
 
 run_ok "${TEST_NAME}-workflow-start" cylc play "${WORKFLOW_NAME}" --host=localhost
-cylc workflow-state "${WORKFLOW_NAME}//1/foo:running" --interval=1 --max-polls=20 >& $ERR
+run_ok "wait-for-task-foo-to-start" \
+    cylc workflow-state "${WORKFLOW_NAME}//1/foo:started" --triggers --interval=1 --max-polls=20 >& $ERR
 
 # condemn localhost
 create_test_global_config '' "

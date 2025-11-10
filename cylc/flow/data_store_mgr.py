@@ -54,23 +54,30 @@ Packaging methods are included for dissemination of protobuf messages.
 
 """
 
+from collections import (
+    Counter,
+    deque,
+)
 from contextlib import suppress
-from collections import Counter, deque
 from copy import deepcopy
 import json
 from time import time
 from typing import (
+    TYPE_CHECKING,
     Any,
     Dict,
-    Optional,
     List,
+    Literal,
+    Optional,
     Set,
-    TYPE_CHECKING,
     Tuple,
 )
 import zlib
 
-from cylc.flow import __version__ as CYLC_VERSION, LOG
+from cylc.flow import (
+    LOG,
+    __version__ as CYLC_VERSION,
+)
 from cylc.flow.cycling.loader import get_point
 from cylc.flow.data_messages_pb2 import (
     AllDeltas,
@@ -98,42 +105,52 @@ from cylc.flow.network import API
 from cylc.flow.parsec.util import (
     listjoin,
     pdeepcopy,
-    poverride
+    poverride,
 )
 from cylc.flow.run_modes import RunMode
-from cylc.flow.workflow_status import (
-    get_workflow_status,
-    get_workflow_status_msg,
+from cylc.flow.task_job_logs import (
+    JOB_LOG_OPTS,
+    get_task_job_log,
 )
-from cylc.flow.task_job_logs import JOB_LOG_OPTS, get_task_job_log
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
-    TASK_STATUS_WAITING,
-    TASK_STATUS_SUBMITTED,
-    TASK_STATUS_SUBMIT_FAILED,
-    TASK_STATUS_RUNNING,
-    TASK_STATUS_SUCCEEDED,
     TASK_STATUS_FAILED,
-    TASK_STATUSES_ORDERED
+    TASK_STATUS_RUNNING,
+    TASK_STATUS_SUBMIT_FAILED,
+    TASK_STATUS_SUBMITTED,
+    TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_WAITING,
+    TASK_STATUSES_FINAL,
+    TASK_STATUSES_ORDERED,
 )
 from cylc.flow.task_state_prop import extract_group_state
-from cylc.flow.taskdef import generate_graph_parents, generate_graph_children
-from cylc.flow.task_state import TASK_STATUSES_FINAL
+from cylc.flow.taskdef import (
+    generate_graph_children,
+    generate_graph_parents,
+)
 from cylc.flow.util import (
+    deserialise_set,
     serialise_set,
-    deserialise_set
 )
 from cylc.flow.wallclock import (
     TIME_ZONE_LOCAL_INFO,
     TIME_ZONE_UTC_INFO,
-    get_utc_mode
+    get_time_string_from_unix_time as time2str,
+    get_unix_time_from_time_string as str2time,
+    get_utc_mode,
 )
+from cylc.flow.workflow_status import (
+    get_workflow_status,
+    get_workflow_status_msg,
+)
+
 
 if TYPE_CHECKING:
     from cylc.flow.cycling import PointBase
     from cylc.flow.flow_mgr import FlowNums
     from cylc.flow.prerequisite import Prerequisite
     from cylc.flow.scheduler import Scheduler
+    from cylc.flow.taskdef import TaskDef
 
 EDGES = 'edges'
 FAMILIES = 'families'
@@ -214,6 +231,37 @@ DEQUE_FIELD_MAP = {
     WORKFLOW: {'log_records': 10}
 }
 
+# internal runtime to protobuf field name mapping
+RUNTIME_CFG_MAP_TO_FIELD = {
+    'completion': 'completion',
+    'directives': 'directives',
+    'environment': 'environment',
+    'env-script': 'env_script',
+    'err-script': 'err_script',
+    'execution polling intervals': 'execution_polling_intervals',
+    'execution retry delays': 'execution_retry_delays',
+    'execution time limit': 'execution_time_limit',
+    'exit-script': 'exit_script',
+    'init-script': 'init_script',
+    'outputs': 'outputs',
+    'post-script': 'post_script',
+    'platform': 'platform',
+    'pre-script': 'pre_script',
+    'run mode': 'run_mode',
+    'script': 'script',
+    'submission polling intervals': 'submission_polling_intervals',
+    'submission retry delays': 'submission_retry_delays',
+    'work sub-directory': 'work_sub_dir',
+}
+RUNTIME_LIST_JOINS = {
+    'execution polling intervals',
+    'execution retry delays',
+    'submission polling intervals',
+    'submission retry delays',
+}
+RUNTIME_JSON_DUMPS = {'directives', 'environment', 'outputs'}
+RUNTIME_STRINGIFYS = {'execution time limit'}
+
 
 def setbuff(obj, key, value):
     """Set an attribute on a protobuf object.
@@ -256,7 +304,7 @@ def generate_checksum(in_strings):
     return zlib.adler32(''.join(sorted(in_strings)).encode()) & 0xffffffff
 
 
-def task_mean_elapsed_time(tdef):
+def task_mean_elapsed_time(tdef: 'TaskDef') -> float | None:
     """Calculate task mean elapsed time."""
     if tdef.elapsed_times:
         return round(sum(tdef.elapsed_times) / len(tdef.elapsed_times))
@@ -316,6 +364,41 @@ def runtime_from_config(rtconfig):
             ]
         )
     )
+
+
+def runtime_from_partial(rtconfig, runtimeold: Optional[PbRuntime] = None):
+    """Populate runtime object from partial/full config.
+
+    Potentially slower than the non-partial one, due to tha the setattr calls,
+    but does not have expected fields.
+    """
+    runtime = PbRuntime()
+    if runtimeold is not None:
+        runtime.CopyFrom(runtimeold)
+    for key, val in rtconfig.items():
+        if val is None or key not in RUNTIME_CFG_MAP_TO_FIELD:
+            continue
+        elif key in RUNTIME_LIST_JOINS:
+            setattr(runtime, RUNTIME_CFG_MAP_TO_FIELD[key], listjoin(val))
+        elif key in RUNTIME_JSON_DUMPS:
+            setattr(
+                runtime,
+                RUNTIME_CFG_MAP_TO_FIELD[key],
+                json.dumps(
+                    [
+                        {'key': k, 'value': v}
+                        for k, v in val.items()
+                    ]
+                )
+            )
+        elif key == 'platform' and isinstance(val, dict):
+            with suppress(KeyError, TypeError):
+                setattr(runtime, RUNTIME_CFG_MAP_TO_FIELD[key], val['name'])
+        elif key in RUNTIME_STRINGIFYS:
+            setattr(runtime, RUNTIME_CFG_MAP_TO_FIELD[key], str(val or ''))
+        else:
+            setattr(runtime, RUNTIME_CFG_MAP_TO_FIELD[key], val)
+    return runtime
 
 
 def reset_protobuf_object(msg_class, msg_orig):
@@ -570,7 +653,7 @@ class DataStoreMgr:
         self.n_window_completed_walks = set()
         self.n_window_depths = {}
         self.update_window_depths = False
-        self.db_load_task_proxies = {}
+        self.db_load_task_proxies: Dict[str, Tuple[TaskProxy, bool]] = {}
         self.family_pruned_ids = set()
         self.prune_trigger_nodes = {}
         self.prune_flagged_nodes = set()
@@ -1527,12 +1610,10 @@ class DataStoreMgr:
                     # added to an already-spawned task before restart.)
 
         # Extract info from itasks to data-store.
-        for task_info in self.db_load_task_proxies.values():
+        for itask, _is_parent in self.db_load_task_proxies.values():
             self._process_internal_task_proxy(
-                task_info[0],
-                self.added[TASK_PROXIES][
-                    self.id_.duplicate(task_info[0].tokens).id
-                ]
+                itask,
+                self.added[TASK_PROXIES][self.id_.duplicate(itask.tokens).id]
             )
 
         # Batch load jobs from DB.
@@ -1575,6 +1656,9 @@ class DataStoreMgr:
             ext_trig.satisfied = satisfied
 
         for label, satisfied in itask.state.xtriggers.items():
+            # Reload may have removed xtrigger of orphan task
+            if label not in self.schd.xtrigger_mgr.xtriggers.functx_map:
+                continue
             sig = self.schd.xtrigger_mgr.get_xtrig_ctx(
                 itask, label).get_signature()
             xtrig = tproxy.xtriggers[f'{label}={sig}']
@@ -1609,27 +1693,29 @@ class DataStoreMgr:
             poverride(rtconfig, overrides, prepend=True)
         return rtconfig
 
-    def insert_job(self, name, cycle_point, status, job_conf):
+    def insert_job(
+        self,
+        itask: 'TaskProxy',
+        status: str,
+        job_conf: dict,
+    ) -> None:
         """Insert job into data-store.
 
         Args:
-            name (str): Corresponding task name.
-            cycle_point (str|PointBase): Cycle point string
-            job_conf (dic):
+            status: The task's state.
+            job_conf:
                 Dictionary of job configuration used to generate
                 the job script.
                 (see TaskJobManager._prep_submit_task_job_impl)
 
-        Returns:
-
-            None
-
         """
+        if status not in JOB_STATUS_SET:
+            # Ignore task-only states e.g. preparing
+            # https://github.com/cylc/cylc-flow/issues/4994
+            return
+
         sub_num = job_conf['submit_num']
-        tp_tokens = self.id_.duplicate(
-            cycle=str(cycle_point),
-            task=name,
-        )
+        tp_tokens = self.id_.duplicate(itask.tokens)
         tproxy: Optional[PbTaskProxy]
         tp_id, tproxy = self.store_node_fetcher(tp_tokens)
         if not tproxy:
@@ -1639,9 +1725,6 @@ class DataStoreMgr:
         j_id, job = self.store_node_fetcher(j_tokens)
         if job:
             # Job already exists (i.e. post-submission submit failure)
-            return
-
-        if status not in JOB_STATUS_SET:
             return
 
         j_buf = PbJob(
@@ -1655,16 +1738,13 @@ class DataStoreMgr:
             execution_time_limit=job_conf.get('execution_time_limit'),
             platform=job_conf['platform']['name'],
             job_runner_name=job_conf.get('job_runner_name'),
+            job_id=itask.summary.get('submit_method_id'),
         )
         # Not all fields are populated with some submit-failures,
         # so use task cfg as base.
-        j_cfg = pdeepcopy(self._apply_broadcasts_to_runtime(
-            tp_tokens,
-            self.schd.config.cfg['runtime'][tproxy.name]
-        ))
-        for key, val in job_conf.items():
-            j_cfg[key] = val
-        j_buf.runtime.CopyFrom(runtime_from_config(j_cfg))
+        j_buf.runtime.CopyFrom(
+            runtime_from_partial(job_conf, tproxy.runtime)
+        )
 
         # Add in log files.
         j_buf.job_log_dir = get_task_job_log(
@@ -2328,16 +2408,16 @@ class DataStoreMgr:
         self.updates_pending = True
 
     def _generate_broadcast_node_deltas(self, node_data, node_type):
-        cfg = self.schd.config.cfg
+        rt_cfg = self.schd.config.cfg['runtime']
         # NOTE: node_data may change during operation so make a copy
         # see https://github.com/cylc/cylc-flow/pull/6397
         for node_id, node in list(node_data.items()):
+            # Avoid removed tasks with deltas queued during reload.
+            if node.name not in rt_cfg:
+                continue
             tokens = Tokens(node_id)
             new_runtime = runtime_from_config(
-                self._apply_broadcasts_to_runtime(
-                    tokens,
-                    cfg['runtime'][node.name]
-                )
+                self._apply_broadcasts_to_runtime(tokens, rt_cfg[node.name])
             )
             new_sruntime = new_runtime.SerializeToString(
                 deterministic=True
@@ -2741,11 +2821,14 @@ class DataStoreMgr:
     # -----------
     # Job Deltas
     # -----------
-    def delta_job_msg(self, tokens: Tokens, msg: str) -> None:
-        """Add message to job."""
+    def delta_job_msg(self, tokens: Tokens, msg: str) -> bool:
+        """Add message to job.
+
+        Returns False if the job was not found in the data store.
+        """
         j_id, job = self.store_node_fetcher(tokens)
         if not job:
-            return
+            return False
         j_delta = self.updated[JOBS].setdefault(
             j_id,
             PbJob(id=j_id)
@@ -2758,15 +2841,16 @@ class DataStoreMgr:
             j_delta.messages[:] = job.messages
             j_delta.messages.append(msg)
         self.updates_pending = True
+        return True
 
     def delta_job_attr(
         self,
-        tokens: Tokens,
+        itask: 'TaskProxy',
         attr_key: str,
         attr_val: Any,
     ) -> None:
         """Set job attribute."""
-        j_id, job = self.store_node_fetcher(tokens)
+        j_id, job = self.store_node_fetcher(itask.job_tokens)
         if not job:
             return
         j_delta = PbJob(stamp=f'{j_id}@{time()}')
@@ -2779,12 +2863,19 @@ class DataStoreMgr:
 
     def delta_job_state(
         self,
-        tokens: Tokens,
+        itask: 'TaskProxy',
         status: str,
     ) -> None:
         """Set job state."""
-        j_id, job = self.store_node_fetcher(tokens)
-        if not job or status not in JOB_STATUS_SET:
+        if status not in JOB_STATUS_SET:
+            # Ignore task-only states e.g. preparing
+            return
+        j_id, job = self.store_node_fetcher(itask.job_tokens)
+        if not job or (
+            # Don't cause backwards state change:
+            JOB_STATUSES_ALL.index(status) <= JOB_STATUSES_ALL.index(job.state)
+            and not itask.job_vacated
+        ):
             return
         j_delta = PbJob(
             stamp=f'{j_id}@{time()}',
@@ -2798,20 +2889,24 @@ class DataStoreMgr:
 
     def delta_job_time(
         self,
-        tokens: Tokens,
-        event_key: str,
-        time_str: Optional[str] = None,
+        itask: 'TaskProxy',
+        event_key: Literal['submitted', 'started', 'finished'],
+        time_str: str,
     ) -> None:
-        """Set an event time in job pool object.
-
-        Set values of both event_key + '_time' and event_key + '_time_string'.
-        """
-        j_id, job = self.store_node_fetcher(tokens)
+        """Set an event time in job pool object."""
+        j_id, job = self.store_node_fetcher(itask.job_tokens)
         if not job:
             return
         j_delta = PbJob(stamp=f'{j_id}@{time()}')
         time_attr = f'{event_key}_time'
         setbuff(j_delta, time_attr, time_str)
+        if (
+            event_key == 'started'
+            and (run_time := task_mean_elapsed_time(itask.tdef)) is not None
+        ):
+            j_delta.estimated_finish_time = (
+                time2str(str2time(time_str) + run_time) if time_str else ''
+            )
         self.updated[JOBS].setdefault(
             j_id,
             PbJob(id=j_id)

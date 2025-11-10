@@ -30,7 +30,8 @@ from cylc.flow.flow_mgr import (
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.commands import (
     run_cmd,
-    force_trigger_tasks
+    force_trigger_tasks,
+    set_prereqs_and_outputs,
 )
 
 
@@ -113,12 +114,16 @@ async def test_flow_assignment(
     schd: Scheduler = scheduler(id_, run_mode='simulation', paused_start=True)
     async with start(schd):
         if command == 'set':
-            do_command: Callable = functools.partial(
-                schd.pool.set_prereqs_and_outputs, outputs=['x'], prereqs=[]
+            do_command = functools.partial(
+                set_prereqs_and_outputs,
+                schd,
+                outputs=['x'],
+                prerequisites=[],
             )
         else:
             do_command = functools.partial(
-                force_trigger_tasks, schd
+                force_trigger_tasks,
+                schd,
             )
 
         active_1, active_2 = schd.pool.get_tasks()  # foo, bar in any order
@@ -129,77 +134,52 @@ async def test_flow_assignment(
 
         # -----(1. Test active tasks)-----
 
+        await run_cmd(do_command([active_1.identity], flow=[]))
         if command == "set":
             # By default active tasks merge existing and active flows.
-            do_command([active_1.identity], flow=[])
             assert active_1.flow_nums == {1, 2}
         else:
             # By default active tasks keep existing flows.
-            await run_cmd(do_command([active_1.identity], flow=[]))
             assert active_1.flow_nums == {1}
 
         # Else merge existing and requested flows.
-        if command == "set":
-            do_command([active_1.identity], flow=['2'])
-        else:
-            await run_cmd(do_command([active_1.identity], flow=['2']))
+        await run_cmd(do_command([active_1.identity], flow=['2']))
         assert active_1.flow_nums == {1, 2}
 
         # (no-flow is ignored for active tasks)
-        if command == "set":
-            do_command([active_1.identity], flow=[FLOW_NONE])
-        else:
-            await run_cmd(do_command([active_1.identity], flow=[FLOW_NONE]))
+        await run_cmd(do_command([active_1.identity], flow=[FLOW_NONE]))
         assert active_1.flow_nums == {1, 2}
         assert log_filter(
             contains=("Already active - ignoring"),
             level=logging.WARNING
         )
 
-        if command == "set":
-            do_command([active_1.identity], flow=[FLOW_NEW])
-        else:
-            await run_cmd(do_command([active_1.identity], flow=[FLOW_NEW]))
+        await run_cmd(do_command([active_1.identity], flow=[FLOW_NEW]))
         assert active_1.flow_nums == {1, 2, 3}
 
         # -----(2. Test inactive tasks)-----
         if command == 'set':
             do_command = functools.partial(
-                schd.pool.set_prereqs_and_outputs, outputs=[], prereqs=['all']
+                set_prereqs_and_outputs,
+                schd,
+                outputs=[],
+                prerequisites=['all'],
             )
 
         # By default inactive tasks get all active flows.
-        if command == "set":
-            do_command(['1/a'], flow=[])
-        else:
-            await run_cmd(do_command(['1/a'], flow=[]))
+        await run_cmd(do_command(['1/a'], flow=[]))
         assert schd.pool._get_task_by_id('1/a').flow_nums == {1, 2, 3}
 
         # Else assign requested flows.
         # Run as no-flow:
-        from cylc.flow import LOG
-        LOG.critical("ZER")
-        if command == "set":
-            do_command(['1/b'], flow=[FLOW_NONE])
-        else:
-            await run_cmd(do_command(['1/b'], flow=[FLOW_NONE]))
-        LOG.critical("ONE")
+        await run_cmd(do_command(['1/b'], flow=[FLOW_NONE]))
         assert schd.pool._get_task_by_id('1/b').flow_nums == set()
 
-        if command == "set":
-            do_command(['1/c'], flow=[FLOW_NEW])
-        else:
-            await run_cmd(do_command(['1/c'], flow=[FLOW_NEW]))
+        await run_cmd(do_command(['1/c'], flow=[FLOW_NEW]))
         assert schd.pool._get_task_by_id('1/c').flow_nums == {4}
 
-        if command == "set":
-            do_command(['1/d'], flow=[])
-        else:
-            await run_cmd(do_command(['1/d'], flow=[]))
+        await run_cmd(do_command(['1/d'], flow=[]))
         assert schd.pool._get_task_by_id('1/d').flow_nums == {1, 2, 3, 4}
 
-        if command == "set":
-            do_command(['1/e'], flow=["7"])
-        else:
-            await run_cmd(do_command(['1/e'], flow=["7"]))
+        await run_cmd(do_command(['1/e'], flow=["7"]))
         assert schd.pool._get_task_by_id('1/e').flow_nums == {7}

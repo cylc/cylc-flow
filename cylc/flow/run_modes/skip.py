@@ -20,6 +20,7 @@ from typing import (
     TYPE_CHECKING,
     Dict,
     List,
+    Literal,
     Optional,
     Set,
     Tuple,
@@ -34,14 +35,10 @@ from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUCCEEDED,
 )
+from cylc.flow.util import serialise_set
 
 
 if TYPE_CHECKING:
-    # BACK COMPAT: typing_extensions.Literal
-    # FROM: Python 3.7
-    # TO: Python 3.8
-    from typing_extensions import Literal
-
     from cylc.flow.task_job_mgr import TaskJobManager
     from cylc.flow.task_proxy import TaskProxy
     from cylc.flow.taskdef import TaskDef
@@ -82,7 +79,7 @@ def submit_task_job(
         itask, {
             'time_submit': now[1],
             'try_num': itask.get_try_num(),
-            'flow_nums': str(list(itask.flow_nums)),
+            'flow_nums': serialise_set(itask.flow_nums),
             'is_manual_submit': itask.is_manual_submit,
             'job_runner_name': RunMode.SKIP.value,
             'platform_name': RunMode.SKIP.value,

@@ -63,6 +63,7 @@ from cylc.flow.parsec.validate import (
 )
 from cylc.flow.pathutil import SYMLINKABLE_LOCATIONS
 from cylc.flow.platforms import validate_platforms
+from cylc.flow.task_events_mgr import TaskEventsManager as TEM
 from cylc.flow.workflow_events import WorkflowEventHandler
 
 
@@ -171,9 +172,11 @@ EVENTS_SETTINGS: Dict[str, Union[str, Dict[str, Any]]] = {  # workflow events
         Configure :term:`event handlers` that run when certain workflow
         events occur.
 
-        This section configures *workflow* event handlers; see
-        :cylc:conf:`flow.cylc[runtime][<namespace>][events]` for *task* event
-        handlers.
+        .. admonition:: Not to be confused with
+           :class: tip
+
+           For *task* events, see
+           :cylc:conf:`flow.cylc[runtime][<namespace>][events]`.
 
         Event handlers can be held in the workflow ``bin/`` directory,
         otherwise it is up to you to ensure their location is in ``$PATH``
@@ -194,18 +197,24 @@ EVENTS_SETTINGS: Dict[str, Union[str, Dict[str, Any]]] = {  # workflow events
 
             .. seealso::
 
-               :ref:`user_guide.scheduler.workflow_events`
+               :ref:`user_guide.scheduler.workflow_events.list`
         ''',
         'options': WorkflowEventHandler.EVENTS.copy(),
         'depr_options': WorkflowEventHandler.EVENTS_DEPRECATED.copy(),
+        'warn_options': True,
     },
     'mail events': {
         'desc': '''
             Specify the workflow events for which notification emails should
             be sent.
+
+            .. seealso::
+
+               :ref:`user_guide.scheduler.workflow_events.list`
         ''',
         'options': WorkflowEventHandler.EVENTS.copy(),
         'depr_options': WorkflowEventHandler.EVENTS_DEPRECATED.copy(),
+        'warn_options': True,
     },
     'startup handlers': f'''
         Handlers to run at scheduler startup.
@@ -364,13 +373,39 @@ EVENTS_SETTINGS: Dict[str, Union[str, Dict[str, Any]]] = {  # workflow events
     ''',
     'restart timeout': '''
         How long to wait for intervention on restarting a completed workflow.
-        The timer stops if any task is triggered.
+
+        When a workflow reaches the end of the :term:`graph`, it will
+        :term:`shut down <shutdown>` automatically. We call such workflows
+        :ref:`completed <workflow completion>` as there are no more tasks for
+        Cylc to run.
+
+        Completed workflows can be caused by:
+
+        * Cylc reaching the end of the :term:`graph`.
+        * The workflow reaching the
+          :cylc:conf:`flow.cylc[scheduling]final cycle point`.
+        * The workflow reaching the
+          :cylc:conf:`flow.cylc[scheduling]stop after cycle point`.
+        * Tasks being manually removed :ref:`interventions.remove_tasks`.
+
+        When you restart a completed workflow, it will detect that there are no
+        more tasks to run, and shut itself down again. The ``restart timeout``
+        delays this shutdown for a configured period allowing you to trigger
+        more task(s) to run.
 
         .. seealso::
 
-           :ref:`user_guide.scheduler.workflow_events`
+           * :ref:`user_guide.scheduler.workflow_events`
+           * :ref:`workflow completion`
+           * :ref:`examples.extending-workflow`
 
         .. versionadded:: 8.2.0
+
+        .. versionchanged:: 8.5.2
+
+           The ``restart timeout`` is now also activated for workflows that
+           have hit the
+           :cylc:conf:`flow.cylc[scheduling]stop after cycle point`.
 
     '''
 }
@@ -546,7 +581,10 @@ want to configure more frequent polling.
 TASK_EVENTS_DESCR = '''
 Configure the task event handling system.
 
-See also :cylc:conf:`flow.cylc[scheduler][events]` for *workflow* events.
+.. admonition:: Not to be confused with
+   :class: tip
+
+   For *workflow* events, see :cylc:conf:`flow.cylc[scheduler][events]`.
 
 Task :term:`event handlers` are scripts to run when task events occur.
 
@@ -576,26 +614,18 @@ task_event_handling.template_variables`.
         For more information, see
         :ref:`user_guide.runtime.task_event_handling`.
 
-        For workflow events, see
-        :ref:`user_guide.scheduler.workflow_event_handling`.
-
         Example::
 
            echo %(event)s occurred in %(workflow)s >> my-log-file
 
     ''',
-    'execution timeout': '''
-        If a task has not finished after the specified interval, the execution
-        timeout event handler(s) will be called.
-    ''',
-    'handler events': '''
+    'handler events': f'''
+        :Options: ``{"``, ``".join(TEM.STD_EVENTS)}`` & any custom event
+
         A list of events for which :cylc:conf:`[..]handlers` are run.
 
-        Specify the events for which the general task event handlers
-        :cylc:conf:`flow.cylc[runtime][<namespace>][events]handlers`
-        should be invoked.
-
-        See :ref:`user_guide.runtime.task_event_handling` for more information.
+        See :ref:`user_guide.runtime.task_event_handling.list` for more
+        information on task events.
 
         Example::
 
@@ -612,16 +642,25 @@ task_event_handling.template_variables`.
 
            PT10S, PT1M, PT5M
     ''',
-    'mail events': '''
-        Specify the events for which notification emails should be sent.
+    'mail events': f'''
+        :Options: ``{"``, ``".join(TEM.STD_EVENTS)}`` & any custom event
+
+        A list of events for which notification emails should be sent.
+
+        See :ref:`user_guide.runtime.task_event_handling.list` for more
+        information on task events.
 
         Example::
 
            submission failed, failed
     ''',
+    'execution timeout': '''
+        If a task has not finished after the specified interval, any configured
+        execution timeout event handler(s) will be called.
+    ''',
     'submission timeout': '''
-        If a task has not started after the specified interval, the submission
-        timeout event handler(s) will be called.
+        If a task has not started after the specified interval, any configured
+        submission timeout event handler(s) will be called.
     '''
 }
 
@@ -670,15 +709,36 @@ def comma_sep_section_note(version_changed: str = '') -> str:
 
 
 def short_descr(text: str) -> str:
-    """Get dedented one-paragraph description from long description."""
-    return dedent(text).split('\n\n', 1)[0]
+    r"""Get dedented one-paragraph description from long description.
+
+    Examples:
+        >>> short_descr('foo\n\nbar')
+        'foo'
+
+        >>> short_descr(':Field: Value\n\nfoo\n\nbar')
+        ':Field: Value\n\nfoo'
+
+    """
+    lines = []
+    for line in dedent(text).splitlines():
+        if not line:
+            continue
+        elif line.startswith(':'):
+            lines.append(line)
+        else:
+            lines.append(line)
+            break
+    return '\n\n'.join(lines)
 
 
 def default_for(
     text: str, config_path: str, section: bool = False
 ) -> str:
-    """Get dedented short description and insert a 'Default(s) For' directive
-    that links to this config item's flow.cylc counterpart."""
+    """Return a ":Default For: field for this config.
+
+    Get dedented short description and insert a 'Default(s) For' field
+    that links to this config item's flow.cylc counterpart.
+    """
     directive = f":Default{'s' if section else ''} For:"
     return (
         f"{directive} :cylc:conf:`flow.cylc{config_path}`.\n\n"
@@ -956,8 +1016,8 @@ with Conf('global.cylc', desc='''
 
                 .. code-block:: python
 
-                   # rank hosts by cpu_percent
-                   cpu_percent()
+                   # rank hosts by cpu_percent over a 1 second interval
+                   cpu_percent(1)  # Note: monitors CPU for 1 second
 
                    # rank hosts by 15min average of server load
                    getloadavg()[2]
@@ -980,7 +1040,7 @@ with Conf('global.cylc', desc='''
                 .. code-block:: python
 
                    # filter out hosts with a CPU utilisation of 70% or above
-                   cpu_percent() < 70
+                   cpu_percent(1) < 70
 
                    # filter out hosts with less than 1GB of RAM available
                    virtual_memory().available > 1000000000
@@ -997,20 +1057,37 @@ with Conf('global.cylc', desc='''
                 .. code-block:: python
 
                    # filter hosts
-                   cpu_percent() < 70
+                   cpu_percent(1) < 70
                    disk_usage('/').free > 1000000000
 
                    # rank hosts by CPU count
                    1 / cpu_count()
                    # if two hosts have the same CPU count
                    # then rank them by CPU usage
-                   cpu_percent()
+                   cpu_percent(1)
 
                 .. versionchanged:: 8.0.0
 
                    {REPLACES}``[suite servers][run host select]rank``.
             ''')
+            Conf('process check timeout', VDR.V_INTERVAL, DurationFloat(10),
+                 desc='''
+                Maximum time for the ``cylc play`` and ``cylc vr`` commands
+                to wait
+                for a remote process that checks if an unresponsive scheduler
+                is still alive (for workflows with existing contact files).
 
+                .. note::
+
+                   This check involves running ``cylc psutil`` on the run host.
+                   You may need to increase the timeout if shared filesystem
+                   latency (for example) results in slow Python script startup.
+                   Increasing the timeout unnecessarily, however, will just
+                   cause these commands to hang for an unnecessarily long time
+                   in this circumstance.
+
+                .. versionadded:: 8.5.2
+            ''')
         with Conf('host self-identification', desc=f'''
             How Cylc determines and shares the identity of the workflow host.
 
@@ -1297,8 +1374,8 @@ with Conf('global.cylc', desc='''
                     be created in ``<this-path>/cylc-run/<workflow-id>``
                     and a symbolic link will be created from
                     ``$HOME/cylc-run/<workflow-id>``.
-                    If not specified the workflow run directory will be created
-                    in ``$HOME/cylc-run/<workflow-id>``.
+                    If not specified, the workflow run directory will be
+                    created in ``$HOME/cylc-run/<workflow-id>``.
                     All the workflow files and the ``.service`` directory get
                     installed into this directory.
 
@@ -1308,13 +1385,12 @@ with Conf('global.cylc', desc='''
                     Conf(folder, VDR.V_STRING, None, desc=f"""
                         Alternative location for the {folder} dir.
 
-                        If specified the workflow {folder} directory will
+                        If specified, the workflow {folder} directory will
                         be created in
                         ``<this-path>/cylc-run/<workflow-id>/{folder}``
                         and a symbolic link will be created from
                         ``$HOME/cylc-run/<workflow-id>/{folder}``.
-                        If not specified the workflow log directory will
-                        be created in
+                        If not specified, the directory will be created in
                         ``$HOME/cylc-run/<workflow-id>/{folder}``.
 
                         .. versionadded:: {versionadded}
@@ -1446,12 +1522,6 @@ with Conf('global.cylc', desc='''
                 .. versionadded:: 8.0.0
 
                    {replaces}
-            ''')
-            Conf('shell', VDR.V_STRING, '/bin/bash', desc='''
-
-                .. versionchanged:: 8.0.0
-
-                   Moved from ``suite.rc[runtime][<namespace>]job``.
             ''')
             Conf('communication method',
                  VDR.V_STRING, 'zmq',
@@ -2027,12 +2097,6 @@ with Conf('global.cylc', desc='''
             TASK_EVENTS_DESCR, "[runtime][<namespace>][events]", section=True
         ) + "\n\n" + ".. versionadded:: 8.0.0"
     )):
-        Conf('execution timeout', VDR.V_INTERVAL, desc=(
-            default_for(
-                TASK_EVENTS_SETTINGS['execution timeout'],
-                "[runtime][<namespace>][events]execution timeout"
-            )
-        ))
         Conf('handlers', VDR.V_STRING_LIST, desc=(
             default_for(
                 TASK_EVENTS_SETTINGS['handlers'],
@@ -2055,6 +2119,12 @@ with Conf('global.cylc', desc='''
             default_for(
                 TASK_EVENTS_SETTINGS['mail events'],
                 "[runtime][<namespace>][events]mail events"
+            )
+        ))
+        Conf('execution timeout', VDR.V_INTERVAL, desc=(
+            default_for(
+                TASK_EVENTS_SETTINGS['execution timeout'],
+                "[runtime][<namespace>][events]execution timeout"
             )
         ))
         Conf('submission timeout', VDR.V_INTERVAL, desc=(

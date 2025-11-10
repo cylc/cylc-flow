@@ -33,5 +33,5 @@ cat > 'flow.cylc' <<__HEREDOC__
 __HEREDOC__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate . --debug
-grep_ok "CYLC_TEMPLATE_VARS={'CYLC_VERSION': '.*', 'CYLC_TEMPLATE_VARS': {...}}" \
+grep_ok "CYLC_TEMPLATE_VARS={'CYLC_VERSION': '.*', 'CYLC_TEMPLATE_VARS': {...}" \
     "${TEST_NAME_BASE}-validate.stderr"

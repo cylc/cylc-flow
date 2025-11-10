@@ -241,21 +241,28 @@ class CylcOptionParser(OptionParser):
     """Common options for all cylc CLI commands."""
 
     MULTITASK_USAGE = dedent('''
-        This command can operate on multiple tasks. Globs and selectors may
-        be used to match tasks in the n=0 active window (except in the
-        `cylc show` command, where globs match in the wider n-window):
+        This command can operate on multiple tasks:
             Multiple Tasks:
                 # Operate on two tasks
-                workflow //cycle-1/task-1 //cycle-2/task-2
+                //cycle-1/task-1 //cycle-2/task-2
 
-            Globs (note: quote globs; they only match in the active-window):
-                # Match any active-window task "foo" in all cycles
+                # Operate on all members of a family
+                //cycle-1/FAMILY-NAME
+
+                # Operate on all tasks in a cycle
+                //cycle  # shorthand for '//cycle/root'
+
+            Globs (note: quote globs or they might expand in your shell):
+                # Match all tasks in cycle "1" with names beginning with "foo"
+                ''//1/foo*'
+
+                # Match the task "foo" in all active (i.e. n=0) cycles
                 '//*/foo'
 
-                # Match the tasks "foo-1" and "foo-2"
+                # Match the tasks "foo-1" and "foo-2" in all active cycles.
                 '//*/foo-[12]'
 
-            Selectors (note: selectors only match in the active window too):
+            Selectors (note: selectors only match active tasks):
                 # match all failed tasks in cycle "1"
                 //1:failed
 

@@ -32,7 +32,6 @@ from typing import (
     Optional,
     Tuple,
     TYPE_CHECKING,
-    Union,
     cast,
 )
 from uuid import uuid4
@@ -69,9 +68,9 @@ if TYPE_CHECKING:
 
 class TaskMsg(NamedTuple):
     """Tuple for Scheduler.message_queue"""
-    job_id: Union[Tokens, str]
+    job_id: Tokens
     event_time: str
-    severity: Union[str, int]
+    severity: str | int
     message: str
 
 
@@ -839,7 +838,12 @@ class Resolvers(BaseResolvers):
         """
         for severity, message in messages:
             self.schd.message_queue.put(
-                TaskMsg(task_job, event_time, severity, message)
+                TaskMsg(
+                    Tokens(task_job, relative=True),
+                    event_time,
+                    severity,
+                    message,
+                )
             )
         return (True, f'Messages queued: {len(messages)}')
 

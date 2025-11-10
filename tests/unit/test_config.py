@@ -52,7 +52,6 @@ from cylc.flow.exceptions import (
     XtriggerConfigError,
 )
 from cylc.flow.parsec.exceptions import (
-    IllegalValueError,
     Jinja2Error,
 )
 from cylc.flow.scheduler_cli import RunOptions
@@ -1776,8 +1775,8 @@ def test_upg_wflow_event_names(back_compat, tmp_flow_config, log_filter):
 
 
 @pytest.mark.parametrize('item', ['handler events', 'mail events'])
-def test_val_wflow_event_names(item, tmp_flow_config):
-    """Any invalid workflow handler/mail events raise an error."""
+def test_val_wflow_event_names(item, tmp_flow_config, log_filter):
+    """Any invalid workflow handler/mail events raise a warning."""
     flow_file = tmp_flow_config('foo', f"""
         [scheduler]
             allow implicit tasks = true
@@ -1787,14 +1786,13 @@ def test_val_wflow_event_names(item, tmp_flow_config):
             [[graph]]
                 R1 = foo
     """)
-    with pytest.raises(IllegalValueError) as ex_info:
-        WorkflowConfig('foo', str(flow_file), ValidateOptions())
-    assert f"{item} = badger, alpaca" in str(ex_info.value)
+    WorkflowConfig('foo', str(flow_file), ValidateOptions())
+    assert log_filter(contains=f"{item} = badger, alpaca")
 
 
 @pytest.mark.parametrize('item', ['handler events', 'mail events'])
-def test_check_task_event_names(item, tmp_flow_config):
-    """"Any invalid task handler events raise an error."""
+def test_check_task_event_names(item, tmp_flow_config, log_filter):
+    """"Any invalid task handler events are warned about."""
     flow_file = tmp_flow_config('foo', f"""
         [scheduling]
             [[graph]]
@@ -1807,9 +1805,9 @@ def test_check_task_event_names(item, tmp_flow_config):
                 [[[outputs]]]
                     owl = who
     """)
-    with pytest.raises(WorkflowConfigError) as ex_info:
-        WorkflowConfig('foo', str(flow_file), ValidateOptions())
-    assert str(ex_info.value) == (
+
+    WorkflowConfig('foo', str(flow_file), ValidateOptions())
+    assert log_filter(contains=(
         f"Invalid event name(s) for [runtime][foo][events]{item}: "
         "badger, horse"
-    )
+    ))

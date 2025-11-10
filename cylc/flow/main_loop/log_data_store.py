@@ -107,15 +107,17 @@ def _plot(state, path):
     ax1.set_xlabel('Time (s)')
 
     ax1.set_ylabel('Objects')
-    for key, objects in state['objects'].items():
-        ax1.plot(times, objects, label=key)
+    lines = [
+        ax1.plot(times, objects, label=key)[0]
+        for key, objects in state['objects'].items()
+    ]
 
     ax2 = ax1.twinx()
     ax2.set_ylabel('Size (kb)')
     for sizes in state['size'].values():
         ax2.plot(times, [x / 1000 for x in sizes], linestyle=':')
 
-    ax1.legend(loc=0)
+    ax1.legend(lines, state['objects'], loc=0)
     ax2.legend(
         (ax1.get_children()[0], ax2.get_children()[0]),
         ('objects', 'size'),

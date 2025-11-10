@@ -295,7 +295,6 @@ def restricted_evaluator(
         ...     ast.Constant,    # required for literals e.g. "1"
         ...     ast.Name,        # required for using variables in expressions
         ...     ast.Load,        # required for accessing variable values
-        ...     ast.Num,         # for Python 3.7 compatibility
         ...     error_class=RestrictedSyntaxError,  # error to raise
         ... )
 

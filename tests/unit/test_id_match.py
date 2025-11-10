@@ -14,320 +14,262 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import TYPE_CHECKING, Callable
-from unittest.mock import create_autospec
+from textwrap import dedent
+from types import SimpleNamespace
+from typing import TYPE_CHECKING, Set, Tuple, cast
 
 import pytest
 
-from cylc.flow.id import IDTokens, Tokens
-from cylc.flow.id_match import filter_ids, point_match
-from cylc.flow.task_pool import Pool
-from cylc.flow.cycling.integer import IntegerPoint, CYCLER_TYPE_INTEGER
-from cylc.flow.cycling.iso8601 import ISO8601Point
-from cylc.flow.task_proxy import TaskProxy
-from cylc.flow.taskdef import TaskDef
+from cylc.flow.id import Tokens
+from cylc.flow.id_match import id_match
+from cylc.flow.config import WorkflowConfig
 
 if TYPE_CHECKING:
-    from cylc.flow.cycling import PointBase
+    from cylc.flow.id_match import TaskTokens
 
 
-def get_task_id(itask: TaskProxy) -> str:
-    return f"{itask.tokens.relative_id}:{itask.state.status}"
+def to_tokens(*ids):
+    return cast('Set[TaskTokens]', {Tokens(id_, relative=True) for id_ in ids})
+
+
+def to_string_ids(*ids):
+    return {id_.relative_id for id_ in ids}
+
+
+def to_string_ids_with_selectors(*ids):
+    return {id_.relative_id_with_selectors for id_ in ids}
 
 
 @pytest.fixture
-def task_pool(set_cycling_type: Callable):
-    def _task_proxy(id_, hier):
-        tokens = Tokens(id_, relative=True)
-        hier = hier.get(tokens['task'], [])
-        hier.append('root')
-        tdef = create_autospec(TaskDef, namespace_hierarchy=hier)
-        tdef.name = tokens['task']
-        tdef.expiration_offset = None
-        return TaskProxy(
-            Tokens('~user/workflow'),
-            tdef,
-            start_point=IntegerPoint(tokens['cycle']),
-            status=tokens['task_sel'],
-        )
+def test_config(tmp_path):
+    path = tmp_path / 'flow.cylc'
+    with open(path, 'w+') as flow_cylc:
+        flow_cylc.write(dedent('''
+            [scheduler]
+                allow implicit tasks = True
 
-    def _task_pool(pool, hier) -> 'Pool':
-        return {
-            IntegerPoint(cycle): {
-                id_.split(':')[0]: _task_proxy(id_, hier)
-                for id_ in ids
-            }
-            for cycle, ids in pool.items()
-        }
+            [scheduling]
+                cycling mode = integer
+                initial cycle point = 1
+                [[graph]]
+                    P1 = a => b => c => d
+                    P3 = z
+        '''))
 
-    set_cycling_type(CYCLER_TYPE_INTEGER)
-    return _task_pool
+    return WorkflowConfig('test', str(path), SimpleNamespace())
 
 
-@pytest.mark.parametrize(
-    'ids,matched,not_matched',
-    [
-        (
-            ['1'],
-            ['1/a:x', '1/b:x', '1/c:x'],
-            []
-        ),
-        (
-            ['2'],
-            [],
-            ['2']
-        ),
-        (
-            ['*'],
-            ['1/a:x', '1/b:x', '1/c:x'],
-            []
-        ),
-        (
-            ['1/*'],
-            ['1/a:x', '1/b:x', '1/c:x'],
-            []
-        ),
-        (
-            ['2/*'],
-            [],
-            ['2/*']
-        ),
-        (
-            ['*/*'],
-            ['1/a:x', '1/b:x', '1/c:x'],
-            []
-        ),
-        (
-            ['*/a'],
-            ['1/a:x'],
-            []
-        ),
-        (
-            ['*/z'],
-            [],
-            ['*/z']
-        ),
-        (
-            ['*/*:x'],
-            ['1/a:x', '1/b:x', '1/c:x'],
-            [],
-        ),
-        (
-            ['*/*:y'],
-            [],
-            ['*/*:y'],
-        ),
-    ]
-)
-def test_filter_ids_task_mode(task_pool, ids, matched, not_matched):
-    """Ensure tasks are returned in task mode."""
-    pool = task_pool(
-        {
-            1: ['1/a:x', '1/b:x', '1/c:x']
-        },
-        {}
-    )
-
-    _matched, _not_matched = filter_ids(pool, ids)
-    assert [get_task_id(itask) for itask in _matched] == matched
-    assert _not_matched == not_matched
-
-
-@pytest.mark.parametrize(
-    'ids,matched,not_matched',
-    [
-        (
-            ['1/a'],
-            [1],
-            [],
-        ),
-        (
-            ['1/*'],
-            [1],
-            [],
-        ),
-        (
-            ['1/*:x'],
-            [1],
-            [],
-        ),
-        (
-            ['1/*:y'],
-            [],
-            ['1/*:y'],
-        ),
-        (
-            ['*/*:x'],
-            [1],
-            [],
-        ),
-        (
-            ['1/z'],
-            [],
-            ['1/z'],
-        ),
-        (
-            ['1'],
-            [1],
-            [],
-        ),
-        (
-            ['3'],
-            [],
-            ['3'],
-        ),
-    ]
-)
-def test_filter_ids_cycle_mode(task_pool, ids, matched, not_matched):
-    """Ensure cycle poinds are returned in cycle mode."""
-    pool = task_pool(
-        {
-            1: ['1/a:x', '1/b:x'],
-            2: ['1/a:x'],
-            3: [],
-        },
-        {}
-    )
-
-    _matched, _not_matched = filter_ids(pool, ids, out=IDTokens.Cycle)
-    assert _matched == [IntegerPoint(i) for i in matched]
-    assert _not_matched == not_matched
-
-
-def test_filter_ids_invalid(caplog):
-    """Ensure invalid IDs are handled elegantly."""
-    matched, not_matched = filter_ids({}, ['#'])
-    assert matched == []
-    assert not_matched == ['#']
-    assert caplog.record_tuples == [
-        ('cylc', 30, 'No active tasks matching: #'),
-    ]
-    caplog.clear()
-    matched, not_matched = filter_ids({}, ['#'], warn=False)
-    assert caplog.record_tuples == []
-
-
-def test_filter_ids_pattern_match_off(task_pool):
-    """Ensure filtering works when pattern matching is turned off."""
-    pool = task_pool(
-        {
-            1: ['1/a:x'],
-        },
-        {}
-    )
-
-    _matched, _not_matched = filter_ids(
+def _id_match(
+    config: 'WorkflowConfig',
+    pool: 'Set[TaskTokens]',
+    ids: 'Set[TaskTokens]',
+    only_match_pool: bool = False,
+) -> 'Tuple[Set[str], Set[str]]':
+    """Convenience function for testing, converts strings to tokens."""
+    matched, unmatched = id_match(
+        config,
         pool,
-        ['1/a'],
-        out=IDTokens.Task,
-        pattern_match=False,
+        to_tokens(*ids),
+        only_match_pool=only_match_pool,
     )
-    assert [get_task_id(itask) for itask in _matched] == ['1/a:x']
-    assert _not_matched == []
-
-
-def test_filter_ids_toggle_pattern_matching(task_pool, caplog):
-    """Ensure pattern matching can be toggled on and off."""
-    pool = task_pool(
-        {
-            1: ['1/a:x'],
-        },
-        {}
+    return (
+        to_string_ids(*matched),
+        to_string_ids_with_selectors(*unmatched),
     )
 
-    ids = ['*/*']
 
-    # ensure pattern matching works
-    _matched, _not_matched = filter_ids(
+@pytest.mark.parametrize(
+    'ids,matched,unmatched',
+    [
+        (
+            {'1'},
+            {'1/a', '1/b', '1/c'},
+            set(),
+        ),
+        (
+            {'2'},
+            set(),
+            {'2'}
+        ),
+        (
+            {'*'},
+            {'1/a', '1/b', '1/c'},
+            set(),
+        ),
+        (
+            {'1/*'},
+            {'1/a', '1/b', '1/c'},
+            set(),
+        ),
+        (
+            {'2/*'},
+            set(),
+            {'2/*'}
+        ),
+        (
+            {'*/*'},
+            {'1/a', '1/b', '1/c'},
+            set(),
+        ),
+        (
+            {'*/a'},
+            {'1/a'},
+            set(),
+        ),
+        (
+            {'*/z'},
+            set(),
+            {'*/z'}
+        ),
+        (
+            {'*/*:x'},
+            {'1/a', '1/b', '1/c'},
+            set(),
+        ),
+        (
+            {'*/*:y'},
+            set(),
+            {'*/*:y'},
+        ),
+    ]
+)
+def test_match_task(test_config, ids, matched, unmatched):
+    """It should match task IDs."""
+    pool = to_tokens('1/a:x', '1/b:x', '1/c:x')
+    _matched, _unmatched = _id_match(
+        test_config,
         pool,
         ids,
-        out=IDTokens.Task,
-        pattern_match=True,
+        only_match_pool=True,
     )
-    assert [get_task_id(itask) for itask in _matched] == ['1/a:x']
-    assert _not_matched == []
-
-    # ensure pattern matching can be disabled
-    caplog.clear()
-    _matched, _not_matched = filter_ids(
-        pool,
-        ids,
-        out=IDTokens.Task,
-        pattern_match=False,
-    )
-    assert [get_task_id(itask) for itask in _matched] == []
-    assert _not_matched == ['*/*']
-
-    # ensure the ID is logged
-    assert len(caplog.record_tuples) == 1
-    assert '*/*' in caplog.record_tuples[0][2]
+    assert _matched == matched
+    assert _unmatched == unmatched
 
 
 @pytest.mark.parametrize(
-    'ids,matched,not_matched',
+    'ids,matched,unmatched',
     [
-        (['1/A'], ['1/a:x'], []),
-        (['1/B'], ['1/b1:x', '1/b2:x'], []),
-        (['1/C'], [], ['1/C']),
-        (['1/root'], ['1/a:x', '1/b1:x', '1/b2:x'], []),
+        (
+            {'1/a'},
+            {'1/a'},
+            set(),
+        ),
+        (
+            {'1/*'},
+            {'1/a', '1/b'},
+            set(),
+        ),
+        (
+            {'1/*:x'},
+            {'1/a', '1/b'},
+            set(),
+        ),
+        (
+            {'1/*:y'},
+            set(),
+            {'1/*:y'},
+        ),
+        (
+            {'*/*:x'},
+            {'1/a', '1/b', '2/a'},
+            set(),
+        ),
+        (
+            {'1/z'},
+            set(),
+            {'1/z'},
+        ),
+        (
+            {'1'},
+            {'1/a', '1/b'},
+            set(),
+        ),
+        (
+            {'3'},
+            set(),
+            {'3'},
+        ),
     ]
 )
-def test_filter_ids_namespace_hierarchy(task_pool, ids, matched, not_matched):
-    """Ensure matching includes namespaces."""
-    pool = task_pool(
-        {
-            1: ['1/a:x', '1/b1:x', '1/b2:x']
-        },
-        {
-            'a': ['A'],
-            'b1': ['B'],
-            'b2': ['B'],
-        },
-    )
-
-    _matched, _not_matched = filter_ids(
+def test_match_cycle(test_config, ids, matched, unmatched):
+    """It should match cycle IDs."""
+    pool = to_tokens('1/a:x', '1/b:x', '2/a:x')
+    assert _id_match(
+        test_config,
         pool,
         ids,
-        pattern_match=False,
-    )
-
-    assert [get_task_id(itask) for itask in _matched] == matched
-    assert _not_matched == not_matched
-
-
-def test_filter_ids_out_format():
-    filter_ids({}, [], out=IDTokens.Cycle)
-    with pytest.raises(ValueError):
-        filter_ids({}, [], out=IDTokens.Job)
-
-
-def test_filter_ids_log_errors(caplog):
-    _, _not_matched = filter_ids({}, ['/////'])
-    assert _not_matched == ['/////']
-    assert caplog.record_tuples == [('cylc', 30, 'Invalid ID: /////')]
+        only_match_pool=True,
+    ) == (matched, unmatched)
 
 
 @pytest.mark.parametrize(
-    'point, value, pattern_match, expected',
+    'ids,matched,unmatched',
     [
-        (IntegerPoint(23), '23', True, True),
-        (IntegerPoint(23), '23', False, True),
-        (IntegerPoint(23), '2*', True, True),
-        (IntegerPoint(23), '2*', False, False),
-        (IntegerPoint(23), '2a', True, False),
-        (ISO8601Point('2049-01-01T00:00Z'), '2049', True, True),
-        (ISO8601Point('2049-01-01T00:00Z'), '2049', False, True),
-        (ISO8601Point('2049-03-01T00:00Z'), '2049', True, False),
-        (ISO8601Point('2049-03-01T00:00Z'), '2049*', True, True),
-        (ISO8601Point('2049-03-01T00:00Z'), '2049*', False, False),
-        (ISO8601Point('2049-01-01T00:00Z'), '20490101T00Z', False, True),
-        (ISO8601Point('2049-01-01T00:00Z'), '20490101T03+03', False, True),
-        (ISO8601Point('2049-01-01T00:00Z'), '2049a', True, False),
+        (
+            {'1/root'},
+            {'1/a', '1/b', '1/c', '1/d', '1/z'},
+            set(),
+        ),
+        (
+            {'2/root'},
+            {'2/a', '2/b', '2/c', '2/d'},  # 1/z isn't in cycle 2
+            set(),
+        ),
+        (
+            {'*/root'},
+            # should match all active cycles (i.e. cycles 1 and 2)
+            {'1/a', '1/b', '1/c', '1/d', '1/z', '2/a', '2/b', '2/c', '2/d'},
+            set(),
+        ),
+        (
+            {'1/[ad]'},
+            {'1/a', '1/d'},
+            set(),
+        ),
+        (
+            {'1/[!ad]'},
+            {'1/b', '1/c', '1/z'},
+            set(),
+        ),
     ]
 )
-def test_point_match(
-    point: 'PointBase', value: str, pattern_match: bool, expected: bool,
-    set_cycling_type: Callable
-):
-    set_cycling_type(point.TYPE, time_zone='Z')
-    assert point_match(point, value, pattern_match) is expected
+def test_match_inactive(test_config, ids, matched, unmatched):
+    """It should match non-pool tasks"""
+    assert _id_match(
+        test_config,
+        to_tokens('1/a:running', '2/a:waiting'),  # active cycles are 1 and 2
+        ids,
+    ) == (matched, unmatched)
+
+
+@pytest.mark.parametrize(
+    'ids,matched,unmatched',
+    [
+        ({'1/A'}, {'1/a'}, set()),
+        ({'1/B'}, {'1/b1', '1/b2'}, set()),
+        ({'1/C'}, set(), {'1/C'}),
+        ({'1/root'}, {'1/a', '1/b1', '1/b2'}, set()),
+    ]
+)
+def test_match_family(tmp_path, ids, matched, unmatched):
+    """It should match family IDs."""
+    pool = to_tokens('1/a:x', '1/b1:x', '1/b2:x')
+
+    path = tmp_path / 'flow.cylc'
+    with open(path, 'w+') as flow_cylc:
+        flow_cylc.write(dedent('''
+            [scheduling]
+                cycling mode = integer
+                initial cycle point = 1
+                [[graph]]
+                    P1 = a & b1 & b2
+            [runtime]
+                [[a]]
+                    inherit = A
+                [[b1, b2]]
+                    inherit = B
+                [[A, B]]
+        '''))
+    config = WorkflowConfig('test', str(path), SimpleNamespace())
+
+    assert _id_match(config, pool, ids) == (matched, unmatched)

@@ -23,12 +23,16 @@ from enum import Enum
 import re
 from typing import (
     TYPE_CHECKING,
+    Any,
     Iterable,
     List,
+    Literal,
     Optional,
     Set,
     Tuple,
     Union,
+    cast,
+    overload,
 )
 
 from cylc.flow import LOG
@@ -158,10 +162,11 @@ class Tokens(dict):
         return f'<id: {id_}>'
 
     def __hash__(self):
-        return hash(tuple(self.values()))
+        # generate the __hash__ from the non None items in the dictionary
+        return hash(tuple(sorted(((k, v) for k, v in self.items() if v))))
 
     def __eq__(self, other):
-        if not isinstance(other, self.__class__):
+        if not isinstance(other, Tokens):
             return False
         return all(
             self[key] == other[key]
@@ -175,7 +180,7 @@ class Tokens(dict):
         return self.id > other.id
 
     def __ne__(self, other):
-        if not isinstance(other, self.__class__):
+        if not isinstance(other, Tokens):
             return True
         return any(
             self[key] != other[key]
@@ -361,9 +366,39 @@ class Tokens(dict):
             self[key] for key in self._REGULAR_KEYS
         )
 
+    @property
+    def submit_num(self) -> int | None:
+        """The job submit number as an integer, or None if not set.
+
+        Examples:
+            >>> Tokens('//c/t/01').submit_num
+            1
+            >>> Tokens('//c/t').submit_num is None
+            True
+        """
+        return int(self['job']) if self['job'] else None
+
+    @overload
     def duplicate(
         self,
-        *tokens_list,
+        *,
+        cycle: str,
+        task: str,
+        **kwargs,
+    ) -> 'TaskTokens':
+        ...
+
+    @overload
+    def duplicate(
+        self,
+        *tokens_list: 'Tokens',
+        **kwargs,
+    ) -> 'Tokens':
+        ...
+
+    def duplicate(
+        self,
+        *tokens_list: 'Tokens',
         **kwargs,
     ) -> 'Tokens':
         """Duplicate a tokens object.
@@ -398,11 +433,42 @@ class Tokens(dict):
             '~u/w//c/b/01'
 
         """
-        _kwargs = {}
+        _kwargs: dict[str, Any] = {}
         for tokens in (self, *tokens_list):
             _kwargs.update(tokens)
         _kwargs.update(kwargs)
         return Tokens(**_kwargs)
+
+
+class TaskTokens(Tokens):
+    """A Tokens object where the cycle and task are compulsory."""
+
+    def __init__(self, cycle: str, task: str, **kwargs):
+        Tokens.__init__(self, cycle=cycle, task=task, **kwargs)
+
+    @overload
+    def __getitem__(self, key: "Literal['cycle']") -> str:
+        ...
+
+    @overload
+    def __getitem__(self, key: "Literal['task']") -> str:
+        ...
+
+    def __getitem__(self, key: str) -> Optional[str]:
+        return Tokens.__getitem__(self, key)
+
+    def duplicate(self, *tokens_list, **kwargs) -> 'TaskTokens':
+        return cast(
+            'TaskTokens', Tokens.duplicate(self, *tokens_list, **kwargs)
+        )
+
+    @property
+    def task(self) -> 'TaskTokens':
+        return cast('TaskTokens', Tokens.task.fget(self))  # type: ignore
+
+    @property
+    def is_task_like(self) -> 'Literal[True]':
+        return True
 
 
 # //cycle[:sel][/task[:sel][/job[:sel]]]

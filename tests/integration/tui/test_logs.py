@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING
 
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.exceptions import ClientError
+from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_job_logs import get_task_job_log
 from cylc.flow.task_state import (
     TASK_STATUS_FAILED,
@@ -128,7 +129,7 @@ async def workflow(
             'a': {},
         }
     }, name='one')
-    schd = mod_scheduler(id_)
+    schd: Scheduler = mod_scheduler(id_)
     async with mod_start(schd):
         # create some log files for tests to inspect
 
@@ -144,27 +145,25 @@ async def workflow(
 
         # task 1/a
         itask = schd.pool.get_task(IntegerPoint('1'), 'a')
-        itask.submit_num = 2
 
         # mark 1/a/01 as failed
         job_1 = schd.tokens.duplicate(cycle='1', task='a', job='01')
         schd.data_store_mgr.insert_job(
-            'a',
-            IntegerPoint('1'),
+            itask,
             TASK_STATUS_SUCCEEDED,
             {'submit_num': 1, 'platform': {'name': 'x'}}
         )
-        schd.data_store_mgr.delta_job_state(job_1, TASK_STATUS_FAILED)
+        schd.data_store_mgr.delta_job_state(itask, TASK_STATUS_FAILED)
 
         # mark 1/a/02 as succeeded
+        itask.submit_num = 2
         job_2 = schd.tokens.duplicate(cycle='1', task='a', job='02')
         schd.data_store_mgr.insert_job(
-            'a',
-            IntegerPoint('1'),
+            itask,
             TASK_STATUS_SUCCEEDED,
             {'submit_num': 2, 'platform': {'name': 'x'}}
         )
-        schd.data_store_mgr.delta_job_state(job_1, TASK_STATUS_SUCCEEDED)
+        schd.data_store_mgr.delta_job_state(itask, TASK_STATUS_SUCCEEDED)
         schd.data_store_mgr.delta_task_state(itask)
 
         # mark 1/a as succeeded

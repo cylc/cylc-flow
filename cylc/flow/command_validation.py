@@ -16,14 +16,18 @@
 
 """Cylc command argument validation logic."""
 
-
 from typing import (
+    TYPE_CHECKING,
+    Dict,
     Iterable,
     List,
     Optional,
+    Set,
+    cast,
 )
 
-from cylc.flow.exceptions import InputError
+from cylc.flow.cycling.loader import standardise_point_string
+from cylc.flow.exceptions import InputError, PointParsingError
 from cylc.flow.flow_mgr import (
     FLOW_NEW,
     FLOW_NONE,
@@ -32,8 +36,13 @@ from cylc.flow.id import (
     IDTokens,
     Tokens,
 )
-from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
+from cylc.flow.id_cli import contains_fnmatch
 from cylc.flow.scripts.set import XTRIGGER_PREREQ_PREFIX
+from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
+
+
+if TYPE_CHECKING:
+    from cylc.flow.id import TaskTokens
 
 
 ERR_OPT_FLOW_VAL_INT_NEW_NONE = (  # for set and trigger commands
@@ -49,7 +58,7 @@ ERR_OPT_FLOW_WAIT = (
 def flow_opts(
     flows: List[str],
     flow_wait: bool,
-    allow_new_or_none: bool = True
+    allow_new_or_none: bool = True,
 ) -> None:
     """Check validity of flow-related CLI options.
 
@@ -235,9 +244,7 @@ def prereq(prereq: str) -> Optional[str]:
         return None
 
     if tokens["cycle"] == XTRIGGER_PREREQ_PREFIX:
-        if (
-            tokens["task_sel"] not in {None, TASK_OUTPUT_SUCCEEDED}
-        ):
+        if tokens["task_sel"] not in {None, TASK_OUTPUT_SUCCEEDED}:
             # Error: xtrigger status must be default or succeeded.
             return None
         if tokens["task_sel"] is None:
@@ -291,7 +298,7 @@ def outputs(outputs: Optional[List[str]]):
 
 def consistency(
     outputs: Optional[List[str]],
-    prereqs: Optional[List[str]]
+    prereqs: Optional[List[str]],
 ) -> None:
     """Check global option consistency
 
@@ -309,40 +316,73 @@ def consistency(
         raise InputError("Use --prerequisite or --output, not both.")
 
 
-def is_tasks(tasks: Iterable[str]):
-    """All tasks in a list of tasks are task ID's without trailing job ID.
+def is_tasks(ids: Iterable[str]) -> 'Set[TaskTokens]':
+    """Ensure all IDs are task IDs and standardise them.
 
-    Examples:
-        # All legal
-        >>> is_tasks(['1/foo', '1/bar', '*/baz', '*/*'])
+    * Parses IDs.
+    * Filters out job ids and ensures at least the cycle point is provided.
+    * Standardises the cycle point format.
+    * Defaults the namespace to "root" unless provided.
 
-        # Some legal
-        >>> is_tasks(['1/foo/NN', '1/bar', '*/baz', '*/*/42'])
-        Traceback (most recent call last):
-        ...
-        cylc.flow.exceptions.InputError: This command does not take job ids:
-        * 1/foo/NN
-        * */*/42
+    Args:
+        ids: The strings to parse.
 
-        # None legal
-        >>> is_tasks(['*/baz/12'])
-        Traceback (most recent call last):
-        ...
-        cylc.flow.exceptions.InputError: This command does not take job ids:
-        * */baz/12
+    Returns:
+        The parsed IDs as TaskTokens objects.
 
-        >>> is_tasks([])
-        Traceback (most recent call last):
-        ...
-        cylc.flow.exceptions.InputError: No tasks specified
+    Raises:
+        InputError: If any of the IDs cannot be parsed or formatted.
+
     """
-    if not tasks:
+    if not ids:
         raise InputError("No tasks specified")
-    bad_tasks: List[str] = []
-    for task in tasks:
-        tokens = Tokens('//' + task)
+    ret: 'Set[TaskTokens]' = set()
+    errors: Dict[str, List[str]] = {}
+
+    for id_ in ids:
+        # parse id
+        try:
+            tokens = Tokens(id_, relative=True)
+        except ValueError:
+            errors.setdefault('Invalid ID', []).append(id_)
+            continue
+
+        # filter out job IDs
         if tokens.lowest_token == IDTokens.Job.value:
-            bad_tasks.append(task)
-    if bad_tasks:
-        msg = 'This command does not take job ids:\n * '
-        raise InputError(msg + '\n * '.join(bad_tasks))
+            errors.setdefault('This command does not take job IDs', []).append(
+                id_
+            )
+            continue
+
+        # if the task is not specified, default to "root"
+        if tokens['task'] is None:
+            tokens = tokens.duplicate(task='root')
+
+        # if the cycle is not a glob or reference, standardise it
+        if (
+            # cycle point is a glob
+            not contains_fnmatch(cast('str', tokens['cycle']))
+            # cycle point is a reference to the ICP/FCP
+            and tokens['cycle'] not in {'^', '$'}
+        ):
+            try:
+                cycle = standardise_point_string(tokens['cycle'])
+            except PointParsingError:
+                errors.setdefault('Invalid cycle point', []).append(id_)
+                continue
+            else:
+                if cycle != tokens['cycle']:
+                    tokens = tokens.duplicate(cycle=cycle)
+
+        # we have confirmed that both cycle and task have been provided
+        ret.add(cast('TaskTokens', tokens))
+
+    if errors:
+        raise InputError(
+            '\n'.join(
+                f'{message}: {", ".join(sorted(_ids))}'
+                for message, _ids in sorted(errors.items())
+            )
+        )
+
+    return ret

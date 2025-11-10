@@ -16,9 +16,15 @@
 """Define job log filenames and option names."""
 
 import os
+from typing import TYPE_CHECKING
 
 from cylc.flow.id import Tokens
 from cylc.flow.pathutil import get_workflow_run_job_dir
+
+
+if TYPE_CHECKING:
+    from cylc.flow.cycling import PointBase
+
 
 # job log filenames.
 JOB_LOG_JOB = "job"
@@ -40,7 +46,13 @@ JOB_LOG_OPTS = {
 NN = "NN"
 
 
-def get_task_job_log(workflow, point, name, submit_num=None, suffix=None):
+def get_task_job_log(
+    workflow: str,
+    point: 'str | PointBase',
+    name: str,
+    submit_num: str | int | None = None,
+    suffix: str | None = None,
+):
     """Return the full job log path."""
     args = [
         get_workflow_run_job_dir(workflow),
@@ -55,12 +67,23 @@ def get_task_job_log(workflow, point, name, submit_num=None, suffix=None):
     return os.path.join(*args)
 
 
-def get_task_job_activity_log(workflow, point, name, submit_num=None):
+def get_task_job_activity_log(
+    workflow: str,
+    point: 'str | PointBase',
+    name: str,
+    submit_num: str | int | None = None,
+):
     """Shorthand for get_task_job_log(..., suffix="job-activity.log")."""
     return get_task_job_log(
-        workflow, point, name, submit_num, JOB_LOG_ACTIVITY)
+        workflow, point, name, submit_num, JOB_LOG_ACTIVITY
+    )
 
 
-def get_task_job_job_log(workflow, point, name, submit_num=None):
+def get_task_job_job_log(
+    workflow: str,
+    point: 'str | PointBase',
+    name: str,
+    submit_num: str | int | None = None,
+):
     """Shorthand for get_task_job_log(..., suffix="job")."""
     return get_task_job_log(workflow, point, name, submit_num, JOB_LOG_JOB)

@@ -19,11 +19,11 @@ import re
 import contextlib
 
 from typing import (
-    Set,
     Dict,
     List,
-    Tuple,
     Optional,
+    Set,
+    Tuple,
     Union
 )
 
@@ -104,8 +104,44 @@ class GraphParser:
             NODE(<REMOTE-WORKFLOW-QUALIFIER>)(:QUALIFIER)
         * Outputs (boo:x) are ignored as triggers on the RHS to allow chaining:
             "foo => bar:x => baz & qux"
-    """
 
+    Chained triggers get decomposed into pairs for processing, e.g.:
+        x  # lone node
+        a | b => c & d => e
+    becomes:
+        [None, x],
+        [None, a],
+        [None, b],
+        [a|b, c&d],  --> [a|b, c], [a|b, d]
+        [c&d, e],   --> [c, e], [d, e]
+    (Lone nodes and left-side nodes make [None, left] for auto-triggering.)
+
+    LEFT sides are TASK OUTPUTS (a plain name is short for "task:succeeded"):
+        a:x & b? & c => d
+    means:
+        a:x & b:succeeded? & c:succeeded => d
+
+    RIGHT sides are just TASKS to trigger when the left side outputs complete:
+        [left] => d  # does NOT imply d:succeeded is required
+
+    But output optionality can be *explicitly* set on the right, if you like:
+        [left] => d?
+        [left] => e:x
+    means
+        [left] => d  # AND d:succeeded is optional
+        [left] => e  # AND e:x is required
+
+    How the graph parser determines output optionality:
+       In chained triggers every node appears on the right of a pair, so we
+       only need rights to set (and check consitency of) optional outputs.
+          x                # [None, x] ... x is end-of-chain
+          a => b => c      # [None, a], [a, b], [b, c] ... c is end-of-chain
+
+       But note we infer :succeeded (for plain task names) except at the end
+       of a chain that is not a lone node (i.e. for x, but not c).
+       i.e.: if NOT end-of-chain OR left is None.
+
+    """
     CYLC7_COMPAT = "CYLC 7 BACK-COMPAT"
 
     OP_AND = '&'
@@ -264,7 +300,8 @@ class GraphParser:
         family_map: Optional[Dict[str, List[str]]] = None,
         parameters: Optional[Dict] = None,
         task_output_opt:
-            Optional[Dict[Tuple[str, str], Tuple[bool, bool, bool]]] = None
+            Optional[Dict[Tuple[str, str], Tuple[bool, bool, bool]]] = None,
+        expire_triggers: bool = False,
     ) -> None:
         """Initialize the graph string parser.
 
@@ -283,6 +320,8 @@ class GraphParser:
         self.triggers: Dict = {}
         self.original: Dict = {}
         self.workflow_state_polling_tasks: Dict = {}
+        self.expire_triggers = expire_triggers
+        self.end_of_chain_nodes: set[str] = set()
 
         # Record task outputs as optional or required:
         #   {(name, output): (is_optional, is_member)}
@@ -470,6 +509,11 @@ class GraphParser:
             for i in range(0, len(chain) - 1):
                 pairs.add((chain[i], chain[i + 1]))
 
+            # Record end of chain nodes (can be multiple with &)
+            self.end_of_chain_nodes.update(
+                chain[-1].split(self.__class__.OP_AND)
+            )
+
         # Get a set of RH nodes which are not at the LH of another pair:
         # terminals = {p[1] for p in pairs}.difference({p[0] for p in pairs})
 
@@ -479,6 +523,7 @@ class GraphParser:
 
         for pair in sorted(pairs, key=lambda p: str(p[0])):
             self._proc_dep_pair(pair, check_terminals, lefts, rights)
+
         self.terminals = rights.difference(lefts)
         for right in self.terminals:
             left = check_terminals.get(right)
@@ -619,6 +664,10 @@ class GraphParser:
                         expr = re.sub(this, that, expr)
                 else:
                     # Make success triggers explicit.
+                    if name in self.family_map:
+                        raise GraphParseError(
+                            f"Family trigger required: {left} => {right}"
+                        )
                     n_trig = TASK_OUTPUT_SUCCEEDED
                     if offset:
                         this = r'\b%s\b%s(?!:)' % (
@@ -744,6 +793,10 @@ class GraphParser:
         self.original.setdefault(name, {})
         self.original[name][expr] = orig_expr
 
+        if suicide and self.expire_triggers:
+            # Make expiry optional for suicide triggered tasks.
+            self._set_output_opt(name, TASK_OUTPUT_EXPIRED, True, False, False)
+
     def _set_output_opt(
         self,
         name: str,
@@ -790,6 +843,7 @@ class GraphParser:
             for outp in [TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED]:
                 self._set_output_opt(
                     name, outp, optional, suicide, fam_member)
+            return
 
         try:
             prev_optional, prev_default, prev_fixed = (
@@ -907,39 +961,51 @@ class GraphParser:
             if name in self.family_map:
                 fam = True
                 rhs_members = self.family_map[name]
-                if not output:
-                    # (Plain family name on RHS).
-                    # Make implicit success explicit.
+                if not output and not expr:
+                    # Infer :succeed-all for lone family nodes, e.g. for
+                    # "R1 = FAM": members default to success required, or
+                    # for "FAM:succeed-all?" they default to success optional.
                     output = QUAL_FAM_SUCCEED_ALL
-                elif output.startswith("finish"):
+                elif output and output.startswith("finish"):
                     if optional:
                         raise GraphParseError(
                             f"Family pseudo-output {name}:{output} can't be"
                             " optional")
-                    # But implicit optional for the real succeed/fail outputs.
-                    optional = True
-                try:
-                    outputs = self.__class__.fam_to_mem_output_map[output]
-                except KeyError:
-                    # Illegal family trigger on RHS of a pair.
-                    raise GraphParseError(
-                        f"Illegal family trigger: {name}:{output}"
-                    ) from None
+                    else:
+                        # Implicit optional for the real succeed/fail outputs.
+                        optional = True
+                if output:
+                    try:
+                        outputs = self.__class__.fam_to_mem_output_map[output]
+                    except KeyError:
+                        # Illegal family trigger on RHS of a pair.
+                        raise GraphParseError(
+                            f"Illegal family trigger: {name}:{output}"
+                        ) from None
+                else:
+                    outputs = ['']
             else:
                 fam = False
-                if not output:
-                    # Make implicit success explicit.
-                    output = TASK_OUTPUT_SUCCEEDED
-                else:
+                rhs_members = [name]
+                if output:
                     # Convert to standard output names if necessary.
                     output = TaskTrigger.standardise_name(output)
-                rhs_members = [name]
-                outputs = [output]
+                elif optional or (
+                    right not in self.end_of_chain_nodes
+                    or not expr
+                ):
+                    # Infer "name:succeeded?" for explicit "name?"
+                    # Infer "name:succeeded" for plain "name"
+                    #   if not (end-of-chain and left is not None)
+                    output = TASK_OUTPUT_SUCCEEDED
+                outputs = [output]  # may be [None]
 
             for mem in rhs_members:
                 if not offset:
                     # Nodes with offsets on the RHS do not define triggers.
                     self._set_triggers(mem, suicide, trigs, expr, orig_expr)
                 for output in outputs:
-                    # But they must be consistent with output optionality.
-                    self._set_output_opt(mem, output, optional, suicide, fam)
+                    if output:
+                        # Infer optionality for explicit outputs on RHS.
+                        self._set_output_opt(
+                            mem, output, optional, suicide, fam)

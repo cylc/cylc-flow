@@ -15,49 +15,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from typing import Optional
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 import pytest
 
 from cylc.flow.broadcast_mgr import BroadcastMgr
-from cylc.flow.subprocctx import SubProcContext
 from cylc.flow.task_events_mgr import TaskEventsManager
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.taskdef import TaskDef
-
-
-@patch("cylc.flow.task_events_mgr.LOG")
-def test_log_error_on_error_exit_code(cylc_log):
-    """Test that an error log is emitted when the log retrieval command
-    exited with a code different than zero.
-
-    :param cylc_log: mocked cylc logger
-    :type cylc_log: mock.MagicMock
-    """
-    task_events_manager = TaskEventsManager(
-        None, None, None, None, None, None, None, None, None)
-    proc_ctx = SubProcContext(
-        cmd_key=None, cmd="error", ret_code=1, err="Error!", id_keys=[])
-    task_events_manager._job_logs_retrieval_callback(proc_ctx, None)
-    assert cylc_log.error.call_count == 1
-    assert cylc_log.error.call_args.contains("Error!")
-
-
-@patch("cylc.flow.task_events_mgr.LOG")
-def test_log_debug_on_noerror_exit_code(cylc_log):
-    """Test that a debug log is emitted when the log retrieval command
-    exited with an non-error code (i.e. 0).
-
-    :param cylc_log: mocked cylc logger
-    :type cylc_log: mock.MagicMock
-    """
-    task_events_manager = TaskEventsManager(
-        None, None, None, None, None, None, None, None, None)
-    proc_ctx = SubProcContext(
-        cmd_key=None, cmd="ls /tmp/123", ret_code=0, err="", id_keys=[])
-    task_events_manager._job_logs_retrieval_callback(proc_ctx, None)
-    assert cylc_log.debug.call_count == 1
-    assert cylc_log.debug.call_args.contains("ls /tmp/123")
 
 
 @pytest.mark.parametrize(

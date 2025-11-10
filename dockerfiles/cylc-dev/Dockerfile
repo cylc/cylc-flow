@@ -21,7 +21,7 @@ RUN \
 # 2) The Cylc image
 #    This has the Cylc Mamba environment installed and activated by default in
 #    Bash shells. However, it does not have Mamba installed.
-FROM ubuntu:latest as cylc-dev
+FROM ubuntu:latest AS cylc-dev
 
 COPY --from=mamba /tmp/venv /venv
 COPY ./ /cylc

@@ -49,6 +49,7 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Literal,
     NoReturn,
     Optional,
     Set,
@@ -57,11 +58,13 @@ from typing import (
 )
 from uuid import uuid4
 
+from metomi.isodatetime.exceptions import TimePointDumperBoundsError
 import psutil
 
 from cylc.flow import (
     LOG,
     __version__ as CYLC_VERSION,
+    command_validation,
     commands,
     main_loop,
     workflow_files,
@@ -82,7 +85,6 @@ from cylc.flow.flow_mgr import (
     FlowMgr,
     stringify_flow_nums,
 )
-
 from cylc.flow.host_select import (
     HostSelectException,
     select_workflow_host,
@@ -108,8 +110,8 @@ from cylc.flow.loggingutil import (
 from cylc.flow.network import API
 from cylc.flow.network.authentication import key_housekeeping
 from cylc.flow.network.server import WorkflowRuntimeServer
-from cylc.flow.parsec.OrderedDict import DictTree
 from cylc.flow.parsec.exceptions import ParsecError
+from cylc.flow.parsec.OrderedDict import DictTree
 from cylc.flow.parsec.validate import DurationFloat
 from cylc.flow.pathutil import (
     get_workflow_name_from_id,
@@ -175,11 +177,6 @@ from cylc.flow.xtrigger_mgr import XtriggerManager
 
 if TYPE_CHECKING:
     from optparse import Values
-
-    # BACK COMPAT: typing_extensions.Literal
-    # FROM: Python 3.7
-    # TO: Python 3.8
-    from typing_extensions import Literal
 
     from cylc.flow.network.resolvers import TaskMsg
     from cylc.flow.task_proxy import TaskProxy
@@ -555,8 +552,22 @@ class Scheduler:
                     timer.reset()
                 self.timers[event] = timer
 
-        if self.is_restart and not self.pool.get_tasks():
-            # This workflow completed before restart; wait for intervention.
+        if self.is_restart and (
+            # workflow has completed
+            not self.pool.get_tasks()
+            # workflow has hit the "stop after cycle point"
+            or (
+                self.config.stop_point
+                and all(
+                    cycle > self.config.stop_point
+                    for cycle in {
+                        itask.point for itask in self.pool.get_tasks()
+                    }
+                )
+            )
+        ):
+            # This workflow will shut down immediately once restarted
+            # => Give the user a grace period to intervene first
             with suppress(KeyError):
                 self.timers[self.EVENT_RESTART_TIMEOUT].reset()
                 self.is_restart_timeout_wait = True
@@ -672,9 +683,6 @@ class Scheduler:
 
                     # If we shut down with manually triggered waiting tasks,
                     # submit them to run now.
-                    # NOTE: this will run tasks that were triggered with
-                    # the trigger "--on-resume" option, even if the workflow
-                    # is restarted as paused. Option to be removed at 8.6.0.
                     pre_prep_tasks = []
                     for itask in self.pool.get_tasks():
                         if (
@@ -832,9 +840,10 @@ class Scheduler:
     def _load_pool_from_tasks(self):
         """Load task pool with specified tasks, for a new run."""
         LOG.info(f"Start task: {self.options.starttask}")
+        start_tasks = command_validation.is_tasks(self.options.starttask)
         # flow number set in this call:
         self.pool.set_prereqs_and_outputs(
-            self.options.starttask,
+            start_tasks,
             outputs=[],
             prereqs=["all"],
             flow=[FLOW_NEW],
@@ -936,7 +945,7 @@ class Scheduler:
     def _load_task_run_times(self, row_idx, row):
         """Load run times of previously succeeded task jobs."""
         if row_idx == 0:
-            LOG.info("LOADING task run times")
+            LOG.debug("LOADING task run times")
         name, run_times_str = row
         try:
             taskdef = self.config.taskdefs[name]
@@ -944,7 +953,7 @@ class Scheduler:
             for run_time_str in run_times_str.rsplit(",", maxlen)[-maxlen:]:
                 run_time = int(run_time_str)
                 taskdef.elapsed_times.append(run_time)
-            LOG.info("+ %s: %s" % (
+            LOG.debug("+ %s: %s" % (
                 name, ",".join(str(s) for s in taskdef.elapsed_times)))
         except (KeyError, ValueError, AttributeError):
             return
@@ -953,7 +962,7 @@ class Scheduler:
         """Process incoming task messages for each task proxy.
 
         """
-        messages: 'Dict[str, List[Tuple[Optional[int], TaskMsg]]]' = {}
+        messages: dict[str, list[TaskMsg]] = {}
 
         # Retrieve queued messages
         while self.message_queue.qsize():
@@ -962,28 +971,23 @@ class Scheduler:
             except Empty:
                 break
             self.message_queue.task_done()
-            tokens = Tokens(task_msg.job_id, relative=True)
             # task ID (job stripped)
-            task_id = tokens.duplicate(job=None).relative_id
-            messages.setdefault(task_id, [])
-            # job may be None (e.g. simulation mode)
-            job = int(tokens['job']) if tokens['job'] else None
-            messages[task_id].append(
-                (job, task_msg)
-            )
+            task_id = task_msg.job_id.duplicate(job=None).relative_id
+            messages.setdefault(task_id, []).append(task_msg)
 
+        unprocessed_messages: List[TaskMsg] = []
         # Poll tasks for which messages caused a backward state change.
-        to_poll_tasks = []
-        for itask in self.pool.get_tasks():
-            message_items = messages.get(itask.identity)
-            if message_items is None:
+        to_poll_tasks: List[TaskProxy] = []
+        for task_id, message_items in messages.items():
+            itask = self.pool._get_task_by_id(task_id)
+            if itask is None:
+                unprocessed_messages.extend(message_items)
                 continue
             should_poll = False
-            del messages[itask.identity]
-            for submit_num, tm in message_items:
+            for tm in message_items:
                 if self.task_events_mgr.process_message(
                     itask, tm.severity, tm.message, tm.event_time,
-                    self.task_events_mgr.FLAG_RECEIVED, submit_num
+                    self.task_events_mgr.FLAG_RECEIVED, tm.job_id.submit_num
                 ):
                     should_poll = True
             if should_poll:
@@ -994,11 +998,18 @@ class Scheduler:
         # Remaining unprocessed messages have no corresponding task proxy.
         # For example, if I manually set a running task to succeeded, the
         # proxy can be removed, but the orphaned job still sends messages.
-        for tms in messages.values():
-            warn = "Undeliverable task messages received and ignored:"
-            for _, msg in tms:
-                warn += f'\n  {msg.job_id}: {msg.severity} - "{msg.message}"'
-            LOG.warning(warn)
+        warn = ""
+        for tm in unprocessed_messages:
+            job_tokens = self.tokens.duplicate(tm.job_id)
+            tdef = self.config.get_taskdef(job_tokens['task'])
+            if not self.task_events_mgr.process_job_message(
+                job_tokens, tdef, tm.message, tm.event_time
+            ):
+                warn += f'\n  {tm.job_id}: {tm.severity} - "{tm.message}"'
+        if warn:
+            LOG.warning(
+                f"Undeliverable task messages received and ignored:{warn}"
+            )
 
     async def process_command_queue(self) -> None:
         """Process queued commands."""
@@ -1066,8 +1077,7 @@ class Scheduler:
             if not itask.state(TASK_STATUS_PREPARING, *TASK_STATUSES_ACTIVE):
                 unkillable.append(itask)
                 continue
-            if itask.state_reset(is_held=True):
-                self.data_store_mgr.delta_task_state(itask)
+            self.pool.hold_active_task(itask)
             if itask.state(TASK_STATUS_PREPARING):
                 self.task_job_mgr.kill_prep_task(itask)
             else:
@@ -1144,7 +1154,7 @@ class Scheduler:
         """Create contact file."""
         # Make sure another workflow of the same name hasn't started while this
         # one is starting
-        # NOTE: raises ContactFileExists if workflow is running
+        # NOTE: raises SchedulerAlive if workflow is running
         workflow_files.detect_old_contact_file(self.workflow)
 
         # Extract contact data.
@@ -1336,17 +1346,19 @@ class Scheduler:
             and self.reload_pending is False
         ):
             if self.pool.tasks_to_trigger_now:
-                # manually triggered tasks to run now, workflow paused or not
+                # manually triggered tasks to run now.
                 pre_prep_tasks.update(self.pool.tasks_to_trigger_now)
                 self.pool.tasks_to_trigger_now = set()
 
-            if not self.is_paused:
+            if self.is_paused:
+                # finish processing preparing tasks
+                pre_prep_tasks.update({
+                    itask for itask in self.pool.get_tasks()
+                    if itask.waiting_on_job_prep
+                })
+            else:
                 # release queued tasks
                 pre_prep_tasks.update(self.pool.release_queued_tasks())
-                if self.pool.tasks_to_trigger_on_resume:
-                    # and manually triggered tasks to run once workflow resumed
-                    pre_prep_tasks.update(self.pool.tasks_to_trigger_on_resume)
-                    self.pool.tasks_to_trigger_on_resume = set()
 
         elif (
             (
@@ -1499,8 +1511,8 @@ class Scheduler:
             self.time_next_kill is not None
             and time() > self.time_next_kill
         ):
-            await commands.run_cmd(commands.poll_tasks(self, ['*/*']))
-            await commands.run_cmd(commands.kill_tasks(self, ['*/*']))
+            self.task_job_mgr.poll_task_jobs(self.pool.get_tasks())
+            self.kill_tasks(self.pool.get_tasks(), warn=False)
             self.time_next_kill = time() + self.INTERVAL_STOP_KILL
 
         # Is the workflow set to auto stop [+restart] now ...
@@ -1664,7 +1676,23 @@ class Scheduler:
             # A simulated task state change occurred.
             self.reset_inactivity_timer()
 
-        self.broadcast_mgr.expire_broadcast(self.pool.get_min_point())
+        # auto expire broadcasts
+        if not self.is_paused:
+            # NOTE: Don't auto-expire broadcasts whilst the scheduler is
+            # paused. This allows broadcast-and-trigger beyond the expiry
+            # limit, by pausing before doing it (after which the expiry
+            # limit moves back).
+            with suppress(TimePointDumperBoundsError):
+                # NOTE: TimePointDumperBoundsError will be raised for negative
+                # cycle points, we skip broadcast expiry in this circumstance
+                # (pre-initial condition)
+                if min_point := self.pool.get_min_point():
+                    # NOTE: the broadcast expire limit is the oldest active
+                    # cycle MINUS the longest cycling interval
+                    self.broadcast_mgr.expire_broadcast(
+                        min_point - self.config.interval_of_longest_sequence
+                    )
+
         self.late_tasks_check()
 
         self.process_queued_task_messages()

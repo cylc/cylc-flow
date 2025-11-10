@@ -19,15 +19,22 @@
 # The following scenarios should be covered:
 #   - Task with no settings
 #   - Task with a host setting that should match the test platform
-export REQUIRE_PLATFORM='loc:remote'
+
+# Note: We cannot run this test with job runners that may be configured to
+# submit the job to a compute node (e.g. pbs, slurm, etc) as we are unable
+# to check the hostname
+export REQUIRE_PLATFORM='loc:remote runner:?(background|at)'
+
 . "$(dirname "$0")/test_header"
-set_test_number 6
+set_test_number 7
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 # Ensure that a mix of syntax will fail.
 run_fail "${TEST_NAME_BASE}-validate-fail" \
-    cylc validate "flow2.cylc"
+    cylc validate "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/bad"
+# and fail in this specific manner:
+grep_ok "cannot be used with" "${TEST_NAME_BASE}-validate-fail.stderr"
 
 # Ensure that you can validate workflow
 run_ok "${TEST_NAME_BASE}-run" \

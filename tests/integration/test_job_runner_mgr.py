@@ -37,7 +37,7 @@ async def test_kill_error(one, start, test_dir, capsys, log_filter):
 
         # fake job details
         workflow_job_log_dir = Path(get_workflow_run_job_dir(one.workflow))
-        job_id = itask.tokens.duplicate(job='01').relative_id
+        job_id = itask.job_tokens.relative_id
         job_log_dir = Path(workflow_job_log_dir, job_id)
 
         # create job status file (give it a fake pid)

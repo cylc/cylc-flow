@@ -21,6 +21,7 @@ from typing import (
     TYPE_CHECKING,
     Optional,
     Tuple,
+    TypedDict,
     Union,
 )
 
@@ -48,10 +49,6 @@ from cylc.flow.workflow_files import (
 
 
 if TYPE_CHECKING:
-    # BACK COMPAT: typing_extensions.TypedDict
-    # FROM: Python 3.7
-    # TO: Python 3.11
-    from typing_extensions import TypedDict
     from zmq.asyncio import Context
 
 
@@ -68,8 +65,8 @@ if TYPE_CHECKING:
         different versions of Cylc 8.
         """
         data: object
-        """For most Cylc commands that issue GQL mutations, the data field will
-        look like:
+        """For most Cylc commands that issue GraphQL mutations, the data field
+        will look like:
         data: {
         <mutationName1>: {
             result: [

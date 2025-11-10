@@ -28,7 +28,6 @@ from getpass import getuser
 from multiprocessing import Queue
 from time import time
 
-from packaging.version import parse as parse_version
 from zmq.error import ZMQError
 
 from cylc.flow.exceptions import (
@@ -49,7 +48,8 @@ from cylc.flow.task_state import (
     TASK_STATUSES_ORDERED,
 )
 from cylc.flow.tui.data import (
-    QUERY, COMPAT_QUERY
+    VersionIncompat,
+    get_query,
 )
 from cylc.flow.tui.util import (
     NaturalSort,
@@ -271,15 +271,9 @@ class Updater():
             return
 
         try:
-            if (
-                parse_version(client.scheduler_version)
-                < parse_version('8.5.0.dev')
-            ):
-                # BACK COMPAT: isRetry, isWallclock, isXtriggered
-                # (see comment in cylc.flow.tui.data)
-                query = COMPAT_QUERY
-            else:
-                query = QUERY
+            # get a graphql query compatible with this workflow
+            query = get_query(client.scheduler_version)
+
             # fetch the data from the workflow
             workflow_update = await client.async_request(
                 'graphql',
@@ -317,6 +311,12 @@ class Updater():
                 w_id,
                 'Timeout communicating with workflow.'
                 ' Use "--comms-timeout" to increase the timeout',
+            )
+        except VersionIncompat as exc:
+            set_message(
+                data,
+                w_id,
+                str(exc),
             )
         except (CylcError, ZMQError) as exc:
             # something went wrong :(

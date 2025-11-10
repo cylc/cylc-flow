@@ -14,24 +14,36 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#-------------------------------------------------------------------------------
-# Test custom task event handler bad template
-. "$(dirname "$0")/test_header"
-set_test_number 4
+#
+# Test that running ``cylc play --pause`` on a paused workflow will _not_
+# upause it, but will return a warning.
+# https://github.com/cylc/cylc-flow/issues/7006
 
-if [[ "${TEST_NAME_BASE}" == *-globalcfg ]]; then
-    create_test_global_config '' ''
-fi
-install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-run_fail "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
-cmp_ok "${TEST_NAME_BASE}-validate.stderr" <<'__ERR__'
-WorkflowConfigError: bad task event handler template t1: echo %(rubbish)s: KeyError('rubbish')
-__ERR__
-workflow_run_fail "${TEST_NAME_BASE}-run" \
-    cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
-grep_ok \
-    'WorkflowConfigError: bad task event handler template t1: echo %(rubbish)s: KeyError(.rubbish.)' \
-    "${WORKFLOW_RUN_DIR}/log/scheduler/log"
+. "$(dirname "$0")/test_header"
+set_test_number 3
+
+init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+[scheduler]
+    allow implicit tasks = True
+[scheduling]
+    [[graph]]
+        R1 = a
+__FLOW_CONFIG__
+
+# It starts the workflow paused:
+run_ok "${TEST_NAME_BASE}-start-paused" \
+    cylc play "${WORKFLOW_NAME}" --pause
+
+# It fails to unpause the workflow:
+run_ok "${TEST_NAME_BASE}-start-paused-again" \
+    cylc play "${WORKFLOW_NAME}" --pause
+
+# It returns an informative error:
+grep_ok "Workflow already running: Remove --pause to resume" \
+    "${TEST_NAME_BASE}-start-paused-again.stderr"
+
+cylc stop "${WORKFLOW_NAME}" --now --now
+
+poll_workflow_stopped
 
 purge
-exit

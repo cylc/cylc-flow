@@ -19,17 +19,22 @@
 
 export REQUIRE_PLATFORM='loc:remote fs:indep comms:tcp'
 . "$(dirname "$0")/test_header"
-set_test_number 5
+set_test_number 6
 
-SSH_CMD="$(cylc config -d -i "[platforms][${CYLC_TEST_PLATFORM}]ssh command")"
+mapfile -d ' ' -t SSH_CMD < <(cylc config -d -i "[platforms][${CYLC_TEST_PLATFORM}]ssh command")
+TEST_NAME="$(basename "$0")"
 
 create_test_global_config "" "
 [install]
     [[symlink dirs]]
         [[[${CYLC_TEST_INSTALL_TARGET}]]]
-            run = \$TMPDIR/\$USER/sym-run
+            run = \$HOME/cylctb-symlinks/$TEST_NAME/
 "
 install_workflow "${TEST_NAME_BASE}" basic
+
+# shellcheck disable=SC2016
+run_ok "${TEST_NAME_BASE}-mkdir" \
+    "${SSH_CMD[@]}" "$CYLC_TEST_HOST" 'mkdir -p $HOME/cylc-symlink-test'
 
 run_ok "${TEST_NAME_BASE}-val" cylc validate "$WORKFLOW_NAME"
 
@@ -37,7 +42,7 @@ run_ok "${TEST_NAME_BASE}-val" cylc validate "$WORKFLOW_NAME"
 workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --no-detach "$WORKFLOW_NAME"
 
 # Remove remote run dir symlink (but not its target)
-$SSH_CMD "$CYLC_TEST_HOST" "rm -rf ~/cylc-run/${WORKFLOW_NAME}"
+"${SSH_CMD[@]}" "$CYLC_TEST_HOST" "rm -rf ~/cylc-run/${WORKFLOW_NAME}"
 
 # New run should abort
 delete_db
@@ -49,6 +54,6 @@ grep_ok "WorkflowFilesError: Symlink dir target already exists" "${TEST_NAME}.st
 
 # Clean up remote symlink dir target
 # shellcheck disable=SC2016
-$SSH_CMD "$CYLC_TEST_HOST" 'rm -rf "${TMPDIR}/${USER}/sym-run"'
+"${SSH_CMD[@]}" "$CYLC_TEST_HOST" 'rm -rf "${TMPDIR}/${USER}/sym-run" "${HOME}/cylctb-symlinks/$TEST_NAME/"'
 
 purge

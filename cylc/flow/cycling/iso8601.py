@@ -406,7 +406,11 @@ class ISO8601Sequence(SequenceBase):
                     exclusion_start_point,
                     exclusion_end_point)
 
-        self.step = ISO8601Interval(str(self.recurrence.duration))
+        self.step = (
+            ISO8601Interval(str(self.recurrence.duration))
+            if self.recurrence.duration
+            else ISO8601Interval.get_null()
+        )
         self.value = str(self.recurrence)
         # Concatenate the strings in exclusion list
         if self.exclusions:

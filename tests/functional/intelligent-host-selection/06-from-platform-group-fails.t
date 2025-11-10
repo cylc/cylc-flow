@@ -53,7 +53,7 @@ logfile="${WORKFLOW_RUN_DIR}/log/scheduler/log"
 
 # Check workflow fails for the reason we want it to fail
 named_grep_ok \
-    "Workflow stalled with 1/bad (submit-failed)" \
+    "${TEST_NAME_BASE}-workflow-stalled-with-bad-submit-failed" \
     "1/bad did not complete the required outputs" \
     "$logfile"
 
@@ -80,7 +80,7 @@ done
 
 # Look for message indicating that remote init has failed.
 named_grep_ok \
-    "platform: badhostplatform. - initialisation did not complete (no hosts were reachable)" \
+    "${TEST_NAME_BASE}-initialisation-did-not-complete" \
     "platform: badhostplatform. - initialisation did not complete (no hosts were reachable)" \
     "${logfile}"
 

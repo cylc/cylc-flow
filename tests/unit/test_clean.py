@@ -44,7 +44,7 @@ from cylc.flow.clean import (
     init_clean,
 )
 from cylc.flow.exceptions import (
-    ContactFileExists,
+    SchedulerAlive,
     CylcError,
     InputError,
     PlatformError,
@@ -119,7 +119,7 @@ def test_clean_check__fail(
     """
     def mocked_detect_old_contact_file(*a, **k):
         if not stopped:
-            raise ContactFileExists('Mocked error')
+            raise SchedulerAlive('Mocked error')
 
     monkeypatch.setattr(
         'cylc.flow.clean.detect_old_contact_file',
@@ -236,7 +236,7 @@ def test_init_clean__running_workflow(
 ) -> None:
     """Test init_clean() fails when workflow is still running"""
     def mock_err(*args, **kwargs):
-        raise ContactFileExists("Mocked error")
+        raise SchedulerAlive("Mocked error")
     monkeypatch.setattr('cylc.flow.clean.detect_old_contact_file',
                         mock_err)
     tmp_run_dir('yavin')

@@ -136,8 +136,8 @@ class WorkflowFilesError(CylcError):
     bullet = "\n    -"
 
 
-class ContactFileExists(CylcError):
-    """Workflow contact file exists."""
+class SchedulerAlive(CylcError):
+    """Workflow contact file exists and scheduler is alive."""
 
 
 class FileRemovalError(CylcError):
