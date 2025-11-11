@@ -17,20 +17,21 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Provide data access object for the suite runtime database."""
 
-import sqlite3
+from contextlib import suppress
+from glob import glob
 import os
 from pathlib import Path
-import tarfile
 import re
-from glob import glob
+import sqlite3
 from sqlite3 import OperationalError
+import tarfile
 
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.task_state import TASK_STATUS_GROUPS
 from cylc.flow.workflow_files import WorkflowFiles
 
 
-class CylcReviewDAO(object):
+class CylcReviewDAO:
     """Cylc Review data access object to the suite runtime database."""
 
     CYCLE_ORDERS = {"time_desc": " DESC", "time_asc": " ASC"}
@@ -157,7 +158,7 @@ class CylcReviewDAO(object):
                 # At Cylc 8.0.1+ Workflows installed but not run will not yet
                 # have a database.
                 wf_dir = Path(
-                    [i for i in self.daos.values()][0].db_file_name
+                    list(self.daos.values())[0].db_file_name
                 ).parent
                 if (wf_dir / WorkflowFiles.FLOW_FILE).exists() or (
                     wf_dir / WorkflowFiles.SUITE_RC
@@ -409,13 +410,8 @@ class CylcReviewDAO(object):
                 task_status_where_exprs.append("task_states.status == ?")
                 where_args.append(item)
             where_exprs.append(" OR ".join(task_status_where_exprs))
-        try:
-            job_status_where = self.JOB_STATUS_COMBOS[job_status]
-        except KeyError:
-            pass
-        else:
-            if job_status_where:
-                where_exprs.append(job_status_where)
+        if job_status_where := self.JOB_STATUS_COMBOS.get(job_status, None):
+            where_exprs.append(job_status_where)
         if where_exprs:
             return (" WHERE (" + ") AND (".join(where_exprs) + ")", where_args)
         else:
@@ -471,9 +467,11 @@ class CylcReviewDAO(object):
                             "seq_key": None,
                         }
                         continue
-            if entry["cycle"] in targzip_log_cycles:
-                if entry["cycle"] not in relevant_targzip_log_cycles:
-                    relevant_targzip_log_cycles.append(entry["cycle"])
+            if (
+                entry["cycle"] in targzip_log_cycles
+                and entry["cycle"] not in relevant_targzip_log_cycles
+            ):
+                relevant_targzip_log_cycles.append(entry["cycle"])
 
         for cycle in relevant_targzip_log_cycles:
             path = os.path.join("log", "job-%s.tar.gz" % cycle)
@@ -523,7 +521,7 @@ class CylcReviewDAO(object):
                     entry["seq_logs_indexes"][seq_key] = int_indexes
                 except ValueError:
                     pass
-            for filename, log_dict in entry["logs"].items():
+            for _, log_dict in entry["logs"].items():
                 # Unset seq_key for singular items
                 if log_dict["seq_key"] not in entry["seq_logs_indexes"]:
                     log_dict["seq_key"] = None
@@ -583,12 +581,10 @@ class CylcReviewDAO(object):
             os.path.join(prefix, os.path.join("cylc-run", suite_name))
         )
         targzip_log_cycles = []
-        try:
+        with suppress(OSError):
             for item in os.listdir(os.path.join(user_suite_dir, "log")):
                 if item.startswith("job-") and item.endswith(".tar.gz"):
                     targzip_log_cycles.append(item[4:-7])
-        except OSError:
-            pass
 
         if self.is_cylc8:
             # Cylc 8 has a smaller set of task states.
@@ -729,7 +725,7 @@ class CylcReviewDAO(object):
         try:
             host = None
             port_str = None
-            for line in open(port_file_path):
+            for line in Path(port_file_path).read_text().split('\n'):
                 key, value = [item.strip() for item in line.split("=", 1)]
                 if key in ["CYLC_SUITE_HOST", "CYLC_WORKFLOW_HOST"]:
                     host = value
@@ -744,12 +740,11 @@ class CylcReviewDAO(object):
 
         stmt = "SELECT status FROM task_states WHERE status GLOB ? LIMIT 1"
         stmt_args = ["*failed"]
-        try:
+        with suppress(sqlite3.Error):
+            # case with no task_states table.
             for _ in self._db_exec(user_name, suite_name, stmt, stmt_args):
                 ret["is_failed"] = True
                 break
-        except sqlite3.Error:
-            pass  # case with no task_states table.
         self._db_close(user_name, suite_name)
 
         return ret

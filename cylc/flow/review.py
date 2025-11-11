@@ -26,6 +26,7 @@ With no arguments, the status of the ad-hoc web service server is printed.
 For 'cylc review start', if 'PORT' is not specified, port 8080 is used."""
 
 import cherrypy
+from contextlib import suppress
 from fnmatch import fnmatch
 from glob import glob
 import jinja2
@@ -33,6 +34,7 @@ from jinja2 import select_autoescape
 import json
 import mimetypes
 import os
+from pathlib import Path
 import pwd
 import re
 import shlex
@@ -69,8 +71,7 @@ CYLC7_TASK_STATUSES_ORDERED = [
 ]
 
 
-
-class CylcReviewService(object):
+class CylcReviewService:
     """'Cylc Review Service."""
 
     NS = "cylc"
@@ -527,7 +528,7 @@ class CylcReviewService(object):
             item = os.path.relpath(dirpath, user_suite_dir_root)
             if not any(fnmatch(item, glob_) for glob_ in name_globs):
                 continue
-            try:
+            with suppress(OSError):
                 data["entries"].append(
                     {
                         "name": str(item),
@@ -537,8 +538,6 @@ class CylcReviewService(object):
                         ),
                     }
                 )
-            except OSError:
-                pass
 
         if order == "name_asc":
             data["entries"].sort(key=lambda entry: entry["name"])
@@ -554,7 +553,7 @@ class CylcReviewService(object):
             if data["of_n_entries"] % per_page != 0:
                 data["n_pages"] += 1
             offset = (page - 1) * per_page
-            data["entries"] = data["entries"][offset : offset + per_page]
+            data["entries"] = data["entries"][offset: offset + per_page]
         else:
             data["n_pages"] = 1
 
@@ -564,14 +563,12 @@ class CylcReviewService(object):
             rosie_suite_info = os.path.join(user_suite_dir, "rose-suite.info")
             if os.path.isfile(rosie_suite_info):
                 rosie_info = {}
-                try:
-                    for line in open(rosie_suite_info, 'r').readlines():
+                with suppress(IOError):
+                    for line in Path(rosie_suite_info).read_text().split('\n'):
                         if not line.strip().startswith('#') and '=' in line:
                             rosie_key, rosie_val = line.strip().split("=", 1)
                             if rosie_key in ("project", "title"):
                                 rosie_info[rosie_key] = rosie_val
-                except IOError:
-                    pass
                 entry["info"].update(rosie_info)
 
         data["time"] = strftime("%Y-%m-%dT%H:%M:%SZ", gmtime())
@@ -591,8 +588,8 @@ class CylcReviewService(object):
             tar_f = tarfile.open(f_name, "r:gz")
             try:
                 tar_info = tar_f.getmember(path_in_tar)
-            except KeyError:
-                raise cherrypy.HTTPError(404)
+            except KeyError as exc:
+                raise cherrypy.HTTPError(404) from exc
             f_size = tar_info.size
             handle = tar_f.extractfile(path_in_tar)
             if handle.read(2) == "#!":
@@ -621,7 +618,7 @@ class CylcReviewService(object):
             text = handle.read()
         else:
             f_size = os.stat(f_name).st_size
-            if open(f_name).read(2) == "#!":
+            if open(f_name).read(2) == "#!":   # NOQA: SIM115
                 mime = self.MIME_TEXT_PLAIN
             else:
                 mime = mimetypes.guess_type(quote(f_name))[0]
@@ -635,7 +632,7 @@ class CylcReviewService(object):
             ):
                 cherrypy.response.headers["Content-Type"] = mime
                 return cherrypy.lib.static.serve_file(f_name, mime)
-            text = open(f_name).read()
+            text = Path(f_name).read_text()
         try:
             text = str(text)
             if mode in [None, "text"]:
@@ -954,8 +951,8 @@ class CylcReviewService(object):
         """
         try:
             return pwd.getpwnam(user).pw_dir
-        except KeyError:
-            raise cherrypy.HTTPError(404)
+        except KeyError as exc:
+            raise cherrypy.HTTPError(404) from exc
 
     def _get_user_suite_dir_root(self, user):
         """Return, e.g. ~user/cylc-run/ for a cylc suite."""
