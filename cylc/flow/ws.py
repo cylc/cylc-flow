@@ -52,58 +52,7 @@ def wsgi_app(service_cls, *args, **kwargs):
         cherrypy.engine.stop()
 
 
-def ws_cli(service_cls, service_docstr, *args, **kwargs):
-    """Parse command line, start/stop ad-hoc server.
-
-    service_cls - Class to launch web service. Must have the constants
-                  service_cls.NS and service_cls.UTIL. *args and **kwargs are
-                  passed to its constructor.
-    """
-
-    parser = COP(
-        # service_docstr,
-        '',
-        argdoc=[
-            ("[start [PORT]]", "Start ad-hoc web service server."),
-            ("[stop]", "Stop ad-hoc web service server.")
-        ])
-
-    parser.add_option(
-        "--non-interactive", "--yes", "-y",
-        help="Switch off interactive prompting i.e. answer yes to everything"
-        " (for stop only).",
-        action="store_true", default=False, dest="non_interactive")
-    parser.add_option(
-        "--service-root", "-R",
-        help="Include web service name under root of URL (for start only).",
-        action="store_true", default=False, dest="service_root_mode")
-
-    opts, args = parser.parse_args(['start'])
-        # remove_opts=['--host', '--user', '--verbose', '--debug'])
-    arg = None
-    if args:
-        arg = args[0]
-    status = _get_server_status(service_cls)
-    if arg == "start":
-        port = None
-        if args[1:]:
-            port = args[1]
-        _ws_init(service_cls, port, opts.service_root_mode, *args, **kwargs)
-    elif not status:
-        print("No %s service server running." % service_cls.TITLE)
-    else:
-        for key, value in sorted(status.items()):
-            print("%s=%s" % (key, value))
-        if (arg == "stop" and status.get("pid") and
-                (opts.non_interactive or input(
-                 "Stop server via termination? y/n (default=n)") == "y")):
-            try:
-                os.killpg(int(status["pid"]), signal.SIGTERM)
-            except OSError:
-                print("Termination signal failed.")
-
-
-def _ws_init(service_cls, port, service_root_mode, *args, **kwargs):
+def _ws_init(service_cls, port, service_root, *args, **kwargs):
     """Start quick web service."""
     config = _configure(service_cls)
 
@@ -129,9 +78,9 @@ def _ws_init(service_cls, port, service_root_mode, *args, **kwargs):
     cherrypy.config["log.error_file"] = log_root + "-error.log"
     open(cherrypy.config["log.error_file"], "w").close()
 
-    root = "/"
-    if service_root_mode:
-        root = "/%s-%s/" % (service_cls.NS, service_cls.UTIL)
+    root = '/'
+    if service_root != '/':
+        root = "/%s-%s/" % (service_root, service_cls.UTIL)
     cherrypy.tree.mount(service_cls(*args, **kwargs), root, config)
     try:
         cherrypy.engine.start()
