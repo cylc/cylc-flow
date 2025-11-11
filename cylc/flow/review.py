@@ -969,7 +969,7 @@ class CylcReviewService:
             ...     os.path.join('foo', 'bar'))
             Traceback (most recent call last):
              ...
-            HTTPError: (403, None)
+            cherrypy._cperror.HTTPError: (403, None)
 
         Raises:
             cherrypy.HTTPError(403)
@@ -999,7 +999,7 @@ class CylcReviewService:
             ... )
             Traceback (most recent call last):
              ...
-            HTTPError: (403, None)
+            cherrypy._cperror.HTTPError: (403, None)
 
             # BAD
             >>> CylcReviewService._check_link_path(
@@ -1007,7 +1007,7 @@ class CylcReviewService:
             ... )
             Traceback (most recent call last):
              ...
-            HTTPError: (403, None)
+            cherrypy._cperror.HTTPError: (403, None)
 
         Raises:
             cherrypy.HTTPError(403)
@@ -1025,11 +1025,11 @@ class CylcReviewService:
             >>> CylcReviewService._check_file_path('.service/contact')
             Traceback (most recent call last):
              ...
-            HTTPError: (403, None)
+            cherrypy._cperror.HTTPError: (403, None)
             >>> CylcReviewService._check_file_path('log/../.service/contact')
             Traceback (most recent call last):
              ...
-            HTTPError: (403, None)
+            cherrypy._cperror.HTTPError: (403, None)
             >>> CylcReviewService._check_file_path('log/foo')  # pass, etc.
             >>> CylcReviewService._check_file_path('suite.rc')
             >>> CylcReviewService._check_file_path('suite.rc.processed')
@@ -1064,23 +1064,24 @@ class CylcReviewService:
             >>> CylcReviewService._check_path_normalised('foo//bar')
             Traceback (most recent call last):
              ...
-            HTTPError: (403, None)
+            cherrypy._cperror.HTTPError: (403, None)
             >>> CylcReviewService._check_path_normalised('foo/bar/')
             Traceback (most recent call last):
              ...
-            HTTPError: (403, None)
+            cherrypy._cperror.HTTPError: (403, None)
             >>> CylcReviewService._check_path_normalised('foo/./bar')
             Traceback (most recent call last):
              ...
-            HTTPError: (403, None)
+            cherrypy._cperror.HTTPError: (403, None)
             >>> CylcReviewService._check_path_normalised('foo/../bar')
             Traceback (most recent call last):
              ...
-            HTTPError: (403, None)
+            cherrypy._cperror.HTTPError: (403, None)
             >>> CylcReviewService._check_path_normalised('../foo')
             Traceback (most recent call last):
              ...
-            HTTPError: (403, None)
+            cherrypy._cperror.HTTPError: (403, None)
+
 
         Raises:
             cherrypy.HTTPError(403)
