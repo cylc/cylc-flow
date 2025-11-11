@@ -60,11 +60,15 @@ def _ws_init(service_cls, port, service_root, *args, **kwargs):
     if port:
         cherrypy.config["server.socket_port"] = int(port)
     port = cherrypy.server.socket_port
-    log_root = os.path.expanduser(LOG_ROOT_TMPL % {
-        "ns": service_cls.NS,
-        "util": service_cls.UTIL,
-        "host": cherrypy.server.socket_host,
-        "port": cherrypy.server.socket_port})
+    log_root = os.path.expanduser(
+        LOG_ROOT_TMPL
+        % {
+            "ns": service_cls.NS,
+            "util": service_cls.UTIL,
+            "host": cherrypy.server.socket_host,
+            "port": cherrypy.server.socket_port,
+        }
+    )
     log_status = log_root + ".status"
     if not os.path.isdir(os.path.dirname(log_root)):
         os.makedirs(os.path.dirname(log_root))
@@ -100,7 +104,9 @@ def _configure(service_cls):
                 break
             path = os.path.dirname(path)
     for key, value in (
-            ("CYLC_NS", service_cls.NS), ("CYLC_UTIL", service_cls.UTIL)):
+        ("CYLC_NS", service_cls.NS),
+        ("CYLC_UTIL", service_cls.UTIL),
+    ):
         if os.getenv(key) is None:
             os.environ[key] = value
 
@@ -109,6 +115,7 @@ def _configure(service_cls):
     cherrypy.config["tools.encode.encoding"] = "utf-8"
     config = {}
     from pathlib import Path
+
     static_lib = Path(__file__).parent / 'cylc_review/static'
     for name in os.listdir(static_lib):
         path = os.path.join(static_lib, name)
@@ -127,11 +134,15 @@ def _configure(service_cls):
 def _get_server_status(service_cls):
     """Return a dict containing quick service server status."""
     ret = {}
-    log_root_glob = os.path.expanduser(LOG_ROOT_TMPL % {
-        "ns": service_cls.NS,
-        "util": service_cls.UTIL,
-        "host": "*",
-        "port": "*"})
+    log_root_glob = os.path.expanduser(
+        LOG_ROOT_TMPL
+        % {
+            "ns": service_cls.NS,
+            "util": service_cls.UTIL,
+            "host": "*",
+            "port": "*",
+        }
+    )
     for filename in glob(log_root_glob):
         try:
             for line in open(filename):

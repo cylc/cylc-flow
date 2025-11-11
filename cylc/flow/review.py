@@ -45,8 +45,7 @@ from urllib.parse import quote
 
 from cylc.flow.hostuserutil import get_host
 from cylc.flow.review_dao import CylcReviewDAO
-from cylc.flow.task_state import (
-    TASK_STATUSES_ORDERED, TASK_STATUS_GROUPS)
+from cylc.flow.task_state import TASK_STATUSES_ORDERED, TASK_STATUS_GROUPS
 from cylc.flow import __version__ as CYLC_VERSION
 from cylc.flow.ws import get_util_home
 from cylc.flow.workflow_files import WorkflowFiles
@@ -69,8 +68,9 @@ CYLC7_TASK_STATUSES_ORDERED = [
     'succeeded',
 ]
 
-class CylcReviewService(object):
 
+
+class CylcReviewService(object):
     """'Cylc Review Service."""
 
     NS = "cylc"
@@ -92,14 +92,15 @@ class CylcReviewService(object):
         'flow.cylc',
         'rose-suite.info',
         'opt/rose-suite-cylc-install.conf',
-        'rose-suite.conf'
+        'rose-suite.conf',
     ]
 
     def __init__(self, *args, **kwargs):
         self.exposed = True
         self.suite_dao = CylcReviewDAO()
         self.logo = os.path.basename(
-            get_util_home("doc", "src", "cylc-logo.png"))
+            get_util_home("doc", "src", "cylc-logo.png")
+        )
         self.title = self.TITLE
         self.host_name = get_host()
         if self.host_name and "." in self.host_name:
@@ -107,9 +108,12 @@ class CylcReviewService(object):
         self.cylc_version = CYLC_VERSION
         # Autoescape markup to prevent code injection from user inputs.
         template_env = jinja2.Environment(
-            loader=jinja2.PackageLoader('cylc', package_path='flow/cylc_review/template'),
+            loader=jinja2.PackageLoader(
+                'cylc', package_path='flow/cylc_review/template'
+            ),
             autoescape=select_autoescape(
-                enabled_extensions=('html', 'xml'), default_for_string=True),
+                enabled_extensions=('html', 'xml'), default_for_string=True
+            ),
         )
         template_env.filters['urlise'] = self.url2hyperlink
         self.template_env = template_env
@@ -152,14 +156,17 @@ class CylcReviewService(object):
             "time": strftime("%Y-%m-%dT%H:%M:%SZ", gmtime()),
         }
         data["states"].update(
-            self.suite_dao.get_suite_state_summary(user, suite))
-        data["states"]["last_activity_time"] = (
-            self.get_last_activity_time(user, suite))
+            self.suite_dao.get_suite_state_summary(user, suite)
+        )
+        data["states"]["last_activity_time"] = self.get_last_activity_time(
+            user, suite
+        )
         data.update(self._get_suite_logs_info(user, suite))
 
         try:
             data["broadcast_states"] = (
-                self.suite_dao.get_suite_broadcast_states(user, suite))
+                self.suite_dao.get_suite_broadcast_states(user, suite)
+            )
         except OperationalError:
             data["broadcast_states"] = ()
 
@@ -167,7 +174,8 @@ class CylcReviewService(object):
             return json.dumps(data)
         try:
             return self.template_env.get_template(
-                "broadcast-states.html").render(**data)
+                "broadcast-states.html"
+            ).render(**data)
         except jinja2.TemplateError:
             traceback.print_exc()
         return json.dumps(data)
@@ -185,15 +193,17 @@ class CylcReviewService(object):
             "script": cherrypy.request.script_name,
             "method": "broadcast_events",
             "states": {},
-            "time": strftime("%Y-%m-%dT%H:%M:%SZ", gmtime())
+            "time": strftime("%Y-%m-%dT%H:%M:%SZ", gmtime()),
         }
         data["states"].update(
-            self.suite_dao.get_suite_state_summary(user, suite))
+            self.suite_dao.get_suite_state_summary(user, suite)
+        )
         data.update(self._get_suite_logs_info(user, suite))
 
         try:
             data["broadcast_events"] = (
-                self.suite_dao.get_suite_broadcast_events(user, suite))
+                self.suite_dao.get_suite_broadcast_events(user, suite)
+            )
         except OperationalError:
             data["broadcast_events"] = ()
 
@@ -201,15 +211,23 @@ class CylcReviewService(object):
             return json.dumps(data)
         try:
             return self.template_env.get_template(
-                "broadcast-events.html").render(**data)
+                "broadcast-events.html"
+            ).render(**data)
         except jinja2.TemplateError:
             traceback.print_exc()
         return json.dumps(data)
 
     @cherrypy.expose
     def cycles(
-            self, user, suite, page=1, order=None, per_page=None,
-            no_fuzzy_time="0", form=None):
+        self,
+        user,
+        suite,
+        page=1,
+        order=None,
+        per_page=None,
+        no_fuzzy_time="0",
+        form=None,
+    ):
         """List cycles of a running or completed suite."""
 
         # Call to ensure user and suite args valid (together), else raise 404.
@@ -232,8 +250,10 @@ class CylcReviewService(object):
             "user": user,
             "suite": suite,
             "is_option_on": (
-                order is not None and order != "time_desc" or
-                per_page is not None and per_page != per_page_default
+                order is not None
+                and order != "time_desc"
+                or per_page is not None
+                and per_page != per_page_default
             ),
             "order": order,
             "cylc_version": self.cylc_version,
@@ -248,7 +268,9 @@ class CylcReviewService(object):
         }
         data["entries"], data["of_n_entries"] = (
             self.suite_dao.get_suite_cycles_summary(
-                user, suite, order, per_page, (page - 1) * per_page))
+                user, suite, order, per_page, (page - 1) * per_page
+            )
+        )
         if per_page:
             data["n_pages"] = data["of_n_entries"] // per_page
             if data["of_n_entries"] % per_page != 0:
@@ -257,9 +279,11 @@ class CylcReviewService(object):
             data["n_pages"] = 1
         data.update(self._get_suite_logs_info(user, suite))
         data["states"].update(
-            self.suite_dao.get_suite_state_summary(user, suite))
-        data["states"]["last_activity_time"] = (
-            self.get_last_activity_time(user, suite))
+            self.suite_dao.get_suite_state_summary(user, suite)
+        )
+        data["states"]["last_activity_time"] = self.get_last_activity_time(
+            user, suite
+        )
         data["time"] = strftime("%Y-%m-%dT%H:%M:%SZ", gmtime())
         if form == "json":
             return json.dumps(data)
@@ -271,9 +295,19 @@ class CylcReviewService(object):
 
     @cherrypy.expose
     def taskjobs(
-            self, user, suite, page=1, cycles=None, tasks=None,
-            task_status=None, job_status=None,
-            order=None, per_page=None, no_fuzzy_time="0", form=None):
+        self,
+        user,
+        suite,
+        page=1,
+        cycles=None,
+        tasks=None,
+        task_status=None,
+        job_status=None,
+        order=None,
+        per_page=None,
+        no_fuzzy_time="0",
+        form=None,
+    ):
         """List task jobs.
 
         user -- A string containing a valid user ID
@@ -318,12 +352,13 @@ class CylcReviewService(object):
             else:
                 per_page = per_page_default
         is_option_on = (
-            cycles or
-            tasks or
-            task_status or
-            job_status or
-            order is not None and order != "time_desc" or
-            per_page != per_page_default
+            cycles
+            or tasks
+            or task_status
+            or job_status
+            or order is not None
+            and order != "time_desc"
+            or per_page != per_page_default
         )
         if page and per_page:
             page = int(page)
@@ -332,10 +367,7 @@ class CylcReviewService(object):
 
         # Set list of task states depending on Cylc version 7 or 8
         task_statuses_ordered = CYLC7_TASK_STATUSES_ORDERED
-        suite_dir = os.path.join(
-            self._get_user_home(user),
-            "cylc-run",
-            suite)
+        suite_dir = os.path.join(self._get_user_home(user), "cylc-run", suite)
         is_c8 = self.is_cylc8(suite_dir)
         if is_c8:
             task_statuses_ordered = TASK_STATUSES_ORDERED
@@ -348,8 +380,10 @@ class CylcReviewService(object):
             task_status = [task_status]
 
         # generate list of all task states [(state, "0" or "1"), ...]
-        task_statuses = [(status, "1" if status in task_status else "0")
-                         for status in task_statuses_ordered]
+        task_statuses = [
+            (status, "1" if status in task_status else "0")
+            for status in task_statuses_ordered
+        ]
 
         data = {
             "cycles": cycles,
@@ -380,15 +414,23 @@ class CylcReviewService(object):
             tasks = shlex.split(str(tasks))
         data.update(self._get_suite_logs_info(user, suite))
         data["states"].update(
-            self.suite_dao.get_suite_state_summary(user, suite))
-        data["states"]["last_activity_time"] = (
-            self.get_last_activity_time(user, suite))
-        (
-            entries, of_n_entries, eight_point_zero
-        ) = self.suite_dao.get_suite_job_entries(
-            user, suite, cycles, tasks,
-            task_status, job_status, order,
-            per_page, (page - 1) * per_page
+            self.suite_dao.get_suite_state_summary(user, suite)
+        )
+        data["states"]["last_activity_time"] = self.get_last_activity_time(
+            user, suite
+        )
+        (entries, of_n_entries, eight_point_zero) = (
+            self.suite_dao.get_suite_job_entries(
+                user,
+                suite,
+                cycles,
+                tasks,
+                task_status,
+                job_status,
+                order,
+                per_page,
+                (page - 1) * per_page,
+            )
         )
         data["eight_point_zero"] = eight_point_zero
         data["entries"] = entries
@@ -404,14 +446,22 @@ class CylcReviewService(object):
             return json.dumps(data)
         try:
             return self.template_env.get_template("taskjobs.html").render(
-                **data)
+                **data
+            )
         except jinja2.TemplateError:
             traceback.print_exc()
 
-
     @cherrypy.expose
-    def suites(self, user, names=None, page=1, order=None, per_page=None,
-               no_fuzzy_time="0", form=None):
+    def suites(
+        self,
+        user,
+        names=None,
+        page=1,
+        order=None,
+        per_page=None,
+        no_fuzzy_time="0",
+        form=None,
+    ):
         """List (installed) suites of a user.
 
         user -- A string containing a valid user ID
@@ -440,9 +490,12 @@ class CylcReviewService(object):
             "no_fuzzy_time": no_fuzzy_time,
             "user": user,
             "is_option_on": (
-                names and shlex.split(str(names)) != ["*"] or
-                order is not None and order != "time_desc" or
-                per_page is not None and per_page != per_page_default
+                names
+                and shlex.split(str(names)) != ["*"]
+                or order is not None
+                and order != "time_desc"
+                or per_page is not None
+                and per_page != per_page_default
             ),
             "names": names,
             "page": page,
@@ -455,18 +508,13 @@ class CylcReviewService(object):
         if names:
             name_globs = shlex.split(str(names))
         # Get entries
-        sub_names = [
-            WorkflowFiles.Service.DIRNAME,
-            "log",
-            "share",
-            "work"
-        ]
+        sub_names = [WorkflowFiles.Service.DIRNAME, "log", "share", "work"]
         for dirpath, dnames, fnames in os.walk(
             user_suite_dir_root, followlinks=True
         ):
             if dirpath != user_suite_dir_root and (
-                    any(name in dnames or name in fnames
-                        for name in sub_names)):
+                any(name in dnames or name in fnames for name in sub_names)
+            ):
                 dnames[:] = []
             else:
                 continue
@@ -480,11 +528,15 @@ class CylcReviewService(object):
             if not any(fnmatch(item, glob_) for glob_ in name_globs):
                 continue
             try:
-                data["entries"].append({
-                    "name": str(item),
-                    "info": {},
-                    "last_activity_time": (
-                        self.get_last_activity_time(user, item))})
+                data["entries"].append(
+                    {
+                        "name": str(item),
+                        "info": {},
+                        "last_activity_time": (
+                            self.get_last_activity_time(user, item)
+                        ),
+                    }
+                )
             except OSError:
                 pass
 
@@ -502,7 +554,7 @@ class CylcReviewService(object):
             if data["of_n_entries"] % per_page != 0:
                 data["n_pages"] += 1
             offset = (page - 1) * per_page
-            data["entries"] = data["entries"][offset:offset + per_page]
+            data["entries"] = data["entries"][offset : offset + per_page]
         else:
             data["n_pages"] = 1
 
@@ -546,13 +598,14 @@ class CylcReviewService(object):
             if handle.read(2) == "#!":
                 mime = self.MIME_TEXT_PLAIN
             else:
-                mime = mimetypes.guess_type(
-                    quote(path_in_tar))[0]
+                mime = mimetypes.guess_type(quote(path_in_tar))[0]
             handle.seek(0)
-            if (mode == "download" or
-                    f_size > view_size_max or
-                    mime and
-                    (not mime.startswith("text/") or mime.endswith("html"))):
+            if (
+                mode == "download"
+                or f_size > view_size_max
+                or mime
+                and (not mime.startswith("text/") or mime.endswith("html"))
+            ):
                 temp_f = NamedTemporaryFile()
                 f_bsize = os.fstatvfs(temp_f.fileno()).f_bsize
                 while True:
@@ -574,10 +627,12 @@ class CylcReviewService(object):
                 mime = mimetypes.guess_type(quote(f_name))[0]
             if not mime:
                 mime = self.MIME_TEXT_PLAIN
-            if (mode == "download" or
-                    f_size > view_size_max or
-                    mime and
-                    (not mime.startswith("text/") or mime.endswith("html"))):
+            if (
+                mode == "download"
+                or f_size > view_size_max
+                or mime
+                and (not mime.startswith("text/") or mime.endswith("html"))
+            ):
                 cherrypy.response.headers["Content-Type"] = mime
                 return cherrypy.lib.static.serve_file(f_name, mime)
             text = open(f_name).read()
@@ -596,10 +651,12 @@ class CylcReviewService(object):
                 handle.seek(0)
                 # file closed by cherrypy
                 return cherrypy.lib.static.serve_fileobj(
-                    handle, self.MIME_TEXT_PLAIN)
+                    handle, self.MIME_TEXT_PLAIN
+                )
             else:
                 return cherrypy.lib.static.serve_file(
-                    f_name, self.MIME_TEXT_PLAIN)
+                    f_name, self.MIME_TEXT_PLAIN
+                )
         else:
             if path_in_tar:
                 handle.close()
@@ -612,17 +669,16 @@ class CylcReviewService(object):
             if len(names) == 4:
                 cycle, task, submit_num, _ = names
                 entries = self.suite_dao.get_suite_job_entries(
-                    user, suite, [cycle], [task],
-                    None, None, None, None, None)[0]
+                    user, suite, [cycle], [task], None, None, None, None, None
+                )[0]
                 for entry in entries:
                     if entry["submit_num"] == int(submit_num):
                         job_entry = entry
                         break
 
         # Set the file_content type for syntax highlighting.
-        if (
-            fnmatch(os.path.basename(path), "suite*.rc*")
-            or fnmatch(os.path.basename(path), "*.cylc")
+        if fnmatch(os.path.basename(path), "suite*.rc*") or fnmatch(
+            os.path.basename(path), "*.cylc"
         ):
             file_content = "cylc-suite-rc"
         elif fnmatch(os.path.basename(path), "*rose*.conf"):
@@ -638,20 +694,31 @@ class CylcReviewService(object):
             fname = os.path.join(self._get_user_suite_dir(user, suite), name)
             try:
                 return strftime(
-                    "%Y-%m-%dT%H:%M:%SZ", gmtime(os.stat(fname).st_mtime))
+                    "%Y-%m-%dT%H:%M:%SZ", gmtime(os.stat(fname).st_mtime)
+                )
             except OSError:
                 continue
 
     @cherrypy.expose
-    def viewsearch(self, user, suite, path=None, path_in_tar=None, mode=None,
-                   search_string=None, search_mode=None):
+    def viewsearch(
+        self,
+        user,
+        suite,
+        path=None,
+        path_in_tar=None,
+        mode=None,
+        search_string=None,
+        search_mode=None,
+    ):
         """Search a text log file."""
         # get file or serve raw
         file_output = self.get_file(
-            user, suite, path, path_in_tar=path_in_tar, mode=mode)
+            user, suite, path, path_in_tar=path_in_tar, mode=mode
+        )
         if isinstance(file_output, tuple):
             lines, _, file_content, _ = self.get_file(
-                user, suite, path, path_in_tar=path_in_tar, mode=mode)
+                user, suite, path, path_in_tar=path_in_tar, mode=mode
+            )
         else:
             return file_output
 
@@ -678,8 +745,7 @@ class CylcReviewService(object):
                     # ERROR: un-recognised search_mode
                     break
                 # if line matches search string include in results
-                results.append([line[:start], line[start:end],
-                                line[end:]])
+                results.append([line[:start], line[start:end], line[end:]])
                 if mode in [None, "text"]:
                     line_numbers.append(i + 1)  # line numbers start from 1
             lines = results
@@ -693,27 +759,30 @@ class CylcReviewService(object):
             lines = [[line] for line in lines]
 
         return template.render(
-            lines=lines,
-            line_numbers=line_numbers,
-            file_content=file_content
+            lines=lines, line_numbers=line_numbers, file_content=file_content
         )
 
     @cherrypy.expose
-    def view(self, user, suite, path, path_in_tar=None, mode=None,
-             no_fuzzy_time="0"):
+    def view(
+        self, user, suite, path, path_in_tar=None, mode=None, no_fuzzy_time="0"
+    ):
         """View a text log file."""
         # Log files with +TZ in name end up with space instead of plus sign, so
         # put plus sign back in (https://github.com/cylc/cylc-flow/issues/4260)
         path = re.sub(r"(log\.\S+\d{2})\s(\d{2,4})$", r"\1+\2", path)
-        path = re.sub(r"(log\/config\/\d*T?\d*)\s(\d*-rose-suite.conf)", r"\1+\2", path)
+        path = re.sub(
+            r"(log\/config\/\d*T?\d*)\s(\d*-rose-suite.conf)", r"\1+\2", path
+        )
         suite = suite.replace('%2F', '/')
 
         # get file or serve raw data
         file_output = self.get_file(
-            user, suite, path, path_in_tar=path_in_tar, mode=mode)
+            user, suite, path, path_in_tar=path_in_tar, mode=mode
+        )
         if isinstance(file_output, tuple):
             lines, job_entry, file_content, f_name = self.get_file(
-                user, suite, path, path_in_tar=path_in_tar, mode=mode)
+                user, suite, path, path_in_tar=path_in_tar, mode=mode
+            )
         else:
             return file_output
 
@@ -740,7 +809,8 @@ class CylcReviewService(object):
             lines=lines,
             entry=job_entry,
             task_status_groups=TASK_STATUS_GROUPS,
-            **data)
+            **data,
+        )
 
     def _get_suite_logs_info(self, user, suite):
         """Return a dict of suite-related files including suite logs."""
@@ -761,7 +831,8 @@ class CylcReviewService(object):
                 data["files"][rose_logs_dest][fname] = {
                     "path": fname,
                     "mtime": stat.st_mtime,
-                    "size": stat.st_size}
+                    "size": stat.st_size,
+                }
 
         # Get Rose log files
         for key in ["conf", "log", "version"]:
@@ -771,7 +842,8 @@ class CylcReviewService(object):
                 data["files"][rose_logs_dest]["log/rose-suite-run." + key] = {
                     "path": "log/rose-suite-run." + key,
                     "mtime": stat.st_mtime,
-                    "size": stat.st_size}
+                    "size": stat.st_size,
+                }
         for key in ["html", "txt", "version"]:
             for f_name in glob(os.path.join(user_suite_dir, "log/*." + key)):
                 if os.path.basename(f_name).startswith("rose-"):
@@ -781,7 +853,8 @@ class CylcReviewService(object):
                 data["files"][rose_logs_dest]["other:" + name] = {
                     "path": name,
                     "mtime": stat.st_mtime,
-                    "size": stat.st_size}
+                    "size": stat.st_size,
+                }
 
         # Returns a tuple that looks like:
         #    ("cylc-run",
@@ -800,9 +873,11 @@ class CylcReviewService(object):
             f_name = os.path.join(dir_, key)
             if os.path.isfile(f_name):
                 f_stat = os.stat(f_name)
-                logs_info[key] = {"path": key,
-                                  "mtime": f_stat.st_mtime,
-                                  "size": f_stat.st_size}
+                logs_info[key] = {
+                    "path": key,
+                    "mtime": f_stat.st_mtime,
+                    "size": f_stat.st_size,
+                }
 
         # Get cylc suite/workflow log files and other files:
         EXTRA_FILES = [
@@ -815,7 +890,7 @@ class CylcReviewService(object):
             "log/config/*",
             "log/scheduler/*.log",
             "log/remote-install/*.log",
-            "log/version/*"
+            "log/version/*",
         ]
         for glob_pattern in EXTRA_FILES:
             for f_name in glob(os.path.join(dir_, glob_pattern)):
@@ -824,7 +899,7 @@ class CylcReviewService(object):
                 logs_info[key] = {
                     "path": key,
                     "mtime": f_stat.st_mtime,
-                    "size": f_stat.st_size
+                    "size": f_stat.st_size,
                 }
 
         if rose_logs_dest == 'cylc':
@@ -845,7 +920,8 @@ class CylcReviewService(object):
         suite_file = os.path.join(user_suite_dir, "suite.rc")
         return os.path.exists(flow_file) or (
             # following check for back compat workflows which have run
-            os.path.exists(suite_file) and os.path.exists(log_dir))
+            os.path.exists(suite_file) and os.path.exists(log_dir)
+        )
 
     @classmethod
     def _check_dir_access(cls, path):
@@ -860,7 +936,8 @@ class CylcReviewService(object):
         """
         if not os.path.exists(path):
             raise cherrypy.HTTPError(
-                404, 'Path {path} does not exist'.format(path=path))
+                404, 'Path {path} does not exist'.format(path=path)
+            )
         if not os.access(path, os.R_OK):
             raise cherrypy.HTTPError(403)
         return path
@@ -882,9 +959,9 @@ class CylcReviewService(object):
 
     def _get_user_suite_dir_root(self, user):
         """Return, e.g. ~user/cylc-run/ for a cylc suite."""
-        return self._check_dir_access(os.path.join(
-            self._get_user_home(user),
-            "cylc-run"))
+        return self._check_dir_access(
+            os.path.join(self._get_user_home(user), "cylc-run")
+        )
 
     @staticmethod
     def _check_string_for_path(string):
@@ -976,9 +1053,9 @@ class CylcReviewService(object):
             head, tail1 = os.path.split(head)
             tail = os.path.join(tail1, tail)
         if not (
-            head == 'log' or
-            (not head and tail in cls.WORKFLOW_FILES) or
-            (head, tail) == (u'opt', u'rose-suite-cylc-install.conf')
+            head == 'log'
+            or (not head and tail in cls.WORKFLOW_FILES)
+            or (head, tail) == ('opt', 'rose-suite-cylc-install.conf')
         ):
             raise cherrypy.HTTPError(403)
 
@@ -1028,10 +1105,7 @@ class CylcReviewService(object):
         self._check_path_normalised(suite)
         for path in paths:
             self._check_path_normalised(path)
-        suite_dir = os.path.join(
-            self._get_user_home(user),
-            "cylc-run",
-            suite)
+        suite_dir = os.path.join(self._get_user_home(user), "cylc-run", suite)
         if not paths:
             return self._check_dir_access(suite_dir)
         path = os.path.join(suite_dir, *paths)
