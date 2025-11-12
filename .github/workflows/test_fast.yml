@@ -66,6 +66,10 @@ jobs:
       - name: Configure git  # Needed by the odd test
         uses: cylc/release-actions/configure-git@v1
 
+      # Useful debug info:
+      - name: Pip list
+        run: pip list
+
       - name: Unit Tests
         timeout-minutes: 5
         run: |
