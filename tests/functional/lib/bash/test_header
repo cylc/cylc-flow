@@ -420,6 +420,100 @@ count_ok() {
     fail "${TEST_NAME}"
 }
 
+
+port_is_busy() {
+    local WS_PORT="${1}"
+    if type -P netcat 1>/dev/null; then
+        WS_HOSTNAME="${WS_HOSTNAME:-"$(hostname)"}"
+        WS_HOSTNAME="${WS_HOSTNAME:-'localhost'}"
+        netcat -z "${WS_HOSTNAME}" "${WS_PORT}"
+    else
+        netstat -atun | grep -q "0.0.0.0:${WS_PORT}"
+    fi
+}
+
+TEST_CYLC_WS_PID=
+TEST_CYLC_WS_PORT=
+TEST_CYLC_WS_URL=
+
+
+cylc_ws_init() {
+    local NS="$1"
+    local UTIL="$2"
+
+    local WS_PORT="$((RANDOM + 10000))"
+    while port_is_busy "${WS_PORT}"; do
+        WS_PORT="$((RANDOM + 10000))"
+    done
+
+    TEST_NAME="${TEST_NAME_BASE}-${NS}-${UTIL}"
+    "${NS}" "${UTIL}" 'start' '--port' "${WS_PORT}"  \
+        0<'/dev/null' 1>"${NS}-${UTIL}.stdout" 2>"${NS}-${UTIL}.stderr" &
+    TEST_CYLC_WS_PID="$!"
+    T_INIT="$(date '+%s')"
+    while ! port_is_busy "${WS_PORT}" && (($(date '+%s') < T_INIT + 30)); do
+        sleep 1
+    done
+    TEST_CYLC_WS_PORT="${WS_PORT}"
+    if port_is_busy "${TEST_CYLC_WS_PORT}"; then
+        ok "${TEST_NAME}"
+        TEST_CYLC_WS_URL="http://localhost:${TEST_CYLC_WS_PORT}"
+    else
+        fail "${TEST_NAME}"
+        cylc_ws_kill
+    fi
+}
+
+cylc_ws_kill() {
+    if [[ -n "${TEST_CYLC_WS_PID}" ]]; then
+        kill "${TEST_CYLC_WS_PID}" 2>'/dev/null'
+        wait 2>'/dev/null'
+    fi
+    if [[ -n "${TEST_CYLC_WS_PORT}" ]]; then
+        rm -fr "${HOME}/.cylc/"*"-0.0.0.0-${TEST_CYLC_WS_PORT}"* 2>'/dev/null'
+    fi
+    TEST_CYLC_WS_PID=
+    TEST_CYLC_WS_PORT=
+    TEST_CYLC_WS_URL=
+}
+
+cylc_ws_json_greps() {
+    local TEST_NAME="$1"
+    shift 1
+    run_ok "${TEST_NAME}" python3 - "$@" <<'__PYTHON__'
+import ast
+import json
+import sys
+
+data = json.load(open(sys.argv[1]))
+for item in sys.argv[2:]:
+    keys, value = ast.literal_eval(item)
+    datum = data
+    try:
+        for key in keys:
+            if isinstance(key, dict):
+                for datum_item in datum:
+                    if all([datum_item.get(k) == v for k, v in key.items()]):
+                        datum = datum_item
+                        break
+                else:
+                    raise KeyError
+            else:
+                datum = datum[key]
+        if datum != value:
+            raise ValueError((item, datum))
+    except IndexError:
+        print(data)
+        raise IndexError(item)
+    except KeyError:
+        raise KeyError(item)
+__PYTHON__
+    if [[ -s "${TEST_NAME}.stderr" ]]; then
+        # Only print the final exception line - change to cat for details
+        tail -n 1 "${TEST_NAME}.stderr" >&2
+    fi
+}
+
 grep_ok() {
     # (Put extra grep options like '-E' at end of the command line)
     local BRE="$1"

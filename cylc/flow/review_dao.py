@@ -270,9 +270,9 @@ class CylcReviewDAO:
                 break
             else:
                 self._db_close(user_name, suite_name)
-                return ([], 0)
+                return ([], 0, self.is_cylc8)
         except sqlite3.Error:
-            return ([], 0)
+            return ([], 0, self.is_cylc8)
         if self.is_cylc8:
             stmt = (
                 "SELECT"
