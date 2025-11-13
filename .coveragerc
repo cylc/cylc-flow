@@ -19,7 +19,8 @@ omit =
     cylc/flow/scripts/report_timings.py
 parallel = True
 source = ./cylc
-timid = False
+# https://github.com/coveragepy/coveragepy/issues/2082:
+core = ctrace
 
 [report]
 exclude_lines =
