@@ -123,10 +123,11 @@ class OptionSettings():
 ICP_OPTION = OptionSettings(
     ["--initial-cycle-point", "--icp"],
     help=(
-        "Set the initial cycle point."
-        " Required if not defined in flow.cylc."
-        "\nMay be either an absolute point or an offset: See"
-        f" {SHORTLINK_TO_ICP_DOCS} (Cylc documentation link)."
+        "Set the initial cycle point. "
+        "Required if not defined in flow.cylc.\n"
+        "Can be an absolute point or an offset relative to the "
+        "current time - see "
+        f"{SHORTLINK_TO_ICP_DOCS} (Cylc documentation link)."
     ),
     metavar="CYCLE_POINT or OFFSET",
     action='store',

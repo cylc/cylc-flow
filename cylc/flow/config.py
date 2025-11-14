@@ -42,6 +42,7 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Literal,
     Mapping,
     Optional,
     Set,
@@ -249,6 +250,17 @@ def interpolate_template(tmpl, params_dict):
         raise ParamExpandError('bad template syntax') from None
 
 
+def _parse_iso_cycle_point(value: str) -> str:
+    """Helper for parsing initial/start cycle point option in
+    datetime cycling mode."""
+    if value == 'now':
+        return get_current_time_string()
+    try:
+        return ingest_time(value, get_current_time_string())
+    except IsodatetimeError as exc:
+        raise WorkflowConfigError(str(exc)) from None
+
+
 class WorkflowConfig:
     """Class for workflow configuration items and derived quantities."""
 
@@ -367,7 +379,8 @@ class WorkflowConfig:
             raise WorkflowConfigError("missing [scheduling][[graph]] section.")
         # (The check that 'graph' is defined is below).
 
-        # Override the workflow defn with an initial point from the CLI.
+        # Override the workflow defn with an initial point from the CLI
+        # or from reload/restart:
         icp_str = getattr(self.options, 'icp', None)
         if icp_str is not None:
             self.cfg['scheduling']['initial cycle point'] = icp_str
@@ -468,7 +481,9 @@ class WorkflowConfig:
 
         # after the call to init_cyclers, we can start getting proper points.
         init_cyclers(self.cfg)
-        self.cycling_type = get_interval_cls().get_null().TYPE
+        self.cycling_type: Literal['integer', 'iso8601'] = (
+            get_interval_cls().get_null().TYPE
+        )
         self.cycle_point_dump_format = get_dump_format(self.cycling_type)
 
         # Initial point from workflow definition (or CLI override above).
@@ -550,7 +565,7 @@ class WorkflowConfig:
         self._upg_wflow_event_names()
 
         self.mem_log("config.py: before load_graph()")
-        self.load_graph()
+        self._load_graph()
         self.mem_log("config.py: after load_graph()")
 
         self._set_completion_expressions()
@@ -670,10 +685,10 @@ class WorkflowConfig:
             all(item in ['graph', '1', 'R1'] for item in graphdict)
         ):
             # Pure acyclic graph, assume integer cycling mode with '1' cycle
-            self.cfg['scheduling']['cycling mode'] = INTEGER_CYCLING_TYPE
             for key in ('initial cycle point', 'final cycle point'):
                 if key not in self.cfg['scheduling']:
                     self.cfg['scheduling'][key] = '1'
+            self.cfg['scheduling']['cycling mode'] = INTEGER_CYCLING_TYPE
 
     def process_utc_mode(self):
         """Set UTC mode from config or from stored value on restart.
@@ -747,7 +762,6 @@ class WorkflowConfig:
         Sets:
             self.initial_point
             self.cfg['scheduling']['initial cycle point']
-            self.evaluated_icp
         Raises:
             WorkflowConfigError - if it fails to validate
         """
@@ -756,22 +770,11 @@ class WorkflowConfig:
             if orig_icp is None:
                 orig_icp = '1'
             icp = orig_icp
-        elif self.cycling_type == ISO8601_CYCLING_TYPE:
+        else:
             if orig_icp is None:
                 raise WorkflowConfigError(
                     "This workflow requires an initial cycle point.")
-            if orig_icp == "now":
-                icp = get_current_time_string()
-            else:
-                try:
-                    icp = ingest_time(orig_icp, get_current_time_string())
-                except IsodatetimeError as exc:
-                    raise WorkflowConfigError(str(exc)) from None
-        self.evaluated_icp = None
-        if icp != orig_icp:
-            # now/next()/previous() was used, need to store
-            # evaluated point in DB
-            self.evaluated_icp = icp
+            icp = _parse_iso_cycle_point(orig_icp)
         self.initial_point = get_point(icp).standardise()
         self.cfg['scheduling']['initial cycle point'] = str(self.initial_point)
 
@@ -807,8 +810,7 @@ class WorkflowConfig:
             )
         if startcp:
             # Start from a point later than initial point.
-            if self.options.startcp == 'now':
-                self.options.startcp = get_current_time_string()
+            self.options.startcp = _parse_iso_cycle_point(startcp)
             self.start_point = get_point(self.options.startcp).standardise()
         elif starttask:
             # Start from designated task(s).
@@ -2294,7 +2296,7 @@ class WorkflowConfig:
 
         return lret, rret
 
-    def load_graph(self):
+    def _load_graph(self):
         """Parse and load dependency graph."""
         LOG.debug("Parsing the dependency graph")
 
@@ -2318,18 +2320,14 @@ class WorkflowConfig:
             section = get_sequence_cls().get_async_expr()
             graphdict[section] = graphdict.pop('graph')
 
-        icp = self.cfg['scheduling']['initial cycle point']
+        icp = str(self.initial_point)
         fcp = self.cfg['scheduling']['final cycle point']
 
         # Make a stack of sections and graphs [(sec1, graph1), ...]
         sections = []
         for section, value in self.cfg['scheduling']['graph'].items():
             # Substitute initial and final cycle points.
-            if icp:
-                section = section.replace("^", icp)
-            elif "^" in section:
-                raise WorkflowConfigError("Initial cycle point referenced"
-                                          " (^) but not defined.")
+            section = section.replace("^", icp)
             if fcp:
                 section = section.replace("$", fcp)
             elif "$" in section:
