@@ -19,7 +19,6 @@
 from ansimarkup import parse
 from contextlib import suppress
 from pathlib import Path
-from random import choice
 import re
 import shutil
 import sys
@@ -46,7 +45,6 @@ RESOURCE_NAMES = {
     'cylc': 'Cylc wrapper script.',
     '!syntax/cylc.vim': 'Obsolete- use https://github.com/cylc/cylc.vim',
 }
-API_KEY = 'api-key'
 
 
 def list_resources(write=print, headers=True):
@@ -78,7 +76,6 @@ def list_resources(write=print, headers=True):
         write('\nTutorials:')
     for tutorial in tutorials:
         write(f'  {tutorial}')
-    write(f'  {API_KEY}')
     if headers:
         write('\nExamples:')
     for example in examples:
@@ -106,10 +103,6 @@ def get_resources(resource: str, tgt_dir: Optional[str]):
     """
     # get the resource path
     resource_path = Path(resource)
-
-    if resource in ('api-key', 'tutorial/api-key'):
-        print(get_api_key())
-        return
 
     src = RESOURCE_DIR / resource_path
     if not src.exists():
@@ -141,8 +134,6 @@ def get_resources(resource: str, tgt_dir: Optional[str]):
 
     # extract resources
     extract_resource(src, tgt, is_source_workflow)
-    if is_source_workflow:
-        set_api_key(tgt)
 
 
 def _backup(tgt: Path) -> None:
@@ -210,48 +201,3 @@ def extract_resource(
             'existing file with the same name'
         )
         sys.exit(1)
-
-
-def get_api_key() -> str:
-    """Return a DataPoint API key for tutorial use.
-
-    Picks an API key from the file "api-keys" at random so as to spread the
-    load over a larger number of keys to prevent hitting the cap with group
-    sessions.
-    """
-    with open((TUTORIAL_DIR / 'api-keys'), 'r') as api_keys:
-        return choice(list(api_keys)).strip()  # nosec
-        # (the randomness of this choice is not a security concern)
-
-
-def set_api_key(tgt):
-    """Replace a placeholder with a real API key.
-
-    Replaces the placeholder DATAPOINT_API_KEY with a value chosen at random
-    from the file api-keys chosen.
-    """
-    # get the api key
-    api_key = get_api_key()
-    # go through all the top level files
-    for path in tgt.glob('*'):
-        if not path.is_dir():
-            # write the file out one line at a time to a temp file
-            tmp_path = path.parent / (path.name + '.tmp')
-            with open(path, 'rb') as _src, open(tmp_path, 'wb+') as _tmp:
-                # NOTE: open the file in bytes mode for safety
-                # (prevents decode errors surfacing here)
-                for line in _src:
-                    _tmp.write(
-                        # perform the replacement line by line
-                        # (some things are easier with sed!)
-                        line.replace(
-                            b'DATAPOINT_API_KEY',
-                            api_key.encode(),
-                        )
-                    )
-
-            # then move the tmpfile over the original
-            # NOTE: shutil interfaces don't fully support Path objects at all
-            # python versions
-            path.unlink()
-            shutil.move(str(tmp_path), str(path))

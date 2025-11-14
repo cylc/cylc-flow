@@ -24,11 +24,8 @@ Usage:
     get-observations
 
 Environment Variables:
-    SITE_ID: The four digit DataPoint site code identifying the weather station
-        we are to fetch results for.
-    API_KEY: The DataPoint API key, required for getting live weather data.
-        If un-specified then get-observations will fall back to archive data
-        from the workflow directory.
+    SITE_ID: The four digit WMO (World Meteorological Organization)
+    site code identifying the weather station we are to fetch results for.
 
 """
 
@@ -42,10 +39,6 @@ import requests
 
 import util
 
-
-BASE_URL = ('http://datapoint.metoffice.gov.uk/public/data/'
-            'val/wxobs/all/json/{site_id}'
-            '?res=hourly&time={time}&key={api_key}')
 
 # Compass bearings for ordinate directions.
 # NOTE: We measure direction by where the winds have come from!
@@ -68,22 +61,52 @@ ORDINATES = {
     'NNW': '157.5'
 }
 
+class Meteorology:
+    """
+    Surface winds tend to be 20-30 degrees backed (vector anticlockwise)
+    from the winds which steer weather systems:
+    Friction with the ground surface tends to mean that land surface winds
+    are as slow as half the speed of the wind at 2000ft. This fudge factor is
+    a more conservative 1.5:
+
+    .. seealso::
+
+       [Source Book to the Forecaster's Reference Book](https://digital.nmla
+       .metoffice.gov.uk/IO_011f7cd4-50fc-4903-b556-d24480ea883d/), section
+       1.2
+    """
+    SURFACE_BACKING = 2
+    SURFACE_FRICTION = .66
+    KT_TO_MPH = 1.15078
+
+    @staticmethod
+    def process_direction(direction: str) -> str:
+        """Process raw wind direction:
+
+        * Convert direction from 10s of degrees to degrees.
+        * Convert from Oceanographic (wind to) to Meteorological (wind from)
+          convention.
+        * Surface Friction Correction
+        """
+        return str(
+            ((int(direction) + 18 - Meteorology.SURFACE_BACKING) % 36) * 10)
+
+    @staticmethod
+    def process_speed(speed: str) -> str:
+        """Process Raw wind speed
+
+        * Convert to KT to MPH
+        * Surface Friction Correction
+        """
+        return str(
+            (
+                int(speed) * Meteorology.KT_TO_MPH
+            ) / Meteorology.SURFACE_FRICTION
+        )
+
 
 class NoDataException(Exception):
     ...
-
-
-def get_datapoint_data(site_id, time, api_key):
-    """Get weather data from the DataPoint service."""
-    # The URL required to get the data.
-    time = datetime.strptime(time, '%Y%m%dT%H%MZ').strftime('%Y-%m-%dT%H:%MZ')
-    url = BASE_URL.format(time=time, site_id=site_id, api_key=api_key)
-    req = requests.get(url)
-    if req.status_code != 200:
-        raise Exception(f'{url} returned exit code {req.status_code}')
-    # Get the data and parse it as JSON.
-    print('Opening URL: %s' % url)
-    return req.json()['SiteRep']['DV']['Location']
 
 
 def get_archived_data(site_id, time):
@@ -152,11 +175,12 @@ def synop_grab(site_id, time):
         raise NoDataException(
             f'Request for data failed, raw request was {req.text}')
 
-    # Parse the direction from 10's of degrees to degrees:
-    data['direction'] = str(int(data['direction']) * 10)
+    # * Parse the direction from 10's of degrees to degrees
+    # * Convert direction from to direction it's blowing to
+    data['direction'] = Meteorology.process_direction(data['direction'])
 
     # Convert data in KT to MPH:
-    data['speed'] = str(int(data['speed']) * 1.15078)
+    data['speed'] = Meteorology.process_speed(data['speed'])
 
     # Get lat and long from MO Data:
     lat, lon = reference_lat_long(site_id)
@@ -185,7 +209,7 @@ def get_nearby_site(site_id, badsites):
     return int(result[0]), dist
 
 
-def main(site_id, api_key=None):
+def main(site_id):
     cycle_point = os.environ['CYLC_TASK_CYCLE_POINT']
 
     # Try to get the information from SYNOPS.
@@ -202,13 +226,8 @@ def main(site_id, api_key=None):
             site_id, dist = get_nearby_site(site_id, badsites)
 
     if obs is None:
-        if api_key:
-            print('Attempting to get weather data from DataPoint...')
-            data = get_datapoint_data(site_id, cycle_point, api_key)
-        else:
-            print('No API key provided, falling back to archived data')
-            data = get_archived_data(site_id, cycle_point)
-
+        print('Obs unavailable, falling back to archived data')
+        data = get_archived_data(site_id, cycle_point)
         obs = extract_observations(data)
 
     # Write observations.
@@ -218,5 +237,4 @@ def main(site_id, api_key=None):
 
 if __name__ == '__main__':
     util.sleep()
-    main(os.environ['SITE_ID'],
-         os.environ.get('API_KEY'))
+    main(os.environ['SITE_ID'])
