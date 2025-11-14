@@ -191,6 +191,15 @@ jobs:
       - name: Configure git  # Needed by the odd test
         uses: cylc/release-actions/configure-git@v1
 
+      # Useful debug info:
+      - name: Pip list
+        run: pip list
+      - name: Inspect versions
+        run: |
+          python --version
+          echo
+          rsync --version
+
       - name: Filter Tests
         env:
           # NOTE: we only want the CHUNK set in this step else we will
@@ -205,6 +214,8 @@ jobs:
             # skip tests that don't configure platform requirements
             grep -l --color=never REQUIRE_PLATFORM $(cat test-file) > test-file
           fi
+          echo "----- Filtered Tests -----"
+          sort test-file
 
       - name: Test
         id: test

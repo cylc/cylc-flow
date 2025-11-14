@@ -359,7 +359,7 @@ def format_reinstall_output(out: str) -> List[str]:
                 formatted_line = f"<{DIM}>{summary}</{DIM}> {formatted_line}"
             lines.append(cparse(formatted_line))
         else:
-            # shouldn't happen; tolerate unknown rsync implementation?
+            # tolerate unknown output from different rsync implementations
             lines.append(line)
     return lines
 

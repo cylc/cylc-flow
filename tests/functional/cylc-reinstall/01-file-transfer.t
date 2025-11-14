@@ -69,12 +69,11 @@ touch new_dir/new_file1 new_dir/new_file2
 rm -rf dir2-be-removed file2
 run_ok "${TEST_NAME}-reinstall" cylc reinstall "${RND_WORKFLOW_NAME}/run2"
 REINSTALL_LOG="$(find "${RND_WORKFLOW_RUNDIR}/run2/log/install" -type f -name '*reinstall.log')"
-log_scan "${TEST_NAME_BASE}-reinstall-log" "$REINSTALL_LOG" 1 0 \
-  'del. dir2-be-removed/file1' \
-  'del. file2' \
-  'send new_dir/$' \
-  'send new_dir/new_file1' \
-  'send new_dir/new_file2'
+grep_ok '(del\.|\*deleting) dir2-be-removed/file1' "$REINSTALL_LOG" -E
+grep_ok '(del\.|\*deleting) file2' "$REINSTALL_LOG" -E
+grep_ok '(send|recv) new_dir/$' "$REINSTALL_LOG" -E
+grep_ok '(send|recv) new_dir/new_file1' "$REINSTALL_LOG" -E
+grep_ok '(send|recv) new_dir/new_file2' "$REINSTALL_LOG" -E
 
 tree -a -v -I "${tree_excludes}" --charset=ascii --noreport "${RND_WORKFLOW_RUNDIR}/run2" > 'after-reinstall-run2-tree.out'
 cmp_ok 'after-reinstall-run2-tree.out'  <<__OUT__
