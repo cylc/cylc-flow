@@ -69,4 +69,7 @@ def pipe_poller(proc, *files, chunk_size=4096):
     # double check the buffers now that the process has finished
     _read(timeout=0.01)
 
+    for file in files:
+        file.close()
+
     return tuple(_files.values())
