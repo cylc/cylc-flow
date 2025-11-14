@@ -267,12 +267,8 @@ class Prerequisite:
             # * the expression is constructed internally
             # * https://github.com/cylc/cylc-flow/issues/4403
         except (SyntaxError, ValueError) as exc:
-            err_msg = str(exc)
-            if str(exc).find("unexpected EOF") != -1:
-                err_msg += (
-                    " (could be unmatched parentheses in the graph string?)")
             raise TriggerExpressionError(
-                '"%s":\n%s' % (self.get_raw_conditional_expression(), err_msg)
+                f'"{self.get_raw_conditional_expression}":\n{str(exc)}'
             ) from None
         return res
 
