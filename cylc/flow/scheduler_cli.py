@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Common logic for "cylc play" CLI."""
 
-from ansimarkup import parse as cparse
 import asyncio
 from copy import deepcopy
 from functools import lru_cache
@@ -24,50 +23,62 @@ import logging
 from pathlib import Path
 from shlex import quote
 import sys
-from typing import TYPE_CHECKING, Tuple
+from typing import (
+    TYPE_CHECKING,
+    Tuple,
+)
 
+from ansimarkup import parse as cparse
 from packaging.version import Version
 
-from cylc.flow import LOG, __version__
+from cylc.flow import (
+    LOG,
+    __version__,
+)
 from cylc.flow.exceptions import (
     CylcError,
     ServiceFileError,
     WorkflowStopped,
 )
-from cylc.flow.scripts.ping import run as cylc_ping
 import cylc.flow.flags
-from cylc.flow.id import upgrade_legacy_ids
 from cylc.flow.host_select import select_workflow_host
 from cylc.flow.hostuserutil import is_remote_host
+from cylc.flow.id import upgrade_legacy_ids
 from cylc.flow.id_cli import parse_ids_async
 from cylc.flow.loggingutil import (
-    close_log,
     RotatingLogFileHandler,
+    close_log,
 )
 from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.network.log_stream_handler import ProtobufStreamHandler
 from cylc.flow.option_parsers import (
+    ICP_OPTION,
+    SHORTLINK_TO_ICP_DOCS,
     WORKFLOW_ID_ARG_DOC,
     CylcOptionParser as COP,
-    OptionSettings,
     Options,
-    ICP_OPTION,
+    OptionSettings,
 )
 from cylc.flow.pathutil import get_workflow_run_scheduler_log_path
 from cylc.flow.remote import cylc_server_cmd
-from cylc.flow.scheduler import Scheduler, SchedulerError
-from cylc.flow.scripts.common import cylc_header
 from cylc.flow.run_modes import WORKFLOW_RUN_MODES
-from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
-from cylc.flow.workflow_files import (
-    SUITERC_DEPR_MSG,
-    get_workflow_srv_dir,
+from cylc.flow.scheduler import (
+    Scheduler,
+    SchedulerError,
 )
+from cylc.flow.scripts.common import cylc_header
+from cylc.flow.scripts.ping import run as cylc_ping
 from cylc.flow.terminal import (
     cli_function,
     is_terminal,
     prompt,
 )
+from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
+from cylc.flow.workflow_files import (
+    SUITERC_DEPR_MSG,
+    get_workflow_srv_dir,
+)
+
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -162,10 +173,14 @@ PLAY_OPTIONS = [
     OptionSettings(
         ["--start-cycle-point", "--startcp"],
         help=(
-            "Set the start cycle point, which may be after"
-            " the initial cycle point. If the specified start point is"
-            " not in the sequence, the next on-sequence point will"
-            " be used. (Not to be confused with the initial cycle point)"),
+            "Set the start cycle point, which may be after "
+            "the initial cycle point. "
+            "If the specified start point is not in the sequence, the next "
+            "on-sequence point will be used.\n"
+            "Can be an absolute point or an offset relative to the "
+            "current time, like the --initial-cycle-point option - see "
+            f"{SHORTLINK_TO_ICP_DOCS} (Cylc documentation link)."
+        ),
         metavar="CYCLE_POINT",
         action='store',
         dest="startcp",
