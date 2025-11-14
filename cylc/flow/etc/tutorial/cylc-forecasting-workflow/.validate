@@ -16,11 +16,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 set -eux
-APIKEY="$(head --lines 1 ../api-keys)"
 FLOW_NAME="$(< /dev/urandom tr -dc A-Za-z | head -c6)"
 cylc lint .
 cylc install --workflow-name "$FLOW_NAME" --no-run-name
-sed -i "s/DATAPOINT_API_KEY/$APIKEY/" "$HOME/cylc-run/$FLOW_NAME/flow.cylc"
 cylc validate --check-circular --icp=2000 "$FLOW_NAME"
 cylc play --no-detach --abort-if-any-task-fails "$FLOW_NAME"
 cylc clean "$FLOW_NAME"
