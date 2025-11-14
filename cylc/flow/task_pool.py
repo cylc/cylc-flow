@@ -900,8 +900,7 @@ class TaskPool:
         except KeyError:
             pass
         else:
-            with suppress(KeyError):
-                self.tasks_to_trigger_now.remove(itask)
+            self.tasks_to_trigger_now.discard(itask)
             self.tasks_removed = True
             self.active_tasks_changed = True
             if not self.active_tasks[itask.point]:
@@ -1042,7 +1041,7 @@ class TaskPool:
 
         return active_task_counter, pre_prep_tasks
 
-    def release_queued_tasks(self):
+    def release_queued_tasks(self) -> set['TaskProxy']:
         """Return list of queue-released tasks awaiting job prep.
 
         Note:
@@ -1071,7 +1070,7 @@ class TaskPool:
                 self.spawn_on_all_outputs(itask)
 
         # Note: released and pre_prep_tasks can overlap
-        return list(set(released + pre_prep_tasks))
+        return set(released + pre_prep_tasks)
 
     def get_min_point(self):
         """Return the minimum cycle point currently in the pool."""
