@@ -14,11 +14,9 @@
         platform = $(cat ${CYLC_WORKFLOW_RUN_DIR}/pretend-hall-info)
 
     [[toggler]]
+        # Toggle the platform between localhost and the remote host
+        # using the content of a file, ${CYLC_WORKFLOW_RUN_DIR}/pretend-hall-info.
         script = """
-            # Toggle the platform between localhost and the remote host
-            # using the content of a file, ${CYLC_WORKFLOW_RUN_DIR}/pretend-hall-info.
-            # between localhost and the remote.
-
             if (( $CYLC_TASK_CYCLE_POINT % 2 == 1 )); then
                 echo ${REMOTE_PLATFORM} > ${CYLC_WORKFLOW_RUN_DIR}/pretend-hall-info
                 cylc message -- "changing platform to ${REMOTE_PLATFORM}"

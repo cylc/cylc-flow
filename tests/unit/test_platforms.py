@@ -16,23 +16,31 @@
 #
 # Tests for the platform lookup.
 
-import pytest
-from typing import Any, Dict, List, Optional, Type
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+    Type,
+)
 
+import pytest
+
+from cylc.flow.exceptions import (
+    GlobalConfigError,
+    PlatformLookupError,
+)
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.platforms import (
+    _platform_name_from_job_info,
+    _validate_single_host,
+    generic_items_match,
+    get_install_target_from_platform,
+    get_install_target_to_platforms_map,
     get_platform,
     get_platform_deprecated_settings,
     is_platform_definition_subshell,
-    platform_from_name, platform_name_from_job_info,
-    get_install_target_from_platform,
-    get_install_target_to_platforms_map,
-    generic_items_match,
-    _validate_single_host
-)
-from cylc.flow.exceptions import (
-    PlatformLookupError,
-    GlobalConfigError
+    platform_from_name,
 )
 from cylc.flow.run_modes import JOBLESS_MODES
 
@@ -270,11 +278,11 @@ def test_similar_but_not_exact_match():
     ]
 )
 def test_platform_name_from_job_info_basic(job, remote, returns):
-    assert platform_name_from_job_info(PLATFORMS, job, remote) == returns
+    assert _platform_name_from_job_info(PLATFORMS, job, remote) == returns
 
 
 def test_platform_name_from_job_info_evaluated_hostname():
-    result = platform_name_from_job_info(
+    result = _platform_name_from_job_info(
         PLATFORMS,
         {'batch system': 'background'},
         {'host': '$(cat tiddles)'},
@@ -294,7 +302,7 @@ def test_platform_name_from_job_info_ordered_dict_comparison():
     platform.defaults_['Made up key'] = {}
     platform.update(PLATFORMS['hpc1-bg'])
     platforms = {'hpc1-bg': platform, 'dobbie': PLATFORMS['sugar']}
-    assert platform_name_from_job_info(platforms, job, remote) == 'hpc1-bg'
+    assert _platform_name_from_job_info(platforms, job, remote) == 'hpc1-bg'
 
 
 # Cases where the error ought to be raised because no matching platform should
@@ -321,7 +329,7 @@ def test_platform_name_from_job_info_ordered_dict_comparison():
 )
 def test_reverse_PlatformLookupError(job, remote):
     with pytest.raises(PlatformLookupError):
-        platform_name_from_job_info(PLATFORMS, job, remote)
+        _platform_name_from_job_info(PLATFORMS, job, remote)
 
 
 # An example of a global config with two Spice systems available
@@ -359,7 +367,7 @@ def test_platform_name_from_job_info_two_spices(
         },
 
     }
-    assert platform_name_from_job_info(platforms, job, remote) == returns
+    assert _platform_name_from_job_info(platforms, job, remote) == returns
 
 
 # An example of two platforms with the same hosts and job runner settings
@@ -406,7 +414,7 @@ def test_platform_name_from_job_info_similar_platforms(
             'job runner': 'background'
         },
     }
-    assert platform_name_from_job_info(platforms, job, remote) == returns
+    assert _platform_name_from_job_info(platforms, job, remote) == returns
 
 
 # -----------------------------------------------------------------------------

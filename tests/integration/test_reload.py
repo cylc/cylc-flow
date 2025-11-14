@@ -16,19 +16,20 @@
 
 """Tests for reload behaviour in the scheduler."""
 
-from contextlib import suppress
 
-from cylc.flow import commands
-from cylc.flow.data_store_mgr import TASK_PROXIES
-from cylc.flow.scheduler import Scheduler
-from cylc.flow.task_state import (
-    TASK_STATUS_WAITING,
-    TASK_STATUS_PREPARING,
-    TASK_STATUS_SUBMITTED,
+from cylc.flow import (
+    commands,
+    flags,
 )
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.data_store_mgr import TASK_PROXIES
 from cylc.flow.platforms import get_platform
-from cylc.flow import flags
+from cylc.flow.scheduler import Scheduler
+from cylc.flow.task_state import (
+    TASK_STATUS_PREPARING,
+    TASK_STATUS_SUBMITTED,
+    TASK_STATUS_WAITING,
+)
 
 
 async def test_reload_waits_for_pending_tasks(
@@ -36,7 +37,6 @@ async def test_reload_waits_for_pending_tasks(
     scheduler,
     start,
     monkeypatch,
-    capture_submission,
     log_scan,
 ):
     """Reload should flush out preparing tasks and pause the workflow.
@@ -47,9 +47,11 @@ async def test_reload_waits_for_pending_tasks(
 
     See https://github.com/cylc/cylc-flow/issues/5107
     """
+    # speed up the test:
+    monkeypatch.setattr('cylc.flow.scheduler.sleep', lambda *_: None)
     # a simple workflow with a single task
     id_ = flow('foo')
-    schd = scheduler(id_, paused_start=False)
+    schd: Scheduler = scheduler(id_, paused_start=False)
 
     # we will artificially push the task through these states
     state_seq = [
@@ -63,26 +65,26 @@ async def test_reload_waits_for_pending_tasks(
 
     # start the scheduler
     async with start(schd) as log:
-        # disable submission events to prevent anything from actually running
-        capture_submission(schd)
+        foo = schd.pool.get_tasks()[0]
 
         # set the task to go through some state changes
-        def change_state(_=0):
-            with suppress(IndexError):
+        def submit_task_jobs(*a, **k):
+            try:
                 foo.state_reset(state_seq.pop(0))
+            except IndexError:
+                foo.waiting_on_job_prep = False
+            return [foo]
+
         monkeypatch.setattr(
-            'cylc.flow.scheduler.sleep',
-            change_state
+            schd.task_job_mgr, 'submit_task_jobs', submit_task_jobs
         )
 
         # the task should start as waiting
-        tasks = schd.pool.get_tasks()
-        assert len(tasks) == 1
-        foo = tasks[0]
-        assert tasks[0].state(TASK_STATUS_WAITING)
+        assert foo.state(TASK_STATUS_WAITING)
 
         # put the task into the preparing state
-        change_state()
+        schd.release_tasks_to_run()
+        assert foo.state(TASK_STATUS_PREPARING)
 
         # reload the workflow
         await commands.run_cmd(commands.reload_workflow(schd))
@@ -96,12 +98,11 @@ async def test_reload_waits_for_pending_tasks(
             [
                 # the task should have entered the preparing state before the
                 # reload was requested
-                '[1/foo:waiting(queued)] => preparing(queued)',
+                '[1/foo:waiting] => preparing',
                 # the reload should have put the workflow into the paused state
                 'Pausing the workflow: Reloading workflow',
                 # reload should have waited for the task to submit
-                '[1/foo/00:preparing(queued)]'
-                ' => submitted(queued)',
+                '[1/foo/00:preparing] => submitted',
                 # before then reloading the workflow config
                 'Reloading the workflow definition.',
                 # post-reload the workflow should have been resumed
