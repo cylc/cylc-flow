@@ -293,9 +293,6 @@ DEAD_ENDS = {
         'cylc set-outputs (cylc 8.0-8.2) has been replaced by cylc set',
     'restart':
         'cylc run & cylc restart have been replaced by cylc play',
-    'review':
-        'cylc review has been removed; the latest Cylc 7 version is forward'
-        ' compatible with Cylc 8.',
     'suite-state':
         'cylc suite-state has been replaced by cylc workflow-state',
     'run':
