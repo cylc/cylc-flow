@@ -21,7 +21,6 @@ from typing import (
     Dict,
     List,
     Optional,
-    Type,
 )
 
 import pytest
@@ -432,9 +431,8 @@ def test_get_install_target_from_platform(platform, expected):
     assert get_install_target_from_platform(platform) == expected
 
 
-@pytest.mark.parametrize('quiet', [True, False])
 @pytest.mark.parametrize(
-    'platform_names, expected_map, expected_err',
+    'platform_names, expected_map',
     [
         (
             ['enterprise', 'stargazer'],
@@ -444,7 +442,6 @@ def test_get_install_target_from_platform(platform, expected):
                     PLATFORMS_TREK['stargazer']
                 ]
             },
-            None
         ),
         (
             ['enterprise', 'voyager', 'enterprise'],
@@ -456,40 +453,34 @@ def test_get_install_target_from_platform(platform, expected):
                     PLATFORMS_TREK['voyager']
                 ]
             },
-            None
         ),
         (
-            ['enterprise', 'discovery'],
-            None,
-            PlatformLookupError
-        )
+            ['enterprise', 'starkiller'],  # ignores non-existent platform
+            {
+                'picard': [
+                    PLATFORMS_TREK['enterprise']
+                ],
+            },
+        ),
     ]
 )
 def test_get_install_target_to_platforms_map(
-        platform_names: List[str],
-        expected_map: Dict[str, Any],
-        expected_err: Type[Exception],
-        quiet: bool,
-        monkeypatch: pytest.MonkeyPatch
+    platform_names: list[str],
+    expected_map: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
 ):
     """Test that get_install_target_to_platforms_map works as expected."""
     monkeypatch.setattr('cylc.flow.platforms.platform_from_name',
                         lambda x: platform_from_name(x, PLATFORMS_TREK))
 
-    if expected_err and not quiet:
-        with pytest.raises(expected_err):
-            get_install_target_to_platforms_map(platform_names)
-    elif expected_err and quiet:
-        # No error should be raised in quiet mode.
-        assert get_install_target_to_platforms_map(platform_names, quiet=quiet)
-    else:
-        result = get_install_target_to_platforms_map(platform_names)
-        # Sort the maps:
-        for _map in (result, expected_map):
-            for install_target in _map:
-                _map[install_target] = sorted(_map[install_target],
-                                              key=lambda k: k['name'])
-        assert result == expected_map
+    result = get_install_target_to_platforms_map(platform_names)
+    # Sort the maps:
+    for _map in (result, expected_map):
+        for install_target in _map:
+            _map[install_target] = sorted(
+                _map[install_target], key=lambda k: k['name']
+            )
+    assert result == expected_map
 
 
 @pytest.mark.parametrize('mode', sorted(JOBLESS_MODES))

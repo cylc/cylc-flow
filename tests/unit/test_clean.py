@@ -14,11 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from glob import iglob
 import logging
 import os
-import shutil
-from glob import iglob
 from pathlib import Path
+import shutil
 from subprocess import Popen
 from typing import (
     TYPE_CHECKING,
@@ -35,7 +35,10 @@ from unittest import mock
 
 import pytest
 
-from cylc.flow import CYLC_LOG, clean as cylc_clean
+from cylc.flow import (
+    CYLC_LOG,
+    clean as cylc_clean,
+)
 from cylc.flow.clean import (
     _clean_using_glob,
     _remote_clean_cmd,
@@ -44,10 +47,9 @@ from cylc.flow.clean import (
     init_clean,
 )
 from cylc.flow.exceptions import (
-    SchedulerAlive,
     CylcError,
     InputError,
-    PlatformError,
+    SchedulerAlive,
     ServiceFileError,
     WorkflowFilesError,
 )
@@ -821,34 +823,27 @@ PLATFORMS = {
 
 
 @pytest.mark.parametrize(
-    ('install_targets_map', 'failed_platforms', 'expected_platforms',
+    ('platform_names', 'failed_platforms', 'expected_platforms',
      'exc_expected', 'expected_err_msgs'),
     [
         pytest.param(
-            {'localhost': [PLATFORMS['exeter']]}, None, None, False, [],
+            ['exeter'], None, None, False, [],
             id="Only localhost install target - no remote clean"
         ),
         pytest.param(
-            {
-                'localhost': [PLATFORMS['exeter']],
-                'picard': [PLATFORMS['enterprise']]
-            },
-            None, ['enterprise'], False, [],
+            ['exeter', 'enterprise'], None, ['enterprise'], False, [],
             id="Localhost and remote install target"
         ),
         pytest.param(
-            {
-                'picard': [PLATFORMS['enterprise'], PLATFORMS['stargazer']],
-                'janeway': [PLATFORMS['voyager']]
-            },
-            None, ['enterprise', 'voyager'], False, [],
+            ['enterprise', 'stargazer', 'voyager'],
+            None,
+            ['enterprise', 'voyager'],
+            False,
+            [],
             id="Only remote install targets"
         ),
         pytest.param(
-            {
-                'picard': [PLATFORMS['enterprise'], PLATFORMS['stargazer']],
-                'janeway': [PLATFORMS['voyager']]
-            },
+            ['enterprise', 'stargazer', 'voyager'],
             {'enterprise': 255},
             ['enterprise', 'stargazer', 'voyager'],
             False,
@@ -856,55 +851,46 @@ PLATFORMS = {
             id="Install target with 1 failed, 1 successful platform"
         ),
         pytest.param(
-            {
-                'picard': [PLATFORMS['enterprise'], PLATFORMS['stargazer']],
-                'janeway': [PLATFORMS['voyager']]
-            },
+            ['enterprise', 'stargazer', 'voyager'],
             {'enterprise': 255, 'stargazer': 255},
             ['enterprise', 'stargazer', 'voyager'],
             True,
-            ["Could not clean foo on install target: picard"],
+            ["could not clean on these install target(s)", "[picard]"],
             id="Install target with all failed platforms"
         ),
         pytest.param(
-            {
-                'picard': [PLATFORMS['enterprise']],
-                'janeway': [PLATFORMS['voyager']]
-            },
+            ['enterprise', 'voyager'],
             {'enterprise': 255, 'voyager': 255},
             ['enterprise', 'voyager'],
             True,
-            ["Could not clean foo on install target: picard",
-             "Could not clean foo on install target: janeway"],
+            ["could not clean on these install target(s)",
+             "[picard]", "[janeway]"],
             id="All install targets have all failed platforms"
         ),
         pytest.param(
-            {
-                'picard': [PLATFORMS['enterprise'], PLATFORMS['stargazer']]
-            },
+            ['enterprise', 'stargazer'],
             {'enterprise': 1},
             ['enterprise'],
             True,
-            ["Could not clean foo on install target: picard"],
+            ["could not clean on these install target(s)", "[picard]"],
             id=("Remote clean cmd fails on a platform for non-SSH reason - "
                 "does not retry")
         ),
     ]
 )
 def test_remote_clean(
-    install_targets_map: Dict[str, Any],
-    failed_platforms: Optional[Dict[str, int]],
-    expected_platforms: Optional[List[str]],
+    platform_names: list[str],
+    failed_platforms: dict[str, int] | None,
+    expected_platforms: list[str] | None,
     exc_expected: bool,
-    expected_err_msgs: List[str],
+    expected_err_msgs: list[str],
     monkeymock: 'MonkeyMock', monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture, log_filter: Callable
 ) -> None:
     """Test remote_clean() logic.
 
     Params:
-        install_targets_map The map that would be returned by
-            platforms.get_install_target_to_platforms_map()
+        platform_names: These platforms will be considered to exist.
         failed_platforms: If specified, any platforms that clean will
             artificially fail on in this test case. The key is the platform
             name, the value is the remote clean cmd return code.
@@ -916,8 +902,8 @@ def test_remote_clean(
     # ----- Setup -----
     caplog.set_level(logging.DEBUG, CYLC_LOG)
     monkeypatch.setattr(
-        'cylc.flow.clean.get_install_target_to_platforms_map',
-        lambda x: install_targets_map)
+        'cylc.flow.clean.platform_from_name', lambda name: PLATFORMS[name]
+    )
     # Remove randomness:
     monkeymock('cylc.flow.clean.shuffle')
 
@@ -934,33 +920,32 @@ def test_remote_clean(
     mocked_remote_clean_cmd = monkeymock(
         'cylc.flow.clean._remote_clean_cmd',
         spec=_remote_clean_cmd,
-        side_effect=mocked_remote_clean_cmd_side_effect)
+        side_effect=mocked_remote_clean_cmd_side_effect,
+    )
     rm_dirs = ["whatever"]
     # ----- Test -----
     id_ = 'foo'
-    platform_names = (
-        "This arg bypassed as we provide the install targets map in the test")
     if exc_expected:
         with pytest.raises(CylcError) as exc:
             cylc_clean.remote_clean(
                 id_, platform_names, timeout='irrelevant', rm_dirs=rm_dirs
             )
-        assert "Remote clean failed" in str(exc.value)
+        assert "Remote clean failed" in (exc_msg := str(exc.value))
+        for msg in expected_err_msgs:
+            assert msg in exc_msg
     else:
         cylc_clean.remote_clean(
             id_, platform_names, timeout='irrelevant', rm_dirs=rm_dirs
         )
-    for msg in expected_err_msgs:
-        assert log_filter(logging.ERROR, msg)
+        for msg in expected_err_msgs:
+            assert log_filter(logging.ERROR, msg)
     if expected_platforms:
         for p_name in expected_platforms:
             mocked_remote_clean_cmd.assert_any_call(
-                id_, PLATFORMS[p_name], rm_dirs, 'irrelevant')
+                id_, PLATFORMS[p_name], rm_dirs, 'irrelevant'
+            )
     else:
         mocked_remote_clean_cmd.assert_not_called()
-    if failed_platforms:
-        for p_name in failed_platforms:
-            assert f"{p_name} - {PlatformError.MSG_TIDY}" in caplog.text
 
 
 def test_remote_clean__timeout(
@@ -979,15 +964,14 @@ def test_remote_clean__timeout(
         )
     )
     monkeypatch.setattr(
-        'cylc.flow.clean.get_install_target_to_platforms_map',
-        lambda *a, **k: {'picard': [PLATFORMS['stargazer']]}
+        'cylc.flow.clean.platform_from_name', lambda name: PLATFORMS[name]
     )
 
-    with pytest.raises(CylcError):
+    with pytest.raises(CylcError) as e:
         cylc_clean.remote_clean(
-            'blah', platform_names=['blah'], timeout='blah'
+            'blah', platform_names=['stargazer'], timeout='blah'
         )
-    assert "cylc clean timed out" in caplog.text
+    assert "cylc clean timed out" in str(e.value)
     # No need to log the remote clean cmd etc. for timeout
     assert "ssh" not in caplog.text.lower()
     assert "stderr" not in caplog.text.lower()

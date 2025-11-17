@@ -16,22 +16,33 @@
 #
 """Functions relating to (job) platforms."""
 
+from copy import deepcopy
 import random
 import re
-from copy import deepcopy
 from typing import (
-    TYPE_CHECKING, Any, Dict, Iterable,
-    List, Optional, Set, Union, overload
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Set,
+    Union,
+    overload,
 )
 
 from cylc.flow import LOG
-
-from cylc.flow.exceptions import (
-    GlobalConfigError,
-    PlatformLookupError, CylcError, NoHostsError, NoPlatformsError)
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
+from cylc.flow.exceptions import (
+    CylcError,
+    GlobalConfigError,
+    NoHostsError,
+    NoPlatformsError,
+    PlatformLookupError,
+)
 from cylc.flow.hostuserutil import is_remote_host
 from cylc.flow.run_modes import JOBLESS_MODES
+
 
 if TYPE_CHECKING:
     from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
@@ -647,14 +658,14 @@ def get_install_target_from_platform(platform: Dict[str, Any]) -> str:
 
 def get_install_target_to_platforms_map(
     platform_names: Iterable[str],
-    quiet: bool = False
-) -> Dict[str, List[Dict[str, Any]]]:
+) -> dict[str, list[dict[str, Any]]]:
     """Get a dictionary of unique install targets and the platforms which use
     them.
 
+    Ignores PlatformLookupErrors.
+
     Args:
         platform_names: List of platform names to look up in the global config.
-        quiet: Supress PlatformLookupErrors
 
     Return {install_target_1: [platform_1_dict, platform_2_dict, ...], ...}
     """
@@ -662,12 +673,10 @@ def get_install_target_to_platforms_map(
     for p_name in set(platform_names):
         try:
             platform = platform_from_name(p_name)
-        except PlatformLookupError as exc:
-            if not quiet:
-                raise exc
-        else:
-            install_target = get_install_target_from_platform(platform)
-            ret.setdefault(install_target, []).append(platform)
+        except PlatformLookupError:
+            continue
+        install_target = get_install_target_from_platform(platform)
+        ret.setdefault(install_target, []).append(platform)
 
     return ret
 

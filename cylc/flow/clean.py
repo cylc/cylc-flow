@@ -16,14 +16,14 @@
 
 """Functionality for workflow removal."""
 
-import glob
-import os
-import sqlite3
 from collections import deque
 from contextlib import suppress
 from functools import partial
+import glob
+import os
 from pathlib import Path
 from random import shuffle
+import sqlite3
 from subprocess import (
     DEVNULL,
     PIPE,
@@ -48,11 +48,11 @@ from typing import (
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import (
-    SchedulerAlive,
     CylcError,
     InputError,
     PlatformError,
     PlatformLookupError,
+    SchedulerAlive,
     ServiceFileError,
 )
 from cylc.flow.pathutil import (
@@ -65,8 +65,9 @@ from cylc.flow.pathutil import (
 )
 from cylc.flow.platforms import (
     get_host_from_platform,
-    get_install_target_to_platforms_map,
+    get_install_target_from_platform,
     get_localhost_install_target,
+    platform_from_name,
 )
 from cylc.flow.remote import construct_ssh_cmd
 from cylc.flow.rundb import CylcWorkflowDAO
@@ -79,6 +80,7 @@ from cylc.flow.workflow_files import (
     validate_workflow_name,
 )
 
+
 if TYPE_CHECKING:
     from optparse import Values
 
@@ -87,6 +89,20 @@ class RemoteCleanQueueTuple(NamedTuple):
     proc: 'Popen[str]'
     install_target: str
     platforms: List[Dict[str, Any]]
+
+
+class RemoteTimeoutErr(CylcError):
+    """Exception for when a remote clean times out."""
+    ret_code = 124
+
+    def __init__(self, timeout: str) -> None:
+        self.timeout = timeout
+
+    def __str__(self) -> str:
+        return (
+            f"cylc clean timed out after {self.timeout}s. You can increase "
+            "this timeout using the --timeout option."
+        )
 
 
 async def get_contained_workflows(partial_id) -> List[str]:
@@ -348,7 +364,7 @@ def remote_clean(
     id_: str,
     platform_names: Iterable[str],
     timeout: str,
-    rm_dirs: Optional[List[str]] = None,
+    rm_dirs: list[str] | None = None,
 ) -> None:
     """Run subprocesses to clean a workflow on its remote install targets
     (skip localhost), given a set of platform names to look up.
@@ -357,38 +373,34 @@ def remote_clean(
         id_: Workflow name.
         platform_names: List of platform names to look up in the global
             config, in order to determine the install targets to clean on.
-        timeout: ISO 8601 duration or number of seconds to wait before
-            cancelling.
+        timeout: Number of seconds to wait before cancelling.
         rm_dirs: Sub dirs to remove instead of the whole run dir.
     """
-    try:
-        install_targets_map = (
-            get_install_target_to_platforms_map(platform_names))
-    except PlatformLookupError as exc:
-        raise PlatformLookupError(
-            f"Cannot clean {id_} on remote platforms as the workflow database "
-            f"is out of date/inconsistent with the global config - {exc}"
-        ) from None
+    install_targets_map: dict[str, list[dict]] = {}
+    for platform_name in platform_names:
+        try:
+            platform = platform_from_name(platform_name)
+        except PlatformLookupError as exc:
+            LOG.warning(exc)
+            continue
+        target = get_install_target_from_platform(platform)
+        if target != get_localhost_install_target():
+            install_targets_map.setdefault(target, []).append(platform)
 
     queue: Deque[RemoteCleanQueueTuple] = deque()
     remote_clean_cmd = partial(
         _remote_clean_cmd, id_=id_, rm_dirs=rm_dirs, timeout=timeout
     )
     for target, platforms in install_targets_map.items():
-        if target == get_localhost_install_target():
-            continue
         shuffle(platforms)
-        LOG.info(
-            f"Cleaning {id_} on install target: "
-            f"{platforms[0]['install target']}"
-        )
+        LOG.info(f"Cleaning {id_} on install target: {target}")
         # Issue ssh command:
         queue.append(
             RemoteCleanQueueTuple(
                 remote_clean_cmd(platform=platforms[0]), target, platforms
             )
         )
-    failed_targets: Dict[str, Union[PlatformError, str]] = {}
+    failed_targets: dict[str, PlatformError | RemoteTimeoutErr] = {}
     # Handle subproc pool results almost concurrently:
     while queue:
         item = queue.popleft()
@@ -399,17 +411,14 @@ def remote_clean(
         out, err = item.proc.communicate()
         if out:
             LOG.info(f"[{item.install_target}]\n{out}")
-        if ret_code == 124:
-            failed_targets[item.install_target] = (
-                f"cylc clean timed out after {timeout}s. You can increase "
-                "this timeout using the --timeout option."
-            )
+        if ret_code == RemoteTimeoutErr.ret_code:
+            failed_targets[item.install_target] = RemoteTimeoutErr(timeout)
         elif ret_code:
             this_platform = item.platforms.pop(0)
             excp = PlatformError(
                 PlatformError.MSG_TIDY,
                 this_platform['name'],
-                cmd=cast('List[str]', item.proc.args),
+                cmd=cast('list[str]', item.proc.args),
                 ret_code=ret_code,
                 out=out,
                 err=err,
@@ -431,12 +440,15 @@ def remote_clean(
             # messages
             LOG.debug(f"[{item.install_target}]\n{err}")
         sleep(0.2)
+
     if failed_targets:
-        for target, info in failed_targets.items():
-            LOG.error(
-                f"Could not clean {id_} on install target: {target}\n{info}"
-            )
-        raise CylcError(f"Remote clean failed for {id_}")
+        msg = (
+            f"Remote clean failed for {id_} - could not clean on these "
+            "install target(s):"
+        )
+        for target, exc in failed_targets.items():
+            msg += f"\n[{target}]\n{exc}"
+        raise CylcError(msg)
 
 
 def _remote_clean_cmd(
