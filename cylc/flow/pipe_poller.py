@@ -23,10 +23,24 @@ function to protect against the buffer filling up.
 Note, there is a more advanced version of this baked into the subprocpool.
 """
 
-from select import select
+import select
+from typing import (
+    IO,
+    TYPE_CHECKING,
+    TypeVar,
+)
 
 
-def pipe_poller(proc, *files, chunk_size=4096):
+if TYPE_CHECKING:
+    from subprocess import Popen
+
+
+T = TypeVar('T', str, bytes)
+
+
+def pipe_poller(
+    proc: 'Popen[T]', *files: IO[T], chunk_size=4096
+) -> tuple[T, ...]:
     """Read from a process without hitting buffer issues.
 
     Standin for subprocess.Popen.communicate.
@@ -51,22 +65,26 @@ def pipe_poller(proc, *files, chunk_size=4096):
         specified.
 
     """
-    _files = {
-        file: b'' if 'b' in getattr(file, 'mode', 'r') else ''
-        for file in files
-    }
+    fd_poll = select.poll()
+    fd_to_output: dict[int, T] = {}
+    fd_to_file: dict[int, IO[T]] = {}
+    for file in files:
+        fd = file.fileno()
+        fd_to_file[fd] = file
+        fd_to_output[fd] = file.read(0)  # empty str | bytes
+        fd_poll.register(fd, select.POLLIN)
 
-    def _read(timeout=1.0):
+    def _read(timeout=1e3):
         # read any data from files
-        for file in select(list(files), [], [], timeout)[0]:
-            buffer = file.read(chunk_size)
+        for fd, _event in fd_poll.poll(timeout):
+            buffer = fd_to_file[fd].read(chunk_size)
             if len(buffer) > 0:
-                _files[file] += buffer
+                fd_to_output[fd] += buffer
 
     while proc.poll() is None:
         # read from the buffers
         _read()
     # double check the buffers now that the process has finished
-    _read(timeout=0.01)
+    _read(timeout=10)
 
-    return tuple(_files.values())
+    return tuple(fd_to_output.values())
