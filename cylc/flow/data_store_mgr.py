@@ -2214,13 +2214,11 @@ class DataStoreMgr:
                         active_counter += Counter(
                             dict(child_node.state_totals)
                         )
-                    else:
-                        state_counter += Counter(dict(child_node.state_totals))
+                    state_counter += Counter(dict(child_node.state_totals))
                     if child_node.graph_depth < graph_depth:
                         graph_depth = child_node.graph_depth
             # Gather all child task states
             task_states = []
-            active_states = []
             for tp_id in fam_node.child_tasks:
                 is_active = False
                 if all_nodes and tp_id not in all_nodes:
@@ -2239,22 +2237,22 @@ class DataStoreMgr:
                     is_active = True
 
                 tp_state = self.from_delta_or_node(tp_delta, tp_node, 'state')
-                if tp_state:
-                    task_states.append(tp_state)
-                    if is_active:
-                        active_states.append(tp_state)
 
-                if (
-                    is_active
-                    and self.from_delta_or_node(tp_delta, tp_node, 'is_held')
-                ):
-                    is_held_total += 1
+                task_states.append(tp_state)
 
-                if self.from_delta_or_node(tp_delta, tp_node, 'is_queued'):
-                    is_queued_total += 1
+                if is_active:
+                    active_counter[tp_state] += 1
 
-                if self.from_delta_or_node(tp_delta, tp_node, 'is_runahead'):
-                    is_runahead_total += 1
+                    if self.from_delta_or_node(tp_delta, tp_node, 'is_held'):
+                        is_held_total += 1
+
+                    if self.from_delta_or_node(tp_delta, tp_node, 'is_queued'):
+                        is_queued_total += 1
+
+                    if self.from_delta_or_node(
+                        tp_delta, tp_node, 'is_runahead'
+                    ):
+                        is_runahead_total += 1
 
                 if self.from_delta_or_node(tp_delta, tp_node, 'is_retry'):
                     is_retry = True
@@ -2266,14 +2264,13 @@ class DataStoreMgr:
                     is_xtriggered = True
 
             state_counter += Counter(task_states)
-            active_counter += Counter(active_states)
             # if n=0 tasks exist only count those, otherwise count all.
             group_counter = active_counter or state_counter
             # created delta data element
             fp_delta = PbFamilyProxy(
                 id=fp_id,
                 stamp=f'{fp_id}@{time()}',
-                state=extract_group_state(group_counter.keys()),
+                state=extract_group_state(state_counter.keys()),
                 is_held=(is_held_total > 0),
                 is_held_total=is_held_total,
                 is_queued=(is_queued_total > 0),
