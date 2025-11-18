@@ -196,18 +196,7 @@ async def run(
         # force trigger evaluation now
         try:
             itask.state.prerequisites_eval_all()
-        except TriggerExpressionError as exc:
-            err = str(exc)
-            if '@' in err:
-                print(
-                    f"ERROR, {name}: xtriggers can't be in conditional"
-                    f" expressions: {err}",
-                    file=sys.stderr,
-                )
-            else:
-                print(
-                    'ERROR, %s: bad trigger: %s' % (name, err), file=sys.stderr
-                )
+        except TriggerExpressionError:
             raise WorkflowConfigError("ERROR: bad trigger") from None
         except Exception as exc:
             print(str(exc), file=sys.stderr)

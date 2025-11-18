@@ -1872,6 +1872,7 @@ class WorkflowConfig:
             # Right is a lone node.
             self.edges[seq].add((right, None, suicide, conditional))
 
+        conditional_xtriggers = []
         for left in left_nodes:
             # if left is None:
             #    continue
@@ -1887,7 +1888,16 @@ class WorkflowConfig:
                     LOG.error(f"{orig_lexpr} => {right}")
                 raise WorkflowConfigError(
                     f"self-edge detected: {left} => {right}")
-            self.edges[seq].add((left, right, suicide, conditional))
+            if left.startswith('@') and conditional:
+                conditional_xtriggers.append(f'{lexpr} => {right}')
+            else:
+                self.edges[seq].add((left, right, suicide, conditional))
+        if conditional_xtriggers:
+            raise WorkflowConfigError(
+                'Xtriggers cannot be used in conditional graph'
+                ' expressions:\n' +
+                '\n * '.join(conditional_xtriggers)
+            )
 
     def generate_taskdef(self, orig_expr, node):
         """Generate task definition for node."""

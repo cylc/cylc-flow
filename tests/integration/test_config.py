@@ -35,6 +35,7 @@ from cylc.flow.parsec.fileparse import read_and_proc
 from cylc.flow.pathutil import get_workflow_run_pub_db_path
 
 Fixture = Any
+param = pytest.param
 
 
 @pytest.mark.parametrize(
@@ -486,6 +487,44 @@ def test_xtrig_signature_validation(
         }
     })
     with pytest.raises(XtriggerConfigError, match=expected_msg):
+        validate(id_)
+
+
+@pytest.mark.parametrize(
+    'left',
+    (
+        param('@xrandom | @echo', id='xtrig-or-xtrig'),
+        param('@xrandom | task', id='xtrig-or-task'),
+        param('task | @echo', id='task-or-xtrig'),
+        param('@xrandom | foo & bar', id='xtrig-or-complex'),
+        param('@xrandom & bar | foo', id='complex-or-xtrig'),
+    )
+)
+def test_xtrig_or_fails_validation(
+    flow: "Fixture",
+    validate: "Fixture",
+    left: str
+):
+    """Xtriggers cannot be chained with the 'or'
+
+    https://github.com/cylc/cylc-flow/issues/6771
+    https://github.com/cylc/cylc-flow/issues/2712
+    """
+    id_ = flow(
+        {
+            "scheduling": {
+                "initial cycle point": "2024",
+                "xtriggers": {
+                    "xrandom": "xrandom(100)",
+                    "echo": "echo(succeed=True)"
+                },
+                "graph": {"R1": f"{left} => fin"},
+            }
+        }
+    )
+    expected_msg = (
+        "Xtriggers cannot be used in conditional graph expressions:\n")
+    with pytest.raises(WorkflowConfigError, match=expected_msg):
         validate(id_)
 
 
