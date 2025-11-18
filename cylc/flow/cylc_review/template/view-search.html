@@ -1,0 +1,40 @@
+{% if lines|length == 0 -%}
+<p>No results found.</p>
+{% else -%}
+<!-- File Line Numbers -->
+{% if line_numbers|length != 0 -%}
+<div class="col-md-1 text-right">
+<pre id="filelinenumbers" class="prettyprint">
+{% for num in line_numbers -%}
+<span><a id="{{num}}" href="#{{num}}" class="line-number">{{num}}</a></span>
+{% endfor -%}
+</pre>
+</div>
+{% endif -%}
+
+<!-- File Contents -->
+{% if line_numbers|length == 0 -%}
+<div class="col-md-12">
+{% else -%}
+<div class="col-md-11">
+{% endif -%}
+<pre id="filecode" {% if file_content %}class="prettyprint lang-{{file_content}}"{% endif -%}>
+{% for line in lines -%}
+{% for part in line -%}
+{% if not file_content -%}
+{% set part = part | replace(
+    'DEBUG', '<span class="nocode text-muted">DEBUG</span>') | replace(
+    'INFO', '<span class="nocode text-info">INFO</span>') | replace(
+    'ERROR', '<span class="nocode text-dander">ERROR</span>') | replace(
+    'CRITICAL', '<span class="nocode text-dander">CRITICAL</span>') | replace(
+    'WARNING', '<span class="nocode text-warning">WARNING</span>') -%}
+{% endif -%}
+{% if loop.index % 2 == 1 -%}{{part}}{% else 
+-%}<span class="highlight">{{part}}</span>{%
+endif -%}
+{% endfor -%}
+{{ "" }} 
+{% endfor -%}
+</pre>
+</div>
+{% endif -%}
