@@ -18,32 +18,48 @@
 from collections import deque
 import json
 import os
-import select
-from signal import SIGKILL
-import sys
+import selectors
 import shlex
+from signal import SIGKILL
+from subprocess import (  # nosec
+    DEVNULL,
+    TimeoutExpired,
+    run,
+)
+import sys
 from tempfile import SpooledTemporaryFile
 from threading import RLock
 from time import time
-from subprocess import DEVNULL, TimeoutExpired, run  # nosec
-from typing import TYPE_CHECKING, Any, Callable, List, Optional, Set
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    List,
+    Optional,
+    Set,
+)
 
-from cylc.flow import LOG, iter_entry_points
+from cylc.flow import (
+    LOG,
+    iter_entry_points,
+)
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.cylc_subproc import procopen
 from cylc.flow.exceptions import PlatformLookupError
 from cylc.flow.hostuserutil import is_remote_host
 from cylc.flow.platforms import (
-    log_platform_event,
     get_platform,
+    log_platform_event,
 )
 from cylc.flow.subprocctx import SubFuncContext
 from cylc.flow.task_events_mgr import TaskJobLogsRetrieveContext
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.wallclock import get_current_time_string
 
+
 if TYPE_CHECKING:
     from subprocess import Popen
+
     from cylc.flow.subprocctx import SubProcContext
 
 _XTRIG_MOD_CACHE: dict = {}
@@ -184,7 +200,6 @@ class SubProcPool:
 
     ERR_WORKFLOW_STOPPING = 'workflow stopping, command not run'
     JOBS_SUBMIT = 'jobs-submit'
-    POLLREAD = select.POLLIN | select.POLLPRI
     RET_CODE_WORKFLOW_STOPPING = 999
 
     def __init__(self):
@@ -197,13 +212,12 @@ class SubProcPool:
         self.stopping_lock = RLock()
         self.queuings = deque()
         self.runnings = []
-        try:
-            self.pipepoller = select.poll()
-        except AttributeError:  # select.poll not implemented for this OS
-            self.pipepoller = None
+        self.pipepoller = selectors.DefaultSelector()
 
     def close(self):
-        """Close pool."""
+        """Mark the pool as closed, which will prevent putting new commands,
+        but not affect existing queued or running commands.
+        """
         self.set_stopping()
         self.closed = True
 
@@ -419,58 +433,58 @@ class SubProcPool:
                 _killpg(proc, SIGKILL)
         # Wait for child processes
         self.process()
+        self.pipepoller.close()
 
     def _poll_proc_pipes(self, proc, ctx):
         """Poll STDOUT/ERR of proc and read some data if possible.
 
         This helps to unblock the command by unblocking its pipes.
         """
-        if self.pipepoller is None:
-            return  # select.poll not supported on this OS
-        for handle in [proc.stdout, proc.stderr]:
-            if not handle.closed:
-                self.pipepoller.register(handle.fileno(), self.POLLREAD)
-        while True:
-            fileno_list = [
-                fileno
-                for fileno, event in self.pipepoller.poll(0.0)
-                if event & self.POLLREAD]
-            if not fileno_list:
-                # Nothing readable
-                break
-            received_data = []
-            for fileno in fileno_list:
-                # If a file handle is readable, read something from it, add
-                # results into the command context object's `.out` or `.err`,
-                # whichever is relevant. To avoid blocking:
-                # 1. Use `os.read` here instead of `file.read` to avoid any
-                #    buffering that may cause the file handle to block.
-                # 2. Call os.read only once after a poll. Poll again before
-                #    another read - otherwise the os.read call may block.
-                try:
-                    data = os.read(fileno, 65536).decode()  # 64K
-                except OSError:
-                    continue
-                received_data.append(data != '')
-                if fileno == proc.stdout.fileno():
-                    if ctx.out is None:
-                        ctx.out = ''
-                    ctx.out += data
-                elif fileno == proc.stderr.fileno():
-                    if ctx.err is None:
-                        ctx.err = ''
-                    ctx.err += data
-            if received_data and not all(received_data):
-                # if no data was pushed down the pipe exit the polling loop,
-                # we can always re-enter the polling loop later if there is
-                # more data
-                # NOTE: this suppresses an infinite polling-loop observed
-                # on darwin see:
-                # https://github.com/cylc/cylc-flow/issues/3535
-                # https://github.com/cylc/cylc-flow/pull/3543
-                return
-        self.pipepoller.unregister(proc.stdout.fileno())
-        self.pipepoller.unregister(proc.stderr.fileno())
+        for handle in (proc.stdout, proc.stderr):
+            if handle and not handle.closed:
+                self.pipepoller.register(handle, selectors.EVENT_READ)
+        try:
+            while True:
+                fileno_list = [
+                    key.fd for key, _event in self.pipepoller.select(0)
+                ]
+                if not fileno_list:
+                    # Nothing readable
+                    break
+                received_data = []
+                for fileno in fileno_list:
+                    # If a file handle is readable, read something from it, add
+                    # results into the command context object's `.out` or
+                    # `.err`, whichever is relevant. To avoid blocking:
+                    # 1. Use `os.read` here instead of `file.read` to avoid any
+                    #    buffering that may cause the file handle to block.
+                    # 2. Call os.read only once after a poll. Poll again before
+                    #    another read - otherwise the os.read call may block.
+                    try:
+                        data = os.read(fileno, 65536).decode()  # 64K
+                    except OSError:
+                        continue
+                    received_data.append(data != '')
+                    if fileno == proc.stdout.fileno():
+                        if ctx.out is None:
+                            ctx.out = ''
+                        ctx.out += data
+                    elif fileno == proc.stderr.fileno():
+                        if ctx.err is None:
+                            ctx.err = ''
+                        ctx.err += data
+                if received_data and not all(received_data):
+                    # if no data was pushed down the pipe exit the polling
+                    # loop, we can always re-enter the polling loop later if
+                    # there is more data
+                    # NOTE: this suppresses an infinite polling-loop observed
+                    # on darwin see:
+                    # https://github.com/cylc/cylc-flow/issues/3535
+                    # https://github.com/cylc/cylc-flow/pull/3543
+                    break
+        finally:
+            for handle in list(self.pipepoller.get_map()):
+                self.pipepoller.unregister(handle)
 
     @classmethod
     def _run_command_init(
