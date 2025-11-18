@@ -23,11 +23,12 @@ function to protect against the buffer filling up.
 Note, there is a more advanced version of this baked into the subprocpool.
 """
 
-import select
+import selectors
 from typing import (
     IO,
     TYPE_CHECKING,
     TypeVar,
+    cast,
 )
 
 
@@ -65,26 +66,26 @@ def pipe_poller(
         specified.
 
     """
-    fd_poll = select.poll()
-    fd_to_output: dict[int, T] = {}
-    fd_to_file: dict[int, IO[T]] = {}
-    for file in files:
-        fd = file.fileno()
-        fd_to_file[fd] = file
-        fd_to_output[fd] = file.read(0)  # empty str | bytes
-        fd_poll.register(fd, select.POLLIN)
 
-    def _read(timeout=1e3):
+    selector = selectors.DefaultSelector()
+    file_to_output: dict[IO[T], T] = {}
+    for file in files:
+        file_to_output[file] = file.read(0)  # empty str | bytes
+        selector.register(file, selectors.EVENT_READ)
+
+    def _read(timeout=1.0):
         # read any data from files
-        for fd, _event in fd_poll.poll(timeout):
-            buffer = fd_to_file[fd].read(chunk_size)
+        for key, _events in selector.select(timeout):
+            file = cast('IO[T]', key.fileobj)
+            buffer = file.read(chunk_size)
             if len(buffer) > 0:
-                fd_to_output[fd] += buffer
+                file_to_output[file] += buffer
 
     while proc.poll() is None:
         # read from the buffers
         _read()
     # double check the buffers now that the process has finished
-    _read(timeout=10)
+    _read(timeout=0.01)
 
-    return tuple(fd_to_output.values())
+    selector.close()
+    return tuple(file_to_output.values())
