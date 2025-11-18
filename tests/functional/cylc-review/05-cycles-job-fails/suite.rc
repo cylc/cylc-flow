@@ -14,6 +14,6 @@
         script = false
     [[rehab]]
         script = """
-cylc reset --state='succeeded' "${CYLC_SUITE_NAME}" 'loser' "${CYLC_TASK_CYCLE_POINT}"
-sleep 1
-"""
+            cylc set "${CYLC_WORKFLOW_NAME}//${CYLC_TASK_CYCLE_POINT}/loser"
+            sleep 1
+        """

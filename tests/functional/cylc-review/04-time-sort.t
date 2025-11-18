@@ -1,5 +1,5 @@
 #!/bin/bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
 # This program is free software: you can redistribute it and/or modify
@@ -19,19 +19,17 @@
 # submit/run/run exit.
 #-------------------------------------------------------------------------------
 . "$(dirname "$0")/test_header"
-if ! python2 -c 'import cherrypy' 2>'/dev/null'; then
-    skip_all '"cherrypy" not installed'
-fi
+requires_cherrypy
 
 set_test_number 14
 #-------------------------------------------------------------------------------
 # Initialise, validate and run a suite for testing with
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 
-cylc run --no-detach --debug "${SUITE_NAME}" 2>'/dev/null'
+cylc play --no-detach --debug "${WORKFLOW_NAME}" 2>'/dev/null'
 #-------------------------------------------------------------------------------
 # Initialise WSGI application for the cylc review web service
 cylc_ws_init 'cylc' 'review'
@@ -40,13 +38,14 @@ if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
 fi
 
 # Set up standard URL escaping of forward slashes in 'cylctb-' suite names.
-ESC_SUITE_NAME="$(echo ${SUITE_NAME} | sed 's|/|%2F|g')"
+# shellcheck disable=SC2001
+ESC_WORKFLOW_NAME="$(echo "${WORKFLOW_NAME}" | sed 's|/|%2F|g')"
 #-------------------------------------------------------------------------------
 # Data transfer output checks for a specific jobs page, various time-ordering
 ORDER='time_submit'
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-${ORDER}"
 run_ok "${TEST_NAME}" curl \
-    "${TEST_CYLC_WS_URL}/taskjobs/${USER}?suite=${ESC_SUITE_NAME}&form=json&order=${ORDER}"
+    "${TEST_CYLC_WS_URL}/taskjobs/${USER}?suite=${ESC_WORKFLOW_NAME}&form=json&order=${ORDER}"
 # Note: only qux submit time order is reliable, the others are submitted at the
 # same time, in any order.
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
@@ -56,7 +55,7 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
 ORDER='time_run_desc'
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-${ORDER}"
 run_ok "${TEST_NAME}" curl \
-    "${TEST_CYLC_WS_URL}/taskjobs/${USER}?suite=${ESC_SUITE_NAME}&form=json&order=${ORDER}"
+    "${TEST_CYLC_WS_URL}/taskjobs/${USER}?suite=${ESC_WORKFLOW_NAME}&form=json&order=${ORDER}"
 
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('order',), '${ORDER}']" \
@@ -68,7 +67,7 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
 ORDER='time_run_exit_desc'
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-${ORDER}"
 run_ok "${TEST_NAME}" curl \
-    "${TEST_CYLC_WS_URL}/taskjobs/${USER}?suite=${ESC_SUITE_NAME}&form=json&order=${ORDER}"
+    "${TEST_CYLC_WS_URL}/taskjobs/${USER}?suite=${ESC_WORKFLOW_NAME}&form=json&order=${ORDER}"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('order',), '${ORDER}']" \
     "[('entries', 0, 'name'), 'qux']" \
@@ -79,7 +78,7 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
 ORDER='duration_queue_desc'
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-${ORDER}"
 run_ok "${TEST_NAME}" curl \
-    "${TEST_CYLC_WS_URL}/taskjobs/${USER}?suite=${ESC_SUITE_NAME}&form=json&order=${ORDER}"
+    "${TEST_CYLC_WS_URL}/taskjobs/${USER}?suite=${ESC_WORKFLOW_NAME}&form=json&order=${ORDER}"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('order',), '${ORDER}']" \
     "[('entries', 0, 'name'), 'bar']" \
@@ -90,7 +89,7 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
 ORDER='duration_run_desc'
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-${ORDER}"
 run_ok "${TEST_NAME}" curl \
-    "${TEST_CYLC_WS_URL}/taskjobs/${USER}?suite=${ESC_SUITE_NAME}&form=json&order=${ORDER}"
+    "${TEST_CYLC_WS_URL}/taskjobs/${USER}?suite=${ESC_WORKFLOW_NAME}&form=json&order=${ORDER}"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('order',), '${ORDER}']" \
     "[('entries', 0, 'name'), 'baz']" \
@@ -101,7 +100,7 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
 ORDER='duration_queue_run_desc'
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs-${ORDER}"
 run_ok "${TEST_NAME}" curl \
-    "${TEST_CYLC_WS_URL}/taskjobs/${USER}?suite=${ESC_SUITE_NAME}&form=json&order=${ORDER}"
+    "${TEST_CYLC_WS_URL}/taskjobs/${USER}?suite=${ESC_WORKFLOW_NAME}&form=json&order=${ORDER}"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('order',), '${ORDER}']" \
     "[('entries', 0, 'name'), 'baz']" \
@@ -110,6 +109,6 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('entries', 3, 'name'), 'qux']"
 #-------------------------------------------------------------------------------
 # Tidy up - note suite trivial so stops early on by itself
-purge_suite "${SUITE_NAME}"
+purge "${WORKFLOW_NAME}"
 cylc_ws_kill
 exit

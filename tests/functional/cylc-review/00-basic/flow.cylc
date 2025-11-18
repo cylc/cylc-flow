@@ -1,17 +1,19 @@
 #!Jinja2
-[cylc]
+[scheduler]
     UTC mode = True
-    abort if any task fails = True
+    [[events]]
+        abort on stall timeout = true
+        stall timeout = PT0S
+
 [scheduling]
     initial cycle point = 2000
     final cycle point = 2000
-    [[dependencies]]
-        [[[P1Y]]]
-            graph = FOO
+    [[graph]]
+        P1Y = FOO
 [runtime]
     [[FOO]]
         script = """
-echo "Hello from ${CYLC_TASK_ID}.${CYLC_SUITE_NAME}"
+echo "Hello from ${CYLC_TASK_ID}.${CYLC_WORKFLOW_NAME}"
 for I in $(seq -w 1 10); do
     echo "[INFO] whatever stuff ${I}" >"$0.${I}.txt"
 done

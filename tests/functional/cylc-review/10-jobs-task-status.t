@@ -1,5 +1,5 @@
 #!/bin/bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
 # This program is free software: you can redistribute it and/or modify
@@ -18,51 +18,45 @@
 # Test for "cylc review", jobs list, task status.
 #-------------------------------------------------------------------------------
 . "$(dirname "$0")/test_header"
-if ! python2 -c 'import cherrypy' 2>'/dev/null'; then
-    skip_all '"cherrypy" not installed'
-fi
+requires_cherrypy
 
 set_test_number 16
 #-------------------------------------------------------------------------------
 # Initialise, validate and run a suite for testing with
-init_suite "${TEST_NAME_BASE}" <<'__SUITE_RC__'
-#!Jinja2
-[cylc]
+init_workflow "${TEST_NAME_BASE}" <<'__SUITE_RC__'
+[scheduler]
     UTC mode = True
     [[events]]
-        abort on stalled = True
+        abort on stall timeout = True
+        stall timeout = PT0S
 [scheduling]
     initial cycle point = 2000
     final cycle point = 2000
     [[dependencies]]
-        [[[P1Y]]]
-            graph = foo & bar & baz
+        P1Y = foo & bar & baz
 [runtime]
     [[foo]]
         script = test "${CYLC_TASK_TRY_NUMBER}" -eq 3
-        [[[job]]]
-            execution retry delays = 3*PT1S
+        execution retry delays = 3*PT1S
     [[bar]]
         script = false
-        [[[job]]]
-            execution retry delays = 3*PT1S
+        execution retry delays = 3*PT1S
     [[baz]]
-        env-script = """
-trap '' EXIT
-if ((${CYLC_TASK_SUBMIT_NUMBER} == 1)); then
-    exit
-fi
-"""
-        script = true
-        [[[job]]]
-            submission retry delays = 3*PT1S
-            submission polling intervals = 20*PT3S
+        script = """
+            echo "Hello Wold
+        """
+        [[[events]]]
+            handler events = submission failed
+            submission failed handlers = """
+                cylc broadcast %(workflow)s -p '*' -n 'baz' -s 'script = echo hello world'
+                cylc trigger %(workflow)s//%(id)s
+            """
 __SUITE_RC__
 
 TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
+run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 
-cylc run --debug --no-detach $SUITE_NAME 2>'/dev/null'
+cylc play --debug --no-detach "${WORKFLOW_NAME}" 2>'/dev/null'
 #-------------------------------------------------------------------------------
 # Initialise WSGI application for the cylc review web service
 TEST_NAME="${TEST_NAME_BASE}-ws-init"
@@ -72,15 +66,17 @@ if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
 fi
 
 # Set up standard URL escaping of forward slashes in 'cylctb-' suite names.
-ESC_SUITE_NAME="$(echo ${SUITE_NAME} | sed 's|/|%2F|g')"
+# shellcheck disable=SC2001
+ESC_WORKFLOW_NAME="$(echo "${WORKFLOW_NAME}" | sed 's|/|%2F|g')"
 #-------------------------------------------------------------------------------
 # Data transfer output check for a specific suite's jobs page
 
 # Key variable for core tests up to end of file
-TASKJOBS_URL="${TEST_CYLC_WS_URL}/taskjobs/${USER}?suite=${ESC_SUITE_NAME}&form=json"
+TASKJOBS_URL="${TEST_CYLC_WS_URL}/taskjobs/${USER}?suite=${ESC_WORKFLOW_NAME}&form=json"
 
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs"
 run_ok "${TEST_NAME}" curl "${TASKJOBS_URL}"
+cat "${TEST_NAME}.stdout" > "/home/users/tim.pillinger/temp.json"
 FOO1="{'cycle': '20000101T0000Z', 'name': 'foo', 'submit_num': 1}"
 FOO2="{'cycle': '20000101T0000Z', 'name': 'foo', 'submit_num': 2}"
 FOO3="{'cycle': '20000101T0000Z', 'name': 'foo', 'submit_num': 3}"
@@ -94,21 +90,21 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('job_status',), None]" \
     "[('entries', ${FOO1}, 'task_status',), 'succeeded']" \
     "[('entries', ${FOO1}, 'run_status',), 1]" \
-    "[('entries', ${FOO1}, 'run_signal',), 'EXIT']" \
+    "[('entries', ${FOO1}, 'run_signal',), 'ERR']" \
     "[('entries', ${FOO2}, 'task_status',), 'succeeded']" \
     "[('entries', ${FOO2}, 'run_status',), 1]" \
-    "[('entries', ${FOO2}, 'run_signal',), 'EXIT']" \
+    "[('entries', ${FOO2}, 'run_signal',), 'ERR']" \
     "[('entries', ${FOO3}, 'task_status',), 'succeeded']" \
     "[('entries', ${FOO3}, 'run_status',), 0]" \
     "[('entries', ${BAR1}, 'task_status',), 'failed']" \
     "[('entries', ${BAR1}, 'run_status',), 1]" \
-    "[('entries', ${BAR1}, 'run_signal',), 'EXIT']" \
+    "[('entries', ${BAR1}, 'run_signal',), 'ERR']" \
     "[('entries', ${BAR2}, 'task_status',), 'failed']" \
     "[('entries', ${BAR2}, 'run_status',), 1]" \
-    "[('entries', ${BAR2}, 'run_signal',), 'EXIT']" \
+    "[('entries', ${BAR2}, 'run_signal',), 'ERR']" \
     "[('entries', ${BAR3}, 'task_status',), 'failed']" \
     "[('entries', ${BAR3}, 'run_status',), 1]" \
-    "[('entries', ${BAR3}, 'run_signal',), 'EXIT']" \
+    "[('entries', ${BAR3}, 'run_signal',), 'ERR']" \
     "[('entries', ${BAZ1}, 'task_status',), 'succeeded']" \
     "[('entries', ${BAZ1}, 'submit_status',), 1]" \
     "[('entries', ${BAZ1}, 'run_status',), None]" \
@@ -156,6 +152,6 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('of_n_entries',), 2]"
 #-------------------------------------------------------------------------------
 # Tidy up - note suite trivial so stops early on by itself
-purge_suite "${SUITE_NAME}"
+purge "${WORKFLOW_NAME}"
 cylc_ws_kill
 exit

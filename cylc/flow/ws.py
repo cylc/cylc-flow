@@ -1,6 +1,4 @@
-#!/usr/bin/env python2
-
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -25,9 +23,7 @@ ws_cli - Parse CLI. Start/Stop ad-hoc server.
 import cherrypy
 from glob import glob
 import os
-import signal
-
-from cylc.option_parsers import CylcOptionParser as COP
+from pathlib import Path
 
 LOG_ROOT_TMPL = "~/.cylc/%(ns)s-%(util)s-%(host)s-%(port)s"
 
@@ -51,68 +47,24 @@ def wsgi_app(service_cls, *args, **kwargs):
         cherrypy.engine.stop()
 
 
-def ws_cli(service_cls, service_docstr, *args, **kwargs):
-    """Parse command line, start/stop ad-hoc server.
-
-    service_cls - Class to launch web service. Must have the constants
-                  service_cls.NS and service_cls.UTIL. *args and **kwargs are
-                  passed to its constructor.
-    """
-
-    parser = COP(
-        service_docstr,
-        argdoc=[
-            ("[start [PORT]]", "Start ad-hoc web service server."),
-            ("[stop]", "Stop ad-hoc web service server.")])
-
-    parser.add_option(
-        "--non-interactive", "--yes", "-y",
-        help="Switch off interactive prompting i.e. answer yes to everything"
-        " (for stop only).",
-        action="store_true", default=False, dest="non_interactive")
-    parser.add_option(
-        "--service-root", "-R",
-        help="Include web service name under root of URL (for start only).",
-        action="store_true", default=False, dest="service_root_mode")
-
-    opts, args = parser.parse_args(
-        remove_opts=['--host', '--user', '--verbose', '--debug'])
-    arg = None
-    if args:
-        arg = args[0]
-    status = _get_server_status(service_cls)
-    if arg == "start":
-        port = None
-        if args[1:]:
-            port = args[1]
-        _ws_init(service_cls, port, opts.service_root_mode, *args, **kwargs)
-    elif not status:
-        print "No %s service server running." % service_cls.TITLE
-    else:
-        for key, value in sorted(status.items()):
-            print "%s=%s" % (key, value)
-        if (arg == "stop" and status.get("pid") and
-                (opts.non_interactive or raw_input(
-                 "Stop server via termination? y/n (default=n)") == "y")):
-            try:
-                os.killpg(int(status["pid"]), signal.SIGTERM)
-            except OSError:
-                print "Termination signal failed."
-
-
-def _ws_init(service_cls, port, service_root_mode, *args, **kwargs):
+def _ws_init(service_cls, port, service_root, *args, **kwargs):
     """Start quick web service."""
     config = _configure(service_cls)
 
-    cherrypy.config["server.socket_host"] = "0.0.0.0"
+    # Bandit is looking for this to have a port, but we add one below:
+    cherrypy.config["server.socket_host"] = "0.0.0.0"   # nosec B104
     if port:
         cherrypy.config["server.socket_port"] = int(port)
     port = cherrypy.server.socket_port
-    log_root = os.path.expanduser(LOG_ROOT_TMPL % {
-        "ns": service_cls.NS,
-        "util": service_cls.UTIL,
-        "host": cherrypy.server.socket_host,
-        "port": cherrypy.server.socket_port})
+    log_root = os.path.expanduser(
+        LOG_ROOT_TMPL
+        % {
+            "ns": service_cls.NS,
+            "util": service_cls.UTIL,
+            "host": cherrypy.server.socket_host,
+            "port": cherrypy.server.socket_port,
+        }
+    )
     log_status = log_root + ".status"
     if not os.path.isdir(os.path.dirname(log_root)):
         os.makedirs(os.path.dirname(log_root))
@@ -126,9 +78,9 @@ def _ws_init(service_cls, port, service_root_mode, *args, **kwargs):
     cherrypy.config["log.error_file"] = log_root + "-error.log"
     open(cherrypy.config["log.error_file"], "w").close()
 
-    root = "/"
-    if service_root_mode:
-        root = "/%s-%s/" % (service_cls.NS, service_cls.UTIL)
+    root = '/'
+    if service_root != '/':
+        root = "/%s-%s/" % (service_root, service_cls.UTIL)
     cherrypy.tree.mount(service_cls(*args, **kwargs), root, config)
     try:
         cherrypy.engine.start()
@@ -148,7 +100,9 @@ def _configure(service_cls):
                 break
             path = os.path.dirname(path)
     for key, value in (
-            ("CYLC_NS", service_cls.NS), ("CYLC_UTIL", service_cls.UTIL)):
+        ("CYLC_NS", service_cls.NS),
+        ("CYLC_UTIL", service_cls.UTIL),
+    ):
         if os.getenv(key) is None:
             os.environ[key] = value
 
@@ -156,7 +110,9 @@ def _configure(service_cls):
     cherrypy.config["tools.encode.on"] = True
     cherrypy.config["tools.encode.encoding"] = "utf-8"
     config = {}
-    static_lib = get_util_home("lib", "cylc", "cylc-review", "static")
+    from pathlib import Path
+
+    static_lib = Path(__file__).parent / 'cylc_review/static'
     for name in os.listdir(static_lib):
         path = os.path.join(static_lib, name)
         if os.path.isdir(path):
@@ -174,11 +130,15 @@ def _configure(service_cls):
 def _get_server_status(service_cls):
     """Return a dict containing quick service server status."""
     ret = {}
-    log_root_glob = os.path.expanduser(LOG_ROOT_TMPL % {
-        "ns": service_cls.NS,
-        "util": service_cls.UTIL,
-        "host": "*",
-        "port": "*"})
+    log_root_glob = os.path.expanduser(
+        LOG_ROOT_TMPL
+        % {
+            "ns": service_cls.NS,
+            "util": service_cls.UTIL,
+            "host": "*",
+            "port": "*",
+        }
+    )
     for filename in glob(log_root_glob):
         try:
             for line in open(filename):
@@ -196,10 +156,4 @@ def get_util_home(*args):
     If args are specified, they are added to the end of returned path.
 
     """
-    try:
-        value = os.environ["CYLC_DIR"]
-    except KeyError:
-        value = os.path.abspath(__file__)
-        for _ in range(4):  # assume __file__ under $CYLC_DIR/lib/cylc/
-            value = os.path.dirname(value)
-    return os.path.join(value, *args)
+    return str(Path(__file__).parent / '/'.join(args))

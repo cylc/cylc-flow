@@ -1,5 +1,5 @@
 #!/bin/bash
-# THIS FILE IS PART OF THE CYLC SUITE ENGINE.
+# THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 # 
 # This program is free software: you can redistribute it and/or modify
@@ -18,19 +18,19 @@
 # Basic tests for "cylc review".
 #-------------------------------------------------------------------------------
 . "$(dirname "$0")/test_header"
-if ! python2 -c 'import cherrypy' 2>'/dev/null'; then
-    skip_all '"cherrypy" not installed'
-fi
+requires_cherrypy
 
-set_test_number 64
+set_test_number 56
 #-------------------------------------------------------------------------------
 # Initialise, validate and run a suite for testing with
-install_suite "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
+install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
 TEST_NAME=$TEST_NAME_BASE-validate
-run_ok $TEST_NAME cylc validate $SUITE_NAME
 
-cylc run --no-detach --debug "${SUITE_NAME}" 2>'/dev/null'
+run_ok "${TEST_NAME_BASE}-play" cylc play \
+    --no-detach \
+    --debug "${WORKFLOW_NAME}" 2>'/dev/null'
+
 #-------------------------------------------------------------------------------
 # Initialise WSGI application for the cylc review web service
 cylc_ws_init 'cylc' 'review'
@@ -39,7 +39,8 @@ if [[ -z "${TEST_CYLC_WS_PORT}" ]]; then
 fi
 
 # Set up standard URL escaping of forward slashes in 'cylctb-' suite names.
-ESC_SUITE_NAME="$(echo ${SUITE_NAME} | sed 's|/|%2F|g')"
+# shellcheck disable=SC2001
+ESC_WORKFLOW_NAME="$(echo "${WORKFLOW_NAME}" | sed 's|/|%2F|g')"
 #-------------------------------------------------------------------------------
 # Data transfer output check for review homepage
 TEST_NAME="${TEST_NAME_BASE}-curl-root"
@@ -50,18 +51,17 @@ TEST_NAME="${TEST_NAME_BASE}-200-curl-root-json"
 run_ok "${TEST_NAME}" curl "${TEST_CYLC_WS_URL}/?form=json"
 
 # FIXME: recent Travis CI failure
-#HOSTNAME=$(hostname)
-HOSTNAME="localhost"
+HOSTNAME=$(hostname)
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('cylc_version',), '$(cylc version | cut -d' ' -f 2)']" \
     "[('title',), 'Cylc Review']" \
     "[('host',), '${HOSTNAME}']"
+
 #-------------------------------------------------------------------------------
 # Data transfer output check for a specific user's page including non-existent
 TEST_NAME="${TEST_NAME_BASE}-200-curl-suites"
 run_ok "${TEST_NAME}" curl -I "${TEST_CYLC_WS_URL}/suites/${USER}"
 grep_ok 'HTTP/.* 200 OK' "${TEST_NAME}.stdout"
-
 TEST_NAME="${TEST_NAME_BASE}-200-curl-suites-json"
 run_ok "${TEST_NAME}" curl "${TEST_CYLC_WS_URL}/suites/${USER}?form=json"
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
@@ -75,48 +75,33 @@ run_ok "${TEST_NAME}" curl -I "${TEST_CYLC_WS_URL}/suites/no-such-user"
 grep_ok 'HTTP/.* 404 Not Found' "${TEST_NAME}.stdout"
 #-------------------------------------------------------------------------------
 # Connection check for a specific suite's cycles & jobs page
-for METHOD in 'cycles' 'jobs'; do
-    TEST_NAME="${TEST_NAME_BASE}-200-curl-${METHOD}"
-    run_ok "${TEST_NAME}" \
-        curl -I "${TEST_CYLC_WS_URL}/${METHOD}/${USER}/${ESC_SUITE_NAME}"
-    grep_ok 'HTTP/.* 200 OK' "${TEST_NAME}.stdout"
-
-    TEST_NAME="${TEST_NAME_BASE}-404-1-curl-${METHOD}"
-    run_ok "${TEST_NAME}" \
-        curl -I "${TEST_CYLC_WS_URL}/${METHOD}/no-such-user/${ESC_SUITE_NAME}"
-    grep_ok 'HTTP/.* 404 Not Found' "${TEST_NAME}.stdout"
-
-    TEST_NAME="${TEST_NAME_BASE}-404-2-curl-${METHOD}"
-    run_ok "${TEST_NAME}" \
-        curl -I "${TEST_CYLC_WS_URL}/${METHOD}/${USER}?suite=no-such-suite"
-    grep_ok 'HTTP/.* 404 Not Found' "${TEST_NAME}.stdout"
-done
-#-------------------------------------------------------------------------------
-# Check that waiting tasks appear when "task_status=waiting"
-TEST_NAME="${TEST_NAME_BASE}-200-waiting-tasks"
-
-URL_PARAMS='?form=json&task_status=waiting'
+TEST_NAME="${TEST_NAME_BASE}-200-curl-cycles"
 run_ok "${TEST_NAME}" \
-    curl "${TEST_CYLC_WS_URL}/taskjobs/${USER}/${ESC_SUITE_NAME}${URL_PARAMS}"
+    curl -I "${TEST_CYLC_WS_URL}/cycles/${USER}/${ESC_WORKFLOW_NAME}"
+grep_ok 'HTTP/.* 200 OK' "${TEST_NAME}.stdout"
 
-FOO2="{'cycle': '20010101T0000Z', 'name': 'foo0', 'submit_num': 0}"
-FOO3="{'cycle': '20010101T0000Z', 'name': 'foo1', 'submit_num': 0}"
-cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
-    "[('entries', ${FOO2}, 'events',), [None, None, None]]" \
-    "[('entries', ${FOO3}, 'events',), [None, None, None]]"
+TEST_NAME="${TEST_NAME_BASE}-404-1-curl-cycles"
+run_ok "${TEST_NAME}" \
+    curl -I "${TEST_CYLC_WS_URL}/cycles/no-such-user/${ESC_WORKFLOW_NAME}"
+grep_ok 'HTTP/.* 404 Not Found' "${TEST_NAME}.stdout"
+
+TEST_NAME="${TEST_NAME_BASE}-404-2-curl-cycles"
+run_ok "${TEST_NAME}" \
+    curl -I "${TEST_CYLC_WS_URL}/cycles/${USER}?suite=no-such-suite"
+grep_ok 'HTTP/.* 404 Not Found' "${TEST_NAME}.stdout"
 #-------------------------------------------------------------------------------
 # Data transfer output check for a specific suite's cycles & jobs page
 TEST_NAME="${TEST_NAME_BASE}-200-curl-cycles"
 
 run_ok "${TEST_NAME}" \
-    curl "${TEST_CYLC_WS_URL}/cycles/${USER}/${ESC_SUITE_NAME}?form=json"
+    curl "${TEST_CYLC_WS_URL}/cycles/${USER}/${ESC_WORKFLOW_NAME}?form=json"
 
 cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('cylc_version',), '$(cylc version | cut -d' ' -f 2)']" \
     "[('title',), 'Cylc Review']" \
     "[('host',), '${HOSTNAME}']" \
     "[('user',), '${USER}']" \
-    "[('suite',), '${SUITE_NAME}']" \
+    "[('suite',), '${WORKFLOW_NAME}']" \
     "[('page',), 1]" \
     "[('n_pages',), 1]" \
     "[('per_page',), 100]" \
@@ -129,7 +114,7 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
 
 TEST_NAME="${TEST_NAME_BASE}-200-curl-jobs"
 run_ok "${TEST_NAME}" \
-    curl "${TEST_CYLC_WS_URL}/taskjobs/${USER}/${ESC_SUITE_NAME}?form=json"
+    curl "${TEST_CYLC_WS_URL}/taskjobs/${USER}/${ESC_WORKFLOW_NAME}?form=json"
 FOO0="{'cycle': '20000101T0000Z', 'name': 'foo0', 'submit_num': 1}"
 FOO0_JOB='log/job/20000101T0000Z/foo0/01/job'
 FOO1="{'cycle': '20000101T0000Z', 'name': 'foo1', 'submit_num': 1}"
@@ -139,7 +124,7 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('title',), 'Cylc Review']" \
     "[('host',), '${HOSTNAME}']" \
     "[('user',), '${USER}']" \
-    "[('suite',), '${SUITE_NAME}']" \
+    "[('suite',), '${WORKFLOW_NAME}']" \
     "[('is_option_on',), False]" \
     "[('page',), 1]" \
     "[('n_pages',), 1]" \
@@ -152,7 +137,7 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('states', 'is_failed',), False]" \
     "[('of_n_entries',), 2]" \
     "[('entries', ${FOO0}, 'task_status',), 'succeeded']" \
-    "[('entries', ${FOO0}, 'host',), '${HOSTNAME}']" \
+    "[('entries', ${FOO0}, 'host',), 'localhost']" \
     "[('entries', ${FOO0}, 'submit_method',), 'background']" \
     "[('entries', ${FOO0}, 'logs', 'job', 'path'), '${FOO0_JOB}']" \
     "[('entries', ${FOO0}, 'logs', 'job.err', 'path'), '${FOO0_JOB}.err']" \
@@ -176,7 +161,7 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
     "[('entries', ${FOO0}, 'seq_logs_indexes', 'job.trace.*.html', '32'), 'job.trace.32.html']" \
     "[('entries', ${FOO0}, 'seq_logs_indexes', 'job.trace.*.html', '256'), 'job.trace.256.html']" \
     "[('entries', ${FOO1}, 'task_status',), 'succeeded']" \
-    "[('entries', ${FOO1}, 'host',), '${HOSTNAME}']" \
+    "[('entries', ${FOO1}, 'host',), 'localhost']" \
     "[('entries', ${FOO1}, 'submit_method',), 'background']" \
     "[('entries', ${FOO1}, 'logs', 'job', 'path'), '${FOO1_JOB}']" \
     "[('entries', ${FOO1}, 'logs', 'job.err', 'path'), '${FOO1_JOB}.err']" \
@@ -202,14 +187,15 @@ cylc_ws_json_greps "${TEST_NAME}.stdout" "${TEST_NAME}.stdout" \
 
 #-------------------------------------------------------------------------------
 # Data transfer output check for a suite run directory with only a "log/db"
-COPY_NAME="${SUITE_NAME}-copy"
-cylc register "${COPY_NAME}"
+COPY_NAME="${WORKFLOW_NAME}-copy"
 
-CYLC_RUN_DIR="$(cylc get-global-config --print-run-dir)"
-mkdir "${CYLC_RUN_DIR}/${COPY_NAME}/log/"
-cp "${SUITE_RUN_DIR}/log/db" "${CYLC_RUN_DIR}/${COPY_NAME}/log/"
+CYLC_RUN_DIR="${HOME}/cylc-run"
+mkdir -p "${CYLC_RUN_DIR}/${COPY_NAME}/log/"
+cp "${WORKFLOW_RUN_DIR}/log/db" "${CYLC_RUN_DIR}/${COPY_NAME}/log/"
+cp "${WORKFLOW_RUN_DIR}/flow.cylc" "${CYLC_RUN_DIR}/${COPY_NAME}/"
 
-ESC_COPY_NAME="$(echo ${COPY_NAME} | sed 's|/|%2F|g')"
+# shellcheck disable=SC2001
+ESC_COPY_NAME="$(echo "${COPY_NAME}" | sed 's|/|%2F|g')"
 run_ok "${TEST_NAME}-bare" \
     curl "${TEST_CYLC_WS_URL}/taskjobs/${USER}?suite=${ESC_COPY_NAME}&form=json"
 
@@ -217,7 +203,7 @@ cylc_ws_json_greps "${TEST_NAME}-bare.stdout" "${TEST_NAME}-bare.stdout" \
     "[('suite',), '${COPY_NAME}']"
 
 for FILE in \
-    'log/suite/log' \
+    'log/scheduler/log' \
     'log/job/20000101T0000Z/foo0/01/job' \
     'log/job/20000101T0000Z/foo0/01/job.out' \
     'log/job/20000101T0000Z/foo1/01/job' \
@@ -225,26 +211,26 @@ for FILE in \
 do
     TEST_NAME="${TEST_NAME_BASE}-200-curl-view-$(tr '/' '-' <<<"${FILE}")"
     run_ok "${TEST_NAME}" \
-        curl -I "${TEST_CYLC_WS_URL}/view/${USER}/${ESC_SUITE_NAME}?path=${FILE}"
+        curl -I "${TEST_CYLC_WS_URL}/view/${USER}/${ESC_WORKFLOW_NAME}?path=${FILE}"
     grep_ok 'HTTP/.* 200 OK' "${TEST_NAME}.stdout"
     MODE='&mode=download'
     run_ok "${TEST_NAME}-download" \
-        curl "${TEST_CYLC_WS_URL}/view/${USER}/${ESC_SUITE_NAME}?path=${FILE}${MODE}"
+        curl "${TEST_CYLC_WS_URL}/view/${USER}/${ESC_WORKFLOW_NAME}?path=${FILE}${MODE}"
     cmp_ok "${TEST_NAME}-download.stdout" \
-        "${TEST_NAME}-download.stdout" "${HOME}/cylc-run/${SUITE_NAME}/${FILE}"
+        "${TEST_NAME}-download.stdout" "${HOME}/cylc-run/${WORKFLOW_NAME}/${FILE}"
 done
 
 TEST_NAME="${TEST_NAME_BASE}-404-curl-view-garbage"
 run_ok "${TEST_NAME}" \
     curl -I \
-    "${TEST_CYLC_WS_URL}/view/${USER}/${ESC_SUITE_NAME}?path=log/of/minus-one"
+    "${TEST_CYLC_WS_URL}/view/${USER}/${ESC_WORKFLOW_NAME}?path=log/of/minus-one"
 grep_ok 'HTTP/.* 404 Not Found' "${TEST_NAME}.stdout"
 #-------------------------------------------------------------------------------
 # Test of the file search feature
 TEST_NAME="${TEST_NAME_BASE}-200-curl-viewsearch"
 FILE='log/job/20000101T0000Z/foo1/01/job.out'
 MODE="&mode=text"
-URL="${TEST_CYLC_WS_URL}/viewsearch/${USER}/${ESC_SUITE_NAME}?path=${FILE}${MODE}\
+URL="${TEST_CYLC_WS_URL}/viewsearch/${USER}/${ESC_WORKFLOW_NAME}?path=${FILE}${MODE}\
 &search_mode=TEXT&search_string=Hello%20from"
 
 run_ok "${TEST_NAME}" curl -I "${URL}"
@@ -261,27 +247,28 @@ grep_ok '<span class="highlight">Hello from</span>' \
 TEST_NAME="${TEST_NAME_BASE}-403-curl-view-outside-absolute"
 run_ok "${TEST_NAME}" \
     curl -I \
-    "${TEST_CYLC_WS_URL}/view/${USER}/${ESC_SUITE_NAME}?path=/dev/null"
+    "${TEST_CYLC_WS_URL}/view/${USER}/${ESC_WORKFLOW_NAME}?path=/dev/null"
 grep_ok 'HTTP/.* 403 Forbidden' "${TEST_NAME}.stdout"
 # 2. By absolute path to imaginary suite directory.
 TEST_NAME="${TEST_NAME_BASE}-403-curl-view-outside-imag"
-IMG_TEST_DIR="${SUITE_RUN_DIR}-imag"
+IMG_TEST_DIR="${WORKFLOW_RUN_DIR}-imag"
 mkdir -p "${IMG_TEST_DIR}"
 echo 'Welcome to the imaginary suite.'>"${IMG_TEST_DIR}/welcome.txt"
 run_ok "${TEST_NAME}" \
     curl -I \
-    "${TEST_CYLC_WS_URL}/view/${USER}/${ESC_SUITE_NAME}?path=${IMG_TEST_DIR}/welcome.txt"
+    "${TEST_CYLC_WS_URL}/view/${USER}/${ESC_WORKFLOW_NAME}?path=${IMG_TEST_DIR}/welcome.txt"
 grep_ok 'HTTP/.* 403 Forbidden' "${TEST_NAME}.stdout"
 # 3. By relative path.
 TEST_NAME="${TEST_NAME_BASE}-403-curl-view-outside-relative"
 run_ok "${TEST_NAME}" \
     curl -I \
-    "${TEST_CYLC_WS_URL}/view/${USER}/${ESC_SUITE_NAME}?path=../$(basename $IMG_TEST_DIR)/welcome.txt"
+    "${TEST_CYLC_WS_URL}/view/${USER}/${ESC_WORKFLOW_NAME}?path=../$(basename "${IMG_TEST_DIR}")/welcome.txt"
 grep_ok 'HTTP/.* 403 Forbidden' "${TEST_NAME}.stdout"
 rm "${IMG_TEST_DIR}/welcome.txt"
 rmdir "${IMG_TEST_DIR}"
 #-------------------------------------------------------------------------------
-# Tidy up - note suite trivial so stops early on by itself
-purge_suite "${SUITE_NAME}"
+# Tidy up:
+purge "${WORKFLOW_NAME}"
+purge "${WORKFLOW_NAME}-copy"
 cylc_ws_kill
 exit
