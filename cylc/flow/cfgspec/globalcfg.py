@@ -542,8 +542,8 @@ Cylc can automatically resubmit jobs after submission failures.
 Submission retry delays is a list of ISO 8601 durations which tell Cylc
 how long to wait before the next try.
 
-The job environment variable ``$CYLC_TASK_SUBMIT_NUMBER`` increments with each
-job submission attempt.
+The job environment variable :envvar:`CYLC_TASK_SUBMIT_NUMBER` increments
+with each job submission attempt.
 
 Tasks only go to the ``submit-failed`` state if job submission fails with no
 retries left.
@@ -1092,8 +1092,8 @@ with Conf('global.cylc', desc='''
             How Cylc determines and shares the identity of the workflow host.
 
             The workflow host's identity must be determined locally by cylc and
-            passed to running tasks (via ``$CYLC_WORKFLOW_HOST``) so that task
-            messages can target the right workflow on the right host.
+            passed to running tasks (via :envvar:`CYLC_WORKFLOW_HOST`) so that
+            task messages can target the right workflow on the right host.
 
             .. versionchanged:: 8.0.0
 
