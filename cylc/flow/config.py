@@ -42,6 +42,7 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Literal,
     Mapping,
     Optional,
     Set,
@@ -247,6 +248,17 @@ def interpolate_template(tmpl, params_dict):
         raise ParamExpandError('wrong data type for parameter') from None
     except ValueError:
         raise ParamExpandError('bad template syntax') from None
+
+
+def _parse_iso_cycle_point(value: str) -> str:
+    """Helper for parsing initial/start cycle point option in
+    datetime cycling mode."""
+    if value == 'now':
+        return get_current_time_string()
+    try:
+        return ingest_time(value, get_current_time_string())
+    except IsodatetimeError as exc:
+        raise WorkflowConfigError(str(exc)) from None
 
 
 class WorkflowConfig:
@@ -468,7 +480,9 @@ class WorkflowConfig:
 
         # after the call to init_cyclers, we can start getting proper points.
         init_cyclers(self.cfg)
-        self.cycling_type = get_interval_cls().get_null().TYPE
+        self.cycling_type: Literal['integer', 'iso8601'] = (
+            get_interval_cls().get_null().TYPE
+        )
         self.cycle_point_dump_format = get_dump_format(self.cycling_type)
 
         # Initial point from workflow definition (or CLI override above).
@@ -756,17 +770,11 @@ class WorkflowConfig:
             if orig_icp is None:
                 orig_icp = '1'
             icp = orig_icp
-        elif self.cycling_type == ISO8601_CYCLING_TYPE:
+        else:
             if orig_icp is None:
                 raise WorkflowConfigError(
                     "This workflow requires an initial cycle point.")
-            if orig_icp == "now":
-                icp = get_current_time_string()
-            else:
-                try:
-                    icp = ingest_time(orig_icp, get_current_time_string())
-                except IsodatetimeError as exc:
-                    raise WorkflowConfigError(str(exc)) from None
+            icp = _parse_iso_cycle_point(orig_icp)
         self.evaluated_icp = None
         if icp != orig_icp:
             # now/next()/previous() was used, need to store
@@ -807,8 +815,7 @@ class WorkflowConfig:
             )
         if startcp:
             # Start from a point later than initial point.
-            if self.options.startcp == 'now':
-                self.options.startcp = get_current_time_string()
+            self.options.startcp = _parse_iso_cycle_point(startcp)
             self.start_point = get_point(self.options.startcp).standardise()
         elif starttask:
             # Start from designated task(s).

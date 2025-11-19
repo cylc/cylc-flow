@@ -316,6 +316,14 @@ def test_family_inheritance_and_quotes(
         ),
         pytest.param(
             ISO8601_CYCLING_TYPE,
+            {'initial cycle point': 'previous(T00)'},
+            '20050102T0000+0530',
+            '20050102T0000+0530',
+            None,
+            id="ICP = prev"
+        ),
+        pytest.param(
+            ISO8601_CYCLING_TYPE,
             {
                 'initial cycle point': '2013',
                 'initial cycle point constraints': ['T00', 'T12']
@@ -412,6 +420,12 @@ def test_process_icp(
             None,
             '20050102T0615+0530',
             None
+        ),
+        (
+            'previous(T00)',
+            None,
+            '20050102T0000+0530',
+            None,
         ),
         (
             None,
