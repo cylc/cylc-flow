@@ -625,6 +625,15 @@ class CylcWorkflowDAO:
         for row_idx, row in enumerate(self.connect().execute(stmt)):
             callback(row_idx, list(row))
 
+    def pre_select_broadcast_events(self, order=None):
+        """Query statement and args formation for select_broadcast_events."""
+        form_stmt = r"SELECT time,change,point,namespace,key,value FROM %s"
+        if order == "DESC":
+            ordering = (" ORDER BY " +
+                        "time DESC, point DESC, namespace DESC, key DESC")
+            form_stmt = form_stmt + ordering
+        return form_stmt % self.TABLE_BROADCAST_EVENTS, []
+
     def select_workflow_params(self) -> Iterable[Tuple[str, Optional[str]]]:
         """Select all from workflow_params.
 

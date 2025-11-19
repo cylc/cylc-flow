@@ -120,6 +120,8 @@
 #         Wait for the workflow to restart.
 #         Provide the UUID from the current run if workflow is not
 #         guaranteed to be running.
+#     port_is_busy $PORT
+#         Return 0 if $PORT is busy or 1 if $PORT is not busy.
 #     purge [WORKFLOW_NAME [PLATFORM]]
 #         Remove a workflow from the filesystem.
 #         Defaults to removing $WORKFLOW_NAME on $CYLC_TEST_PLATFORM
@@ -136,6 +138,8 @@
 #         Install a reference workflow using `install_workflow`, run a validation
 #         test on the workflow and run the reference workflow with `workflow_run_ok`.
 #         Expect 2 OK tests.
+#     requires_cherrypy
+#         Will skip all tests if CherryPy hasn't been installed.
 #     install_and_validate
 #         The first part of reftest, to allow separate use.
 #         Expect 1 OK test.
@@ -418,6 +422,107 @@ count_ok() {
     echo "Found ${NEW_COUNT} (not ${COUNT}) of ${BRE} in ${FILE}" \
         >"${TEST_LOG_DIR}/${TEST_NAME}.stderr"
     fail "${TEST_NAME}"
+}
+
+
+requires_cherrypy() {
+    if ! python3 -c 'import cherrypy' 2>'/dev/null'; then
+        skip_all '"cherrypy" not installed: Use pip install .[review]'
+    fi
+}
+
+
+port_is_busy() {
+    local WS_PORT="${1}"
+    if type -P netcat 1>/dev/null; then
+        WS_HOSTNAME="${WS_HOSTNAME:-"$(hostname)"}"
+        WS_HOSTNAME="${WS_HOSTNAME:-'localhost'}"
+        netcat -z "${WS_HOSTNAME}" "${WS_PORT}"
+    else
+        netstat -atun | grep -q "0.0.0.0:${WS_PORT}"
+    fi
+}
+
+TEST_CYLC_WS_PID=
+TEST_CYLC_WS_PORT=
+TEST_CYLC_WS_URL=
+
+
+cylc_ws_init() {
+    local NS="$1"
+    local UTIL="$2"
+
+    local WS_PORT="$((RANDOM + 10000))"
+    while port_is_busy "${WS_PORT}"; do
+        WS_PORT="$((RANDOM + 10000))"
+    done
+
+    TEST_NAME="${TEST_NAME_BASE}-${NS}-${UTIL}"
+    "${NS}" "${UTIL}" 'start' '--port' "${WS_PORT}"  \
+        0<'/dev/null' 1>"${NS}-${UTIL}.stdout" 2>"${NS}-${UTIL}.stderr" &
+    TEST_CYLC_WS_PID="$!"
+    T_INIT="$(date '+%s')"
+    while ! port_is_busy "${WS_PORT}" && (($(date '+%s') < T_INIT + 30)); do
+        sleep 1
+    done
+    TEST_CYLC_WS_PORT="${WS_PORT}"
+    if port_is_busy "${TEST_CYLC_WS_PORT}"; then
+        ok "${TEST_NAME}"
+        TEST_CYLC_WS_URL="http://localhost:${TEST_CYLC_WS_PORT}"
+    else
+        fail "${TEST_NAME}"
+        cylc_ws_kill
+    fi
+}
+
+cylc_ws_kill() {
+    if [[ -n "${TEST_CYLC_WS_PID}" ]]; then
+        kill "${TEST_CYLC_WS_PID}" 2>'/dev/null'
+        wait 2>'/dev/null'
+    fi
+    if [[ -n "${TEST_CYLC_WS_PORT}" ]]; then
+        rm -fr "${HOME}/.cylc/"*"-0.0.0.0-${TEST_CYLC_WS_PORT}"* 2>'/dev/null'
+    fi
+    TEST_CYLC_WS_PID=
+    TEST_CYLC_WS_PORT=
+    TEST_CYLC_WS_URL=
+}
+
+cylc_ws_json_greps() {
+    local TEST_NAME="$1"
+    shift 1
+    run_ok "${TEST_NAME}" python3 - "$@" <<'__PYTHON__'
+import ast
+import json
+import sys
+
+data = json.load(open(sys.argv[1]))
+for item in sys.argv[2:]:
+    keys, value = ast.literal_eval(item)
+    datum = data
+    try:
+        for key in keys:
+            if isinstance(key, dict):
+                for datum_item in datum:
+                    if all([datum_item.get(k) == v for k, v in key.items()]):
+                        datum = datum_item
+                        break
+                else:
+                    raise KeyError
+            else:
+                datum = datum[key]
+        if datum != value:
+            raise ValueError((item, datum))
+    except IndexError:
+        print(data)
+        raise IndexError(item)
+    except KeyError:
+        raise KeyError(item)
+__PYTHON__
+    if [[ -s "${TEST_NAME}.stderr" ]]; then
+        # Only print the final exception line - change to cat for details
+        tail -n 1 "${TEST_NAME}.stderr" >&2
+    fi
 }
 
 grep_ok() {

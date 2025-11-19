@@ -173,6 +173,13 @@ TASK_STATE_MAP = {
     TASK_STATUS_SUCCEEDED: TASK_OUTPUT_SUCCEEDED,
 }
 
+# Tasks statuses grouped for cylc review 'create_suite_cycles_summary()'
+TASK_STATUS_GROUPS = {
+    "active": list(TASK_STATUSES_ACTIVE | TASK_STATUSES_NEVER_ACTIVE),
+    "fail": list(TASK_STATUSES_FAILURE),
+    "success": list(TASK_STATUSES_SUCCESS)
+}
+
 
 def status_leq(status_a, status_b):
     """"Return True if status_a <= status_b"""
