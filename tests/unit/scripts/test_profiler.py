@@ -118,10 +118,12 @@ def test_parse_cpu_file(mocker, tmpdir):
 
     mem_file = tmpdir.join("memory_file.txt")
     mem_file.write('1024')
-    cpu_file_v1 = tmpdir.join("cpu_file_v1.txt")
-    cpu_file_v1.write('1234567890')
-    cpu_file_v2 = tmpdir.join("cpu_file_v2.txt")
-    cpu_file_v2.write('usage_usec=1234567890')
+    cpu_file_v1_good = tmpdir.join("cpu_file_v1_good.txt")
+    cpu_file_v1_good.write('1234567890')
+    cpu_file_v1_bad = tmpdir.join("cpu_file_v1_bad.txt")
+    cpu_file_v1_bad.write("I'm your dream, mind ashtray")
+    cpu_file_v2_good = tmpdir.join("cpu_file_v2_good.txt")
+    cpu_file_v2_good.write('usage_usec=1234567890')
     cpu_file_v2_bad = tmpdir.join("cpu_file_v2_bad.txt")
     cpu_file_v2_bad.write('Give me fuel, give me fire, '
                           'give me that which I desire')
@@ -130,18 +132,23 @@ def test_parse_cpu_file(mocker, tmpdir):
 
     good_process_object_v1 = Process(
         cgroup_memory_path=mem_file,
-        cgroup_cpu_path=cpu_file_v1,
+        cgroup_cpu_path=cpu_file_v1_good,
         memory_allocated_path=mem_allocated_file,
         cgroup_version=1)
     good_process_object_v2 = Process(
         cgroup_memory_path=mem_file,
-        cgroup_cpu_path=cpu_file_v2,
+        cgroup_cpu_path=cpu_file_v2_good,
         memory_allocated_path=mem_allocated_file,
         cgroup_version=2)
-    bad_process_object = Process(
+    bad_process_object_v1_1 = Process(
         cgroup_memory_path='',
         cgroup_cpu_path='',
         memory_allocated_path='',
+        cgroup_version=1)
+    bad_process_object_v1_2 = Process(
+        cgroup_memory_path=mem_file,
+        cgroup_cpu_path=cpu_file_v1_bad,
+        memory_allocated_path=mem_allocated_file,
         cgroup_version=1)
     bad_process_object_v2 = Process(
         cgroup_memory_path=mem_file,
@@ -153,7 +160,9 @@ def test_parse_cpu_file(mocker, tmpdir):
     assert parse_cpu_file(good_process_object_v2) == 1234567
 
     with pytest.raises(FileNotFoundError):
-        parse_cpu_file(bad_process_object)
+        parse_cpu_file(bad_process_object_v1_1)
+    with pytest.raises(ValueError):
+        parse_cpu_file(bad_process_object_v1_2)
     with pytest.raises(ValueError):
         parse_cpu_file(bad_process_object_v2)
 
@@ -170,24 +179,25 @@ def test_get_cgroup_name(mocker):
     assert get_cgroup_name() == "good/cgroup/place/2222222"
 
 
-def test_parse_memory_allocated(mocker, tmpdir):
-    mem_allocated_file = tmpdir.join("memory.max")
-    mem_allocated_file.write('99999')
+def test_parse_memory_allocated(tmp_path_factory):
+    good_mem_dir = tmp_path_factory.mktemp("mem_dir")
+    mem_allocated_file = good_mem_dir / "memory.max"
+    mem_allocated_file.write_text('99999')
 
     # We currently do not track memory allocated for cgroups v1
     good_process_object_v1 = Process(
         cgroup_memory_path='',
         cgroup_cpu_path='',
-        memory_allocated_path=tmpdir,
+        memory_allocated_path=str(good_mem_dir),
         cgroup_version=1)
 
     good_process_object_v2 = Process(
         cgroup_memory_path='',
         cgroup_cpu_path='',
-        memory_allocated_path=tmpdir,
+        memory_allocated_path=str(good_mem_dir),
         cgroup_version=2)
 
-    bad_process_object_v2 = Process(
+    bad_process_object_v2_1 = Process(
         cgroup_memory_path='',
         cgroup_cpu_path='',
         memory_allocated_path='/',
@@ -196,8 +206,44 @@ def test_parse_memory_allocated(mocker, tmpdir):
     assert parse_memory_allocated(good_process_object_v1) == 0
     assert parse_memory_allocated(good_process_object_v2) == 99999
     with pytest.raises(FileNotFoundError):
-        parse_memory_file(bad_process_object_v2)
+        parse_memory_file(bad_process_object_v2_1)
+    
+    # Nested directories with 'max' value
+    base_dir = tmp_path_factory.mktemp("base")
 
+    dir_1 = base_dir / "dir_1"
+    dir_1.mkdir()
+    mem_file_1 = dir_1 / "memory.max"
+    mem_file_1.write_text("max")
+
+    dir_2 = dir_1 / "dir_2"
+    dir_2.mkdir()
+    mem_file_2 = dir_2 / "memory.max"
+    mem_file_2.write_text("max")
+
+    dir_3 = dir_2 / "dir_3"
+    dir_3.mkdir()
+    mem_file_3 = dir_3 / "memory.max"
+    mem_file_3.write_text("max")
+
+    dir_4 = dir_3 / "dir_4"
+    dir_4.mkdir()
+    mem_file_4 = dir_4 / "memory.max"
+    mem_file_4.write_text("max")
+
+    dir_5 = dir_4 / "dir_5"
+    dir_5.mkdir()
+    mem_file_5 = dir_5 / "memory.max"
+    mem_file_5.write_text("max")
+
+
+    bad_process_object_v2_2 = Process(
+        cgroup_memory_path='',
+        cgroup_cpu_path='',
+        memory_allocated_path=str(dir_5),
+        cgroup_version=2)
+
+    assert parse_memory_allocated(bad_process_object_v2_2) == 0
 
 def test_get_cgroup_name_file_not_found(mocker):
 
