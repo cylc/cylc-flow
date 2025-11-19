@@ -286,7 +286,7 @@ jobs:
 
       - name: Upload failed tests artifact
         if: failure() && steps.test.outcome == 'failure'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: cylc-run (${{ steps.uploadname.outputs.uploadname }})
           path: ~/cylc-run/
@@ -325,7 +325,7 @@ jobs:
           coverage report
 
       - name: Upload coverage artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: coverage_${{ steps.uploadname.outputs.uploadname }}
           path: coverage.xml
@@ -340,7 +340,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Download coverage artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
 
       - name: Codecov upload
         uses: codecov/codecov-action@v5

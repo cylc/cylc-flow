@@ -36,7 +36,7 @@ __HERE__
 
 run_ok "${TEST_NAME_BASE}-view" cylc view -p .
 
-named_grep_ok "src-path-in-view-p" "TEST: $PWD" \
+named_grep_ok "${TEST_NAME_BASE}-src-path-in-view-p" "TEST: $PWD" \
     "${TEST_NAME_BASE}-view.stdout"
 
 # It starts playing:
@@ -47,7 +47,7 @@ run_ok "${TEST_NAME_BASE}-vip" \
         --workflow-name "${WORKFLOW_NAME}"
 
 # It can get CYLC_WORKFLOW_SRC_DIR
-named_grep_ok "src-path-available" \
+named_grep_ok "${TEST_NAME_BASE}-src-path-available" \
     "TEST: $PWD" "${RUN_DIR}/${WORKFLOW_NAME}/log/config/flow-processed.cylc"
 
 # It can be updated with Cylc VR
@@ -57,7 +57,7 @@ run_ok "${TEST_NAME_BASE}-vr" \
 poll_grep "meta" "${RUN_DIR}/${WORKFLOW_NAME}/log/config/flow-processed.cylc"
 
 # It can get CYLC_WORKFLOW_SRC_DIR
-named_grep_ok "src-path-available" \
+named_grep_ok "${TEST_NAME_BASE}-src-path-available" \
     "TEST: $PWD" "${RUN_DIR}/${WORKFLOW_NAME}/log/config/flow-processed.cylc"
 
 cylc stop "${WORKFLOW_NAME}"
