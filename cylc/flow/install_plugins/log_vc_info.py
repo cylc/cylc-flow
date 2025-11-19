@@ -71,6 +71,7 @@ from typing import (
     TYPE_CHECKING,
     TextIO,
     Union,
+    cast,
     overload,
 )
 
@@ -255,7 +256,9 @@ def _run_cmd(
         # otherwise Popen() will succeed with a non-zero return code
         raise VCSNotInstalledError(vcs, exc) from None
     if stdout == PIPE:
-        out, err = pipe_poller(proc, proc.stdout, proc.stderr)
+        out, err = pipe_poller(
+            proc, cast('TextIO', proc.stdout), cast('TextIO', proc.stderr)
+        )
     else:
         out, err = proc.communicate()
     if proc.returncode:
