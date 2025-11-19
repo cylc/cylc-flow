@@ -122,20 +122,15 @@ def parse_memory_allocated(process: Process) -> int:
     """Open the memory stat file and copy the appropriate data"""
     if process.cgroup_version == 2:
         cgroup_memory_path = Path(process.memory_allocated_path)
-
         for i in range(5):
             with open(cgroup_memory_path / "memory.max", 'r') as f:
                 line = f.readline()
                 if "max" not in line:
                     return int(line)
             cgroup_memory_path = cgroup_memory_path.parent
-            if i == 5:
-                break
-    elif process.cgroup_version == 1:
-        return 0  # Memory limit not tracked for cgroups v1
-
-    raise FileNotFoundError("Could not find memory.max file")
-
+        return 0
+    else : # Memory limit not tracked for cgroups v1
+        return 0
 
 def parse_cpu_file(process: Process) -> int:
     """Open the CPU stat file and return the appropriate data"""
@@ -147,10 +142,12 @@ def parse_cpu_file(process: Process) -> int:
             raise ValueError("Unable to find cpu usage data")
     else:
         with open(process.cgroup_cpu_path, 'r') as f:
-            for line in f:
-                # Cgroups v1 uses nanoseconds
-                return int(line) // 1000000
-        raise ValueError("Unable to find cpu usage data")
+            try:
+                for line in f:
+                    # Cgroups v1 uses nanoseconds
+                    return int(line) // 1000000
+            except ValueError:
+                raise ValueError("Unable to find cpu usage data")
 
 
 def get_cgroup_version(cgroup_location: str, cgroup_name: str) -> int:
