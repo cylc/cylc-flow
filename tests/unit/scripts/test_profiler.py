@@ -207,7 +207,7 @@ def test_parse_memory_allocated(tmp_path_factory):
     assert parse_memory_allocated(good_process_object_v2) == 99999
     with pytest.raises(FileNotFoundError):
         parse_memory_file(bad_process_object_v2_1)
-    
+
     # Nested directories with 'max' value
     base_dir = tmp_path_factory.mktemp("base")
 
@@ -236,7 +236,6 @@ def test_parse_memory_allocated(tmp_path_factory):
     mem_file_5 = dir_5 / "memory.max"
     mem_file_5.write_text("max")
 
-
     bad_process_object_v2_2 = Process(
         cgroup_memory_path='',
         cgroup_cpu_path='',
@@ -244,6 +243,7 @@ def test_parse_memory_allocated(tmp_path_factory):
         cgroup_version=2)
 
     assert parse_memory_allocated(bad_process_object_v2_2) == 0
+
 
 def test_get_cgroup_name_file_not_found(mocker):
 
