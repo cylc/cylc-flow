@@ -179,7 +179,7 @@ def get_cgroup_name():
             result = f.read()
         result = PID_REGEX.search(result).group()
         return result
-    except FileNotFoundError as err:
+    except FileNotFoundError:
         raise CylcError(
             '/proc/' + str(pid) + '/cgroup not found') from None
 
