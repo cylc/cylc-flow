@@ -4,18 +4,17 @@
             # The dimensions of each grid cell in degrees.
             RESOLUTION = 0.2
             # The area to generate forecasts for (lng1, lat1, lng2, lat2)
-            DOMAIN = -12,48,5,61  # Do not change!
+            DOMAIN = -12,46,12,61  # Do not change!
 
     [[get_rainfall]]
         script = get-rainfall
         [[[environment]]]
             # The key required to get weather data from the DataPoint service.
             # To use archived data comment this line out.
-            API_KEY = DATAPOINT_API_KEY
             # The dimensions of each grid cell in degrees.
             RESOLUTION = 0.2
             # The area to generate forecasts for (lng1, lat1, lng2, lat2)
-            DOMAIN = -12,48,5,61  # Do not change!
+            DOMAIN = -12,46,12,61  # Do not change!
 
     [[forecast]]
         script = forecast 60 5  # Generate 5 forecasts at 60 minute intervals.
@@ -23,7 +22,7 @@
             # The dimensions of each grid cell in degrees.
             RESOLUTION = 0.2
             # The area to generate forecasts for (lng1, lat1, lng2, lat2)
-            DOMAIN = -12,48,5,61  # Do not change!
+            DOMAIN = -12,46,12,61  # Do not change!
             # The path to the files containing wind data (the {variables} will
             # get substituted in the forecast script).
             WIND_FILE_TEMPLATE = $CYLC_WORKFLOW_WORK_DIR/{cycle}/consolidate_observations/wind_{xy}.csv
@@ -44,4 +43,4 @@
             # The dimensions of each grid cell in degrees.
             RESOLUTION = 0.2
             # The area to generate forecasts for (lng1, lat1, lng2, lat2)
-            DOMAIN = -12,48,5,61  # Do not change!
+            DOMAIN = -12,46,12,61  # Do not change!
