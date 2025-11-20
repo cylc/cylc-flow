@@ -31,9 +31,10 @@ from pathlib import Path
 from functools import partial
 from dataclasses import dataclass
 
-from cylc.flow.network.client_factory import get_client
-from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.exceptions import CylcProfilerError
 from cylc.flow.terminal import cli_function
+from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.network.client_factory import get_client
 
 
 PID_REGEX = re.compile(r"([^:]*\d{6,}.*)")
@@ -106,58 +107,70 @@ def get_resource_usage(process):
 def parse_memory_file(process: Process):
     """Open the memory stat file and copy the appropriate data"""
 
-    if process.cgroup_version == 2:
-        with open(process.cgroup_memory_path, 'r') as f:
-            for line in f:
-                if "anon" in line:
-                    return int(''.join(filter(str.isdigit, line)))
-    else:
-        with open(process.cgroup_memory_path, 'r') as f:
-            for line in f:
-                if "total_rss" in line:
-                    return int(''.join(filter(str.isdigit, line)))
+    try:
+        if process.cgroup_version == 2:
+            with open(process.cgroup_memory_path, 'r') as f:
+                for line in f:
+                    if "anon" in line:
+                        return int(''.join(filter(str.isdigit, line)))
+        else:
+            with open(process.cgroup_memory_path, 'r') as f:
+                for line in f:
+                    if "total_rss" in line:
+                        return int(''.join(filter(str.isdigit, line)))
+    except Exception as err:
+        raise CylcProfilerError(
+            err, "Unable to find memory usage data") from err
 
 
 def parse_memory_allocated(process: Process) -> int:
     """Open the memory stat file and copy the appropriate data"""
     if process.cgroup_version == 2:
         cgroup_memory_path = Path(process.memory_allocated_path)
-        for i in range(5):
+        for _ in range(5):
             with open(cgroup_memory_path / "memory.max", 'r') as f:
                 line = f.readline()
                 if "max" not in line:
                     return int(line)
             cgroup_memory_path = cgroup_memory_path.parent
         return 0
-    else : # Memory limit not tracked for cgroups v1
+    else:  # Memory limit not tracked for cgroups v1
         return 0
+
 
 def parse_cpu_file(process: Process) -> int:
     """Open the CPU stat file and return the appropriate data"""
-    if process.cgroup_version == 2:
-        with open(process.cgroup_cpu_path, 'r') as f:
-            for line in f:
-                if "usage_usec" in line:
-                    return int(RE_INT.findall(line)[0]) // 1000
-            raise ValueError("Unable to find cpu usage data")
-    else:
-        with open(process.cgroup_cpu_path, 'r') as f:
-            try:
+    try:
+        if process.cgroup_version == 2:
+            with open(process.cgroup_cpu_path, 'r') as f:
+                for line in f:
+                    if "usage_usec" in line:
+                        return int(RE_INT.findall(line)[0]) // 1000
+            raise FileNotFoundError(process.cgroup_cpu_path)
+
+        elif process.cgroup_version == 1:
+            with open(process.cgroup_cpu_path, 'r') as f:
                 for line in f:
                     # Cgroups v1 uses nanoseconds
                     return int(line) // 1000000
-            except ValueError:
-                raise ValueError("Unable to find cpu usage data")
+            raise FileNotFoundError(process.cgroup_cpu_path)
+
+    except Exception as err:
+        raise CylcProfilerError(
+            err, "Unable to find cpu usage data") from err
 
 
 def get_cgroup_version(cgroup_location: str, cgroup_name: str) -> int:
-    if Path.exists(Path(cgroup_location + cgroup_name)):
-        return 2
-    elif Path.exists(Path(cgroup_location + "/memory" + cgroup_name)):
-        return 1
-    else:
-        raise FileNotFoundError("Cgroup not found at " +
-                                cgroup_location + cgroup_name)
+    try:
+        if Path.exists(Path(cgroup_location + cgroup_name)):
+            return 2
+        elif Path.exists(Path(cgroup_location + "/memory" + cgroup_name)):
+            return 1
+        raise FileNotFoundError(cgroup_location + cgroup_name)
+    except Exception as err:
+        raise CylcProfilerError(
+            err, "Cgroup not found at " + cgroup_location +
+                 cgroup_name) from err
 
 
 def get_cgroup_name():
@@ -175,38 +188,40 @@ def get_cgroup_name():
             result = f.read()
         result = PID_REGEX.search(result).group()
         return result
-    except FileNotFoundError as err:
-        raise FileNotFoundError(
-            '/proc/' + str(pid) + '/cgroup not found') from err
 
-    except AttributeError as err:
-        raise AttributeError("No cgroup found for process:", pid) from err
+    except Exception as err:
+        raise CylcProfilerError(
+            err, '/proc/' + str(pid) + '/cgroup not found') from err
 
 
 def get_cgroup_paths(location) -> Process:
-    cgroup_name = get_cgroup_name()
-    cgroup_version = get_cgroup_version(location, cgroup_name)
-    if cgroup_version == 2:
-        return Process(
-            cgroup_memory_path=location +
-            cgroup_name + "/" + "memory.stat",
-            cgroup_cpu_path=location +
-            cgroup_name + "/" + "cpu.stat",
-            memory_allocated_path=location + cgroup_name,
-            cgroup_version=cgroup_version,
-        )
 
-    elif cgroup_version == 1:
-        return Process(
-            cgroup_memory_path=location + "memory/" +
-            cgroup_name + "/memory.stat",
-            cgroup_cpu_path=location + "cpu/" +
-            cgroup_name + "/cpuacct.usage",
-            memory_allocated_path="",
-            cgroup_version=cgroup_version,
-        )
+    try:
+        cgroup_name = get_cgroup_name()
+        cgroup_version = get_cgroup_version(location, cgroup_name)
+        if cgroup_version == 2:
+            return Process(
+                cgroup_memory_path=location +
+                cgroup_name + "/" + "memory.stat",
+                cgroup_cpu_path=location +
+                cgroup_name + "/" + "cpu.stat",
+                memory_allocated_path=location + cgroup_name,
+                cgroup_version=cgroup_version,
+            )
 
-    raise ValueError("Unable to determine cgroup version")
+        elif cgroup_version == 1:
+            return Process(
+                cgroup_memory_path=location + "memory/" +
+                cgroup_name + "/memory.stat",
+                cgroup_cpu_path=location + "cpu/" +
+                cgroup_name + "/cpuacct.usage",
+                memory_allocated_path="",
+                cgroup_version=cgroup_version,
+            )
+        raise Exception
+    except Exception as err:
+        raise CylcProfilerError(
+            err, "Unable to determine cgroup version") from err
 
 
 def profile(_process: Process, delay, keep_looping=lambda: True):

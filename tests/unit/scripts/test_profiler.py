@@ -27,15 +27,13 @@ from cylc.flow.scripts.profiler import (parse_memory_file,
                                         Process)
 import pytest
 from unittest import mock
+from cylc.flow.exceptions import CylcProfilerError
 
 
 def test_stop_profiler(mocker, monkeypatch, tmpdir):
     monkeypatch.setenv('CYLC_WORKFLOW_ID', "test_value")
 
-    def mock_get_client(env_var, timeout=None):
-        return True
-
-    class MockedClient():
+    class MockedClient:
         def __init__(self, *a, **k):
             pass
 
@@ -45,7 +43,7 @@ def test_stop_profiler(mocker, monkeypatch, tmpdir):
     mocker.patch("cylc.flow.scripts.profiler.get_client", MockedClient)
 
     mem_file = tmpdir.join("memory_file.txt")
-    mem_file.write('1234')
+    mem_file.write('total_rss 1234')
     cpu_file = tmpdir.join("cpu_file.txt")
     cpu_file.write('5678')
     mem_allocated_file = tmpdir.join("memory_allocated.txt")
@@ -106,15 +104,16 @@ def test_parse_memory_file(mocker, tmpdir):
         memory_allocated_path='',
         cgroup_version=1)
 
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(CylcProfilerError) as excinfo:
         parse_memory_file(bad_process_object)
+    assert "Unable to find memory usage data" in str(excinfo.value)
 
     # Test the parse_memory_file function
     assert parse_memory_file(good_process_object_v1) == 1024
     assert parse_memory_file(good_process_object_v2) == 666
 
 
-def test_parse_cpu_file(mocker, tmpdir):
+def test_parse_cpu_file(tmpdir):
 
     mem_file = tmpdir.join("memory_file.txt")
     mem_file.write('1024')
@@ -159,19 +158,22 @@ def test_parse_cpu_file(mocker, tmpdir):
     assert parse_cpu_file(good_process_object_v1) == 1234
     assert parse_cpu_file(good_process_object_v2) == 1234567
 
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(CylcProfilerError) as excinfo:
         parse_cpu_file(bad_process_object_v1_1)
-    with pytest.raises(ValueError):
+    assert "Unable to find cpu usage data" in str(excinfo.value)
+    with pytest.raises(CylcProfilerError) as excinfo:
         parse_cpu_file(bad_process_object_v1_2)
-    with pytest.raises(ValueError):
+    assert "Unable to find cpu usage data" in str(excinfo.value)
+    with pytest.raises(CylcProfilerError) as excinfo:
         parse_cpu_file(bad_process_object_v2)
+    assert "Unable to find cpu usage data" in str(excinfo.value)
 
 
 def test_get_cgroup_name(mocker):
 
     mock_file = mocker.mock_open(read_data="0::bad/test/cgroup/place")
     mocker.patch("builtins.open", mock_file)
-    with pytest.raises(AttributeError):
+    with pytest.raises(CylcProfilerError):
         get_cgroup_name()
 
     mock_file = mocker.mock_open(read_data="0::good/cgroup/place/2222222")
@@ -205,9 +207,9 @@ def test_parse_memory_allocated(tmp_path_factory):
 
     assert parse_memory_allocated(good_process_object_v1) == 0
     assert parse_memory_allocated(good_process_object_v2) == 99999
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(CylcProfilerError) as excinfo:
         parse_memory_file(bad_process_object_v2_1)
-    
+    assert "Unable to find memory usage data" in str(excinfo.value)
     # Nested directories with 'max' value
     base_dir = tmp_path_factory.mktemp("base")
 
@@ -236,7 +238,6 @@ def test_parse_memory_allocated(tmp_path_factory):
     mem_file_5 = dir_5 / "memory.max"
     mem_file_5.write_text("max")
 
-
     bad_process_object_v2_2 = Process(
         cgroup_memory_path='',
         cgroup_cpu_path='',
@@ -245,14 +246,16 @@ def test_parse_memory_allocated(tmp_path_factory):
 
     assert parse_memory_allocated(bad_process_object_v2_2) == 0
 
+
 def test_get_cgroup_name_file_not_found(mocker):
 
     def mock_os_pid():
         return 'The Thing That Should Not Be'
 
     mocker.patch("os.getpid", mock_os_pid)
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(CylcProfilerError) as excinfo:
         get_cgroup_name()
+    assert "/cgroup not found" in str(excinfo.value)
 
 
 def test_get_cgroup_version(mocker):
@@ -268,9 +271,10 @@ def test_get_cgroup_version(mocker):
 
     # Mock the Path.exists function call to return False
     mocker.patch("pathlib.Path.exists", return_value=False)
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(CylcProfilerError) as excinfo:
         get_cgroup_version('stuff/in/other/place',
                            'things')
+    assert "Cgroup not found" in str(excinfo.value)
 
 
 def test_get_cgroup_paths(mocker):
@@ -297,8 +301,9 @@ def test_get_cgroup_paths(mocker):
                  return_value='test_name')
     mocker.patch("cylc.flow.scripts.profiler.get_cgroup_version",
                  return_value=3)
-    with pytest.raises(ValueError):
+    with pytest.raises(CylcProfilerError) as excinfo:
         get_cgroup_paths("test_location/")
+    assert "Unable to determine cgroup version" in str(excinfo.value)
 
 
 def test_profile_data(mocker):
