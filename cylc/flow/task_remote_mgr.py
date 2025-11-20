@@ -321,7 +321,8 @@ class TaskRemoteMgr:
             unreachable_targets = install_targets
         else:
             install_targets_map = get_install_target_to_platforms_map(
-                platform_names, quiet=True)
+                platform_names
+            )
             # If we couldn't find a platform for a target, we cannot tidy it -
             # raise an Error:
             unreachable_targets = install_targets.difference(
