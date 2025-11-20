@@ -1,8 +1,11 @@
+[scheduler]
+    [[events]]
+        restart timeout = PT0S
 [scheduling]
     initial cycle point = 2020
-    stop after cycle point = 2020-01-01T00:01Z
+    final cycle point = 2020
     [[graph]]
-        PT1M = foo
+        P1Y = foo
 [runtime]
     [[foo]]
         [[[simulation]]]

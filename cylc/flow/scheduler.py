@@ -1228,7 +1228,7 @@ class Scheduler:
         })
 
     def _set_workflow_params(
-        self, params: Iterable[Tuple[str, Optional[str]]]
+        self, params: Iterable[tuple[str, str | None]]
     ) -> None:
         """Set workflow params on restart/reload.
 
@@ -1240,20 +1240,20 @@ class Scheduler:
         * A flag to indicate if the workflow should be paused or not.
         * Original workflow run time zone.
         """
-        LOG.info('LOADING workflow parameters')
+        LOG.info("LOADING saved workflow parameters")
         for key, value in params:
             if key == self.workflow_db_mgr.KEY_RUN_MODE:
                 self.options.run_mode = value or RunMode.LIVE.value
                 LOG.info(f"+ run mode = {value}")
             if value is None:
                 continue
-            if key in self.workflow_db_mgr.KEY_INITIAL_CYCLE_POINT_COMPATS:
+            if key == self.workflow_db_mgr.KEY_INITIAL_CYCLE_POINT:
                 self.options.icp = value
                 LOG.info(f"+ initial point = {value}")
-            elif key in self.workflow_db_mgr.KEY_START_CYCLE_POINT_COMPATS:
+            elif key == self.workflow_db_mgr.KEY_START_CYCLE_POINT:
                 self.options.startcp = value
                 LOG.info(f"+ start point = {value}")
-            elif key in self.workflow_db_mgr.KEY_FINAL_CYCLE_POINT_COMPATS:
+            elif key == self.workflow_db_mgr.KEY_FINAL_CYCLE_POINT:
                 if self.is_restart and self.options.fcp == 'reload':
                     LOG.debug(f"- final point = {value} (ignored)")
                 elif self.options.fcp is None:
