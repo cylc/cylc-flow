@@ -27,15 +27,13 @@ from cylc.flow.scripts.profiler import (parse_memory_file,
                                         Process)
 import pytest
 from unittest import mock
+from cylc.flow.exceptions import CylcError
 
 
 def test_stop_profiler(mocker, monkeypatch, tmpdir):
     monkeypatch.setenv('CYLC_WORKFLOW_ID', "test_value")
 
-    def mock_get_client(env_var, timeout=None):
-        return True
-
-    class MockedClient():
+    class MockedClient:
         def __init__(self, *a, **k):
             pass
 
@@ -45,7 +43,7 @@ def test_stop_profiler(mocker, monkeypatch, tmpdir):
     mocker.patch("cylc.flow.scripts.profiler.get_client", MockedClient)
 
     mem_file = tmpdir.join("memory_file.txt")
-    mem_file.write('1234')
+    mem_file.write('total_rss 1234')
     cpu_file = tmpdir.join("cpu_file.txt")
     cpu_file.write('5678')
     mem_allocated_file = tmpdir.join("memory_allocated.txt")
@@ -251,7 +249,7 @@ def test_get_cgroup_name_file_not_found(mocker):
         return 'The Thing That Should Not Be'
 
     mocker.patch("os.getpid", mock_os_pid)
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(CylcError):
         get_cgroup_name()
 
 
@@ -297,7 +295,7 @@ def test_get_cgroup_paths(mocker):
                  return_value='test_name')
     mocker.patch("cylc.flow.scripts.profiler.get_cgroup_version",
                  return_value=3)
-    with pytest.raises(ValueError):
+    with pytest.raises(CylcError):
         get_cgroup_paths("test_location/")
 
 

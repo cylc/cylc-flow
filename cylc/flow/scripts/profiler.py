@@ -31,9 +31,10 @@ from pathlib import Path
 from functools import partial
 from dataclasses import dataclass
 
-from cylc.flow.network.client_factory import get_client
-from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.exceptions import CylcError
 from cylc.flow.terminal import cli_function
+from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.network.client_factory import get_client
 
 
 PID_REGEX = re.compile(r"([^:]*\d{6,}.*)")
@@ -117,6 +118,8 @@ def parse_memory_file(process: Process):
                 if "total_rss" in line:
                     return int(''.join(filter(str.isdigit, line)))
 
+    raise CylcError("Unable to find memory usage data")
+
 
 def parse_memory_allocated(process: Process) -> int:
     """Open the memory stat file and copy the appropriate data"""
@@ -148,7 +151,7 @@ def parse_cpu_file(process: Process) -> int:
                 # Cgroups v1 uses nanoseconds
                 return int(line) // 1000000
 
-    raise ValueError("Unable to find cpu usage data")
+    raise CylcError("Unable to find cpu usage data")
 
 
 def get_cgroup_version(cgroup_location: str, cgroup_name: str) -> int:
@@ -177,8 +180,8 @@ def get_cgroup_name():
         result = PID_REGEX.search(result).group()
         return result
     except FileNotFoundError as err:
-        raise FileNotFoundError(
-            '/proc/' + str(pid) + '/cgroup not found') from err
+        raise CylcError(
+            '/proc/' + str(pid) + '/cgroup not found') from None
 
     except AttributeError as err:
         raise AttributeError("No cgroup found for process:", pid) from err
@@ -206,7 +209,7 @@ def get_cgroup_paths(location) -> Process:
             memory_allocated_path="",
             cgroup_version=cgroup_version,
         )
-    raise ValueError("Unable to determine cgroup version")
+    raise CylcError("Unable to determine cgroup version")
 
 
 def profile(_process: Process, delay, keep_looping=lambda: True):
