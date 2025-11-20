@@ -156,9 +156,9 @@ async def test_data_store(
     async with start(schd):
         await schd.update_data_structure()
         data = schd.data_store_mgr.data[schd.tokens.id]
-        task_a: PbTaskProxy = data[TASK_PROXIES][
-            schd.pool.get_task(IntegerPoint('1'), 'a').tokens.id
-        ]
+        # 1/a not the same data-store object post set and not in pool
+        # post succeeded.
+        task_a_id = schd.pool.get_task(IntegerPoint('1'), 'a').tokens.id
 
         # set the 1/a:succeeded prereq of 1/z
         schd.pool.set_prereqs_and_outputs(
@@ -174,6 +174,7 @@ async def test_data_store(
             {TaskTokens('1', 'a')}, ['x'], [], ['1']
         )
         await schd.update_data_structure()
+        task_a: PbTaskProxy = data[TASK_PROXIES][task_a_id]
         assert task_a.state == TASK_STATUS_WAITING
         assert task_a.outputs['x'].satisfied is True
         assert task_a.outputs['succeeded'].satisfied is False
@@ -183,6 +184,7 @@ async def test_data_store(
             {TaskTokens('1', 'a')}, ['succeeded'], [], ['1']
         )
         await schd.update_data_structure()
+        task_a: PbTaskProxy = data[TASK_PROXIES][task_a_id]
         assert task_a.state == TASK_STATUS_SUCCEEDED
         assert task_a.outputs['x'].satisfied is True
         assert task_a.outputs['succeeded'].satisfied is True
