@@ -30,7 +30,7 @@ set_test_number 7
 
 mkdir -p "${PWD}/cgroups_test_data"
 
-echo '12345678' > cgroups_test_data/memory.stat
+echo 'anon 12345678' > cgroups_test_data/memory.stat
 echo '123456789' > cgroups_test_data/memory.max
 printf "blah blah 123456\nusage_usec 56781234" > cgroups_test_data/cpu.stat
 
