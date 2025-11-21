@@ -60,6 +60,13 @@ from cylc.flow import LOG
 from cylc.flow.c3mro import C3
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.cfgspec.workflow import RawWorkflowConfig
+
+from cylc.flow.cycling.nocycle import (
+    NocycleSequence,
+    NOCYCLE_SEQ_STARTUP,
+    NOCYCLE_SEQ_SHUTDOWN
+)
+from cylc.flow.id import Tokens
 from cylc.flow.cycling.integer import IntegerInterval
 from cylc.flow.cycling.iso8601 import (
     ISO8601Interval,
@@ -88,7 +95,6 @@ from cylc.flow.exceptions import (
 import cylc.flow.flags
 from cylc.flow.graph_parser import GraphParser
 from cylc.flow.graphnode import GraphNodeParser
-from cylc.flow.id import Tokens
 from cylc.flow.listify import listify
 from cylc.flow.log_level import verbosity_to_env
 from cylc.flow.param_expand import NameExpander
@@ -323,6 +329,7 @@ class WorkflowConfig:
         self.start_point: 'PointBase'
         self.stop_point: Optional['PointBase'] = None
         self.final_point: Optional['PointBase'] = None
+        self.nocycle_sequences: Set['NocycleSequence'] = set()
         self.sequences: List['SequenceBase'] = []
         self.actual_first_point: Optional['PointBase'] = None
         self._start_point_for_actual_first_point: Optional['PointBase'] = None
@@ -671,8 +678,13 @@ class WorkflowConfig:
             )
 
     def prelim_process_graph(self) -> None:
-        """Ensure graph is not empty; set integer cycling mode and icp/fcp = 1
-        for simplest "R1 = foo" type graphs.
+        """Error if graph empty; set integer cycling and icp/fcp = 1,
+        if those settings are omitted and the graph is acyclic graphs.
+
+        Somewhat relevant notes:
+         - The default (if not set) cycling mode, gregorian, requires an ICP.
+         - cycling mode is not stored in the DB, so recompute for restarts.
+
         """
         graphdict = self.cfg['scheduling']['graph']
         if not any(graphdict.values()):
@@ -681,9 +693,21 @@ class WorkflowConfig:
         if (
             'cycling mode' not in self.cfg['scheduling'] and
             self.cfg['scheduling'].get('initial cycle point', '1') == '1' and
-            all(item in ['graph', '1', 'R1'] for item in graphdict)
+            all(
+                seq in [
+                    'R1',
+                    str(NOCYCLE_SEQ_STARTUP),
+                    str(NOCYCLE_SEQ_SHUTDOWN),
+                    'graph',  # Cylc 7 back-compat
+                    '1'  # Cylc 7 back-compat?
+                ]
+                for seq in graphdict
+            )
         ):
-            # Pure acyclic graph, assume integer cycling mode with '1' cycle
+            # Non-cycling graph, assume integer cycling mode with '1' cycle.
+            # Typos in "startup", "shutdown", or "R1" will appear as cycling
+            # here, but will be fatal later during proper recurrance checking.
+
             self.cfg['scheduling']['cycling mode'] = INTEGER_CYCLING_TYPE
             for key in ('initial cycle point', 'final cycle point'):
                 if key not in self.cfg['scheduling']:
@@ -2367,15 +2391,25 @@ class WorkflowConfig:
             try:
                 seq = get_sequence(section, icp, fcp)
             except (AttributeError, TypeError, ValueError, CylcError) as exc:
-                if cylc.flow.flags.verbosity > 1:
-                    traceback.print_exc()
-                msg = 'Cannot process recurrence %s' % section
-                msg += ' (initial cycle point=%s)' % icp
-                msg += ' (final cycle point=%s)' % fcp
-                if isinstance(exc, CylcError):
-                    msg += ' %s' % exc.args[0]
-                raise WorkflowConfigError(msg) from None
-            self.sequences.append(seq)
+                try:
+                    # is it a startup or shutdown graph?
+                    seq = NocycleSequence(section)
+                except ValueError:
+                    if cylc.flow.flags.verbosity > 1:
+                        traceback.print_exc()
+                    msg = (
+                        f"Cannot process recurrence {section}"
+                        f" (initial cycle point={icp})"
+                        f" (final cycle point={fcp})"
+                    )
+                    if isinstance(exc, CylcError):
+                        msg += ' %s' % exc.args[0]
+                    raise WorkflowConfigError(msg) from None
+                else:
+                    self.nocycle_sequences.add(seq)
+            else:
+                self.sequences.append(seq)
+
             parser = GraphParser(
                 family_map,
                 self.parameters,

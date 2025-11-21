@@ -27,6 +27,7 @@ from typing import (
 )
 
 from cylc.flow.cycling.loader import standardise_point_string
+from cylc.flow.cycling.nocycle import NOCYCLE_POINTS
 from cylc.flow.exceptions import InputError, PointParsingError
 from cylc.flow.flow_mgr import (
     FLOW_NEW,
@@ -39,7 +40,6 @@ from cylc.flow.id import (
 from cylc.flow.id_cli import contains_fnmatch
 from cylc.flow.scripts.set import XTRIGGER_PREREQ_PREFIX
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
-
 
 if TYPE_CHECKING:
     from cylc.flow.id import TaskTokens
@@ -359,7 +359,10 @@ def is_tasks(ids: Iterable[str]) -> 'Set[TaskTokens]':
             tokens = tokens.duplicate(task='root')
 
         # if the cycle is not a glob or reference, standardise it
-        if (
+        if cast('str', tokens['cycle']) in NOCYCLE_POINTS:
+            # OK: startup or shutdown graph
+            pass
+        elif (
             # cycle point is a glob
             not contains_fnmatch(cast('str', tokens['cycle']))
             # cycle point is a reference to the ICP/FCP
