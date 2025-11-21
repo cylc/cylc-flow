@@ -55,7 +55,7 @@ jobs:
       IMAGE: 'ghcr.io/cylc/cylc-bash-testing-2:master'
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Run Docker container
         run: |
