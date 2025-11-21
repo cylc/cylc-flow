@@ -30,6 +30,7 @@ from typing import (
     Tuple,
     Type,
 )
+from unittest.mock import Mock
 
 import pytest
 
@@ -407,52 +408,63 @@ def test_process_icp(
 
 
 @pytest.mark.parametrize(
-    'startcp, starttask, expected, expected_err',
+    'cycling_type, options, expected, expected_err',
     [
         (
+            ISO8601_CYCLING_TYPE,
+            SimpleNamespace(startcp='20210120T1700+0530'),
             '20210120T1700+0530',
             None,
-            '20210120T1700+0530',
-            None
         ),
         (
-            'now',
-            None,
+            ISO8601_CYCLING_TYPE,
+            SimpleNamespace(startcp='now'),
             '20050102T0615+0530',
-            None
+            None,
         ),
         (
-            'previous(T00)',
-            None,
+            ISO8601_CYCLING_TYPE,
+            SimpleNamespace(startcp='previous(T00)'),
             '20050102T0000+0530',
             None,
         ),
         (
-            None,
-            None,
+            ISO8601_CYCLING_TYPE,
+            SimpleNamespace(startcp=None),
             '18990501T0000+0530',
-            None
-        ),
-        (
             None,
-            ['20090802T0615+0530/foo', '20090802T0515+0530/bar'],
-            '20090802T0515+0530',
-            None
         ),
         (
-            '20210120T1700+0530',
-            ['20090802T0615+0530/foo'],
+            ISO8601_CYCLING_TYPE,
+            SimpleNamespace(
+                starttask=['20090802T0615+0530/foo', '20090802T0515+0530/bar']
+            ),
+            '20090802T0515+0530',
+            None,
+        ),
+        (
+            ISO8601_CYCLING_TYPE,
+            SimpleNamespace(
+                startcp='20210120T1700+0530',
+                starttask=['20090802T0615+0530/foo'],
+            ),
             None,
             (
                 InputError,
-                "--start-cycle-point and --start-task are mutually exclusive"
+                "--start-cycle-point and --start-task are mutually exclusive",
             ),
+        ),
+        (
+            INTEGER_CYCLING_TYPE,
+            SimpleNamespace(startcp='10'),
+            '10',
+            None,
         )
-    ]
+    ],
 )
 def test_process_startcp(
-    startcp: Optional[str],
-    starttask: Optional[str],
+    cycling_type: str,
+    options: SimpleNamespace,
     expected: str,
     expected_err: Optional[Tuple[Type[Exception], str]],
     monkeypatch: pytest.MonkeyPatch, set_cycling_type: 'Fixture'
@@ -463,14 +475,16 @@ def test_process_startcp(
     2005-01-02T06:15+0530
 
     Params:
-        startcp: The start cycle point given by cli option.
+        options: SimpleNamespace with startcp and starttask attributes.
         expected: The expected startcp value that gets set.
         expected_err: Expected exception.
     """
-    set_cycling_type(ISO8601_CYCLING_TYPE, time_zone="+0530")
-    mocked_config = SimpleNamespace(
+    set_cycling_type(cycling_type, time_zone='+0530')
+    mocked_config = Mock(
+        spec=WorkflowConfig,
+        cycling_type=cycling_type,
         initial_point='18990501T0000+0530',
-        options=SimpleNamespace(startcp=startcp, starttask=starttask),
+        options=options,
     )
     monkeypatch.setattr('cylc.flow.config.get_current_time_string',
                         lambda: '20050102T0615+0530')

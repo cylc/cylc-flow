@@ -815,7 +815,8 @@ class WorkflowConfig:
             )
         if startcp:
             # Start from a point later than initial point.
-            self.options.startcp = _parse_iso_cycle_point(startcp)
+            if self.cycling_type == ISO8601_CYCLING_TYPE:
+                self.options.startcp = _parse_iso_cycle_point(startcp)
             self.start_point = get_point(self.options.startcp).standardise()
         elif starttask:
             # Start from designated task(s).
