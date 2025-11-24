@@ -231,6 +231,15 @@ DEQUE_FIELD_MAP = {
     WORKFLOW: {'log_records': 10}
 }
 
+# Data types for protobuf memory reset
+RESET_PROTOBUF_TYPES = {
+    TASKS,
+    TASK_PROXIES,
+    FAMILIES,
+    FAMILY_PROXIES,
+    WORKFLOW,
+}
+
 # internal runtime to protobuf field name mapping
 RUNTIME_CFG_MAP_TO_FIELD = {
     'completion': 'completion',
@@ -402,7 +411,7 @@ def runtime_from_partial(rtconfig, runtimeold: Optional[PbRuntime] = None):
 
 
 def reset_protobuf_object(msg_class, msg_orig):
-    """Reset object to clear memory build-up."""
+    """Reset upb-protobuf object to clear memory build-up."""
     # See: https://github.com/protocolbuffers/protobuf/issues/19674
     # The new message instantiation needs happen on a separate line.
     new_msg = msg_class()
@@ -421,6 +430,10 @@ def apply_delta(key, delta, data):
 
     # Merge in updated fields
     if getattr(delta, 'updated', False):
+        # Flag for clearing memory accumulation.
+        reset_protobuf = False
+        if key in RESET_PROTOBUF_TYPES:
+            reset_protobuf = True
         if key == WORKFLOW:
             # Clear fields that require overwrite with delta
             field_set = {f.name for f, _ in delta.updated.ListFields()}
@@ -437,6 +450,10 @@ def apply_delta(key, delta, data):
                     lst = getattr(data[key], field_name)
                     while len(lst) > max_len:
                         lst.pop(0)
+
+            # Reset upb memory allocation post delta merge.
+            if reset_protobuf:
+                data[key] = reset_protobuf_object(MESSAGE_MAP[key], data[key])
         else:
             for element in delta.updated:
                 try:
@@ -446,8 +463,9 @@ def apply_delta(key, delta, data):
                         if field.name in CLEAR_FIELD_MAP[key]:
                             data_element.ClearField(field.name)
                     data_element.MergeFrom(element)
-                    # Clear memory accumulation
-                    if key in (TASKS, FAMILIES):
+
+                    # Reset upb memory allocation post delta merge.
+                    if reset_protobuf:
                         data[key][element.id] = reset_protobuf_object(
                             MESSAGE_MAP[key],
                             data_element
@@ -460,10 +478,6 @@ def apply_delta(key, delta, data):
                         'on update application: %s' % str(exc)
                     )
                     continue
-
-    # Clear memory accumulation
-    if key == WORKFLOW:
-        data[key] = reset_protobuf_object(PbWorkflow, data[key])
 
     # Prune data elements
     if hasattr(delta, 'pruned'):
