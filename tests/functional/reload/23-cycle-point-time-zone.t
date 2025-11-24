@@ -50,7 +50,7 @@ poll_grep_workflow_log "Reload completed"
 cylc stop --now --now "${WORKFLOW_NAME}"
 
 log_scan "${TEST_NAME_BASE}-log-scan" "${WORKFLOW_RUN_DIR}/log/scheduler/log" 1 0 \
-    'LOADING workflow parameters' \
+    'LOADING saved workflow parameters' \
     '+ cycle point time zone = +0100'
 
 purge

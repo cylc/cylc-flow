@@ -264,13 +264,11 @@ def test_family_inheritance_and_quotes(
 
 
 @pytest.mark.parametrize(
-    ('cycling_type', 'scheduling_cfg', 'expected_icp', 'expected_eval_icp',
-     'expected_err'),
+    ('cycling_type', 'scheduling_cfg', 'expected_icp', 'expected_err'),
     [
         pytest.param(
             ISO8601_CYCLING_TYPE,
             {'initial cycle point': None},
-            None,
             None,
             (WorkflowConfigError, "requires an initial cycle point"),
             id="Lack of icp"
@@ -280,13 +278,11 @@ def test_family_inheritance_and_quotes(
             {'initial cycle point': None},
             '1',
             None,
-            None,
             id="Default icp for integer cycling type"
         ),
         pytest.param(
             INTEGER_CYCLING_TYPE,
             {'initial cycle point': "now"},
-            None,
             None,
             (PointParsingError, "invalid literal for int()"),
             id="Non-integer ICP for integer cycling type"
@@ -295,14 +291,12 @@ def test_family_inheritance_and_quotes(
             INTEGER_CYCLING_TYPE,
             {'initial cycle point': "20500808T0000Z"},
             None,
-            None,
             (PointParsingError, "invalid literal for int()"),
             id="More non-integer ICP for integer cycling type"
         ),
         pytest.param(
             ISO8601_CYCLING_TYPE,
             {'initial cycle point': "1"},
-            None,
             None,
             (PointParsingError, "Invalid ISO 8601 date representation"),
             id="Non-ISO8601 ICP for ISO8601 cycling type"
@@ -311,14 +305,12 @@ def test_family_inheritance_and_quotes(
             ISO8601_CYCLING_TYPE,
             {'initial cycle point': 'now'},
             '20050102T0615+0530',
-            '20050102T0615+0530',
             None,
             id="ICP = now"
         ),
         pytest.param(
             ISO8601_CYCLING_TYPE,
             {'initial cycle point': 'previous(T00)'},
-            '20050102T0000+0530',
             '20050102T0000+0530',
             None,
             id="ICP = prev"
@@ -331,7 +323,6 @@ def test_family_inheritance_and_quotes(
             },
             '20130101T0000+0530',
             None,
-            None,
             id="Constraints"
         ),
         pytest.param(
@@ -340,7 +331,6 @@ def test_family_inheritance_and_quotes(
                 'initial cycle point': '2021-01-20',
                 'initial cycle point constraints': ['--01-19', '--01-21']
             },
-            None,
             None,
             (WorkflowConfigError, "does not meet the constraints"),
             id="Violated constraints"
@@ -351,7 +341,6 @@ def test_family_inheritance_and_quotes(
                 'initial cycle point': 'a',
             },
             None,
-            None,
             (WorkflowConfigError, 'Invalid ISO 8601 date representation: a'),
             id="invalid"
         ),
@@ -361,7 +350,6 @@ def test_process_icp(
     cycling_type: str,
     scheduling_cfg: Dict[str, Any],
     expected_icp: Optional[str],
-    expected_eval_icp: Optional[str],
     expected_err: Optional[Tuple[Type[Exception], str]],
     monkeypatch: pytest.MonkeyPatch, set_cycling_type: 'Fixture'
 ) -> None:
@@ -373,8 +361,6 @@ def test_process_icp(
         cycling_type: Workflow cycling type.
         scheduling_cfg: 'scheduling' section of workflow config.
         expected_icp: The expected icp value that gets set.
-        expected_eval_icp: The expected value of options.icp that gets set
-            (this gets stored in the workflow DB).
         expected_err: Exception class expected to be raised plus the message.
     """
     set_cycling_type(cycling_type, time_zone="+0530")
@@ -401,10 +387,6 @@ def test_process_icp(
         assert mocked_config.cfg[
             'scheduling']['initial cycle point'] == expected_icp
         assert str(mocked_config.initial_point) == expected_icp
-        eval_icp = mocked_config.evaluated_icp
-        if eval_icp is not None:
-            eval_icp = str(loader.get_point(eval_icp).standardise())
-        assert eval_icp == expected_eval_icp
 
 
 @pytest.mark.parametrize(
