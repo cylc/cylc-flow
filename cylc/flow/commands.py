@@ -568,6 +568,10 @@ async def reload_workflow(schd: 'Scheduler', reload_global: bool = False):
         schd.reload_pending = 'loading the workflow definition'
         schd.update_data_store()  # update workflow status msg
         schd._update_workflow_state()
+        # Things that can't change on workflow reload:
+        schd._set_workflow_params(
+            schd.workflow_db_mgr.pri_dao.select_workflow_params()
+        )
         LOG.info("Reloading the workflow definition.")
         config = schd.load_flow_file(is_reload=True)
     except (ParsecError, CylcConfigError) as exc:
@@ -589,10 +593,7 @@ async def reload_workflow(schd: 'Scheduler', reload_global: bool = False):
     else:
         schd.reload_pending = 'applying the new config'
         old_tasks = set(schd.config.get_task_name_list())
-        # Things that can't change on workflow reload:
-        schd._set_workflow_params(
-            schd.workflow_db_mgr.pri_dao.select_workflow_params()
-        )
+
         schd.apply_new_config(config, is_reload=True)
         schd.broadcast_mgr.linearized_ancestors = (
             schd.config.get_linearized_ancestors()

@@ -379,7 +379,8 @@ class WorkflowConfig:
             raise WorkflowConfigError("missing [scheduling][[graph]] section.")
         # (The check that 'graph' is defined is below).
 
-        # Override the workflow defn with an initial point from the CLI.
+        # Override the workflow defn with an initial point from the CLI
+        # or from reload/restart:
         icp_str = getattr(self.options, 'icp', None)
         if icp_str is not None:
             self.cfg['scheduling']['initial cycle point'] = icp_str
@@ -564,7 +565,7 @@ class WorkflowConfig:
         self._upg_wflow_event_names()
 
         self.mem_log("config.py: before load_graph()")
-        self.load_graph()
+        self._load_graph()
         self.mem_log("config.py: after load_graph()")
 
         self._set_completion_expressions()
@@ -684,10 +685,10 @@ class WorkflowConfig:
             all(item in ['graph', '1', 'R1'] for item in graphdict)
         ):
             # Pure acyclic graph, assume integer cycling mode with '1' cycle
-            self.cfg['scheduling']['cycling mode'] = INTEGER_CYCLING_TYPE
             for key in ('initial cycle point', 'final cycle point'):
                 if key not in self.cfg['scheduling']:
                     self.cfg['scheduling'][key] = '1'
+            self.cfg['scheduling']['cycling mode'] = INTEGER_CYCLING_TYPE
 
     def process_utc_mode(self):
         """Set UTC mode from config or from stored value on restart.
@@ -761,7 +762,6 @@ class WorkflowConfig:
         Sets:
             self.initial_point
             self.cfg['scheduling']['initial cycle point']
-            self.evaluated_icp
         Raises:
             WorkflowConfigError - if it fails to validate
         """
@@ -775,11 +775,6 @@ class WorkflowConfig:
                 raise WorkflowConfigError(
                     "This workflow requires an initial cycle point.")
             icp = _parse_iso_cycle_point(orig_icp)
-        self.evaluated_icp = None
-        if icp != orig_icp:
-            # now/next()/previous() was used, need to store
-            # evaluated point in DB
-            self.evaluated_icp = icp
         self.initial_point = get_point(icp).standardise()
         self.cfg['scheduling']['initial cycle point'] = str(self.initial_point)
 
@@ -815,7 +810,8 @@ class WorkflowConfig:
             )
         if startcp:
             # Start from a point later than initial point.
-            self.options.startcp = _parse_iso_cycle_point(startcp)
+            if self.cycling_type == ISO8601_CYCLING_TYPE:
+                self.options.startcp = _parse_iso_cycle_point(startcp)
             self.start_point = get_point(self.options.startcp).standardise()
         elif starttask:
             # Start from designated task(s).
@@ -2311,7 +2307,7 @@ class WorkflowConfig:
 
         return lret, rret
 
-    def load_graph(self):
+    def _load_graph(self):
         """Parse and load dependency graph."""
         LOG.debug("Parsing the dependency graph")
 
@@ -2335,18 +2331,14 @@ class WorkflowConfig:
             section = get_sequence_cls().get_async_expr()
             graphdict[section] = graphdict.pop('graph')
 
-        icp = self.cfg['scheduling']['initial cycle point']
+        icp = str(self.initial_point)
         fcp = self.cfg['scheduling']['final cycle point']
 
         # Make a stack of sections and graphs [(sec1, graph1), ...]
         sections = []
         for section, value in self.cfg['scheduling']['graph'].items():
             # Substitute initial and final cycle points.
-            if icp:
-                section = section.replace("^", icp)
-            elif "^" in section:
-                raise WorkflowConfigError("Initial cycle point referenced"
-                                          " (^) but not defined.")
+            section = section.replace("^", icp)
             if fcp:
                 section = section.replace("$", fcp)
             elif "$" in section:

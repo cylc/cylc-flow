@@ -594,7 +594,7 @@ def init_from_cfg(_):
     pass
 
 
-def get_dump_format(cycling_type=None):
+def get_dump_format() -> None:
     """Return cycle point string dump format."""
     # Not used for integer cycling.
     return None
