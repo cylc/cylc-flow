@@ -299,6 +299,9 @@ class Dependency:
                 ret.append('( %s )' % str(item))
         return ' '.join(ret)
 
+    def __repr__(self) -> str:
+        return f"<{type(self).__name__} {self}>"
+
     @classmethod
     def _stringify_list(cls, nested_expr, point):
         """Stringify a nested list of TaskTrigger objects."""

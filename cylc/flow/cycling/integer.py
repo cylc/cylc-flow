@@ -588,6 +588,17 @@ class IntegerSequence(SequenceBase):
                     return True
         return False
 
+    def __repr__(self) -> str:
+        ret = f"start={self.p_start}, stop={self.p_stop}, step={self.i_step}"
+        if self.p_context_start not in {self.p_start, None}:
+            ret += f", {self.p_context_start=}"
+        if self.p_context_stop not in {self.p_stop, None}:
+            ret += f", {self.p_context_stop=}"
+        for attr in ('i_offset', 'exclusions'):
+            if (value := getattr(self, attr)) is not None:
+                ret += f", {attr}={value}"
+        return f"<{type(self).__name__} {ret}>"
+
 
 def init_from_cfg(_):
     """Placeholder function required by all cycling modules."""
