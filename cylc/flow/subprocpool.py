@@ -435,7 +435,9 @@ class SubProcPool:
         self.process()
         self.pipepoller.close()
 
-    def _poll_proc_pipes(self, proc, ctx):
+    def _poll_proc_pipes(
+        self, proc: 'Popen[bytes]', ctx: 'SubProcContext'
+    ) -> None:
         """Poll STDOUT/ERR of proc and read some data if possible.
 
         This helps to unblock the command by unblocking its pipes.
@@ -444,15 +446,9 @@ class SubProcPool:
             if handle and not handle.closed:
                 self.pipepoller.register(handle, selectors.EVENT_READ)
         try:
-            while True:
-                fileno_list = [
-                    key.fd for key, _event in self.pipepoller.select(0)
-                ]
-                if not fileno_list:
-                    # Nothing readable
-                    break
-                received_data = []
-                for fileno in fileno_list:
+            while selection := self.pipepoller.select(0):
+                received_data: set[bool] = set()
+                for key, _event in selection:
                     # If a file handle is readable, read something from it, add
                     # results into the command context object's `.out` or
                     # `.err`, whichever is relevant. To avoid blocking:
@@ -461,19 +457,19 @@ class SubProcPool:
                     # 2. Call os.read only once after a poll. Poll again before
                     #    another read - otherwise the os.read call may block.
                     try:
-                        data = os.read(fileno, 65536).decode()  # 64K
+                        data = os.read(key.fd, 65536).decode()  # 64K
                     except OSError:
                         continue
-                    received_data.append(data != '')
-                    if fileno == proc.stdout.fileno():
+                    received_data.add(data != '')
+                    if key.fileobj == proc.stdout:
                         if ctx.out is None:
                             ctx.out = ''
                         ctx.out += data
-                    elif fileno == proc.stderr.fileno():
+                    elif key.fileobj == proc.stderr:
                         if ctx.err is None:
                             ctx.err = ''
                         ctx.err += data
-                if received_data and not all(received_data):
+                if False in received_data:
                     # if no data was pushed down the pipe exit the polling
                     # loop, we can always re-enter the polling loop later if
                     # there is more data
