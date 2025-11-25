@@ -827,7 +827,7 @@ def _force_trigger_tasks(
         icycle = get_point(id_['cycle'])
         in_flow_prereqs = False
         jtask: Optional[TaskProxy] = None
-        if tdef.is_parentless(icycle):
+        if tdef.is_parentless(icycle, cutoff=schd.config.initial_point):
             # Parentless: set all prereqs to spawn the task.
             jtask = schd.pool._set_prereqs_tdef(
                 icycle, tdef,
