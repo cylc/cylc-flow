@@ -851,3 +851,10 @@ class XtriggerManager:
             self.data_store_mgr.delta_task_xtrigger(
                 itask, label, sig, satisfied)
             LOG.info(f"{prefix} force-{state}: {suffix}")
+
+    def force_satisfy_all(self, itask: 'TaskProxy'):
+        """Force satisfy all xtriggers for the provided task."""
+        self.force_satisfy(
+            itask,
+            dict.fromkeys(itask.state.xtriggers, True),
+        )
