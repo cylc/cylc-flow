@@ -2168,9 +2168,8 @@ class DataStoreMgr:
         first called with this function, which then adds it's first parent
         ancestor to the set of families flagged for update.
 
-        State totals of families reflect zero n-window (n=0), if no n=0
-        children (tasks/families) exist then the totals include the states of
-        all children. Family group state, however, is determined from all child
+        State totals of families reflect zero n-window (n=0).
+        Family group state, however, is determined from all child
         states via the n>=0 state totals.
         """
         all_nodes = self.all_n_window_nodes
@@ -2199,10 +2198,8 @@ class DataStoreMgr:
             tp_added = self.added[TASK_PROXIES]
 
             # Count child family states, set is_held, is_queued, is_runahead
-            # n>=0 child state totals
-            state_counter = Counter({})
-            # n=0 child state totals
-            active_counter = Counter({})
+            state_set = set()  # n>=0 child states
+            active_counter = Counter({})  # n=0 child state totals
             is_held_total = 0
             is_queued_total = 0
             is_runahead_total = 0
@@ -2223,11 +2220,10 @@ class DataStoreMgr:
                         active_counter += Counter(
                             dict(child_node.state_totals)
                         )
-                    state_counter += Counter(dict(child_node.state_totals))
+                    state_set.add(child_node.state)
                     if child_node.graph_depth < graph_depth:
                         graph_depth = child_node.graph_depth
             # Gather all child task states
-            task_states = []
             for tp_id in fam_node.child_tasks:
                 is_active = False
                 if all_nodes and tp_id not in all_nodes:
@@ -2247,7 +2243,7 @@ class DataStoreMgr:
 
                 tp_state = self.from_delta_or_node(tp_delta, tp_node, 'state')
 
-                task_states.append(tp_state)
+                state_set.add(tp_state)
                 # if child task is active add states/held/queued/runahead
                 # to totals
                 if is_active:
@@ -2273,15 +2269,12 @@ class DataStoreMgr:
                 if self.from_delta_or_node(tp_delta, tp_node, 'is_xtriggered'):
                     is_xtriggered = True
 
-            state_counter += Counter(task_states)
-            # if n=0 tasks exist only count those, otherwise count all.
-            group_counter = active_counter or state_counter
             # created delta data element
             fp_delta = PbFamilyProxy(
                 id=fp_id,
                 stamp=f'{fp_id}@{time()}',
                 # use the state of all children to determine the group state.
-                state=extract_group_state(state_counter.keys()),
+                state=extract_group_state(state_set),
                 is_held=(is_held_total > 0),
                 is_held_total=is_held_total,
                 is_queued=(is_queued_total > 0),
@@ -2293,10 +2286,10 @@ class DataStoreMgr:
                 is_xtriggered=is_xtriggered,
                 graph_depth=graph_depth,
             )
-            fp_delta.states[:] = group_counter.keys()
+            fp_delta.states[:] = active_counter.keys()
             # Reset all totals to reflect either active or inactive totals.
             for state in TASK_STATUSES_ORDERED:
-                fp_delta.state_totals[state] = group_counter.get(state, 0)
+                fp_delta.state_totals[state] = active_counter.get(state, 0)
             fp_updated.setdefault(fp_id, PbFamilyProxy()).MergeFrom(fp_delta)
             # mark as updated in case parent family is updated next
             self.updated_state_families.add(fp_id)
