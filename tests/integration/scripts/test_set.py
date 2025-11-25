@@ -462,3 +462,73 @@ async def test_timings(one_conf, flow, scheduler, start, caplog):
 
         await run_cmd(set_prereqs_and_outputs(schd, [itask.identity], []))
         check_times()
+
+
+async def test_set_clears_modifiers(flow, scheduler, start):
+    """Manually setting a final output on a task should clear some states.
+
+    The is_held and is_retry task states should be cleared if a task is
+    manually set to a final state as these states become moot and confusing.
+
+    See https://github.com/cylc/cylc-flow/issues/7065
+    """
+    id_ = flow(
+        {
+            'scheduling': {
+                'graph': {'R1': 'a => b'},
+            },
+            'runtime': {
+                'a': {
+                    'outputs': {
+                        'x': 'xxx',
+                    },
+                },
+            },
+        },
+    )
+    schd = scheduler(id_)
+
+    async with start(schd):
+        task_a = schd.pool.get_task(IntegerPoint('1'), 'a')
+        assert task_a
+
+        # line up both submission and execution retries
+        schd.task_events_mgr._retry_task(task_a, 0, True)
+        schd.task_events_mgr._retry_task(task_a, 0, False)
+
+        # mark the task as held
+        schd.pool.hold_tasks({task_a.tokens})
+
+        # update the data store
+        await schd.update_data_structure()
+        task_a_data_store = schd.data_store_mgr.data[schd.id]['task_proxies'][
+            task_a.tokens.id
+        ]
+
+        # the task should have the states is_held and is_retry
+        assert task_a.state.is_held is True
+        assert task_a_data_store.is_retry is True
+        assert task_a_data_store.is_retry is True
+
+        # set a custom output
+        await run_cmd(
+            set_prereqs_and_outputs(schd, [task_a.identity], [], ['x'])
+        )
+
+        # the is_held and is_retry statuses should be unchanged
+        assert task_a.state.is_held is True
+        assert task_a_data_store.is_retry is True
+        assert task_a_data_store.is_retry is True
+
+        # manually complete the task
+        await run_cmd(
+            set_prereqs_and_outputs(
+                schd, [task_a.identity], [], [TASK_OUTPUT_SUCCEEDED]
+            )
+        )
+        await schd.update_data_structure()
+
+        # the is_held and is_retry states should have been cleared
+        assert task_a.state.is_held is False
+        assert task_a_data_store.is_retry is False
+        assert task_a_data_store.is_retry is False

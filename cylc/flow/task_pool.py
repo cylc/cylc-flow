@@ -88,6 +88,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_WAITING,
     TASK_STATUSES_ACTIVE,
     TASK_STATUSES_FINAL,
+    status_geq,
 )
 from cylc.flow.task_trigger import TaskTrigger
 from cylc.flow.util import deserialise_set
@@ -874,6 +875,11 @@ class TaskPool:
 
     def remove(self, itask: 'TaskProxy', reason: Optional[str] = None) -> None:
         """Remove a task from the pool."""
+        # the held state is no longer relevant -> remove it
+        self.release_held_active_task(itask)
+
+        # xtriggers are no longer relevant -> remove them
+        self.xtrigger_mgr.force_satisfy_all(itask, log=False)
 
         if itask.state.is_runahead and itask.flow_nums:
             # If removing a parentless runahead-limited task
@@ -1501,9 +1507,12 @@ class TaskPool:
             self.remove_if_complete(itask, output)
             return
 
+        if status_geq(itask.state.status, TASK_STATUS_PREPARING):
+            # task has begun submission -> clear all xtriggers
+            self.xtrigger_mgr.force_satisfy_all(itask, log=False)
+
         suicide = []
         for c_name, c_point, is_abs in children:
-
             if is_abs:
                 self.abs_outputs_done.add(
                     (str(itask.point), itask.tdef.name, output))
@@ -2211,7 +2220,7 @@ class TaskPool:
         itask: 'TaskProxy',
         outputs: Iterable[str],
     ) -> bool:
-        """Set requested outputs on a task proxy and spawn children.
+        """Manually set requested outputs on a task proxy and spawn children.
 
         If no outputs were specified and the task has no required outputs to
         set, set the "success pathway" outputs in the same way that skip mode
@@ -2219,7 +2228,9 @@ class TaskPool:
 
         Designated flows should already be merged to the task proxy.
 
-        Returns True if any outputs were set, else False.
+        Returns:
+            True if any outputs were set, else False.
+
         """
         no_op = True
         outputs = set(outputs)
@@ -2394,8 +2405,8 @@ class TaskPool:
         """Spawn successor(s) of parentless wall clock satisfied tasks."""
         while self.xtrigger_mgr.sequential_spawn_next:
             taskid = self.xtrigger_mgr.sequential_spawn_next.pop()
-            itask = self._get_task_by_id(taskid)
-            self.check_spawn_psx_task(itask)
+            if itask := self._get_task_by_id(taskid):
+                self.check_spawn_psx_task(itask)
 
     def check_spawn_psx_task(self, itask: 'TaskProxy') -> None:
         """Check and spawn parentless sequential xtriggered task (psx)."""
