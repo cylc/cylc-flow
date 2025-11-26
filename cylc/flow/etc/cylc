@@ -78,7 +78,7 @@
 # for selection using CYLC_VERSION. e.g. ln -s cylc-8.0.1-1 cylc-next
 #
 # Legacy Cylc 7 and Rose 2019.01 versions can also be installed into environments
-# in the ROOT location. The legacy support for rose edit, rosie and cylc review
+# in the ROOT location. The legacy support for rose edit and rosie
 # requires cylc-7 and rose-2019.01 symlinks to be created to the preferred
 # environments.
 # e.g.    ln -s cylc-7.9.5 cylc-7
@@ -158,13 +158,6 @@ if [[ ${0##*/} =~ ^ros ]]; then
         # If CYLC_HOME was set externally, use ROSE_HOME if it is set
         CYLC_HOME="${ROSE_HOME:-$CYLC_HOME}"
     fi
-fi
-
-# Legacy support for cylc review
-if [[ ${0##*/} == "cylc" && ${1:-} == "review" && \
-      ! ${CYLC_ENV_NAME:-} =~ ^cylc-7 ]]; then
-    # Cylc 8: Use Cylc 7 to run "review"
-    CYLC_HOME="${CYLC_HOME_ROOT}/cylc-7"
 fi
 
 if [[ ! -x "${CYLC_HOME}/bin/${0##*/}" ]]; then
