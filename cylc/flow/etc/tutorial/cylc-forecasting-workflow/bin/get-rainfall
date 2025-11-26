@@ -24,9 +24,6 @@ Usage:
     get-rainfall
 
 Environment Variables:
-    API_KEY: The DataPoint API key, required for getting live weather data.
-        If un-specified then get-observations will fall back to archive data
-        from the workflow directory.
     DOMAIN: The area in which to generate forecasts for in the format
         (lng1, lat1, lng2, lat2).
     RESOLUTION: The length/width of each grid cell in degrees.
@@ -38,20 +35,20 @@ import math
 import os
 import shutil
 
-import requests
+import h5py
+from pathlib import Path
+import urllib
+import requests   # noqa: F401 - required implicitly by urllib.
 
-try:
-    from PIL import Image
-except ModuleNotFoundError:
-    # not all PIL installations are created equal
-    # sometimes we must import like this
-    import Image
-from mercator import get_offset, get_scale, pos_to_coord
+from mercator import get_scale, pos_to_coord
 import util
 
-
-URL = ('http://datapoint.metoffice.gov.uk/public/data/layer/wxobs/'
-       'RADAR_UK_Composite_Highres/png?TIME={time}&key={api_key}')
+S3URL = (
+    'https://met-office-radar-obs-data.s3-eu-west-2.amazonaws.com/radar/'
+    '{Y}/{m}/{d}/{YYYYmmddHHMM}_ODIM_ng_radar_rainrate_composite_1km_UK.h5'
+)
+DEBUG=os.environ['CYLC_DEBUG']=='true'
+CYLC_TASK_LOG_DIR=os.environ['CYLC_TASK_LOG_DIR']
 
 
 class Rainfall(object):
@@ -62,16 +59,6 @@ class Rainfall(object):
         resolution (float): The length of each grid cell in degrees.
 
     """
-    VALUE_MAP = {
-        (0, 0, 254, 255): 1,
-        (50, 101, 254, 255): 2,
-        (127, 127, 0, 255): 3,
-        (254, 203, 0, 255): 4,
-        (254, 152, 0, 255): 5,
-        (254, 0, 0, 255): 6,
-        (254, 0, 254, 255): 7
-    }
-
     def __init__(self, domain, resolution):
         self.resolution = resolution
         self.domain = domain
@@ -98,10 +85,23 @@ class Rainfall(object):
         """
         itt_x, itt_y = util.get_grid_coordinates(lng, lat, self.domain,
                                                  self.resolution)
-        try:
-            self.data[itt_y][itt_x].append(self.VALUE_MAP[value])
-        except KeyError:
-            pass
+                    
+        self.data[itt_y][itt_x].append(self.value_map(value))
+
+    @staticmethod
+    def value_map(v):
+        """Convert rainfall rate values into colour space values.
+
+        Checks if rainfall value above each threshold in turn.
+
+        TODO:
+            - Unit test this
+        """
+        thresholds = {32, 16, 8, 4, 2, 1, .5, .2}
+        for i, threshold in enumerate(sorted(thresholds, reverse=True)):
+            if v > threshold:
+                return 8 - i
+        return 0
 
     def compute_bins(self):
         """Return this dataset as a 2D matrix."""
@@ -112,25 +112,6 @@ class Rainfall(object):
                 else:
                     row[itt] = 0
         return self.data
-
-
-def get_datapoint_radar_image(filename, time, api_key):
-    """Retrieve a png image of rainfall from the DataPoint service.
-
-    Args:
-        filename (str): The path to write the image file to.
-        time (str): The datetime of the image to retrieve in ISO8601 format.
-        api_key (str): Datapoint API key.
-
-    """
-    time = datetime.strptime(time, '%Y%m%dT%H%MZ').strftime(
-        '%Y-%m-%dT%H:%M:%SZ')
-    url = URL.format(time=time, api_key=api_key)
-    req = requests.get(url)
-    if req.status_code != 200:
-        raise Exception(f'{url} returned exit code {req.status_code}')
-    with open(filename, 'bw') as png_file:
-        png_file.write(req.content)
 
 
 def get_archived_radar_image(filename, time):
@@ -147,8 +128,23 @@ def get_archived_radar_image(filename, time):
         filename)
 
 
+def get_amazon_radar_data(filename, time):
+    time = datetime.strptime(time, '%Y%m%dT%H%MZ')
+    url = S3URL.format(
+        Y=time.strftime('%Y'),
+        m=time.strftime('%m'),
+        d=time.strftime('%d'),
+        YYYYmmddHHMM=time.strftime('%Y%m%d%H%M')
+    )
+    print(f'[INFO] Getting data from {url=}')
+    data = urllib.request.urlopen(url).read()
+    with open(filename, 'wb') as fh:
+        fh.write(data)
+
+
+# def process_rainfall_data(filename, resolution, domain):
 def process_rainfall_data(filename, resolution, domain):
-    """Generate a 2D matrix of data from the rainfall data in the image.
+    """get_amazon_radar_dataGenerate a 2D matrix of data from the rainfall data in the image.
 
     Args:
         filename (str): Path to the png image to process.
@@ -160,37 +156,62 @@ def process_rainfall_data(filename, resolution, domain):
         list - A 2D matrix of rainfall data.
 
     """
+    print(f'[INFO] Analysing data from {filename}')
+    data = h5py.File(filename)['dataset1']['data1']['data']
     rainfall = Rainfall(domain, resolution)
 
-    image = Image.open(filename)
-    scale = get_scale(domain, image.width)
-    offset = get_offset(domain, scale)
+    _height, width = data.shape
 
-    for itt_x in range(image.width):
-        for itt_y in range(image.height):
+    scale = get_scale(domain, width)
+    offset = (-1100.8461538461539, 1400.6953225710452)
+
+    if DEBUG:
+        print(f'[INFO] {scale=}, {offset=}')
+        from matplotlib import pyplot as plt
+        Path(CYLC_TASK_LOG_DIR).mkdir(parents=True, exist_ok=True)
+        plt.imshow(data)
+        plt.savefig(f'{CYLC_TASK_LOG_DIR}/raw.data.png')
+
+    for itt_y, row in enumerate(data):
+        for itt_x, col in enumerate(row):
             lng, lat = pos_to_coord(
                 itt_x,
                 itt_y * (2. / 3.),  # Counter aspect ratio.
-                offset, scale)
-            rainfall.add(lng, lat, image.getpixel((itt_x, itt_y)))
+                offset,
+                scale
+            )
+            val = float(col)
+            # Original data uses -1 to indicate radar mask
+            val = 0 if val == -1 else val
+            rainfall.add(lng, lat, val)
+    data = rainfall.compute_bins()
 
-    return rainfall.compute_bins()
+    if DEBUG:
+        plt.imshow(data)
+        plt.savefig(f'{CYLC_TASK_LOG_DIR}/processed.data.png')
 
+    return data
 
 def main():
     time = os.environ['CYLC_TASK_CYCLE_POINT']
     resolution = float(os.environ['RESOLUTION'])
     domain = util.parse_domain(os.environ['DOMAIN'])
-    api_key = os.environ.get('API_KEY')
 
-    if api_key:
-        print('Attempting to get weather data from the DataPoint service.')
-        get_datapoint_radar_image('rainfall-radar.png', time, api_key)
+    # Acts as a switch - if a file-name is given, use that file-name
+    canned_data = os.environ.get('CANNED_DATA', 'fetch')
+
+    if canned_data == 'fetch':
+        print('[INFO] Attempting to get rainfall data from S3 bucket')
+        get_amazon_radar_data('radardata.h5', time)
+        canned_data = 'radardata.h5'
     else:
-        print('No API key provided, falling back to archived data')
-        get_archived_radar_image('rainfall-radar.png', time)
+        raise Exception('Not currently provided functionality')
+        # Not currently used.
+        #print(f'[INFO] Canned data provided: {canned_data}')
+        #get_archived_radar_data(canned_data, time)
 
-    data = process_rainfall_data('rainfall-radar.png', resolution, domain)
+    data = process_rainfall_data(canned_data, resolution, domain)
+
     util.write_csv('rainfall.csv', data)
 
 

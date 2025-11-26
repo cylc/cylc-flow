@@ -61,7 +61,7 @@ def plot_wind_data(wind_x, wind_y, x_range, y_range, x_coords, y_coords,
                [x[0] for x in z_coords],
                [y[1] for y in z_coords],
                color='red')
-    plt.savefig('wind.png')
+    plt.savefig(f'{os.environ["CYLC_TASK_LOG_DIR"]}/wind.png')
 
 
 def get_wind_fields():
