@@ -2169,8 +2169,8 @@ class DataStoreMgr:
         ancestor to the set of families flagged for update.
 
         State totals of families reflect zero n-window (n=0).
-        Family group state, however, is determined from all child
-        states via the n>=0 state totals.
+        Family group state, however, is determined from all (n>=0) child
+        task and family states.
         """
         all_nodes = self.all_n_window_nodes
         fp_added = self.added[FAMILY_PROXIES]
