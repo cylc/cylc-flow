@@ -11,6 +11,42 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 <!-- towncrier release notes start -->
 
+## __cylc-8.6.1 (Released 2025-11-27)__
+
+### 🚀 Enhancements
+
+[#6261](https://github.com/cylc/cylc-flow/pull/6261) - Allow a workflow to be restarted by `cylc vr` even if there are no changes to reinstall.
+
+[#7024](https://github.com/cylc/cylc-flow/pull/7024) - Add support for the `next()/previous()` syntax with the `cylc play --startcp` option.
+
+[#7044](https://github.com/cylc/cylc-flow/pull/7044) - Replace use of Met Office Datapoint (Switchoff December 2025) in tutorial with Met Office data via the Amazon Data Sustainability Initative.
+
+[#7075](https://github.com/cylc/cylc-flow/pull/7075) - State totals shown in GUI/tui now represent the active (n=0) window of tasks.
+
+### 🔧 Fixes
+
+[#6772](https://github.com/cylc/cylc-flow/pull/6772) - Xtriggers with an OR operator (`|`) between them now correctly fail validation as Cylc does not support this.
+
+[#7007](https://github.com/cylc/cylc-flow/pull/7007) - Fix bug where cylc play --pause would resume a paused workflow.
+
+[#7021](https://github.com/cylc/cylc-flow/pull/7021) - Fix compatibility with Python 3.14
+
+[#7026](https://github.com/cylc/cylc-flow/pull/7026) - Log (re)commencement of xtrigger calls, for old xtriggers.
+
+[#7035](https://github.com/cylc/cylc-flow/pull/7035) - Fixed platform subshell expression evaluating more than once for tasks triggered in paused workflow.
+
+[#7041](https://github.com/cylc/cylc-flow/pull/7041) - Removed spurious "tasks not killable" warnings for `cylc stop --kill`.
+
+[#7048](https://github.com/cylc/cylc-flow/pull/7048) - Stopped the evaluated value of `initial cycle point = now` changing on reload/restart.
+
+[#7054](https://github.com/cylc/cylc-flow/pull/7054) - Fix an issue where job submission could fail with the message
+  `No such file or directory` when tasks were triggered while the workflow was
+  paused.
+
+[#7087](https://github.com/cylc/cylc-flow/pull/7087) - `cylc clean` will now skip any non-existent remote platforms recorded in the workflow database, instead of failing.
+
+[#7089](https://github.com/cylc/cylc-flow/pull/7089) - Fixes a memory build-up problem exposed by large workflows of many interconnected tasks.
+
 ## __cylc-8.6.0 (Released 2025-10-01)__
 
 ### ⚠ Breaking Changes
