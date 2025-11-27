@@ -2182,6 +2182,9 @@ class DataStoreMgr:
         first called with this function, which then adds it's first parent
         ancestor to the set of families flagged for update.
 
+        State totals of families reflect zero n-window (n=0).
+        Family group state, however, is determined from all (n>=0) child
+        task and family states.
         """
         all_nodes = self.all_n_window_nodes
         fp_added = self.added[FAMILY_PROXIES]
@@ -2207,8 +2210,10 @@ class DataStoreMgr:
             tp_data = self.data[self.workflow_id][TASK_PROXIES]
             tp_updated = self.updated[TASK_PROXIES]
             tp_added = self.added[TASK_PROXIES]
+
             # Count child family states, set is_held, is_queued, is_runahead
-            state_counter = Counter({})
+            state_set = set()  # n>=0 child states
+            active_counter = Counter({})  # n=0 child state totals
             is_held_total = 0
             is_queued_total = 0
             is_runahead_total = 0
@@ -2216,36 +2221,58 @@ class DataStoreMgr:
             is_wallclock = False
             is_xtriggered = False
             graph_depth = self.n_edge_distance
+            # Gather the counts and totals of child families.
             for child_id in fam_node.child_families:
                 child_node = fp_updated.get(child_id, fp_data.get(child_id))
                 if child_node is not None:
-                    is_held_total += child_node.is_held_total
-                    is_queued_total += child_node.is_queued_total
-                    is_runahead_total += child_node.is_runahead_total
-                    state_counter += Counter(dict(child_node.state_totals))
+                    # if child family is active/n=0
+                    if child_node.graph_depth == 0:
+                        is_held_total += child_node.is_held_total
+                        is_queued_total += child_node.is_queued_total
+                        is_runahead_total += child_node.is_runahead_total
+                        # add active child state totals to active count.
+                        active_counter += Counter(
+                            dict(child_node.state_totals)
+                        )
+                    state_set.add(child_node.state)
                     if child_node.graph_depth < graph_depth:
                         graph_depth = child_node.graph_depth
             # Gather all child task states
-            task_states = []
             for tp_id in fam_node.child_tasks:
+                is_active = False
                 if all_nodes and tp_id not in all_nodes:
                     continue
 
                 tp_delta = tp_updated.get(tp_id)
                 tp_node = tp_added.get(tp_id, tp_data.get(tp_id))
 
+                tp_depth = tp_delta
+                if tp_depth is None or not tp_depth.HasField('graph_depth'):
+                    tp_depth = tp_node
+                if tp_depth.graph_depth < graph_depth:
+                    graph_depth = tp_depth.graph_depth
+
+                if tp_id in self.all_task_pool:
+                    is_active = True
+
                 tp_state = self.from_delta_or_node(tp_delta, tp_node, 'state')
-                if tp_state:
-                    task_states.append(tp_state)
 
-                if self.from_delta_or_node(tp_delta, tp_node, 'is_held'):
-                    is_held_total += 1
+                state_set.add(tp_state)
+                # if child task is active add states/held/queued/runahead
+                # to totals
+                if is_active:
+                    active_counter[tp_state] += 1
 
-                if self.from_delta_or_node(tp_delta, tp_node, 'is_queued'):
-                    is_queued_total += 1
+                    if self.from_delta_or_node(tp_delta, tp_node, 'is_held'):
+                        is_held_total += 1
 
-                if self.from_delta_or_node(tp_delta, tp_node, 'is_runahead'):
-                    is_runahead_total += 1
+                    if self.from_delta_or_node(tp_delta, tp_node, 'is_queued'):
+                        is_queued_total += 1
+
+                    if self.from_delta_or_node(
+                        tp_delta, tp_node, 'is_runahead'
+                    ):
+                        is_runahead_total += 1
 
                 if self.from_delta_or_node(tp_delta, tp_node, 'is_retry'):
                     is_retry = True
@@ -2256,18 +2283,12 @@ class DataStoreMgr:
                 if self.from_delta_or_node(tp_delta, tp_node, 'is_xtriggered'):
                     is_xtriggered = True
 
-                tp_depth = tp_delta
-                if tp_depth is None or not tp_depth.HasField('graph_depth'):
-                    tp_depth = tp_node
-                if tp_depth.graph_depth < graph_depth:
-                    graph_depth = tp_depth.graph_depth
-
-            state_counter += Counter(task_states)
             # created delta data element
             fp_delta = PbFamilyProxy(
                 id=fp_id,
                 stamp=f'{fp_id}@{time()}',
-                state=extract_group_state(state_counter.keys()),
+                # use the state of all children to determine the group state.
+                state=extract_group_state(state_set),
                 is_held=(is_held_total > 0),
                 is_held_total=is_held_total,
                 is_queued=(is_queued_total > 0),
@@ -2279,10 +2300,10 @@ class DataStoreMgr:
                 is_xtriggered=is_xtriggered,
                 graph_depth=graph_depth,
             )
-            fp_delta.states[:] = state_counter.keys()
-            # Use all states to clean up pruned counts
+            fp_delta.states[:] = active_counter.keys()
+            # Reset all totals to reflect either active or inactive totals.
             for state in TASK_STATUSES_ORDERED:
-                fp_delta.state_totals[state] = state_counter.get(state, 0)
+                fp_delta.state_totals[state] = active_counter.get(state, 0)
             fp_updated.setdefault(fp_id, PbFamilyProxy()).MergeFrom(fp_delta)
             # mark as updated in case parent family is updated next
             self.updated_state_families.add(fp_id)
@@ -2333,7 +2354,7 @@ class DataStoreMgr:
                     root_node = root_node_updated
                 else:
                     root_node = data[FAMILY_PROXIES].get(root_id)
-                if root_node is not None:
+                if root_node is not None and root_node.graph_depth == 0:
                     is_held_total += root_node.is_held_total
                     is_queued_total += root_node.is_queued_total
                     is_runahead_total += root_node.is_runahead_total

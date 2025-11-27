@@ -407,8 +407,6 @@ async def test_update_data_structure(mod_harness):
     assert TASK_STATUS_FAILED in set(collect_states(data, TASK_PROXIES))
     # family state changed and applied
     assert TASK_STATUS_FAILED in set(collect_states(data, FAMILY_PROXIES))
-    # state totals changed
-    assert TASK_STATUS_FAILED in data[WORKFLOW].state_totals
 
 
 async def test_prune_data_store(flow, scheduler, start):
