@@ -223,7 +223,10 @@ class TaskJobManager:
         self._prep_submit_task_job_error(itask, '(killed in job prep)', '')
 
     def poll_task_jobs(
-        self, itasks: 'Iterable[TaskProxy]', msg: str | None = None
+        self,
+        itasks: 'Iterable[TaskProxy]',
+        msg: str | None = None,
+        manual_request: bool = False,
     ):
         """Poll jobs of specified tasks.
 
@@ -245,7 +248,8 @@ class TaskJobManager:
                     if itask.state.status != TASK_STATUS_WAITING
                 ],
                 self._poll_task_jobs_callback,
-                self._poll_task_jobs_callback_255
+                self._poll_task_jobs_callback_255,
+                continue_if_no_good_hosts=manual_request,
             )
 
     def prep_submit_task_jobs(
@@ -918,12 +922,33 @@ class TaskJobManager:
         log_task_job_activity(ctx, self.workflow, itask.point, itask.tdef.name)
 
     def _run_job_cmd(
-        self, cmd_key, itasks, callback, callback_255
+        self,
+        cmd_key,
+        itasks,
+        callback,
+        callback_255,
+        continue_if_no_good_hosts=False,
     ):
         """Run job commands, e.g. poll, kill, etc.
 
         Group itasks with their platform_name and host.
         Put a job command for each group to the multiprocess pool.
+
+        Args:
+            cmd_key:
+                Identifier for the command to run.
+            itasks:
+                List of task proxies to run the command against.
+            callback:
+                Callback to run on command completion.
+            callback_255:
+                Callback to run on SSH error.
+            continue_if_no_good_hosts:
+                If True, the bad hosts set will be reset in the event that
+                there are no "good hosts" to run the command on. This should
+                only be turned on for manual operations, e.g. manual poll. Use
+                of this option for automatic commands may result in feedback
+                loops between parallel opererations.
 
         """
         if not itasks:
@@ -968,15 +993,22 @@ class TaskJobManager:
                     host = get_host_from_platform(
                         platform, bad_hosts=self.bad_hosts
                     )
-                    cmd = construct_ssh_cmd(
-                        cmd, platform, host
-                    )
                 except NoHostsError:
-                    ctx.err = f'No available hosts for {platform["name"]}'
-                    LOG.debug(ctx)
-                    callback_255(ctx, itasks)
-                    continue
+                    if continue_if_no_good_hosts:
+                        # no hosts available for this platform
+                        # -> reset the bad hosts and try again
+                        self.task_events_mgr.reset_bad_hosts()
+                        host = get_host_from_platform(
+                            platform, bad_hosts=self.bad_hosts
+                        )
+                    else:
+                        ctx.err = f'No available hosts for {platform["name"]}'
+                        LOG.debug(ctx)
+                        callback_255(ctx, itasks)
+                        continue
                 else:
+
+                    cmd = construct_ssh_cmd(cmd, platform, host)
                     ctx = SubProcContext(cmd_key, cmd, host=host)
 
             for itask in sorted(itasks, key=lambda task: task.identity):
