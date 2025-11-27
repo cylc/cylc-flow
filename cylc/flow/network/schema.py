@@ -763,7 +763,7 @@ class Workflow(ObjectType):
     )
     state_totals = GenericScalar(
         resolver=resolve_state_totals,
-        description='The number of tasks in each state as a JSON object.',
+        description='The number of n=0 tasks in each state as a JSON object.',
     )
     latest_state_tasks = GenericScalar(
         states=graphene.List(
