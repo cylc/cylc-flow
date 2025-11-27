@@ -40,7 +40,7 @@ jobs:
       PYTEST_ADDOPTS: --cov --cov-append -n 5 --color=yes
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Install System Dependencies
         uses: mamba-org/setup-micromamba@v2
@@ -88,7 +88,7 @@ jobs:
 
       - name: Upload failed tests artifact
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: cylc-run (${{ matrix.os }} py-${{ matrix.python-version }})
           path: ~/cylc-run/
@@ -100,7 +100,7 @@ jobs:
           coverage report
 
       - name: Upload coverage artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: coverage_${{ matrix.os }}_py-${{ matrix.python-version }}
           path: coverage.xml
@@ -116,7 +116,7 @@ jobs:
       FORCE_COLOR: 2
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Install System Dependencies
         uses: mamba-org/setup-micromamba@v2
@@ -159,10 +159,10 @@ jobs:
     timeout-minutes: 2
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Download coverage artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
 
       - name: Codecov upload
         uses: codecov/codecov-action@v5

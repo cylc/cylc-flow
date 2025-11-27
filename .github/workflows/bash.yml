@@ -55,7 +55,7 @@ jobs:
       IMAGE: 'ghcr.io/cylc/cylc-bash-testing-2:master'
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Run Docker container
         run: |
@@ -95,7 +95,7 @@ jobs:
 
       - name: Upload artifact
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: 'cylc-run (bash-${{ matrix.bash-version }})'
           path: cylc-run

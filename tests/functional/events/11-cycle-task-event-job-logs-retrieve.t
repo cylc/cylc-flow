@@ -27,12 +27,12 @@ create_test_global_config '' "
 [platforms]
     [[_retrieve]]
         $(cylc config -i "[platforms][$CYLC_TEST_PLATFORM]")
+    [[_retrieve]]
         retrieve job logs = True
-        install target = $CYLC_TEST_PLATFORM
     [[_no_retrieve]]
         $(cylc config -i "[platforms][$CYLC_TEST_PLATFORM]")
+    [[_no_retrieve]]
         retrieve job logs = False
-        install target = $CYLC_TEST_PLATFORM
 "
 
 run_ok "${TEST_NAME_BASE}-validate" \
