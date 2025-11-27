@@ -165,8 +165,12 @@ class ZMQSocketBase:
         self.bind = bind
         if context is None:
             self.context: 'Context' = zmq.asyncio.Context()
+            # ensure this context is closed with the client
+            self._disposable_context = True
         else:
             self.context = context
+            # this context was passed in by the caller, don't close it!
+            self._disposable_context = False
         self.pattern = pattern
         self.workflow = workflow
         self.host: Optional[str] = None
@@ -334,6 +338,9 @@ class ZMQSocketBase:
             self.loop.stop()
         if self.socket and not self.socket.closed:
             self.socket.close()
+        if self._disposable_context and self.context:
+            # NOTE: this ZMQ context was opened for the sole use of this client
+            self.context.term()
         LOG.debug('...stopped')
 
     def _bespoke_stop(self):

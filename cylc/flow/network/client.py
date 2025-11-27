@@ -188,6 +188,9 @@ class WorkflowRuntimeClientBase(metaclass=ABCMeta):
             # the workflow has stopped
             raise WorkflowStopped(self.workflow)
 
+    def __del__(self):
+        self.stop(stop_loop=False)
+
 
 class WorkflowRuntimeClient(  # type: ignore[misc]
     ZMQSocketBase, WorkflowRuntimeClientBase
