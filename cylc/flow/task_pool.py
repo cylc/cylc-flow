@@ -2111,7 +2111,7 @@ class TaskPool:
                     # with associated task producing these outputs.
                     self.merge_flows(itask, flow_nums)
                     self.check_spawn_psx_task(itask)
-                    self._set_outputs_itask(itask, outputs)
+                    self._set_outputs_itask(itask, outputs, is_manual=True)
                     no_op = False
 
             else:
@@ -2136,7 +2136,9 @@ class TaskPool:
                         icycle, tdef, flow_nums,
                         flow_wait=flow_wait, transient=True
                     )
-                    if trans and self._set_outputs_itask(trans, outputs):
+                    if trans and self._set_outputs_itask(
+                        trans, outputs, is_manual=True
+                    ):
                         no_op = False
 
         if warnings_flow_none:
@@ -2210,6 +2212,7 @@ class TaskPool:
         self,
         itask: 'TaskProxy',
         outputs: Iterable[str],
+        is_manual: bool = False,
     ) -> bool:
         """Set requested outputs on a task proxy and spawn children.
 
@@ -2219,7 +2222,18 @@ class TaskPool:
 
         Designated flows should already be merged to the task proxy.
 
-        Returns True if any outputs were set, else False.
+        Args:
+            itask:
+                The task to set the outputs on.
+            outputs:
+                The outputs to set.
+            is_manual:
+                Set this to True if the output was manually satisfied as per
+                user request.
+
+        Returns:
+            True if any outputs were set, else False.
+
         """
         no_op = True
         outputs = set(outputs)
@@ -2258,6 +2272,15 @@ class TaskPool:
         if not itask.state(TASK_STATUS_WAITING):
             # Can't be runahead limited or queued.
             itask.state_reset(is_runahead=False, is_queued=False)
+
+            if itask.state(*TASK_STATUSES_FINAL):
+                # clear all xtriggers
+                self.xtrigger_mgr.force_satisfy_all(itask)
+
+                if is_manual:
+                    # clear the held state (if output is manually set)
+                    self.release_held_active_task(itask)
+
             self.task_queue_mgr.remove_task(itask)
 
         if no_op:
