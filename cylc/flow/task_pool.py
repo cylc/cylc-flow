@@ -847,7 +847,7 @@ class TaskPool:
 
         is_xtrig_sequential = False
         while point is not None and (point <= self.runahead_limit_point):
-            if tdef.is_parentless(point):
+            if tdef.is_parentless(point, cutoff=self.config.start_point):
                 ntask, is_in_pool, is_xtrig_sequential = (
                     self.get_or_spawn_task(point, tdef, flow_nums)
                 )
@@ -865,7 +865,11 @@ class TaskPool:
 
     def spawn_if_parentless(self, tdef, point, flow_nums):
         """Spawn a task if parentless, regardless of runahead limit."""
-        if flow_nums and point is not None and tdef.is_parentless(point):
+        if (
+            flow_nums
+            and point is not None
+            and tdef.is_parentless(point, cutoff=self.config.start_point)
+        ):
             ntask, is_in_pool, _ = self.get_or_spawn_task(
                 point, tdef, flow_nums
             )
