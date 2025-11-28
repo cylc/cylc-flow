@@ -121,9 +121,8 @@ Examples:
 
 from functools import partial
 import sys
-from typing import Iterable, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
-from cylc.flow.exceptions import InputError
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import (
@@ -170,11 +169,6 @@ mutation (
 '''
 
 
-SELECTOR_ERROR = (
-    'Use "--output={1}" to specify outputs, not "{0}:{1}"'
-)
-
-
 def get_option_parser() -> COP:
     parser = COP(
         __doc__,
@@ -215,47 +209,11 @@ def get_option_parser() -> COP:
     return parser
 
 
-def validate_tokens(tokens_list: Iterable['Tokens']) -> None:
-    """Check the cycles/tasks provided.
-
-    This checks that cycle/task selectors have not been provided in the IDs.
-
-    Examples:
-        >>> from cylc.flow.id import Tokens
-
-        Good:
-        >>> validate_tokens([Tokens('w//c')])
-        >>> validate_tokens([Tokens('w//c/t')])
-
-        Bad:
-        >>> validate_tokens([Tokens('w//c:s')])
-        Traceback (most recent call last):
-        cylc.flow.exceptions.InputError: ...
-        >>> validate_tokens([Tokens('w//c/t:s')])
-        Traceback (most recent call last):
-        cylc.flow.exceptions.InputError: ...
-
-    """
-    for tokens in tokens_list:
-        if tokens['cycle_sel']:
-            raise InputError(SELECTOR_ERROR.format(
-                tokens['cycle'],
-                tokens['cycle_sel'],
-            ))
-        if tokens['task_sel']:
-            raise InputError(SELECTOR_ERROR.format(
-                tokens['task'],
-                tokens['task_sel'],
-            ))
-
-
 async def run(
     options: 'Values',
     workflow_id: str,
     *tokens_list: 'Tokens'
 ):
-    validate_tokens(tokens_list)
-
     pclient = get_client(workflow_id, timeout=options.comms_timeout)
 
     mutation_kwargs = {
