@@ -6,7 +6,7 @@ Datetime Cycling
 
    .. code-block:: console
 
-      $ cylc get-resources examples/datetime-cycling
+      $ cylc get-resources examples/3-datetime-cycling ~/cylc-src/datetime-cycling
 
 .. literalinclude:: flow.cylc
    :language: cylc

@@ -6,7 +6,7 @@ Hello World
 
    .. code-block:: console
 
-      $ cylc get-resources examples/hello-world
+      $ cylc get-resources examples/1-hello-world ~/cylc-src/hello-world
 
 In the time honoured tradition, this is the minimal Cylc workflow:
 
