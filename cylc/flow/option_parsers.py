@@ -119,6 +119,9 @@ class OptionSettings():
         """Update the sources from this and 1 other OptionSettings object"""
         self.sources = {*self.sources, *other.sources}
 
+    def __repr__(self) -> str:
+        return f"<{type(self).__name__} {self.args}>"
+
 
 ICP_OPTION = OptionSettings(
     ["--initial-cycle-point", "--icp"],

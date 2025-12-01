@@ -6,7 +6,7 @@ Integer Cycling
 
    .. code-block:: console
 
-      $ cylc get-resources examples/integer-cycling
+      $ cylc get-resources examples/2-integer-cycling ~/cylc-src/integer-cycling
 
 .. literalinclude:: flow.cylc
    :language: cylc
