@@ -104,7 +104,7 @@ def main(parser: COP, options: 'Values', workflow_id: Optional[str] = None):
     asyncio.run(cylc_validate(parser, options, str(source)))
 
     # Unset is validate after validation.
-    delattr(options, 'is_validate')
+    del options.is_validate
 
     log_subcommand('install', source)
     _, workflow_id = asyncio.run(cylc_install(options, workflow_id))

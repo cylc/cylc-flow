@@ -201,8 +201,8 @@ async def vr_cli(
     await cylc_validate(parser, options, workflow_id)
 
     # Unset options that do not apply after validation:
-    delattr(options, 'against_source')
-    delattr(options, 'is_validate')
+    del options.against_source
+    del options.is_validate
 
     # Run "cylc reinstall"
     log_subcommand('reinstall', workflow_id)
