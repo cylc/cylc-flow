@@ -836,9 +836,11 @@ class TaskPool:
         longer parentless, and/or hit the runahead limit.
 
         """
-        if not flow_nums or point is None:
-            # Force-triggered no-flow task.
-            # Or called with an invalid next_point.
+        if (
+            not flow_nums  # Force-triggered no-flow task
+            or point is None  # Reached end of sequence?
+            or point < self.config.start_point  # Warm start
+        ):
             return
         if self.runahead_limit_point is None:
             self.compute_runahead()
