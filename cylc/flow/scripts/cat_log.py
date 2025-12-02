@@ -586,7 +586,15 @@ def _main(
             workflow_id, point, task, submit_num
         )
 
-        job_log_present = (Path(local_log_dir) / "job.out").exists()
+        job_log_present = all(
+            (Path(local_log_dir) / file).exists()
+            for file in [
+                # the files which are used to indicate that job log retrieval
+                # has completed
+                'job.out',
+                *platform['retrieve job log expected files'],
+            ]
+        )
 
         log_is_remote = (is_remote_platform(platform)
                          and (options.filename != JOB_LOG_ACTIVITY))
