@@ -173,7 +173,8 @@ if [[ ! -x "${CYLC_HOME}/bin/${0##*/}" ]]; then
 fi
 
 # Set PATH when running cylc hub so that configurable-http-proxy can find node
-if [[ ${0##*/} == "cylc" && ${1:-} == "hub" ]]; then
+# and when running cylc graph so that it can find Graphviz
+if [[ ${0##*/} == "cylc" && ${1:-} =~ ^(graph|hub)$ ]]; then
     PATH=${PATH}:${CYLC_HOME}/bin
 fi
 
