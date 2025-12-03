@@ -566,7 +566,8 @@ def _version_check(
                 '\nUse --downgrade to disable this check (NOT RECOMMENDED!) or'
                 ' use a more recent version e.g:'
                 '<blue>'
-                f'\n$ CYLC_VERSION={last_run_version} {" ".join(sys.argv[1:])}'
+                f'\n$ CYLC_VERSION={last_run_version}'
+                f' {" ".join(['cylc'] + sys.argv[1:])}'
                 '</blue>'
             ), file=sys.stderr)
             return False

@@ -1720,7 +1720,7 @@ with Conf('global.cylc', desc='''
 
                 .. note::
                    The default command (``rsync -a``) means that the retrieved
-                   files (and the directories above including ``job/log``) get
+                   files (and the directories above including ``log/job``) get
                    the same permissions as on the remote host. This can cause
                    problems if the remote host uses different permissions to
                    the scheduler host (e.g. no world read access). To avoid
