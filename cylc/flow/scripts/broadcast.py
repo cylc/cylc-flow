@@ -196,11 +196,34 @@ def get_rdict(left, right=None, for_cancel_broadcast=False):
     upg(
         {'runtime': {'__MANY__': rdict}},
         'test',
-        for_cancel_broadcast=for_cancel_broadcast,
+        broadcast='cancel' if for_cancel_broadcast else True,
     )
+    rdict = strip_empty_sections(rdict)
     # Perform validation, but don't coerce the original (deepcopy).
     cylc_config_validate(deepcopy(rdict), SPEC['runtime']['__MANY__'])
     return rdict
+
+
+def strip_empty_sections(data):
+    """Recursively strip data structure of empty dicts.
+
+    This is needed post-upgrade as the upgrader can leave empty sections
+    behind.
+
+    >>> strip_empty_sections(
+    ...     {'job': {}, 'thing limit': 'PT2S', 'whatever': ''})
+    {'thing limit': 'PT2S', 'whatever': ''}
+
+    >>> strip_empty_sections({'section': {'subsection': {}}})
+    {}
+    """
+    if not isinstance(data, dict):
+        return data
+    return {
+        key: stripped
+        for key, val in data.items()
+        if (stripped := strip_empty_sections(val)) != {}
+    }
 
 
 def files_to_settings(settings, setting_files, cancel_mode=False):
@@ -437,9 +460,11 @@ async def run(options: 'Values', workflow_id):
                 raise InputError(
                     "--cancel=[SEC]ITEM does not take a value")
             option_item = option_item.strip()
-            setting = get_rdict(option_item, for_cancel_broadcast=True)
-            settings.append(setting)
+            if setting := get_rdict(option_item, for_cancel_broadcast=True):
+                settings.append(setting)
         files_to_settings(settings, options.cancel_files, options.cancel)
+        if not settings:
+            raise InputError("No valid settings to broadcast.")
         mutation_kwargs['variables'].update(
             {
                 'bMode': 'Clear',
@@ -456,9 +481,11 @@ async def run(options: 'Values', workflow_id):
                 raise InputError(
                     "--set=[SEC]ITEM=VALUE requires a value")
             lhs, rhs = [s.strip() for s in option_item.split("=", 1)]
-            setting = get_rdict(lhs, rhs)
-            settings.append(setting)
+            if setting := get_rdict(lhs, rhs):
+                settings.append(setting)
         files_to_settings(settings, options.setting_files)
+        if not settings:
+            raise InputError("No valid settings to broadcast.")
         mutation_kwargs['variables'].update(
             {
                 'bMode': 'Set',
