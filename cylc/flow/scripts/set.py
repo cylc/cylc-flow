@@ -26,6 +26,9 @@ By default this command completes required outputs, plus the "submitted",
 Setting prerequisites promotes target tasks to the n=0 active window; setting
 outputs also sets the prerequisites of any tasks that depend on those outputs.
 
+Note: state selectors such as ":failed" determine which tasks to target, not
+the outputs to set - see examples below.
+
 Note: see `cylc trigger` command help if you want rerun a sub-graph of tasks.
 
 Setting Outputs:
@@ -117,6 +120,11 @@ Examples:
   # satisfy multiple prerequisites at once:
   $ cylc set --pre=3/foo:x --pre=3/foo:y,3/foo:z my_workflow//3/bar
 
+  # set required outputs of all failed tasks in the n=0 window at cycle 3:
+  $ cylc set my_workflow//3/*:failed
+
+  # set the succeeded output of all failed tasks in the n=0 window at cycle 3:
+  $ cylc set my_workflow//3/*:failed --output=succeeded
 """
 
 from functools import partial
