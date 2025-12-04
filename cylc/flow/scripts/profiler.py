@@ -158,6 +158,7 @@ def parse_cpu_file(process: Process) -> int:
     except Exception as err:
         raise CylcProfilerError(
             err, "Unable to find cpu usage data") from err
+    return 0
 
 
 def get_cgroup_version(cgroup_location: str, cgroup_name: str) -> int:
