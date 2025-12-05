@@ -742,3 +742,40 @@ async def test_trigger_with_task_selector(flow, scheduler, start, monkeypatch):
         await run_cmd(force_trigger_tasks(schd, ['*:failed'], []))
         assert trigger_calls == [{'1/d'}]
         trigger_calls.clear()
+
+
+async def test_pre_warm_start_group_trigger(flow, scheduler, run, complete):
+    """Group-triggered tasks that are before the start point (in a warm-started
+    workflow) should run in order.
+
+    https://github.com/cylc/cylc-flow/pull/7101
+    """
+    schd: Scheduler = scheduler(
+        flow({
+            'scheduling': {
+                'cycling mode': 'integer',
+                'runahead limit': 'P2',
+                'graph': {
+                    'R1': 'c1 => c2 => c3 => foo',
+                    'P1': 'foo[-P1] => foo',
+                },
+            },
+            'runtime': {
+                'COLD': {},
+                **{f'c{n}': {'inherit': 'COLD'} for n in (1, 2, 3)},
+            },
+        }),
+        paused_start=False,
+        startcp='5'
+    )
+    async with run(schd):
+        schd.pool.set_hold_point(IntegerPoint('4'))
+
+        await run_cmd(force_trigger_tasks(schd, ['1/COLD'], []))
+        assert schd.pool.get_task_ids() == {'1/c1', '5/foo'}
+
+        await complete(schd, '1/c1', timeout=10)
+        assert schd.pool.get_task_ids() == {'1/c2', '5/foo'}
+        assert schd.pool._get_task_by_id('1/c2').state(TASK_STATUS_WAITING)
+
+        await complete(schd, '1/c2', '1/c3', timeout=10)

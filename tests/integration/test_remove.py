@@ -15,9 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+
 import pytest
 
-from cylc.flow import CYLC_LOG
 from cylc.flow.commands import (
     force_trigger_tasks,
     reload_workflow,
@@ -261,15 +261,14 @@ async def test_logging(
         # Invalid tasks:
         '2005/a', '2000/doh',
     ]
-    async with start(schd) as log:
-        log.set_level(logging.DEBUG, CYLC_LOG)
+    async with start(schd):
         await run_cmd(remove_tasks(schd, tasks_to_remove, []))
 
     assert log_filter(
         logging.INFO, "Removed tasks: 2000/a (flows=1), 2000/b (flows=1)"
     )
 
-    assert log_filter(logging.DEBUG, "Task(s) not removable: 2001/a, 2001/b")
+    assert log_filter(logging.WARNING, "Task(s) not removable: 2001/a, 2001/b")
     assert log_filter(logging.WARNING, "Invalid cycle point for task: a, 2005")
     assert log_filter(
         logging.WARNING, "No tasks match the IDs:\n* 2000/doh\n* 2005/a"
@@ -283,13 +282,12 @@ async def test_logging_flow_nums(
 ):
     """Test logging of task removals involving flow numbers."""
     schd: Scheduler = scheduler(example_workflow)
-    async with start(schd) as log:
-        log.set_level(logging.DEBUG, CYLC_LOG)
+    async with start(schd):
         await run_cmd(force_trigger_tasks(schd, ['1/a1'], ['1', '2']))
         # Removing from flow that doesn't exist doesn't work:
         await run_cmd(remove_tasks(schd, ['1/a1'], ['3']))
         assert log_filter(
-            logging.DEBUG, "Task(s) not removable: 1/a1 (flows=3)"
+            logging.WARNING, "Task(s) not removable: 1/a1 (flows=3)"
         )
 
         # But if a valid flow is included, it will be removed from that flow:

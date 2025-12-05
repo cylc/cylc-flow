@@ -836,9 +836,11 @@ class TaskPool:
         longer parentless, and/or hit the runahead limit.
 
         """
-        if not flow_nums or point is None:
-            # Force-triggered no-flow task.
-            # Or called with an invalid next_point.
+        if (
+            not flow_nums  # Force-triggered no-flow task
+            or point is None  # Reached end of sequence?
+            or point < self.config.start_point  # Warm start
+        ):
             return
         if self.runahead_limit_point is None:
             self.compute_runahead()
@@ -847,7 +849,7 @@ class TaskPool:
 
         is_xtrig_sequential = False
         while point is not None and (point <= self.runahead_limit_point):
-            if tdef.is_parentless(point):
+            if tdef.is_parentless(point, cutoff=self.config.start_point):
                 ntask, is_in_pool, is_xtrig_sequential = (
                     self.get_or_spawn_task(point, tdef, flow_nums)
                 )
@@ -865,7 +867,11 @@ class TaskPool:
 
     def spawn_if_parentless(self, tdef, point, flow_nums):
         """Spawn a task if parentless, regardless of runahead limit."""
-        if flow_nums and point is not None and tdef.is_parentless(point):
+        if (
+            flow_nums
+            and point is not None
+            and tdef.is_parentless(point, cutoff=self.config.start_point)
+        ):
             ntask, is_in_pool, _ = self.get_or_spawn_task(
                 point, tdef, flow_nums
             )
