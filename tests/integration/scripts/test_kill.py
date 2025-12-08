@@ -24,8 +24,11 @@ import pytest
 
 from cylc.flow.commands import (
     kill_tasks,
+    remove_tasks,
     run_cmd,
+    set_prereqs_and_outputs,
 )
+from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_remote_mgr import (
@@ -39,6 +42,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_PREPARING,
     TASK_STATUS_RUNNING,
     TASK_STATUS_SUBMIT_FAILED,
+    TASK_STATUS_WAITING,
 )
 
 
@@ -168,3 +172,72 @@ async def test_kill_preparing_pipeline(
         # Should not submit after finish because it was killed:
         assert schd.release_tasks_to_run() is False
         assert not mock_file_install.called
+
+
+@pytest.mark.parametrize('method', (remove_tasks, set_prereqs_and_outputs))
+async def test_kill_hold_retry(method, flow, scheduler, start):
+    """Test the interaction between kill, hold and automated retry.
+
+    When killed, tasks should be put into the held state to suppress automatic
+    retries.
+
+    Once the task has been completed or been removed, the held and retrying
+    states no longer serve a purpose and should be cleared (see
+    https://github.com/cylc/cylc-flow/pull/7100).
+    """
+    id_ = flow({
+        'scheduling': {
+            'graph': {
+                'R1': 'execution & submission'
+            },
+        },
+        'runtime': {
+            'execution, submission': {
+                'execution retry delays': 'PT0S',
+                'submission retry delays': 'PT0S',
+            }
+        }
+    })
+    schd: Scheduler = scheduler(id_)
+    async with start(schd):
+        # a task we will make execution-fail
+        execution = schd.pool.get_task(IntegerPoint('1'), 'execution')
+        # a task we will make submission-fail
+        submission = schd.pool.get_task(IntegerPoint('1'), 'submission')
+        assert execution and submission
+
+        # the tasks should not be held (doesn't hurt to check!)
+        assert execution.state(is_held=False)
+        assert submission.state(is_held=False)
+
+        # fake job submissions
+        execution.state_reset(TASK_STATUS_RUNNING)
+        submission.state_reset(TASK_STATUS_PREPARING)
+        schd.task_job_mgr._set_retry_timers(execution, execution.tdef.rtconfig)
+        schd.task_job_mgr._set_retry_timers(
+            submission, submission.tdef.rtconfig
+        )
+
+        # kill the tasks
+        await run_cmd(
+            kill_tasks(schd, [execution.identity, submission.identity])
+        )
+
+        # the tasks should be in the held state with a retry lined up
+        assert execution.state(TASK_STATUS_WAITING, is_held=True)  # held
+        assert submission.state(TASK_STATUS_WAITING, is_held=True)
+        assert list(execution.state.xtriggers.values()) == [False]  # retry
+        assert list(submission.state.xtriggers.values()) == [False]
+
+        # either remove or complete the tasks
+        await run_cmd(
+            method(schd, [execution.identity, submission.identity], [])
+        )
+
+        # the held state should be cleared
+        assert execution.state(is_held=False)
+        assert submission.state(is_held=False)
+
+        # the retry state should be cleared
+        assert list(execution.state.xtriggers.values()) == [True]
+        assert list(submission.state.xtriggers.values()) == [True]
