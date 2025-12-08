@@ -31,12 +31,28 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.cfgspec.globalcfg import GlobalConfig
 from cylc.flow.loggingutil import (
     CylcLogFormatter,
+    LOG_once,
     RotatingLogFileHandler,
     get_reload_start_number,
     get_sorted_logs_by_time,
     patch_log_level,
     set_timestamps,
 )
+
+
+def test_LOG_once(caplog: pytest.LogCaptureFixture):
+    """Test that LOG_once only logs a message once at a given level."""
+    caplog.set_level(logging.INFO)
+    msg = "This is a one-time message."
+    LOG_once(logging.INFO, msg)
+    assert [r.message for r in caplog.records] == [msg]
+    LOG_once(logging.INFO, msg)
+    LOG_once(logging.INFO, msg)
+    assert [r.message for r in caplog.records] == [msg]
+    LOG_once(logging.WARNING, msg)
+    assert [r.message for r in caplog.records] == [msg, msg]
+    LOG_once(logging.WARNING, msg)
+    assert [r.message for r in caplog.records] == [msg, msg]
 
 
 @pytest.fixture

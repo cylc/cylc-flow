@@ -20,11 +20,22 @@ Coerce more value type from string (to time point, duration, xtriggers, etc.).
 
 from inspect import Parameter
 import json
-from shlex import quote
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
-
+from shlex import (
+    join,
+    quote,
+)
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 from cylc.flow.wallclock import get_current_time_string
+
 
 if TYPE_CHECKING:
     from inspect import Signature
@@ -109,34 +120,68 @@ class SubProcContext:  # noqa: SIM119 (not really relevant to this case)
         self.out = cmd_kwargs.get('out')
         self.host = host
 
-    def __str__(self):
+    @property
+    def cmd_str(self) -> str:
+        """The command (+ ret code if present) formatted as a string.
+
+        >>> SubProcContext(
+        ...     'my-cmd', ['do', 'something cool'], ret_code=1,
+        ...     out='Haha', err='Oopsie'
+        ... ).cmd_str
+        "[my-cmd cmd] do 'something cool'\\n[my-cmd ret_code] 1"
+        """
+        if not self.cmd:
+            return ''
+        mesg = ''
+        if stdin_files := self.cmd_kwargs.get('stdin_files'):
+            mesg = 'cat'
+            for file_path in stdin_files:
+                mesg += ' ' + quote(str(file_path))
+            mesg += ' | '
+        mesg += (
+            join(self.cmd) if isinstance(self.cmd, list)
+            else str(self.cmd).strip()
+        )
+        if stdin_str := self.cmd_kwargs.get('stdin_str'):
+            mesg += ' <<<%s' % quote(stdin_str)
+        return (
+            f"{self._format_message('cmd', mesg)}\n"
+            f"{self._attr_str('ret_code')}"
+        )
+
+    @property
+    def out_err_str(self) -> str:
+        """The out/err content formatted as a string.
+
+        >>> SubProcContext(
+        ...     'my-cmd', ['do', 'something cool'], ret_code=1,
+        ...     out='Haha', err='Oopsie'
+        ... ).out_err_str
+        '[my-cmd out] Haha\\n[my-cmd err] Oopsie'
+        """
+        return self._attr_str('out', 'err')
+
+    def _format_message(self, attr: str, message: str) -> str:
+        return (
+            self.JOB_LOG_FMT_M
+            if len(message.splitlines()) > 1
+            else self.JOB_LOG_FMT_1
+        ) % {
+            'cmd_key': self.cmd_key,
+            'attr': attr,
+            'mesg': message,
+        }
+
+    def _attr_str(self, *attrs: str) -> str:
         ret = ''
-        for attr in 'cmd', 'ret_code', 'out', 'err':
+        for attr in attrs:
             value = getattr(self, attr, None)
-            if value is not None and str(value).strip():
-                mesg = ''
-                if attr == 'cmd' and self.cmd_kwargs.get('stdin_files'):
-                    mesg += 'cat'
-                    for file_path in self.cmd_kwargs.get('stdin_files'):
-                        mesg += ' ' + quote(str(file_path))
-                    mesg += ' | '
-                if attr == 'cmd' and isinstance(value, list):
-                    mesg += ' '.join(quote(item) for item in value)
-                else:
-                    mesg = str(value).strip()
-                if attr == 'cmd' and self.cmd_kwargs.get('stdin_str'):
-                    mesg += ' <<<%s' % quote(self.cmd_kwargs.get('stdin_str'))
-                if len(mesg.splitlines()) > 1:
-                    fmt = self.JOB_LOG_FMT_M
-                else:
-                    fmt = self.JOB_LOG_FMT_1
-                if not mesg.endswith('\n'):
-                    mesg += '\n'
-                ret += fmt % {
-                    'cmd_key': self.cmd_key,
-                    'attr': attr,
-                    'mesg': mesg}
+            if value is not None and (mesg := str(value).strip()):
+                ret += self._format_message(attr, mesg) + '\n'
         return ret.rstrip()
+
+    def __str__(self):
+        return f"{self.cmd_str}\n{self.out_err_str}"
 
     def __repr__(self) -> str:
         return f"<{type(self).__name__} {self.cmd_key}>"
