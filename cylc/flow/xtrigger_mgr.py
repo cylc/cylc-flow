@@ -812,7 +812,10 @@ class XtriggerManager:
         self.do_housekeeping = True
 
     def force_satisfy(
-        self, itask: 'TaskProxy', xtriggers: 'Dict[str, bool]'
+        self,
+        itask: 'TaskProxy',
+        xtriggers: 'Dict[str, bool]',
+        log: bool = True,
     ) -> None:
         """Force un/satisfy one or all xtrigger prerequisites of itask.
 
@@ -822,6 +825,7 @@ class XtriggerManager:
         Args:
             itask: task proxy
             xtriggers: xtrigger prerequisites to un/satisfy
+            log: if True outcome will be logged
 
         """
         # [(label, satisfied), ]
@@ -845,7 +849,8 @@ class XtriggerManager:
             state = "satisfied" if satisfied else "unsatisfied"
 
             if itask.state.xtriggers[label] == satisfied:
-                LOG.info(f"{prefix} already {state}: {suffix}")
+                if log:
+                    LOG.info(f"{prefix} already {state}: {suffix}")
                 continue
 
             itask.state.xtriggers[label] = satisfied
@@ -854,4 +859,13 @@ class XtriggerManager:
 
             self.data_store_mgr.delta_task_xtrigger(
                 itask, label, sig, satisfied)
-            LOG.info(f"{prefix} force-{state}: {suffix}")
+            if log:
+                LOG.info(f"{prefix} force-{state}: {suffix}")
+
+    def force_satisfy_all(self, itask: 'TaskProxy', log: bool = True):
+        """Force satisfy all xtriggers for the provided task."""
+        self.force_satisfy(
+            itask,
+            dict.fromkeys(itask.state.xtriggers, True),
+            log=log,
+        )

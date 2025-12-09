@@ -467,6 +467,9 @@ class Scheduler:
                     f" You can't restart it in {run_mode.value} mode."
                 )
 
+        if self.options.paused_start:
+            self.pause_workflow('Paused on start up')
+
         self.profiler.log_memory("scheduler.py: before load_flow_file")
         try:
             cfg = self.load_flow_file()
@@ -590,9 +593,6 @@ class Scheduler:
             holdcp = self.config.cfg['scheduling']['hold after cycle point']
         if holdcp is not None:
             await commands.run_cmd(commands.set_hold_point(self, holdcp))
-
-        if self.options.paused_start:
-            self.pause_workflow('Paused on start up')
 
         self.profiler.log_memory("scheduler.py: begin run while loop")
         self.is_updated = True
