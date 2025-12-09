@@ -17,6 +17,7 @@
 
 from calendar import timegm
 from datetime import datetime, timedelta, timezone
+from typing import Dict, Optional
 
 from metomi.isodatetime.timezone import (
     get_local_time_zone_format, get_local_time_zone, TimeZoneFormatMode)
@@ -37,21 +38,16 @@ TIME_FORMAT_BASIC_SUB_SECOND = "%H%M%S.%f"
 TIME_FORMAT_EXTENDED = "%H:%M:%S"
 TIME_FORMAT_EXTENDED_SUB_SECOND = "%H:%M:%S.%f"
 
-TIME_ZONE_STRING_LOCAL_BASIC = get_local_time_zone_format(
-    TimeZoneFormatMode.reduced)
-TIME_ZONE_STRING_LOCAL_EXTENDED = get_local_time_zone_format(
-    TimeZoneFormatMode.extended)
 TIME_ZONE_STRING_UTC = "Z"
 TIME_ZONE_UTC_UTC_OFFSET = (0, 0)
-TIME_ZONE_LOCAL_UTC_OFFSET = get_local_time_zone()
-TIME_ZONE_LOCAL_UTC_OFFSET_HOURS = TIME_ZONE_LOCAL_UTC_OFFSET[0]
-TIME_ZONE_LOCAL_UTC_OFFSET_MINUTES = TIME_ZONE_LOCAL_UTC_OFFSET[1]
 
 TIME_ZONE_LOCAL_INFO = {
-    "hours": TIME_ZONE_LOCAL_UTC_OFFSET[0],
-    "minutes": TIME_ZONE_LOCAL_UTC_OFFSET[1],
-    "string_basic": TIME_ZONE_STRING_LOCAL_BASIC,
-    "string_extended": TIME_ZONE_STRING_LOCAL_EXTENDED
+    "hours": get_local_time_zone()[0],
+    "minutes": get_local_time_zone()[1],
+    "string_basic": get_local_time_zone_format(
+        TimeZoneFormatMode.reduced),
+    "string_extended": get_local_time_zone_format(
+        TimeZoneFormatMode.extended)
 }
 
 TIME_ZONE_UTC_INFO = {
@@ -113,34 +109,49 @@ def get_current_time_string(display_sub_seconds=False, override_use_utc=None,
                            use_basic_format=use_basic_format)
 
 
-def get_time_string(date_time, display_sub_seconds=False,
-                    override_use_utc=None, use_basic_format=False,
-                    date_time_is_local=False, custom_time_zone_info=None):
+def get_time_string(
+    date_time: datetime,
+    display_sub_seconds: bool = False,
+    override_use_utc: Optional[bool] = None,
+    use_basic_format: bool = False,
+    date_time_is_local: bool = False,
+    custom_time_zone_info: Optional[Dict] = None,
+):
     """Return a string representing the current system time.
 
-    Arguments:
-    date_time - a datetime.datetime object.
+    Args:
+        date_time: Datetime to operate on.
+        display_sub_seconds:
+            Switch on microsecond reporting.
+        override_use_utc:
+            Switch on utc time zone reporting.
+            If False, it switches off utc time zone reporting even
+            if ``_FLAGS['utc_mode']`` is True).
+            If None, the ``_FLAGS['utc_mode']`` boolean is used.
+        use_basic_format:
+            Represent the date/time without "-" or ":"
+            delimiters. This is useful for filenames, where ":" may
+            cause problems.
+        date_time_is_local:
+            Indicates that the date_time argument
+            object is in the local time zone, not UTC.
+        custom_time_zone_info:
+            A dictionary that enforces a particular time zone:
 
-    Keyword arguments:
-    display_sub_seconds (default False) - a boolean that, if True,
-    switches on microsecond reporting
-    override_use_utc (default None) - a boolean (or None) that, if
-    True, switches on utc time zone reporting. If False, it switches
-    off utc time zone reporting (even if _FLAGS['utc_mode'] is True). If None,
-    the _FLAGS['utc_mode'] boolean is used.
-    use_basic_format (default False) - a boolean that, if True,
-    represents the date/time without "-" or ":" delimiters. This is
-    most useful for filenames where ":" may cause problems.
-    date_time_is_local - a boolean that, if True, indicates that
-    the date_time argument object is in the local time zone, not UTC.
-    custom_time_zone_info (default None) - a dictionary that enforces
-    a particular time zone. It looks like {"hours": _hours,
-    "minutes": _minutes, "string": _string} where _hours and _minutes
-    are the hours and minutes offset from UTC and _string is the string
-    to use as the time zone designator.
+            .. code-block:: python
+                {
+                    "hours": _hours,           # offset from UTC
+                    "minutes": _minutes,       # offset from utc
+                    "string_basic": _string,    # timezone designators
+                    "string_extened": _string
+                }
+
+            Usage of ``string_basic`` or ``string_extended`` is
+            switched by ``use_basic_format``.
 
     """
     time_zone_string = None
+    local_tz = get_local_time_zone()
     if custom_time_zone_info is not None:
         custom_hours = custom_time_zone_info["hours"]
         custom_minutes = custom_time_zone_info["minutes"]
@@ -149,8 +160,7 @@ def get_time_string(date_time, display_sub_seconds=False,
         else:
             custom_string = custom_time_zone_info["string_extended"]
         if date_time_is_local:
-            date_time_hours = TIME_ZONE_LOCAL_UTC_OFFSET_HOURS
-            date_time_minutes = TIME_ZONE_LOCAL_UTC_OFFSET_MINUTES
+            date_time_hours, date_time_minutes = local_tz
         else:
             date_time_hours, date_time_minutes = (0, 0)
         diff_hours = custom_hours - date_time_hours
@@ -162,17 +172,18 @@ def get_time_string(date_time, display_sub_seconds=False,
         time_zone_string = TIME_ZONE_STRING_UTC
         if date_time_is_local:
             date_time = date_time - timedelta(
-                hours=TIME_ZONE_LOCAL_UTC_OFFSET_HOURS,
-                minutes=TIME_ZONE_LOCAL_UTC_OFFSET_MINUTES
+                hours=local_tz[0],
+                minutes=local_tz[1]
             )
     else:
         if use_basic_format:
-            time_zone_string = TIME_ZONE_STRING_LOCAL_BASIC
+            time_zone_string = get_local_time_zone_format(
+                TimeZoneFormatMode.reduced)
         else:
-            time_zone_string = TIME_ZONE_STRING_LOCAL_EXTENDED
+            time_zone_string = get_local_time_zone_format(
+                TimeZoneFormatMode.extended)
         if not date_time_is_local:
-            diff_hours = TIME_ZONE_LOCAL_UTC_OFFSET_HOURS
-            diff_minutes = TIME_ZONE_LOCAL_UTC_OFFSET_MINUTES
+            diff_hours, diff_minutes = local_tz
             date_time = date_time + timedelta(
                 hours=diff_hours, minutes=diff_minutes)
     if use_basic_format:
