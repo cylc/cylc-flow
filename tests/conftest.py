@@ -270,6 +270,8 @@ def import_object_from_string(string):
         obj = getattr(obj, part)
 
     return obj
+
+
 @pytest.fixture
 def set_timezone(monkeypatch):
     """Fixture to temporarily set a timezone.
