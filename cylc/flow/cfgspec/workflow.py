@@ -1058,7 +1058,7 @@ with Conf(
 
                See :ref:`task namespace rules. <namespace-names>`
 
-            ..rubric:: Examples:
+            .. rubric:: Examples:
 
             - ``[foo]``
             - ``[foo, bar, baz]``
