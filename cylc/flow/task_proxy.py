@@ -166,6 +166,9 @@ class TaskProxy:
         .removed:
             A flag to indicate this task has been removed by command (used
             e.g. to disable failed/submit-failed event handlers).
+        .no_spawn:
+            A flag to indicate whether this task should spawn a successor
+            (usually only applies to parentless tasks).
 
     Args:
         tdef: The definition object of this task.
@@ -212,6 +215,7 @@ class TaskProxy:
         'transient',
         'is_xtrigger_sequential',
         'removed',
+        'no_spawn',
     )
 
     def __init__(
@@ -288,6 +292,7 @@ class TaskProxy:
         self.is_late = is_late
         self.waiting_on_job_prep = False
         self.removed: bool = False
+        self.no_spawn: bool = False
 
         self.state = TaskState(tdef, self.point, status, is_held)
 
