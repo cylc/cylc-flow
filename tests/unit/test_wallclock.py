@@ -78,20 +78,12 @@ def test_get_unix_time_from_time_string_error(value, error):
     pytest.param(timezone.utc, id="utc-tz-aware"),
     pytest.param(timezone(timedelta(hours=5)), id="custom-tz-aware"),
 ])
-def test_get_time_string_tzinfo(tz_info, monkeypatch: pytest.MonkeyPatch):
+def test_get_time_string_tzinfo(tz_info, set_timezone):
     """Basic check it handles naive and timezone-aware datetime objects.
 
     Currently we just ignore the timezone information in the datetime object.
     """
-    # Mock UTC time zone:
-    monkeypatch.setattr(
-        'cylc.flow.wallclock.TIME_ZONE_LOCAL_UTC_OFFSET', (0, 0)
-    )
-    for fmt in ('BASIC', 'EXTENDED'):
-        monkeypatch.setattr(
-            f'cylc.flow.wallclock.TIME_ZONE_STRING_LOCAL_{fmt}', 'Z'
-        )
-
+    set_timezone('UTC')
     assert get_time_string(
         datetime(2077, 2, 8, 13, 42, 39, 123456, tz_info)
     ) == '2077-02-08T13:42:39Z'
@@ -102,7 +94,7 @@ def test_get_current_time_string(set_timezone):
 
     https://github.com/cylc/cylc-flow/issues/6701
     """
-    set_timezone()
+    set_timezone('XXX-19:17')
     res = get_current_time_string()
     assert res[-6:] == '+19:17'
 
@@ -124,46 +116,12 @@ def test_get_current_time_string(set_timezone):
         ),
         param(
             datetime(2000, 12, 13, 15, 30, 12, 123456),
-            {
-                'custom_time_zone_info': {
-                    'hours': 0,
-                    'minutes': -20,
-                    'string_basic': 'XXX+00:20',
-                },
-                'use_basic_format': True
-            },
-            '20001213T151012XXX+00:20',
-            id='custom_time_zone_info_string_basic',
-        ),
-        param(
-            datetime(2000, 12, 13, 15, 30, 12, 123456),
-            {
-                'custom_time_zone_info': {
-                    'hours': 0,
-                    'minutes': -20,
-                    'string_extended': ':UK/Exeter',
-                },
-                'use_basic_format': False
-            },
-            '2000-12-13T15:10:12:UK/Exeter',
-            id='custom_time_zone_info_string_extended',
-        ),
-        param(
-            datetime(2000, 12, 13, 15, 30, 12, 123456),
-            {
-                'custom_time_zone_info': {
-                    'hours': 0,
-                    'minutes': -20,
-                    'string_extended': ':UK/Exeter',
-                },
-                'use_basic_format': False,
-                'date_time_is_local': True,
-            },
-            '2000-12-12T19:53:12:UK/Exeter',
-            id='date_time_is_local',
+            {'use_basic_format': True},
+            '20001214T104712+1917',
+            id='basic_format',
         ),
     ),
 )
 def test_get_time_string(set_timezone, arg, kwargs, expect):
-    set_timezone()
+    set_timezone('XXX-19:17')
     assert get_time_string(arg, **kwargs) == expect
