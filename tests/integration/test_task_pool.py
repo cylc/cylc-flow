@@ -2583,15 +2583,7 @@ async def test_add_to_pool(
     flow, scheduler, start, caplog
 ):
     """It should log attempts to add the same task again."""
-    id_ = flow(
-        {
-            'scheduling': {
-                'graph': {
-                    'R1': 'a',
-                },
-            },
-        }
-    )
+    id_ = flow('a')
     schd = scheduler(id_)
 
     async with start(schd):
