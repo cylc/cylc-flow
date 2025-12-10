@@ -50,12 +50,9 @@ from cylc.flow.xtriggers.workflow_state import (
 
 if TYPE_CHECKING:
     from inspect import BoundArguments, Signature
-    from cylc.flow.broadcast_mgr import BroadcastMgr
-    from cylc.flow.data_store_mgr import DataStoreMgr
+    from cylc.flow.scheduler import Scheduler
     from cylc.flow.subprocctx import SubFuncContext
-    from cylc.flow.subprocpool import SubProcPool
     from cylc.flow.task_proxy import TaskProxy
-    from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 
 
 XTRIG_DUP_WARNING = (
@@ -511,11 +508,7 @@ class XtriggerManager:
             '''
 
     Args:
-        workflow: workflow name
-        user: workflow owner
-        workflow_db_mgr: the DB Manager
-        broadcast_mgr: the Broadcast Manager
-        proc_pool: pool of Subprocesses
+        schd: Scheduler
         workflow_run_dir: workflow run directory
         workflow_share_dir: workflow share directory
 
@@ -523,15 +516,13 @@ class XtriggerManager:
 
     def __init__(
         self,
-        workflow: str,
-        broadcast_mgr: 'BroadcastMgr',
-        workflow_db_mgr: 'WorkflowDatabaseManager',
-        data_store_mgr: 'DataStoreMgr',
-        proc_pool: 'SubProcPool',
-        user: Optional[str] = None,
+        schd: 'Scheduler',
         workflow_run_dir: Optional[str] = None,
         workflow_share_dir: Optional[str] = None,
     ):
+        self.schd = schd
+        workflow = schd.workflow
+        user = schd.owner
         # When next to call a function, by signature.
         self.t_next_call: dict = {}
         # Succeeded triggers and their function results, by signature.
@@ -539,9 +530,8 @@ class XtriggerManager:
         # Signatures of active functions (waiting on callback).
         self.active: list = []
 
-        # Gather parentless tasks whose xtrigger(s) have been satisfied
-        # (these will be used to spawn the next occurrence).
-        self.sequential_spawn_next: Set[str] = set()
+        # A record of parentless sequential xtriggered tasks
+        # that have had their next occurrance spawned.
         self.sequential_has_spawned_next: Set[str] = set()
 
         self.workflow_run_dir = workflow_run_dir
@@ -562,10 +552,10 @@ class XtriggerManager:
             TemplateVariables.SuiteShareDir.value: workflow,
         }
 
-        self.proc_pool = proc_pool
-        self.workflow_db_mgr = workflow_db_mgr
-        self.broadcast_mgr = broadcast_mgr
-        self.data_store_mgr = data_store_mgr
+        self.proc_pool = schd.proc_pool
+        self.workflow_db_mgr = schd.workflow_db_mgr
+        self.broadcast_mgr = schd.broadcast_mgr
+        self.data_store_mgr = schd.data_store_mgr
         self.do_housekeeping = False
         self.xtriggers = XtriggerCollator()
 
@@ -696,7 +686,7 @@ class XtriggerManager:
                     # Already satisfied, just update the task
                     itask.state.xtriggers[label] = True
                     if self.all_task_seq_xtriggers_satisfied(itask):
-                        self.sequential_spawn_next.add(itask.identity)
+                        self.schd.pool.check_spawn_psx_task(itask)
                 elif _wall_clock(*ctx.func_args, **ctx.func_kwargs):
                     # Newly satisfied
                     itask.state.xtriggers[label] = True
@@ -705,7 +695,7 @@ class XtriggerManager:
                     self.workflow_db_mgr.put_xtriggers({sig: {}})
                     LOG.info('xtrigger succeeded: %s = %s', label, sig)
                     if self.all_task_seq_xtriggers_satisfied(itask):
-                        self.sequential_spawn_next.add(itask.identity)
+                        self.schd.pool.check_spawn_psx_task(itask)
                     self.do_housekeeping = True
                 continue
             # General case: potentially slow asynchronous function call.
@@ -726,7 +716,7 @@ class XtriggerManager:
                             xtrigger_env
                         )
                     if self.all_task_seq_xtriggers_satisfied(itask):
-                        self.sequential_spawn_next.add(itask.identity)
+                        self.schd.pool.check_spawn_psx_task(itask)
                 continue
 
             # Call the function to check the xtrigger.
@@ -855,7 +845,7 @@ class XtriggerManager:
 
             itask.state.xtriggers[label] = satisfied
             if satisfied and self.all_task_seq_xtriggers_satisfied(itask):
-                self.sequential_spawn_next.add(itask.identity)
+                self.schd.pool.check_spawn_psx_task(itask)
 
             self.data_store_mgr.delta_task_xtrigger(
                 itask, label, sig, satisfied)
