@@ -14,11 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from datetime import datetime
+from datetime import (
+    datetime,
+    timedelta,
+    timezone,
+)
+
+from metomi.isodatetime.data import CALENDAR
 import pytest
 from pytest import param
 
-from metomi.isodatetime.data import CALENDAR
 from cylc.flow.wallclock import (
     get_current_time_string,
     get_time_string,
@@ -66,6 +71,30 @@ def test_get_unix_time_from_time_string_360(time_str, time_sec):
 def test_get_unix_time_from_time_string_error(value, error):
     with pytest.raises(error):
         get_unix_time_from_time_string(value)
+
+
+@pytest.mark.parametrize('tz_info', [
+    pytest.param(None, id="naive"),
+    pytest.param(timezone.utc, id="utc-tz-aware"),
+    pytest.param(timezone(timedelta(hours=5)), id="custom-tz-aware"),
+])
+def test_get_time_string_tzinfo(tz_info, monkeypatch: pytest.MonkeyPatch):
+    """Basic check it handles naive and timezone-aware datetime objects.
+
+    Currently we just ignore the timezone information in the datetime object.
+    """
+    # Mock UTC time zone:
+    monkeypatch.setattr(
+        'cylc.flow.wallclock.TIME_ZONE_LOCAL_UTC_OFFSET', (0, 0)
+    )
+    for fmt in ('BASIC', 'EXTENDED'):
+        monkeypatch.setattr(
+            f'cylc.flow.wallclock.TIME_ZONE_STRING_LOCAL_{fmt}', 'Z'
+        )
+
+    assert get_time_string(
+        datetime(2077, 2, 8, 13, 42, 39, 123456, tz_info)
+    ) == '2077-02-08T13:42:39Z'
 
 
 def test_get_current_time_string(set_timezone):

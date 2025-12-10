@@ -16,11 +16,17 @@
 """Wall clock related utilities."""
 
 from calendar import timegm
-from datetime import datetime, timedelta, timezone
-from typing import Dict, Optional
+from datetime import (
+    datetime,
+    timedelta,
+    timezone,
+)
 
 from metomi.isodatetime.timezone import (
-    get_local_time_zone_format, get_local_time_zone, TimeZoneFormatMode)
+    TimeZoneFormatMode,
+    get_local_time_zone,
+    get_local_time_zone_format,
+)
 
 
 DATE_TIME_FORMAT_BASIC = "%Y%m%dT%H%M%S"
@@ -70,8 +76,9 @@ def set_utc_mode(mode):
     _FLAGS['utc_mode'] = bool(mode)
 
 
-def now(override_use_utc=None):
-    """Return a current-time datetime.datetime and a UTC timezone flag.
+def now(override_use_utc: bool | None = None) -> tuple[datetime, bool]:
+    """Return a current-time, timezone-aware datetime.datetime and a flag
+    indicating whether it is UTC or not.
 
     Keyword arguments:
     override_use_utc (default None) - a boolean (or None) that, if
@@ -81,9 +88,9 @@ def now(override_use_utc=None):
 
     """
     if override_use_utc or (override_use_utc is None and _FLAGS['utc_mode']):
-        return datetime.utcnow(), False
+        return datetime.now(timezone.utc), False
     else:
-        return datetime.now(), True
+        return datetime.now().astimezone(), True
 
 
 def get_current_time_string(display_sub_seconds=False, override_use_utc=None,
@@ -112,10 +119,10 @@ def get_current_time_string(display_sub_seconds=False, override_use_utc=None,
 def get_time_string(
     date_time: datetime,
     display_sub_seconds: bool = False,
-    override_use_utc: Optional[bool] = None,
+    override_use_utc: bool | None = None,
     use_basic_format: bool = False,
     date_time_is_local: bool = False,
-    custom_time_zone_info: Optional[Dict] = None,
+    custom_time_zone_info: dict | None = None,
 ):
     """Return a string representing the current system time.
 
