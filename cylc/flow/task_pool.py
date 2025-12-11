@@ -270,6 +270,10 @@ class TaskPool:
         """Add a task to the pool."""
 
         self.active_tasks.setdefault(itask.point, {})
+        if itask.identity in self.active_tasks[itask.point]:
+            # If logged, something has gone wrong.
+            LOG.debug(f"{itask.identity} not added to n=0: already exists")
+            return None
         self.active_tasks[itask.point][itask.identity] = itask
         self.active_tasks_changed = True
         LOG.debug(f"[{itask}] added to the n=0 window")
