@@ -1843,12 +1843,19 @@ class TaskPool:
         if (
             prev_status is not None
             and not itask.state.outputs.get_completed_outputs()
+            and not self.config.experimental.expire_triggers
         ):
-            # If itask has any history in this flow but no completed outputs
-            # we can infer it has just been deliberately removed (N.B. not
-            # by `cylc remove`), so don't immediately respawn it.
-            # TODO (follow-up work):
-            # - this logic fails if task removed after some outputs completed
+            # If itask has any history but no completed outputs, it must have
+            # been removed by suicide trigger (not by `cylc remove` which
+            # erases task history).
+            #
+            # This was a bodge to prevent suicided tasks from respawning via
+            # other dependencies, given that suicide leaves no DB record.
+            # The bodge fails if any outputs were completed before suicide.
+            #
+            # The reimplementation of suicide triggers as expire triggers
+            # renders this bodge obsolete. TODO: remove this code block on
+            # migrating expire triggers from "experimental" to standard.
             LOG.info(f"Not respawning {point}/{name} - task was removed")
             return None
 
