@@ -886,6 +886,13 @@ class Scheduler:
         self.workflow_db_mgr.pri_dao.select_abs_outputs_for_restart(
             self.pool.load_abs_outputs_for_restart)
 
+        # Compute and release runahead tasks once after loading all tasks from
+        # the DB. This also causes spawning of parentless tasks out to the
+        # runahead limit, which may be necessary here if the stop point or
+        # runahead limit was changed for the restart.
+        self.pool.compute_runahead()
+        self.pool.release_runahead_tasks()
+
         self.pool.load_db_tasks_to_hold()
         self.pool.update_flow_mgr()
 

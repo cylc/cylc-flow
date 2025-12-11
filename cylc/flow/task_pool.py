@@ -658,9 +658,6 @@ class TaskPool:
             ):
                 self.rh_release_and_queue(itask)
 
-            self.compute_runahead()
-            self.release_runahead_tasks()
-
     def load_db_task_action_timers(self, row_idx: int, row: Iterable) -> None:
         """Load a task action timer, e.g. event handlers, retry states."""
         if row_idx == 0:
