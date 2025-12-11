@@ -2576,3 +2576,23 @@ async def test_add_new_flow_rows_on_spawn(
         assert db_select(
             schd, True, 'task_outputs', 'outputs', cycle='1', name='foo'
         ) == [('{"x": "(manually completed)"}',)]
+
+
+async def test_add_to_pool(
+    flow, scheduler, start, caplog
+):
+    """It should log attempts to add the same task again."""
+    id_ = flow('a')
+    schd = scheduler(id_)
+
+    async with start(schd):
+        caplog.set_level(logging.DEBUG, CYLC_LOG)
+
+        # 1/a should be pre-spawned (parentless)
+        a_1 = schd.pool.get_task(IntegerPoint('1'), 'a')
+        assert a_1
+
+        # add it again
+        schd.pool.add_to_pool(a_1)
+
+        assert "1/a not added to n=0: already exists" in caplog.text
