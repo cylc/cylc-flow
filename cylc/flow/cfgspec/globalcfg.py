@@ -1477,6 +1477,28 @@ with Conf('global.cylc', desc='''
 
                 .. versionadded:: 8.0.0
             ''')
+
+            with Conf('profile'):
+                Conf('activate', VDR.V_BOOLEAN, False, desc='''
+                A Boolean that sets if the cylc profiler will be used
+
+                .. versionadded:: 8.0.0
+                ''')
+                Conf('cgroups path', VDR.V_STRING,
+                     default='/sys/fs/cgroup',
+                     desc='''
+                     The path to the cgroups filesystem. The default value
+                     (/sys/fs/cgroup) is the standard location for cgroups on
+                     linux and should work in most circumstances''')
+                Conf('polling interval', VDR.V_INTEGER,
+                     default=10,
+                     desc='''
+                     The interval (in seconds) at which the profiler will
+                     poll the cgroups filesystem for resource usage data.
+                     The default value of 10 seconds should be sufficient for
+                     most use cases, but can be adjusted as needed.
+                ''')
+
             Conf('job runner', VDR.V_STRING, 'background', desc=f'''
                 The system used to run jobs on the platform.
 
