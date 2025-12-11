@@ -896,7 +896,6 @@ class TaskPool:
         itask.transient = True
 
         if itask.is_xtrigger_sequential:
-            self.xtrigger_mgr.sequential_spawn_next.discard(itask.identity)
             self.xtrigger_mgr.sequential_has_spawned_next.discard(
                 itask.identity
             )
@@ -2400,13 +2399,6 @@ class TaskPool:
         # Task may be set running before xtrigger is satisfied,
         # if so check/spawn if xtrigger sequential.
         self.check_spawn_psx_task(itask)
-
-    def spawn_parentless_sequential_xtriggers(self):
-        """Spawn successor(s) of parentless wall clock satisfied tasks."""
-        while self.xtrigger_mgr.sequential_spawn_next:
-            taskid = self.xtrigger_mgr.sequential_spawn_next.pop()
-            if itask := self._get_task_by_id(taskid):
-                self.check_spawn_psx_task(itask)
 
     def check_spawn_psx_task(self, itask: 'TaskProxy') -> None:
         """Check and spawn parentless sequential xtriggered task (psx)."""

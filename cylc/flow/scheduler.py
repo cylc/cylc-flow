@@ -404,12 +404,7 @@ class Scheduler:
         self.workflow_event_handler = WorkflowEventHandler(self.proc_pool)
 
         self.xtrigger_mgr = XtriggerManager(
-            self.workflow,
-            user=self.owner,
-            broadcast_mgr=self.broadcast_mgr,
-            workflow_db_mgr=self.workflow_db_mgr,
-            data_store_mgr=self.data_store_mgr,
-            proc_pool=self.proc_pool,
+            self,
             workflow_run_dir=self.workflow_run_dir,
             workflow_share_dir=self.workflow_share_dir,
         )
@@ -1649,9 +1644,6 @@ class Scheduler:
 
             if itask.is_ready_to_run() and not itask.is_manual_submit:
                 self.pool.queue_task(itask)
-
-        if self.xtrigger_mgr.sequential_spawn_next:
-            self.pool.spawn_parentless_sequential_xtriggers()
 
         if self.xtrigger_mgr.do_housekeeping:
             self.xtrigger_mgr.housekeep(self.pool.get_tasks())

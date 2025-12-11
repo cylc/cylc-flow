@@ -207,16 +207,12 @@ def xtrigger_mgr() -> XtriggerManager:
     and uses a mocked broadcast_mgr."""
     workflow_name = "sample_workflow"
     user = "john-foo"
-    return XtriggerManager(
-        workflow=workflow_name,
-        user=user,
-        proc_pool=Mock(put_command=lambda *a, **k: True),
-        workflow_db_mgr=Mock(housekeep=lambda *a, **k: True),
-        broadcast_mgr=Mock(put_broadcast=lambda *a, **k: True),
-        data_store_mgr=DataStoreMgr(
-            create_autospec(Scheduler, workflow=workflow_name, owner=user)
-        )
-    )
+    schd = create_autospec(Scheduler, workflow=workflow_name, owner=user)
+    schd.proc_pool = Mock(put_command=lambda *a, **k: True)
+    schd.workflow_db_mgr = Mock(housekeep=lambda *a, **k: True)
+    schd.broadcast_mgr = Mock(put_broadcast=lambda *a, **k: True)
+    schd.data_store_mgr = DataStoreMgr(schd)
+    return XtriggerManager(schd)
 
 
 @pytest.fixture()
