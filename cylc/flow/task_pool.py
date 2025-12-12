@@ -212,6 +212,7 @@ class TaskPool:
 
         self.tasks_to_hold: Set[Tuple[str, 'PointBase']] = set()
         self.tasks_to_trigger_now: Set['TaskProxy'] = set()
+        self.pre_start_tasks_to_trigger: set[tuple[str, 'PointBase']] = set()
 
     def set_stop_task(self, task_id):
         """Set stop after a task."""
@@ -907,6 +908,9 @@ class TaskPool:
             pass
         else:
             self.tasks_to_trigger_now.discard(itask)
+            self.pre_start_tasks_to_trigger.discard(
+                (itask.tdef.name, itask.point)
+            )
             self.tasks_removed = True
             self.active_tasks_changed = True
             if not self.active_tasks[itask.point]:
@@ -1823,6 +1827,15 @@ class TaskPool:
         submit_num, prev_status, prev_flow_wait = (
             self._get_task_history(name, point, flow_nums)
         )
+
+        if (
+            not prev_status
+            and point < self.config.start_point
+            # Warm start - treat pre-startcp tasks as already run,
+            # unless manually triggered:
+            and (name, point) not in self.pre_start_tasks_to_trigger
+        ):
+            return None
 
         # Create the task proxy with any completed outputs loaded.
         itask = self._get_task_proxy_db_outputs(

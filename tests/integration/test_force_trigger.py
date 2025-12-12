@@ -746,9 +746,11 @@ async def test_trigger_with_task_selector(flow, scheduler, start, monkeypatch):
 
 async def test_pre_warm_start_group_trigger(flow, scheduler, run, complete):
     """Group-triggered tasks that are before the start point (in a warm-started
-    workflow) should run in order.
+    workflow) should run in order, and only in-group tasks should run as all
+    other tasks before the startcp are treated as complete.
 
     https://github.com/cylc/cylc-flow/pull/7101
+    https://github.com/cylc/cylc-flow/pull/7148
     """
     schd: Scheduler = scheduler(
         flow({
@@ -756,7 +758,7 @@ async def test_pre_warm_start_group_trigger(flow, scheduler, run, complete):
                 'cycling mode': 'integer',
                 'runahead limit': 'P2',
                 'graph': {
-                    'R1': 'c1 => c2 => c3 => foo',
+                    'R1': 'start => c1 => c2 => c3 => foo',
                     'P1': 'foo[-P1] => foo',
                 },
             },
@@ -779,3 +781,7 @@ async def test_pre_warm_start_group_trigger(flow, scheduler, run, complete):
         assert schd.pool._get_task_by_id('1/c2').state(TASK_STATUS_WAITING)
 
         await complete(schd, '1/c2', '1/c3', timeout=10)
+        assert schd.pool.get_task_ids() == {'5/foo'}
+
+        # Check list of pre-start tasks to trigger has been cleared:
+        assert not schd.pool.pre_start_tasks_to_trigger

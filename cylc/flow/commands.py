@@ -808,9 +808,16 @@ def _force_trigger_tasks(
         # (No need to remove tasks if triggering with no-flow).
         _remove_matched_tasks(
             schd,
-            {*active_to_remove, *inactive},
+            ids := {*active_to_remove, *inactive},
             flow_nums,
             warn_unremovable=False,
+        )
+        # Record pre-startcp tasks, as these would not normally be spawned -
+        # see https://github.com/cylc/cylc-flow/pull/7148
+        schd.pool.pre_start_tasks_to_trigger.update(
+            (tokens['task'], point)
+            for tokens in ids
+            if (point := get_point(tokens['cycle'])) < schd.config.start_point
         )
 
         # trigger should override the held state, however, in-group tasks may
