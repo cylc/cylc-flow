@@ -44,27 +44,39 @@ from contextlib import suppress
 import inspect
 import os
 from pathlib import Path
-import select
+import selectors
 import sys
 import typing as t
 
-from packaging.version import parse as parse_version
 from packaging.specifiers import SpecifierSet
+from packaging.version import parse as parse_version
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import CylcError
-from cylc.flow.id import tokenise, IDTokens, Tokens
+from cylc.flow.id import (
+    IDTokens,
+    Tokens,
+    tokenise,
+)
 from cylc.flow.network.scan import scan
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.pathutil import get_workflow_run_job_dir
 from cylc.flow.resources import (
-    list_resources as list_resources_,
     RESOURCE_DIR,
+    list_resources as list_resources_,
 )
-from cylc.flow.scripts.cylc import ALIASES, COMMANDS
-from cylc.flow.scripts.scan import FLOW_STATES, get_pipe, ScanOptions
+from cylc.flow.scripts.cylc import (
+    ALIASES,
+    COMMANDS,
+)
+from cylc.flow.scripts.scan import (
+    FLOW_STATES,
+    ScanOptions,
+    get_pipe,
+)
 from cylc.flow.terminal import cli_function
 from cylc.flow.workflow_files import infer_latest_run_from_id
+
 
 if t.TYPE_CHECKING:
     from optparse import Values
@@ -93,13 +105,13 @@ def stdin(timeout: int = 2) -> t.Iterator[str]:
         The file line by line.
 
     """
-    while True:
-        if select.select([sys.stdin], [], [], timeout)[0]:
-            # wait for input => yield
-            yield sys.stdin.readline()
-        else:
-            # timeout => stop iterating
-            return
+    selector = selectors.DefaultSelector()
+    selector.register(sys.stdin, selectors.EVENT_READ)
+    while selector.select(timeout):
+        # wait for input => yield
+        yield sys.stdin.readline()
+    # timeout => stop iterating
+    selector.close()
 
 
 async def server(
