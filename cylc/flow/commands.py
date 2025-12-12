@@ -161,6 +161,7 @@ def _remove_matched_tasks(
     schd: 'Scheduler',
     ids: Set[TaskTokens],
     flow_nums: 'FlowNums',
+    no_spawn: bool
 ):
     """Remove matched tasks."""
     # Mapping of *relative* task IDs to removed flow numbers:
@@ -182,6 +183,7 @@ def _remove_matched_tasks(
                 # Need to remove the task from the pool.
                 # Spawn next occurrence of xtrigger sequential task (otherwise
                 # this would not happen after removing this occurrence):
+                itask.no_spawn = no_spawn
                 schd.pool.check_spawn_psx_task(itask)
                 schd.pool.remove(itask, 'request')
                 to_kill.append(itask)
@@ -493,13 +495,17 @@ async def set_verbosity(schd: 'Scheduler', level: 'Enum'):
 
 @_command('remove_tasks')
 async def remove_tasks(
-    schd: 'Scheduler', tasks: Iterable[str], flow: List[str]
+    schd: 'Scheduler',
+    tasks: Iterable[str],
+    flow: List[str],
+    no_spawn: bool = False
 ):
     """Match and remove tasks (`cylc remove` command).
 
     Args:
         tasks: Relative IDs or globs to match.
         flow: flows to remove the tasks from.
+        no_spawn: Do not spawn successors before removal.
     """
     flow = back_compat_flow_all(flow)  # BACK COMPAT (see func def)
     ids = validate.is_tasks(tasks)
@@ -512,7 +518,8 @@ async def remove_tasks(
         _remove_matched_tasks(
             schd,
             matched,
-            schd.pool.flow_mgr.cli_to_flow_nums(flow)
+            schd.pool.flow_mgr.cli_to_flow_nums(flow),
+            no_spawn
         )
 
 
@@ -806,7 +813,8 @@ def _force_trigger_tasks(
     # Remove all inactive and selected active group members.
     if flow != [FLOW_NONE]:
         # (No need to remove tasks if triggering with no-flow).
-        _remove_matched_tasks(schd, {*active_to_remove, *inactive}, flow_nums)
+        _remove_matched_tasks(
+            schd, {*active_to_remove, *inactive}, flow_nums, False)
 
         # trigger should override the held state, however, in-group tasks may
         # have previously been held and active in-group tasks will become

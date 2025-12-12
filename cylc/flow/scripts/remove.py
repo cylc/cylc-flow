@@ -71,11 +71,13 @@ mutation (
   $wFlows: [WorkflowID]!,
   $tasks: [NamespaceIDGlob]!,
   $flow: [Flow!],
+  $noSpawn: Boolean,
 ) {
   remove (
     workflows: $wFlows,
     tasks: $tasks,
-    flow: $flow
+    flow: $flow,
+    noSpawn: $noSpawn
   ) {
     result
   }
@@ -91,7 +93,12 @@ def get_option_parser() -> COP:
         multiworkflow=True,
         argdoc=[FULL_ID_MULTI_ARG_DOC],
     )
+
     add_flow_opts_for_remove(parser)
+    parser.add_option(
+        "--no-spawn",
+        help="Do not spawn successors before removal.",
+        action="store_true", default=False, dest="no_spawn")
     return parser
 
 
@@ -107,6 +114,7 @@ async def run(options: 'Values', workflow_id: str, *tokens_list):
                 for tokens in tokens_list
             ],
             'flow': options.flow,
+            'noSpawn': options.no_spawn,
         }
     }
 
