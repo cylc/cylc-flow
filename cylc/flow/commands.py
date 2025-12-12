@@ -430,7 +430,7 @@ async def poll_tasks(schd: 'Scheduler', tasks: Iterable[str]):
     matched, unmatched = schd.pool.id_match(ids, only_match_pool=True)
     _report_unmatched(unmatched)
     itasks = schd.pool.get_itasks(matched)
-    schd.task_job_mgr.poll_task_jobs(itasks)
+    schd.task_job_mgr.poll_task_jobs(itasks, manual_request=True)
     yield len(unmatched)
 
 
