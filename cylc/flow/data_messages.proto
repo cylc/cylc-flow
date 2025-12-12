@@ -107,6 +107,8 @@ message PbWorkflow {
     optional bool states_updated = 39;
     optional int32 n_edge_distance = 40;
     repeated PbLogRecord log_records = 41;
+    optional bool contains_held = 42;
+    optional bool contains_retry = 43;
 }
 
 message PbLogRecord {

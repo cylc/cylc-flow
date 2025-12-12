@@ -2341,6 +2341,7 @@ class DataStoreMgr:
             is_held_total = 0
             is_queued_total = 0
             is_runahead_total = 0
+            contains_retry = False
             for root_id in set(
                     [n.id
                      for n in data[FAMILY_PROXIES].values()
@@ -2359,14 +2360,24 @@ class DataStoreMgr:
                     is_queued_total += root_node.is_queued_total
                     is_runahead_total += root_node.is_runahead_total
                     state_counter += Counter(dict(root_node.state_totals))
+                    contains_retry = contains_retry or root_node.is_retry
             w_delta.states[:] = state_counter.keys()
             for state, state_cnt in state_counter.items():
                 w_delta.state_totals[state] = state_cnt
 
             w_delta.states_updated = True
+            w_delta.contains_held = bool(is_held_total)
+            w_delta.contains_retry = contains_retry
+
+            # BACK COMPAT: is_held_total, is_queued_total, is_runahead_total
+            # From: 8.6.2
+            # These fields were added, but have probably never been used.
+            # They are marked as deprecated in GraphQL pending possible
+            # deletion in a future release (to cut down on message cruft)
             w_delta.is_held_total = is_held_total
             w_delta.is_queued_total = is_queued_total
             w_delta.is_runahead_total = is_runahead_total
+
             delta_set = True
 
             for state, tp_queue in self.latest_state_tasks.items():
