@@ -23,7 +23,11 @@ This module provides:
   because "time.strftime" will handle time zone from "localtime" properly.
 """
 
-from contextlib import contextmanager, suppress
+from contextlib import (
+    contextmanager,
+    suppress,
+)
+from functools import lru_cache
 from glob import glob
 import logging
 import os
@@ -32,10 +36,18 @@ import re
 import sys
 import textwrap
 from time import time
-from typing import List, Optional, Union
+from typing import (
+    List,
+    Optional,
+    Union,
+)
 
-from ansimarkup import parse as cparse, strip as cstrip
+from ansimarkup import (
+    parse as cparse,
+    strip as cstrip,
+)
 
+from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.wallclock import get_time_string_from_unix_time
 
@@ -43,6 +55,10 @@ from cylc.flow.wallclock import get_time_string_from_unix_time
 LOG_FILE_EXTENSION = '.log'
 START_LOAD_TYPE = 'start'
 RESTART_LOAD_TYPE = 'restart'
+
+
+LOG_once = lru_cache(LOG.log)
+"""Log a given message at this level only once."""
 
 
 class CylcLogFormatter(logging.Formatter):
