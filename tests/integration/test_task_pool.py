@@ -2342,6 +2342,52 @@ async def test_expire_dequeue_with_retries(
         assert not schd.pool.task_queue_mgr.remove_task(itask)
 
 
+async def test_clock_expire_with_sequential_xtriggers(
+    flow,
+    scheduler,
+    run,
+    complete,
+    log_filter,
+):
+    """Clock expire should play nicely with sequential xtriggers.
+
+    See https://github.com/cylc/cylc-flow/issues/7103
+    """
+    id_ = flow({
+        'scheduler': {
+            'cycle point format': 'CCYY',
+        },
+        'scheduling': {
+            'initial cycle point': '2000',
+            # v prevent this test passing if sequential spawning gets broken
+            'runahead limit': 'P2',
+            'special tasks': {
+                'clock-expire': 'a',
+            },
+            'graph': {
+                'P1Y': '@wall_clock => a => b => c'
+            },
+        },
+        'runtime': {
+            'a': {
+                'completion': 'succeeded or expired',
+            },
+        },
+    })
+    schd = scheduler(id_, paused_start=False)
+    async with run(schd):
+        # each cycle should expire and spawn in turn
+        await complete(schd, '2005/a')
+        for cycle in range(2000, 2006):
+            assert log_filter(regex=rf'{cycle}/a:waiting.*expired')
+
+        # * the next instance should have been spawned
+        # * it should be the only task in the pool
+        assert {
+            itask.tokens.relative_id for itask in schd.pool.get_tasks()
+        } == {'2006/a'}
+
+
 async def test_downstream_complete_before_upstream(
     flow, scheduler, start, db_select
 ):
