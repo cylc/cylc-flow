@@ -21,6 +21,7 @@ from textwrap import dedent
 from typing import (
     Any,
     Dict,
+    Literal,
     Optional,
     Set,
 )
@@ -2101,7 +2102,9 @@ with Conf(
                 ''')
 
 
-def upg(cfg, descr, for_cancel_broadcast=False):
+def upg(
+    cfg: dict, descr: str, broadcast: bool | Literal["cancel"] = False
+) -> upgrader:
     """Upgrade old workflow configuration.
 
     NOTE: We are silencing deprecation (and only deprecation) warnings
@@ -2110,14 +2113,15 @@ def upg(cfg, descr, for_cancel_broadcast=False):
     warnings and upgrade the syntax).
 
     Args:
-        for_cancel_broadcast:
-            If True, extra validation steps which inspect configuration values
-            will be skipped. This is used for "cylc broadcast --cancel" where
-            the values are not known.
+        broadcast:
+            If truthy, tailors warning messages for the context of broadcasts.
+            If "cancel", extra validation steps which inspect configuration
+            values will be skipped. This is used for
+            "cylc broadcast --cancel" where the values are not known.
             See https://github.com/cylc/cylc-flow/issues/6950.
 
     """
-    u = upgrader(cfg, descr)
+    u = upgrader(cfg, descr, broadcast=bool(broadcast))
 
     u.obsolete(
         '7.8.0', ['runtime', '__MANY__', 'suite state polling', 'template']
@@ -2320,7 +2324,7 @@ def upg(cfg, descr, for_cancel_broadcast=False):
     )
     u.upgrade()
 
-    if not for_cancel_broadcast:
+    if broadcast != "cancel":
         upgrade_graph_section(cfg, descr)
         upgrade_param_env_templates(cfg, descr)
         warn_about_depr_platform(cfg)
@@ -2392,7 +2396,7 @@ def upgrade_param_env_templates(cfg, descr):
                 continue
             if not cylc.flow.flags.cylc7_back_compat:
                 if first_warn:
-                    LOG.warning(upgrader.DEPR_MSG)
+                    LOG.warning(upgrader.depr_msg)
                     first_warn = False
                 LOG.warning(
                     f' * (8.0.0) {dep % task_name} contents prepended to '
