@@ -1834,7 +1834,8 @@ class TaskPool:
         if (
             not prev_status
             and point < self.config.start_point
-            # Warm start - treat pre-startcp tasks as already run,
+            and flow_nums.issuperset({1})
+            # Warm start - treat pre-startcp tasks as already run in flow=1,
             # unless manually triggered:
             and (name, point) not in self.pre_start_tasks_to_trigger
         ):

@@ -32,6 +32,7 @@ from cylc.flow.commands import (
     set_prereqs_and_outputs,
 )
 from cylc.flow.cycling.integer import IntegerPoint
+from cylc.flow.flow_mgr import FLOW_NEW
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_state import (
     TASK_STATUS_FAILED,
@@ -745,12 +746,12 @@ async def test_trigger_with_task_selector(flow, scheduler, start, monkeypatch):
 
 
 async def test_pre_warm_start_group_trigger(flow, scheduler, run, complete):
-    """Group-triggered tasks that are before the start point (in a warm-started
-    workflow) should run in order, and only in-group tasks should run as all
-    other tasks before the startcp are treated as complete.
+    """Group-triggered tasks that are before the start point should run in
+    order.
 
+    This is designed to handle re-running a family of one-time setup tasks
+    in a warm-started workflow.
     https://github.com/cylc/cylc-flow/pull/7101
-    https://github.com/cylc/cylc-flow/pull/7148
     """
     schd: Scheduler = scheduler(
         flow({
@@ -785,3 +786,42 @@ async def test_pre_warm_start_group_trigger(flow, scheduler, run, complete):
 
         # Check list of pre-start tasks to trigger has been cleared:
         assert not schd.pool.pre_start_tasks_to_trigger
+
+
+async def test_pre_warm_start_trigger_flow_new(
+    flow, scheduler, run, complete
+):
+    """In a warm-started workflow, triggering tasks that are < startcp:
+    * Should not flow on in flow=1
+    * Should flow on in flow=new
+
+    As we don't have any history for pre-startcp tasks in a warm start,
+    we treat them as complete in flow=1.
+    https://github.com/cylc/cylc-flow/pull/7148
+    """
+    schd: Scheduler = scheduler(
+        flow({
+            'scheduling': {
+                'cycling mode': 'integer',
+                'graph': {
+                    'P1': 'foo[-P1] => foo',
+                },
+            },
+        }),
+        paused_start=False,
+        startcp='10'
+    )
+    async with run(schd):
+        schd.pool.set_hold_point(IntegerPoint('9'))
+
+        # flow=1 - don't flow on:
+        await run_cmd(force_trigger_tasks(schd, ['1/foo'], []))
+        assert schd.pool.get_task_ids() == {'1/foo', '10/foo'}
+        await complete(schd, '1/foo', timeout=10)
+        assert schd.pool.get_task_ids() == {'10/foo'}
+
+        # flow=new - flow on:
+        await run_cmd(force_trigger_tasks(schd, ['3/foo'], [FLOW_NEW]))
+        assert schd.pool.get_task_ids() == {'3/foo', '10/foo'}
+        await complete(schd, '5/foo', timeout=10)
+        assert schd.pool.get_task_ids() == {'6/foo', '10/foo'}
