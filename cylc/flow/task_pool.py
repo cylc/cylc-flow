@@ -210,8 +210,8 @@ class TaskPool:
             self.config.runtime['descendants']
         )
 
-        self.tasks_to_hold: Set[Tuple[str, 'PointBase']] = set()
-        self.tasks_to_trigger_now: Set['TaskProxy'] = set()
+        self.tasks_to_hold: set[tuple[str, 'PointBase']] = set()
+        self.tasks_to_trigger_now: set['TaskProxy'] = set()
         self.pre_start_tasks_to_trigger: set[tuple[str, 'PointBase']] = set()
 
     def set_stop_task(self, task_id):
@@ -1729,8 +1729,8 @@ class TaskPool:
         return True
 
     def _get_task_history(
-        self, name: str, point: 'PointBase', flow_nums: Set[int]
-    ) -> Tuple[int, Optional[str], bool]:
+        self, name: str, point: 'PointBase', flow_nums: 'FlowNums'
+    ) -> tuple[int, str | None, bool]:
         """Get submit_num, status, flow_wait for point/name in flow_nums.
 
         Args:
@@ -1768,7 +1768,10 @@ class TaskPool:
         return submit_num, status, flow_wait
 
     def _load_historical_outputs(self, itask: 'TaskProxy') -> None:
-        """Load a task's historical outputs from the DB."""
+        """Load a task's historical outputs from the DB.
+
+        NOTE this creates a task_states/task_outputs DB entry if not present.
+        """
         info = self.workflow_db_mgr.pri_dao.select_task_outputs(
             itask.tdef.name, str(itask.point))
         if not info:
@@ -1805,9 +1808,9 @@ class TaskPool:
         self,
         name: str,
         point: 'PointBase',
-        flow_nums: Set[int],
+        flow_nums: 'FlowNums',
         flow_wait: bool = False,
-    ) -> Optional[TaskProxy]:
+    ) -> TaskProxy | None:
         """Return a new task proxy for the given flow if possible.
 
         We need to hit the DB for:
@@ -1838,7 +1841,7 @@ class TaskPool:
             return None
 
         # Create the task proxy with any completed outputs loaded.
-        itask = self._get_task_proxy_db_outputs(
+        itask = self._load_db_task_proxy(
             point,
             self.config.get_taskdef(name),
             flow_nums,
@@ -1936,7 +1939,7 @@ class TaskPool:
         self.workflow_db_mgr.put_update_task_flow_wait(itask)
         return None
 
-    def _get_task_proxy_db_outputs(
+    def _load_db_task_proxy(
         self,
         point: 'PointBase',
         taskdef: 'TaskDef',
@@ -1946,8 +1949,11 @@ class TaskPool:
         transient: bool = False,
         is_manual_submit: bool = False,
         submit_num: int = 0,
-    ) -> Optional['TaskProxy']:
-        """Spawn a task, update outputs from DB."""
+    ) -> 'TaskProxy | None':
+        """Spawn a task, update outputs from DB.
+
+        NOTE this creates a task_states/task_outputs DB entry if not present.
+        """
 
         if not self.can_be_spawned(taskdef.name, point):
             return None
@@ -2151,7 +2157,7 @@ class TaskPool:
                     no_op = False
                 else:
                     # Outputs (may be empty list)
-                    trans = self._get_task_proxy_db_outputs(
+                    trans = self._load_db_task_proxy(
                         icycle, tdef, flow_nums,
                         flow_wait=flow_wait, transient=True
                     )
