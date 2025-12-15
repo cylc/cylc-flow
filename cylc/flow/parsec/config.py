@@ -45,11 +45,11 @@ class ParsecConfig:
     def __init__(
         self,
         spec: 'ConfigNode',
-        upgrader: Optional[Callable[[dict, str], None]] = None,
-        output_fname: Optional[str] = None,
-        tvars: Optional[dict] = None,
-        validator: Optional[Callable] = None,
-        options: Optional['Values'] = None
+        upgrader: Callable | None = None,
+        output_fname: str | None = None,
+        tvars: dict | None = None,
+        validator: Callable | None = None,
+        options: 'Values | None' = None
     ):
         """Instatiate a parsec config object.
 
