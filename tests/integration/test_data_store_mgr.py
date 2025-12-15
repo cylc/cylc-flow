@@ -664,7 +664,7 @@ async def test_absolute_graph_edges(flow, scheduler, start):
         }
 
 
-async def test_group_state_on_window_rezise(flow, scheduler, start):
+async def test_group_state_on_window_resize(flow, scheduler, start):
     """Test group state change on n-window resize. This method will expand
     and reduce the data-store to change the family/root states.
 
