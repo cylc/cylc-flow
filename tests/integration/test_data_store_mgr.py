@@ -51,6 +51,7 @@ from cylc.flow.network.log_stream_handler import ProtobufStreamHandler
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_events_mgr import TaskEventsManager
 from cylc.flow.task_outputs import (
+    TASK_OUTPUT_FAILED,
     TASK_OUTPUT_STARTED,
     TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUCCEEDED,
@@ -661,6 +662,118 @@ async def test_absolute_graph_edges(flow, scheduler, start):
             # +2 for Cylc's runahead
             for cycle in range(1, runahead_cycles + 3)
         }
+
+
+async def test_group_state_on_window_resize(flow, scheduler, start):
+    """Test group state change on n-window resize. This method will expand
+    and reduce the data-store to change the family/root states.
+
+    See: https://github.com/cylc/cylc-flow/issues/7115
+    """
+    id_ = flow({
+        'scheduling': {
+            'graph': {
+                'R1': 'foo:failed => bar'
+            }
+        },
+        'runtime': {
+            'FOOBAR': {},
+            'FOO': {
+                'inherit': 'FOOBAR'
+            },
+            'foo': {
+                'inherit': 'FOO',
+            },
+            'BAR': {
+                'inherit': 'FOOBAR'
+            },
+            'bar': {
+                'inherit': 'BAR'
+            }
+        }
+    })
+    schd = scheduler(id_)
+    async with start(schd):
+        # initialise the data store
+        await schd.update_data_structure()
+        w_id = schd.data_store_mgr.workflow_id
+        data = schd.data_store_mgr.data[w_id]
+        schd.pool.hold_tasks({TaskTokens('1', 'bar')})
+        await schd.update_data_structure()
+        # At startup foo/FOO/FOOBAR/root should be waiting
+        assert {
+            t.state
+            for t in data[TASK_PROXIES].values()
+        } == {TASK_STATUS_WAITING}
+        assert {
+            data[FAMILY_PROXIES][f_id].state
+            for f_id in [
+                schd.data_store_mgr.id_.duplicate(cycle='1', task=t).id
+                for t in ['FOO', 'FOOBAR', 'root']
+            ]
+        } == {TASK_STATUS_WAITING}
+
+        # Set foo to failed, spawn in bar, remove foo
+        itask = schd.pool._get_task_by_id('1/foo')
+        itask.state.reset(TASK_STATUS_FAILED)
+        schd.pool.spawn_on_output(itask, TASK_OUTPUT_FAILED)
+        schd.data_store_mgr.delta_task_state(itask)
+        schd.pool.remove(itask, 'Test removal')
+        schd.data_store_mgr.update_data_structure()
+        # With both tasks there should be a mix failed and waiting
+        assert {
+            t.state
+            for t in data[TASK_PROXIES].values()
+        } == {TASK_STATUS_FAILED, TASK_STATUS_WAITING}
+        assert [
+            data[FAMILY_PROXIES][f_id].state
+            for f_id in [
+                schd.data_store_mgr.id_.duplicate(cycle='1', task=t).id
+                for t in ['FOO', 'BAR', 'FOOBAR', 'root']
+            ]
+        ] == [
+            TASK_STATUS_FAILED,
+            TASK_STATUS_WAITING,
+            TASK_STATUS_FAILED,
+            TASK_STATUS_FAILED,
+        ]
+
+        # Window size reduction to remove failed state task
+        schd.data_store_mgr.set_graph_window_extent(0)
+        schd.data_store_mgr.update_data_structure()
+        # Now bar/BAR/FOOBAR/root should be waiting
+        assert {
+            t.state
+            for t in data[TASK_PROXIES].values()
+        } == {TASK_STATUS_WAITING}
+        assert {
+            data[FAMILY_PROXIES][f_id].state
+            for f_id in [
+                schd.data_store_mgr.id_.duplicate(cycle='1', task=t).id
+                for t in ['BAR', 'FOOBAR', 'root']
+            ]
+        } == {TASK_STATUS_WAITING}
+
+        # Window size increase to add failed state task again
+        schd.data_store_mgr.set_graph_window_extent(1)
+        schd.data_store_mgr.update_data_structure()
+        # Again there should be a mix failed and waiting states
+        assert {
+            t.state
+            for t in data[TASK_PROXIES].values()
+        } == {TASK_STATUS_FAILED, TASK_STATUS_WAITING}
+        assert [
+            data[FAMILY_PROXIES][f_id].state
+            for f_id in [
+                schd.data_store_mgr.id_.duplicate(cycle='1', task=t).id
+                for t in ['FOO', 'BAR', 'FOOBAR', 'root']
+            ]
+        ] == [
+            TASK_STATUS_FAILED,
+            TASK_STATUS_WAITING,
+            TASK_STATUS_FAILED,
+            TASK_STATUS_FAILED,
+        ]
 
 
 async def test_flow_numbers(flow, scheduler, start):
