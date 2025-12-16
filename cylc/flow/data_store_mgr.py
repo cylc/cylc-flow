@@ -2189,6 +2189,7 @@ class DataStoreMgr:
         all_nodes = self.all_n_window_nodes
         fp_added = self.added[FAMILY_PROXIES]
         fp_data = self.data[self.workflow_id][FAMILY_PROXIES]
+        fp_updated = self.updated[FAMILY_PROXIES]
         if fp_id in fp_data:
             fam_node = fp_data[fp_id]
         elif fp_id in fp_added:
@@ -2200,13 +2201,19 @@ class DataStoreMgr:
                 self.updated_state_families.add(fp_id)
                 self.state_update_families.remove(fp_id)
             return
-        # Gather child families, then check/update recursively
-        for child_fam_id in fam_node.child_families:
+        fam_updated_node = fp_updated.get(fp_id)
+        # Gather child families, then check/update recursively.
+        # Use all new and existing child families that are not destined
+        # to be pruned.
+        child_fams = set(fam_node.child_families)
+        if fam_updated_node:
+            child_fams.update(fam_updated_node.child_families)
+        child_fams.difference_update(self.family_pruned_ids)
+        for child_fam_id in child_fams:
             if child_fam_id in self.updated_state_families:
                 continue
             self._family_ascent_point_update(child_fam_id)
         if fp_id in self.state_update_families:
-            fp_updated = self.updated[FAMILY_PROXIES]
             tp_data = self.data[self.workflow_id][TASK_PROXIES]
             tp_updated = self.updated[TASK_PROXIES]
             tp_added = self.added[TASK_PROXIES]
@@ -2222,7 +2229,7 @@ class DataStoreMgr:
             is_xtriggered = False
             graph_depth = self.n_edge_distance
             # Gather the counts and totals of child families.
-            for child_id in fam_node.child_families:
+            for child_id in child_fams:
                 child_node = fp_updated.get(child_id, fp_data.get(child_id))
                 if child_node is not None:
                     # if child family is active/n=0
@@ -2237,8 +2244,14 @@ class DataStoreMgr:
                     state_set.add(child_node.state)
                     if child_node.graph_depth < graph_depth:
                         graph_depth = child_node.graph_depth
-            # Gather all child task states
-            for tp_id in fam_node.child_tasks:
+            # Gather all child task states.
+            # Use all new and existing child tasks that are not destined
+            # to be pruned.
+            child_tasks = set(fam_node.child_tasks)
+            if fam_updated_node:
+                child_tasks.update(fam_updated_node.child_tasks)
+            child_tasks.difference_update(self.pruned_task_proxies)
+            for tp_id in child_tasks:
                 is_active = False
                 if all_nodes and tp_id not in all_nodes:
                     continue
