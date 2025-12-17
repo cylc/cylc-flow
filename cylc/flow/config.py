@@ -700,7 +700,6 @@ class WorkflowConfig:
         """Ensure graph is not empty; set integer cycling mode and icp/fcp = 1
         for simplest "R1 = foo" type graphs.
         """
-
         graphdict = self.strip_graph_comments(self.cfg['scheduling']['graph'])
 
         if not any(graphdict.values()):
