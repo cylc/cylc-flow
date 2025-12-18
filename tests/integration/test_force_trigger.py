@@ -32,6 +32,7 @@ from cylc.flow.commands import (
     set_prereqs_and_outputs,
 )
 from cylc.flow.cycling.integer import IntegerPoint
+from cylc.flow.flow_mgr import FLOW_NEW
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_state import (
     TASK_STATUS_FAILED,
@@ -742,3 +743,85 @@ async def test_trigger_with_task_selector(flow, scheduler, start, monkeypatch):
         await run_cmd(force_trigger_tasks(schd, ['*:failed'], []))
         assert trigger_calls == [{'1/d'}]
         trigger_calls.clear()
+
+
+async def test_pre_warm_start_group_trigger(flow, scheduler, run, complete):
+    """Group-triggered tasks that are before the start point should run in
+    order.
+
+    This is designed to handle re-running a family of one-time setup tasks
+    in a warm-started workflow.
+    https://github.com/cylc/cylc-flow/pull/7101
+    """
+    schd: Scheduler = scheduler(
+        flow({
+            'scheduling': {
+                'cycling mode': 'integer',
+                'runahead limit': 'P2',
+                'graph': {
+                    'R1': 'start => c1 => c2 => c3 => foo',
+                    'P1': 'foo[-P1] => foo',
+                },
+            },
+            'runtime': {
+                'COLD': {},
+                **{f'c{n}': {'inherit': 'COLD'} for n in (1, 2, 3)},
+            },
+        }),
+        paused_start=False,
+        startcp='5'
+    )
+    async with run(schd):
+        schd.pool.set_hold_point(IntegerPoint('4'))
+
+        await run_cmd(force_trigger_tasks(schd, ['1/COLD'], []))
+        assert schd.pool.get_task_ids() == {'1/c1', '5/foo'}
+
+        await complete(schd, '1/c1', timeout=10)
+        assert schd.pool.get_task_ids() == {'1/c2', '5/foo'}
+        assert schd.pool._get_task_by_id('1/c2').state(TASK_STATUS_WAITING)
+
+        await complete(schd, '1/c2', '1/c3', timeout=10)
+        assert schd.pool.get_task_ids() == {'5/foo'}
+
+        # Check list of pre-start tasks to trigger has been cleared:
+        assert not schd.pool.pre_start_tasks_to_trigger
+
+
+async def test_pre_warm_start_trigger_flow_new(
+    flow, scheduler, run, complete
+):
+    """In a warm-started workflow, triggering tasks that are < startcp:
+    * Should not flow on in flow=1
+    * Should flow on in flow=new
+
+    As we don't have any history for pre-startcp tasks in a warm start,
+    we treat them as complete in flow=1.
+    https://github.com/cylc/cylc-flow/pull/7148
+    """
+    schd: Scheduler = scheduler(
+        flow({
+            'scheduling': {
+                'cycling mode': 'integer',
+                'graph': {
+                    'P1': 'foo[-P1] => foo',
+                },
+            },
+        }),
+        paused_start=False,
+        startcp='10'
+    )
+    async with run(schd):
+        schd.pool.set_hold_point(IntegerPoint('9'))
+
+        # flow=1 - don't flow on:
+        await run_cmd(force_trigger_tasks(schd, ['1/foo'], []))
+        assert schd.pool.get_task_ids() == {'1/foo', '10/foo'}
+        await complete(schd, '1/foo', timeout=10)
+        assert schd.pool.get_task_ids() == {'10/foo'}
+
+        # flow=new - flow on:
+        await run_cmd(force_trigger_tasks(schd, ['3/foo'], [FLOW_NEW]))
+        assert schd.pool.get_task_ids() == {'3/foo', '10/foo'}
+        await complete(schd, '5/foo', timeout=10)
+        assert schd.pool.get_task_ids() == {'6/foo', '10/foo'}

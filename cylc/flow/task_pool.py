@@ -211,8 +211,9 @@ class TaskPool:
             self.config.runtime['descendants']
         )
 
-        self.tasks_to_hold: Set[Tuple[str, 'PointBase']] = set()
-        self.tasks_to_trigger_now: Set['TaskProxy'] = set()
+        self.tasks_to_hold: set[tuple[str, 'PointBase']] = set()
+        self.tasks_to_trigger_now: set['TaskProxy'] = set()
+        self.pre_start_tasks_to_trigger: set[tuple[str, 'PointBase']] = set()
 
     def set_stop_task(self, task_id):
         """Set stop after a task."""
@@ -837,9 +838,11 @@ class TaskPool:
         longer parentless, and/or hit the runahead limit.
 
         """
-        if not flow_nums or point is None:
-            # Force-triggered no-flow task.
-            # Or called with an invalid next_point.
+        if (
+            not flow_nums  # Force-triggered no-flow task
+            or point is None  # Reached end of sequence?
+            or point < self.config.start_point  # Warm start
+        ):
             return
         if self.runahead_limit_point is None:
             self.compute_runahead()
@@ -848,7 +851,7 @@ class TaskPool:
 
         is_xtrig_sequential = False
         while point is not None and (point <= self.runahead_limit_point):
-            if tdef.is_parentless(point):
+            if tdef.is_parentless(point, cutoff=self.config.start_point):
                 ntask, is_in_pool, is_xtrig_sequential = (
                     self.get_or_spawn_task(point, tdef, flow_nums)
                 )
@@ -866,7 +869,11 @@ class TaskPool:
 
     def spawn_if_parentless(self, tdef, point, flow_nums):
         """Spawn a task if parentless, regardless of runahead limit."""
-        if flow_nums and point is not None and tdef.is_parentless(point):
+        if (
+            flow_nums
+            and point is not None
+            and tdef.is_parentless(point, cutoff=self.config.start_point)
+        ):
             ntask, is_in_pool, _ = self.get_or_spawn_task(
                 point, tdef, flow_nums
             )
@@ -906,6 +913,9 @@ class TaskPool:
             pass
         else:
             self.tasks_to_trigger_now.discard(itask)
+            self.pre_start_tasks_to_trigger.discard(
+                (itask.tdef.name, itask.point)
+            )
             self.tasks_removed = True
             self.active_tasks_changed = True
             if not self.active_tasks[itask.point]:
@@ -1727,8 +1737,8 @@ class TaskPool:
         return True
 
     def _get_task_history(
-        self, name: str, point: 'PointBase', flow_nums: Set[int]
-    ) -> Tuple[int, Optional[str], bool]:
+        self, name: str, point: 'PointBase', flow_nums: 'FlowNums'
+    ) -> tuple[int, str | None, bool]:
         """Get submit_num, status, flow_wait for point/name in flow_nums.
 
         Args:
@@ -1766,7 +1776,10 @@ class TaskPool:
         return submit_num, status, flow_wait
 
     def _load_historical_outputs(self, itask: 'TaskProxy') -> None:
-        """Load a task's historical outputs from the DB."""
+        """Load a task's historical outputs from the DB.
+
+        NOTE this creates a task_states/task_outputs DB entry if not present.
+        """
         info = self.workflow_db_mgr.pri_dao.select_task_outputs(
             itask.tdef.name, str(itask.point))
         if not info:
@@ -1803,9 +1816,9 @@ class TaskPool:
         self,
         name: str,
         point: 'PointBase',
-        flow_nums: Set[int],
+        flow_nums: 'FlowNums',
         flow_wait: bool = False,
-    ) -> Optional[TaskProxy]:
+    ) -> TaskProxy | None:
         """Return a new task proxy for the given flow if possible.
 
         We need to hit the DB for:
@@ -1826,8 +1839,18 @@ class TaskPool:
             self._get_task_history(name, point, flow_nums)
         )
 
+        if (
+            not prev_status
+            and point < self.config.start_point
+            and flow_nums.issuperset({1})
+            # Warm start - treat pre-startcp tasks as already run in flow=1,
+            # unless manually triggered:
+            and (name, point) not in self.pre_start_tasks_to_trigger
+        ):
+            return None
+
         # Create the task proxy with any completed outputs loaded.
-        itask = self._get_task_proxy_db_outputs(
+        itask = self._load_db_task_proxy(
             point,
             self.config.get_taskdef(name),
             flow_nums,
@@ -1925,7 +1948,7 @@ class TaskPool:
         self.workflow_db_mgr.put_update_task_flow_wait(itask)
         return None
 
-    def _get_task_proxy_db_outputs(
+    def _load_db_task_proxy(
         self,
         point: 'PointBase',
         taskdef: 'TaskDef',
@@ -1935,8 +1958,11 @@ class TaskPool:
         transient: bool = False,
         is_manual_submit: bool = False,
         submit_num: int = 0,
-    ) -> Optional['TaskProxy']:
-        """Spawn a task, update outputs from DB."""
+    ) -> 'TaskProxy | None':
+        """Spawn a task, update outputs from DB.
+
+        NOTE this creates a task_states/task_outputs DB entry if not present.
+        """
 
         if not self.can_be_spawned(taskdef.name, point):
             return None
@@ -2140,7 +2166,7 @@ class TaskPool:
                     no_op = False
                 else:
                     # Outputs (may be empty list)
-                    trans = self._get_task_proxy_db_outputs(
+                    trans = self._load_db_task_proxy(
                         icycle, tdef, flow_nums,
                         flow_wait=flow_wait, transient=True
                     )

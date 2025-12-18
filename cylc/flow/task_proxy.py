@@ -218,8 +218,8 @@ class TaskProxy:
         self,
         scheduler_tokens: 'Tokens',
         tdef: 'TaskDef',
-        start_point: 'PointBase',
-        flow_nums: Optional['FlowNums'] = None,
+        point: 'PointBase',
+        flow_nums: 'FlowNums | None' = None,
         status: str = TASK_STATUS_WAITING,
         is_held: bool = False,
         submit_num: int | None = 0,
@@ -242,7 +242,7 @@ class TaskProxy:
             # (don't share flow_nums ref with parent task)
             self.flow_nums = flow_nums.copy()
         self.flow_wait = flow_wait
-        self.point = start_point
+        self.point = point
         self.tokens: TaskTokens = scheduler_tokens.duplicate(
             cycle=str(self.point),
             task=self.tdef.name,
@@ -294,7 +294,9 @@ class TaskProxy:
         # Set xtrigger checking type, which effects parentless spawning.
         self.is_xtrigger_sequential = bool(
             sequential_xtrigger_labels
-            and self.tdef.is_parentless(start_point)
+            and self.tdef.is_parentless(
+                self.point, cutoff=self.tdef.initial_point
+            )
             and sequential_xtrigger_labels.intersection(self.state.xtriggers)
         )
 

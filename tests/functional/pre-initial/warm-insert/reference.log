@@ -1,7 +1,0 @@
-20100101T1800Z/inserter -triggered off []
-20100101T1800Z/foo -triggered off []
-20100101T1800Z/bar -triggered off ['20100101T1800Z/foo', '20100101T1800Z/inserter']
-20100102T0000Z/foo -triggered off []
-20100102T0000Z/bar -triggered off ['20100102T0000Z/foo']
-20100101T1200Z/foo -triggered off []
-20100101T1200Z/bar -triggered off ['20100101T1200Z/foo']
