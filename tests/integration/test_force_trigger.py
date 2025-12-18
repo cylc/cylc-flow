@@ -835,10 +835,10 @@ async def test_pre_warm_start_interraction_with_auto_restart(
     start,
     log_filter,
 ):
-    """Test interraction between warm-start pre-initial tasks and auto-restart.
+    """Test interaction between warm-start pre-startcp tasks and auto-restart.
 
-    Pre-initial tasks are held in memory only, no DB backup, so get wiped out
-    by restart.
+    The list of pre-startcp tasks to run is held in memory only, no DB backup,
+    so get wiped out by restart.
     """
     schd: Scheduler = scheduler(
         flow(
