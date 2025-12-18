@@ -1508,6 +1508,7 @@ class Scheduler:
             # ... no
             pass
         elif self.auto_restart_mode == AutoRestartMode.RESTART_NORMAL:
+
             # ... yes - wait for preparing jobs to see if they're local and
             # wait for local jobs to complete before restarting
             #    * Avoid polling issues - see #2843
@@ -1531,7 +1532,13 @@ class Scheduler:
                              'complete before attempting restart')
                     break
             else:  # no break
-                self._set_stop(StopMode.REQUEST_NOW_NOW)
+                if self.pool.pre_start_tasks_to_trigger:
+                    LOG.info(
+                        'Waiting for pre start-cycle tasks to complete before'
+                        ' attempting restart'
+                    )
+                else:
+                    self._set_stop(StopMode.REQUEST_NOW_NOW)
         elif (  # noqa: SIM106
             self.auto_restart_mode == AutoRestartMode.FORCE_STOP
         ):

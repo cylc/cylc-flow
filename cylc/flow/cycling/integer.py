@@ -593,6 +593,10 @@ class IntegerSequence(SequenceBase):
         >>> IntegerSequence('R6/3/P1', '2')
         <IntegerSequence start=3, stop=8, step=P1, self.p_context_start=2,
         i_offset=P0>
+
+        >>> IntegerSequence('R6/P1/3', '2', '4')
+        <IntegerSequence start=2, stop=3, step=P1, self.p_context_stop=4,
+        i_offset=P0>
         """
         ret = f"start={self.p_start}, stop={self.p_stop}, step={self.i_step}"
         if self.p_context_start not in {self.p_start, None}:
