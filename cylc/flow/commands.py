@@ -161,6 +161,7 @@ def _remove_matched_tasks(
     schd: 'Scheduler',
     ids: Set[TaskTokens],
     flow_nums: 'FlowNums',
+    warn_unremovable: bool = True,
 ):
     """Remove matched tasks."""
     # Mapping of *relative* task IDs to removed flow numbers:
@@ -267,15 +268,14 @@ def _remove_matched_tasks(
             )
         LOG.info(f"Removed tasks: {', '.join(sorted(tasks_str_list))}")
 
-    if not_removed:
+    if warn_unremovable and not_removed:
         fnums_str = (
             repr_flow_nums(flow_nums, full=True) if flow_nums else ''
         )
         tasks_str = ', '.join(
             sorted(tokens.relative_id for tokens in not_removed)
         )
-        # This often does not indicate an error - e.g. for group trigger.
-        LOG.debug(f"Task(s) not removable: {tasks_str} {fnums_str}")
+        LOG.warning(f"Task(s) not removable: {tasks_str} {fnums_str}")
 
     if removed and schd.pool.compute_runahead():
         schd.pool.release_runahead_tasks()
@@ -806,7 +806,19 @@ def _force_trigger_tasks(
     # Remove all inactive and selected active group members.
     if flow != [FLOW_NONE]:
         # (No need to remove tasks if triggering with no-flow).
-        _remove_matched_tasks(schd, {*active_to_remove, *inactive}, flow_nums)
+        _remove_matched_tasks(
+            schd,
+            ids := {*active_to_remove, *inactive},
+            flow_nums,
+            warn_unremovable=False,
+        )
+        # Record pre-startcp tasks, as these would not normally be spawned -
+        # see https://github.com/cylc/cylc-flow/pull/7148
+        schd.pool.pre_start_tasks_to_trigger.update(
+            (tokens['task'], point)
+            for tokens in ids
+            if (point := get_point(tokens['cycle'])) < schd.config.start_point
+        )
 
         # trigger should override the held state, however, in-group tasks may
         # have previously been held and active in-group tasks will become
@@ -827,7 +839,7 @@ def _force_trigger_tasks(
         icycle = get_point(id_['cycle'])
         in_flow_prereqs = False
         jtask: Optional[TaskProxy] = None
-        if tdef.is_parentless(icycle):
+        if tdef.is_parentless(icycle, cutoff=schd.config.initial_point):
             # Parentless: set all prereqs to spawn the task.
             jtask = schd.pool._set_prereqs_tdef(
                 icycle, tdef,
