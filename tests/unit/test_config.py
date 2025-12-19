@@ -899,9 +899,10 @@ def test_prelim_process_graph(
             processing.
         expected_err: Exception class expected to be raised plus the message.
     """
-    mock_config = SimpleNamespace(cfg={
-        'scheduling': scheduling_cfg
-    })
+    mock_config = SimpleNamespace(
+        cfg={'scheduling': scheduling_cfg},
+        strip_graph_comments=WorkflowConfig.strip_graph_comments,
+    )
 
     if expected_err:
         err, msg = expected_err
