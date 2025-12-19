@@ -27,6 +27,7 @@ from cylc.flow.commands import (
     force_trigger_tasks,
     hold,
     reload_workflow,
+    remove_tasks,
     resume,
     run_cmd,
     set_prereqs_and_outputs,
@@ -41,6 +42,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_SUCCEEDED,
     TASK_STATUS_WAITING,
 )
+from cylc.flow.workflow_status import AutoRestartMode
 
 
 async def test_workflow_paused_simple(
@@ -825,3 +827,54 @@ async def test_pre_warm_start_trigger_flow_new(
         assert schd.pool.get_task_ids() == {'3/foo', '10/foo'}
         await complete(schd, '5/foo', timeout=10)
         assert schd.pool.get_task_ids() == {'6/foo', '10/foo'}
+
+
+async def test_pre_warm_start_interraction_with_auto_restart(
+    flow,
+    scheduler,
+    start,
+    log_filter,
+):
+    """Test interaction between warm-start pre-startcp tasks and auto-restart.
+
+    The list of pre-startcp tasks to run is held in memory only, no DB backup,
+    so get wiped out by restart.
+    """
+    schd: Scheduler = scheduler(
+        flow(
+            {
+                'scheduling': {
+                    'cycling mode': 'integer',
+                    'graph': {
+                        'P1': 'foo[-P1] => foo',
+                    },
+                },
+            }
+        ),
+        paused_start=False,
+        startcp='10',
+    )
+    async with start(schd):
+        # trigger a pre-initial task (pre start-cycle point)
+        await run_cmd(force_trigger_tasks(schd, ['^/foo'], []))
+        assert schd.pool.pre_start_tasks_to_trigger
+
+        # configure the workflow to auto-retsart
+        schd.auto_restart_mode = AutoRestartMode.RESTART_NORMAL
+        schd.auto_restart_time = 0
+
+        # the workflow should not auto-restart whilst there are pre-initial
+        # tasks in play
+        await schd.workflow_shutdown()
+        assert log_filter(
+            contains='Waiting for pre start-cycle tasks to complete'
+        )
+        assert schd.stop_mode is None
+
+        # remove the pre-initial task
+        await run_cmd(remove_tasks(schd, ['^/foo'], []))
+        assert schd.pool.pre_start_tasks_to_trigger == set()
+
+        # the workflow should now auto-restart as normal
+        await schd.workflow_shutdown()
+        assert schd.stop_mode is not None
