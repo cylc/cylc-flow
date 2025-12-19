@@ -14,10 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from functools import partial
+import os
+from optparse import Values
+import pytest
 from contextlib import suppress
 import logging
-from optparse import Values
-import os
 from pathlib import Path
 from textwrap import dedent
 from types import SimpleNamespace
@@ -31,8 +33,6 @@ from typing import (
     Type,
 )
 from unittest.mock import Mock
-
-import pytest
 
 from cylc.flow import (
     CYLC_LOG,
@@ -719,7 +719,7 @@ def test_process_fcp(
             id="stopcp-beyond-fcp"
         ),
         pytest.param(
-            '+P12Y -P2Y', None, '2000', None, None,
+            '+P12Y -P2Y', None, '1010', None, None,
             id="stopcp-relative-to-icp"
         ),
     ]
@@ -751,11 +751,13 @@ def test_process_stop_cycle_point(
                 'stop after cycle point': cfg_stopcp
             }
         },
-        initial_point=ISO8601Point('1990'),
+        initial_point=ISO8601Point('1000'),
         final_point=fcp,
         stop_point=None,
         options=RunOptions(stopcp=options_stopcp),
     )
+    mock_config.cycle_point_warning = partial(
+        WorkflowConfig.cycle_point_warning, mock_config)
 
     WorkflowConfig.process_stop_cycle_point(mock_config)
     assert str(mock_config.stop_point) == str(expected_value)
