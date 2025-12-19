@@ -1712,7 +1712,9 @@ class Scheduler:
         if has_updated:
             if not self.is_reloaded:
                 # (A reload cannot un-stall workflow by itself)
-                self.is_stalled = False
+                if self.is_stalled:
+                    self.is_stalled = False
+                    self.update_data_store()
             self.is_reloaded = False
 
             # Reset workflow and task updated flags.
@@ -1824,10 +1826,9 @@ class Scheduler:
             return True
         if self.is_paused:  # cannot be stalled it's not even running
             return False
-        is_stalled = self.pool.is_stalled()
-        if is_stalled != self.is_stalled:
+        if self.pool.is_stalled():
+            self.is_stalled = True
             self.update_data_store()
-            self.is_stalled = is_stalled
         if self.is_stalled:
             LOG.critical("Workflow stalled")
             self.run_event_handlers(self.EVENT_STALL, 'workflow stalled')

@@ -27,6 +27,7 @@ from cylc.flow.exceptions import CylcError
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.scheduler import Scheduler, SchedulerStop
 from cylc.flow.task_state import (
+    TASK_STATUS_SUCCEEDED,
     TASK_STATUS_WAITING,
     TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_SUBMITTED,
@@ -398,3 +399,59 @@ async def test_signal_escallation(one, start, signal, log_filter):
         # two signals should escalate this from NOW to NOW_NOW
         one._handle_signal(signal, None)
         assert one.stop_mode.name == 'REQUEST_NOW_NOW'
+
+
+async def test_set_stall_interaction(flow, scheduler, start):
+    """Test the interaction between manual set and workflow stall.
+
+    A set operation can put a scheduler into the stalled state and can also get
+    a scheduler out of the stalled state.
+    """
+    id_ = flow({
+        'scheduling': {
+            'initial cycle point': 'next(T00)',
+            'runahead limit': 'P0',
+            'graph': {
+                'P1D': '''
+                    # add a wall-clock trigger so that when we unstall the
+                    # workflow (via "cylc set") there are no downstream impacts
+                    # See https://github.com/cylc/cylc-flow/issues/7157
+                    @wall_clock => b
+                    a => b
+                '''
+            },
+        },
+    })
+    schd: 'Scheduler' = scheduler(id_, paused_start=False)
+    async with start(schd):
+        # set 1/a to failed
+        await commands.run_cmd(
+            commands.set_prereqs_and_outputs(
+                schd, ['^/a'], [], [TASK_STATUS_FAILED]
+            )
+        )
+
+        # the scheduler should be stalled
+        await schd._main_loop()
+        await schd._main_loop()
+        assert schd.is_stalled is True
+        assert (
+            schd.data_store_mgr.data[schd.tokens.id]['workflow'].status_msg
+            == 'stalled'
+        )
+
+        # set 1/a to succeeded
+        await commands.run_cmd(
+            commands.set_prereqs_and_outputs(
+                schd, ['^/a'], [], [TASK_STATUS_SUCCEEDED]
+            )
+        )
+
+        # the scheduler should NOT be stalled
+        await schd._main_loop()
+        await schd._main_loop()
+        assert schd.is_stalled is False
+        assert (
+            schd.data_store_mgr.data[schd.tokens.id]['workflow'].status_msg
+            == 'running'
+        )
