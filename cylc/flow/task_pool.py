@@ -888,7 +888,7 @@ class TaskPool:
         # xtriggers are no longer relevant -> remove them
         self.xtrigger_mgr.force_satisfy_all(itask, log=False)
 
-        if itask.state.is_runahead and itask.flow_nums:
+        if itask.state.is_runahead and itask.flow_nums and not itask.no_spawn:
             # If removing a parentless runahead-limited task
             # auto-spawn its next instance first.
             self.spawn_if_parentless(
@@ -2436,6 +2436,7 @@ class TaskPool:
                 itask.identity not in
                 self.xtrigger_mgr.sequential_has_spawned_next
             )
+            and not itask.no_spawn
         ):
             self.xtrigger_mgr.sequential_has_spawned_next.add(
                 itask.identity
