@@ -42,6 +42,7 @@ from cylc.flow.data_store_mgr import TASK_PROXIES
 from cylc.flow.exceptions import WorkflowConfigError
 from cylc.flow.flow_mgr import FLOW_NONE
 from cylc.flow.id import TaskTokens, Tokens
+from cylc.flow.run_modes import RunMode
 from cylc.flow.task_events_mgr import TaskEventsManager
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_FAILED,
@@ -2300,16 +2301,15 @@ async def test_expire_dequeue_with_retries(
     conf = {
         'scheduling': {
             'initial cycle point': '2000',
-
             'graph': {
                 'R1': 'foo'
             },
         },
         'runtime': {
             'foo': {
-                'execution retry delays': 'PT0S'
-            }
-        }
+                'execution retry delays': 'PT0S',
+            },
+        },
     }
 
     if expire_type == 'clock-expire':
@@ -2324,10 +2324,20 @@ async def test_expire_dequeue_with_retries(
         )
 
     id_ = flow(conf)
-    schd = scheduler(id_)
+    schd = scheduler(id_, run_mode='live')
     schd: Scheduler
     async with start(schd):
         itask = schd.pool.get_tasks()[0]
+
+        # fake a real submission failure
+        # NOTE: yes, all of these things are needed for a valid test!
+        # Try removing the "force=True" added in this commit and ensure the
+        # "clock-expire" test fails before changing anything here!
+        itask.submit_num += 1
+        itask.run_mode = RunMode.LIVE
+        schd.task_job_mgr._set_retry_timers(itask, itask.tdef.rtconfig)
+        schd.task_events_mgr.process_message(itask, 0, 'failed')
+        schd.task_events_mgr._retry_task(itask, 0)
 
         # the task should start as "waiting(queued)"
         assert itask.state(TASK_STATUS_WAITING, is_queued=True)
