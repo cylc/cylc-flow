@@ -11,6 +11,27 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 <!-- towncrier release notes start -->
 
+## __cylc-8.6.2 (Released 2026-01-07)__
+
+### 🔧 Fixes
+
+[#6719](https://github.com/cylc/cylc-flow/pull/6719) - Fix incorrect job submission time reported after a time zone change.
+
+[#7100](https://github.com/cylc/cylc-flow/pull/7100) - Task hold, retry, wallclock and xtriggers are now cleared when they
+  are no longer applicable.
+
+[#7101](https://github.com/cylc/cylc-flow/pull/7101) - Fixed manual group triggering of tasks before the start cycle point not obeying prerequisites within the group.
+
+[#7108](https://github.com/cylc/cylc-flow/pull/7108) - Allow use of task state selectors with the `cylc set` command.
+
+[#7144](https://github.com/cylc/cylc-flow/pull/7144) - Fixed a bug that produced incorrect family states on n-window resize.
+
+[#7148](https://github.com/cylc/cylc-flow/pull/7148) - Fixed a bug where tasks would flow on from tasks manually triggered before the start cycle point.
+
+[#7158](https://github.com/cylc/cylc-flow/pull/7158) - Fix an issue where a workflow's status message (as displayed in the GUI
+  toolbar) could erroneously report that the workflow is stalled after
+  intervention is performed.
+
 ## __cylc-8.6.1 (Released 2025-11-27)__
 
 ### 🚀 Enhancements
