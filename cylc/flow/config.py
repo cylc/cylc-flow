@@ -671,37 +671,11 @@ class WorkflowConfig:
                 f' runtime: {implicit_q_msg}{truncation_msg}'
             )
 
-    @staticmethod
-    def strip_graph_comments(raw_graphdict: dict) -> dict:
-        """Remove commented lines from graph definitions.
-
-        Intended to prevent graphs containing only comments from passing
-        validation: https://github.com/cylc/cylc-flow/issues/7136
-
-        Examples:
-            >>> this = WorkflowConfig.strip_graph_comments
-            >>> this({'foo': '# Hello'})
-            {}
-            >>> this({'bar': '# hello\\nsomething legit'})
-            {'bar': 'something legit'}
-
-        """
-        graphdict: dict = {}
-        for reccurrence, graph in raw_graphdict.items():
-            stripped = '\n'.join(
-                line for line in graph.split('\n')
-                if not line.strip().startswith('#')
-            )
-            if stripped:
-                graphdict[reccurrence] = stripped
-        return graphdict
-
     def prelim_process_graph(self) -> None:
         """Ensure graph is not empty; set integer cycling mode and icp/fcp = 1
         for simplest "R1 = foo" type graphs.
         """
-        graphdict = self.strip_graph_comments(self.cfg['scheduling']['graph'])
-
+        graphdict = self.cfg['scheduling']['graph']
         if not any(graphdict.values()):
             raise WorkflowConfigError('No workflow dependency graph defined.')
 
