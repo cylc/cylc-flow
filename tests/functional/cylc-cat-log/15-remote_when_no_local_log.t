@@ -15,29 +15,34 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test kill local jobs.
+# Test "cylc cat-log" for a specific circumstance that caused cat-log to
+# not work properly. This tests simulates small window of time where a
+# job has finished but the logs have not yet been retrieved. In this
+# situation cat-log should remote log retrieval
+export REQUIRE_PLATFORM='loc:remote'
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 10
-#-------------------------------------------------------------------------------
+set_test_number 5
+create_test_global_config "" "
+[platforms]
+   [[${CYLC_TEST_PLATFORM}]]
+       retrieve job logs = True"
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-#-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}-validate"
-run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
 workflow_run_ok "${TEST_NAME}" \
-    cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
+    cylc play --debug --no-detach \
+        -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'" "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME="${TEST_NAME_BASE}-ps"
-for DIR in "${WORKFLOW_RUN_DIR}"/work/*/t*; do
-    run_fail "${TEST_NAME}.$(basename "$DIR")" ps "$(cat "${DIR}/file")"
-done
-N=0
-for FILE in "${WORKFLOW_RUN_DIR}"/log/job/*/t*/01/job.status; do
-    run_fail "${TEST_NAME}-status-$((++N))" \
-        ps "$(awk -F= '$1 == "CYLC_JOB_PID" {print $2}' "$FILE")"
-done
-#-------------------------------------------------------------------------------
+# remote
+TEST_NAME=${TEST_NAME_BASE}-no_log_remote
+run_ok "$TEST_NAME" cylc cat-log --debug -f j "${WORKFLOW_NAME}//1/a-task"
+grep_ok "job.out not present, getting job log remotely" "${TEST_NAME}.stderr"
+
+# remote
+TEST_NAME=${TEST_NAME_BASE}-no_log_remote_list_dir
+run_ok "$TEST_NAME" cylc cat-log --debug --mode=list-dir "${WORKFLOW_NAME}//1/a-task"
+grep_ok "job.out not present, getting job log remotely" "${TEST_NAME}.stderr"
+
+# Clean up the task host.
 purge
-exit

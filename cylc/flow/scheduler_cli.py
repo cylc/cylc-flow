@@ -70,6 +70,7 @@ from cylc.flow.scripts.common import cylc_header
 from cylc.flow.scripts.ping import run as cylc_ping
 from cylc.flow.terminal import (
     cli_function,
+    handle_sigint,
     is_terminal,
     prompt,
 )
@@ -586,15 +587,16 @@ def _version_check(
             ))
             if is_terminal():
                 # we are in interactive mode, ask the user if this is ok
-                options.upgrade = prompt(
-                    cparse(
-                        'Are you sure you want to upgrade from'
-                        f' <yellow>{last_run_version}</yellow>'
-                        f' to <green>{__version__}</green>?'
-                    ),
-                    {'y': True, 'n': False},
-                    process=str.lower,
-                )
+                with handle_sigint():
+                    options.upgrade = prompt(
+                        cparse(
+                            'Are you sure you want to upgrade from'
+                            f' <yellow>{last_run_version}</yellow>'
+                            f' to <green>{__version__}</green>?'
+                        ),
+                        {'y': True, 'n': False},
+                        process=str.lower,
+                    )
                 return options.upgrade
             # we are in non-interactive mode, abort abort abort
             print('Use "--upgrade" to upgrade the workflow.', file=sys.stderr)

@@ -98,6 +98,8 @@ from cylc.flow.plugins import run_plugins_async
 from cylc.flow.terminal import (
     DIM,
     cli_function,
+    handle_sigint,
+    interrupt,
     is_terminal,
 )
 from cylc.flow.workflow_files import (
@@ -226,10 +228,11 @@ async def reinstall_cli(
             display_rose_warning(source)
             display_cylcignore_tip()
             # prompt for permission to continue
-            while usr not in ['y', 'n']:
-                usr = _input(
-                    cparse('<bold>Continue [y/n]: </bold>')
-                ).lower()
+            with handle_sigint(interrupt):
+                while usr not in ['y', 'n']:
+                    usr = _input(
+                        cparse('<bold>Continue [y/n]: </bold>')
+                    ).lower()
 
         else:  # non interactive-mode - no dry-run, no prompt
             usr = 'y'
@@ -237,7 +240,6 @@ async def reinstall_cli(
     except KeyboardInterrupt:
         # ensure the "reinstall canceled" message shows for ctrl+c
         usr = 'n'  # cancel the reinstall
-        print()    # clear the traceback line
 
     if usr == 'y':
         # reinstall for real
