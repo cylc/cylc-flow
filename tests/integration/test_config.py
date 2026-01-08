@@ -837,3 +837,23 @@ async def test_icp_now_reload(
             f'{expected_icp}/foo',
         }
         assert not log_filter(level=logging.WARNING)
+
+
+def test_error_if_no_graph(tmp_path, validate):
+    """Users should see an error if no graph is defined
+
+    n.b. This doesn't work with the conftest infrastructure because
+    """
+    (tmp_path / 'flow.cylc').write_text('''
+        [scheduling]
+        [[graph]]
+            R1 = """
+                # no comment
+            """
+    ''')
+
+    with pytest.raises(
+        WorkflowConfigError,
+        match='No workflow dependency graph defined'
+    ):
+        validate(tmp_path)
