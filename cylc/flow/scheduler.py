@@ -1876,10 +1876,7 @@ class Scheduler:
 
         if hasattr(self, 'proc_pool'):
             try:
-                self.proc_pool.close()
-                if self.proc_pool.is_not_done():
-                    self.proc_pool.terminate()
-                self.proc_pool.process()
+                self.proc_pool.terminate()
             except Exception as exc:
                 LOG.exception(exc)
 
