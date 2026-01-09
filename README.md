@@ -30,7 +30,7 @@ domains.
 conda install cylc-flow
 
 # extract an example to run
-cylc get-resources examples/2-integer-cycling ~/cylc-src/integer-cycling
+cylc get-resources examples/2-integer-cycling
 
 # install and run it
 cylc vip integer-cycling  # vip = validate, install and play
