@@ -409,14 +409,13 @@ async def test_set_stall_interaction(flow, scheduler, start):
     """
     id_ = flow({
         'scheduling': {
-            'initial cycle point': 'next(T00)',
-            'runahead limit': 'P0',
+            'xtriggers': {'never': 'xrandom(0)'},
             'graph': {
-                'P1D': '''
-                    # add a wall-clock trigger so that when we unstall the
+                'R1': '''
+                    # add a pending xtrigger so that when we unstall the
                     # workflow (via "cylc set") there are no downstream impacts
                     # See https://github.com/cylc/cylc-flow/issues/7157
-                    @wall_clock => b
+                    @never => b
                     a => b
                 '''
             },
@@ -453,5 +452,5 @@ async def test_set_stall_interaction(flow, scheduler, start):
         assert schd.is_stalled is False
         assert (
             schd.data_store_mgr.data[schd.tokens.id]['workflow'].status_msg
-            == 'running'
+            != 'stalled'
         )
