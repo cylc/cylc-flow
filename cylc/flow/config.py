@@ -850,8 +850,7 @@ class WorkflowConfig:
                 f"{label1} cycle point '{point1}' will have no effect as"
                 f" it is {order} the {label2} cycle point '{point2}'."
             )
-            LOG.warning(msg)
-            return True
+            raise WorkflowConfigError(msg)
         return False
 
     def process_final_cycle_point(self) -> None:

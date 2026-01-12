@@ -843,64 +843,20 @@ async def test_icp_now_reload(
     'a, b, c, d, validation_fail, err',
     (
         ('initial', 'start', 'stop', 'final', True, False),
-        (
-            'initial', 'start', 'final', 'stop', True,
-            "stop cycle point '20030101T0000Z' will have no effect as it"
-            " is after the final cycle point '20020101T0000Z'."
-        ),
-        (
-            'initial', 'stop', 'start', 'final', False,
-            "stop cycle point '20010101T0000Z' will have no effect as it"
-            " is before the start cycle point '20020101T0000Z'."
-        ),
-        (
-            'initial', 'stop', 'final', 'start', False,
-            "start cycle point '20030101T0000Z' will have no effect as it"
-            " is after the final cycle point '20020101T0000Z'."
-        ),
-        (
-            'initial', 'final', 'start', 'stop', True,
-            "stop cycle point '20030101T0000Z' will have no effect as it"
-            " is after the final cycle point '20010101T0000Z'."
-        ),
-        (
-            'initial', 'final', 'stop', 'start', True,
-            "stop cycle point '20020101T0000Z' will have no effect as it"
-            " is after the final cycle point '20010101T0000Z'."
-        ),
-        (
-            'start', 'initial', 'stop', 'final', False,
-            "start cycle point '20000101T0000Z' will have no effect as it"
-            " is before the initial cycle point '20010101T0000Z'."
-        ),
-        (
-            'start', 'initial', 'final', 'stop', True,
-            "stop cycle point '20030101T0000Z' will have no effect as it"
-            " is after the final cycle point '20020101T0000Z'."
-        ),
-        (
-            'start', 'stop', 'initial', 'final', True,
-            "stop cycle point '20010101T0000Z' will have no effect as it"
-            " is before the initial cycle point '20020101T0000Z'."
-        ),
+        ('initial', 'start', 'final', 'stop', True, WorkflowConfigError),
+        ('initial', 'stop', 'start', 'final', False, WorkflowConfigError),
+        ('initial', 'stop', 'final', 'start', False, WorkflowConfigError),
+        ('initial', 'final', 'start', 'stop', True, WorkflowConfigError),
+        ('initial', 'final', 'stop', 'start', True, WorkflowConfigError),
+        ('start', 'initial', 'stop', 'final', False, WorkflowConfigError),
+        ('start', 'initial', 'final', 'stop', True, WorkflowConfigError),
+        ('start', 'stop', 'initial', 'final', True, WorkflowConfigError),
         ('start', 'stop', 'final', 'initial', True, WorkflowConfigError),
         ('start', 'final', 'initial', 'stop', True, WorkflowConfigError),
         ('start', 'final', 'stop', 'initial', True, WorkflowConfigError),
-        (
-            'stop', 'initial', 'start', 'final', True,
-            "stop cycle point '20000101T0000Z' will have no effect as it"
-            " is before the initial cycle point '20010101T0000Z'."
-        ),
-        (
-            'stop', 'initial', 'final', 'start', True,
-            "stop cycle point '20000101T0000Z' will have no effect as it"
-            " is before the initial cycle point '20010101T0000Z'."
-        ),
-        (
-            'stop', 'start', 'initial', 'final', True,
-            "stop cycle point '20000101T0000Z' will have no effect as it"
-            " is before the initial cycle point '20020101T0000Z'."
-        ),
+        ('stop', 'initial', 'start', 'final', True, WorkflowConfigError),
+        ('stop', 'initial', 'final', 'start', True, WorkflowConfigError),
+        ('stop', 'start', 'initial', 'final', True, WorkflowConfigError),
         ('stop', 'start', 'final', 'initial', True, WorkflowConfigError),
         ('stop', 'final', 'initial', 'start', True, WorkflowConfigError),
         ('stop', 'final', 'start', 'initial', True, WorkflowConfigError),
@@ -951,5 +907,6 @@ async def test_milestone_cycle_points(
 
     else:
         schd = scheduler(wid, startcp=str(order['start']))
-        async with start(schd):
-            assert err in caplog.messages
+        with pytest.raises(err):
+            async with start(schd):
+                pass

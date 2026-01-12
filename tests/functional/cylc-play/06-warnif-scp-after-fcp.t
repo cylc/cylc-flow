@@ -42,13 +42,14 @@ run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 
 for SCP in 1 2 3; do
     TEST_NAME="${TEST_NAME_BASE}-play-integer-scp=${SCP}"
-        workflow_run_ok "${TEST_NAME}" cylc play "${WORKFLOW_NAME}" \
-        --no-detach --stopcp="${SCP}"
-
     if [[ "${SCP}" -lt 3 ]]; then
+        workflow_run_ok "${TEST_NAME}" cylc play "${WORKFLOW_NAME}" \
+            --no-detach --stopcp="${SCP}"
         grep_ok "stop cycle point '.*'.*after.*final cycle point '.*'" \
             "${RUN_DIR}/${WORKFLOW_NAME}/log/scheduler/log" "-v"
     else
+        workflow_run_fail "${TEST_NAME}" cylc play "${WORKFLOW_NAME}" \
+            --no-detach --stopcp="${SCP}"
         grep_ok "stop cycle point '.*'.*after.*final cycle point '.*'" \
             "${RUN_DIR}/${WORKFLOW_NAME}/log/scheduler/log"
     fi
