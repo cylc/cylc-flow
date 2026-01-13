@@ -32,43 +32,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
         os: ['ubuntu-latest', 'macos-latest']
         python: ['3.12', '3']
-=======
-=======
->>>>>>> 38c31f56d (Fail gracefully if cgroups cannot be found)
-        os: ['ubuntu-latest']
-        python: ['3.8', '3.9', '3.10', '3.11']
-        include:
-          - os: 'ubuntu-22.04'
-<<<<<<< HEAD
-            python: '3.7'
-          - os: 'macos-latest'
-            python: '3.8'
->>>>>>> 9727be9e5 (CPU/Memory Logging working)
-=======
-        os: ['ubuntu-latest', 'macos-latest']
-        python: ['3.7', '3.8', '3.9', '3.10', '3']
-        exclude:
-          - os: 'macos-latest'
-            python: '3.7'
->>>>>>> 171f7ee1d (GH Actions: use explicit `bash` shell & other defaults)
-=======
-            python: '3.7'
-          - os: 'macos-latest'
-            python: '3.8'
->>>>>>> 38c31f56d (Fail gracefully if cgroups cannot be found)
-=======
-        os: ['ubuntu-latest', 'macos-latest']
-        python: ['3.7', '3.8', '3.9', '3.10', '3']
-        exclude:
-          - os: 'macos-latest'
-            python: '3.7'
->>>>>>> ad6b3a133 (Fixing my terrible rebasing)
     steps:
       - name: Checkout
         uses: actions/checkout@v6
