@@ -16,7 +16,6 @@ omit =
     tests/*
     */cylc/flow/*_pb2.py
     cylc/flow/etc/*
-    cylc/flow/scripts/report_timings.py
 parallel = True
 source = ./cylc
 # https://github.com/coveragepy/coveragepy/issues/2082:
