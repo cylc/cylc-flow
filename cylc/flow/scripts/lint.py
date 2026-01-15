@@ -297,32 +297,6 @@ def check_dead_ends(line: str) -> bool:
     )
 
 
-def check_for_suicide_triggers(
-    line: str,
-    file: Path,
-    function: Callable,
-    **kwargs
-):
-    """Check for suicide triggers, if file is a .cylc file.
-
-    Examples:
-        >>> func = lambda line: line
-
-        # Suicide trigger in a *.cylc file:
-        >>> check_for_suicide_triggers(
-        ... 'x:fail => !y', function=func, file=Path('foo.cylc'))
-        'x:fail => !y'
-
-        # Suicide trigger in a suite.rc file:
-        >>> check_for_suicide_triggers(
-        ... 'x:fail => !y', function=func, file=Path('suite.rc'))
-        False
-    """
-    if file.name.endswith('.cylc'):
-        return function(line)
-    return False
-
-
 def check_for_deprecated_environment_variables(
     line: str
 ) -> Union[bool, dict]:
@@ -730,17 +704,6 @@ MANUAL_DEPRECATIONS = {
             'https://cylc.github.io/cylc-doc/stable/html/7-to-8/'
             'major-changes/platforms.html'),
         FUNCTION: re.compile(r'platform\s*=\s*\$\(\s*rose host-select').findall
-    },
-    'U008': {
-        'short': 'Suicide triggers are not required at Cylc 8.',
-        'url': (
-            'https://cylc.github.io/cylc-doc/stable/html/7-to-8'
-            '/major-changes/suicide-triggers.html'),
-        'kwargs': True,
-        FUNCTION: functools.partial(
-            check_for_suicide_triggers,
-            function=re.compile(r'=>\s*\!.*').findall
-        ),
     },
     'U009': {
         'short': 'This line contains an obsolete Cylc CLI command.',

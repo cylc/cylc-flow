@@ -260,7 +260,9 @@ def test_check_cylc_file_7to8(number):
     """TEST File has one of each manual deprecation;"""
     lint = lint_text(TEST_FILE, ['728'])
     instances = EXPECT_INSTANCES_OF_ERR.get(number, None)
-    assert_contains(lint.messages, f'[U{number:03d}]', instances)
+    # U0008 Has been removed, but we don't want to change the numbering
+    if number != 8:
+        assert_contains(lint.messages, f'[U{number:03d}]', instances)
 
 
 def test_check_cylc_file_7to8_has_shebang():
@@ -386,7 +388,9 @@ def test_check_cylc_file_jinja2_comments_shell_arithmetic_not_warned():
 )
 def test_check_cylc_file_inplace(number):
     lint = lint_text(TEST_FILE, ['728', 'style'], modify=True)
-    assert_contains(lint.outlines, f'[U{number:03d}]')
+    # U0008 Has been removed, but we don't want to change the numbering
+    if number != 8:
+        assert_contains(lint.outlines, f'[U{number:03d}]')
 
 
 def test_get_cylc_files_get_all_rcs(tmp_path):
