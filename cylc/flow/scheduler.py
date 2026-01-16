@@ -1829,7 +1829,6 @@ class Scheduler:
         if self.pool.is_stalled():
             self.is_stalled = True
             self.update_data_store()
-        if self.is_stalled:
             LOG.critical("Workflow stalled")
             self.run_event_handlers(self.EVENT_STALL, 'workflow stalled')
             with suppress(KeyError):
