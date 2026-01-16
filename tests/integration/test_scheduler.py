@@ -412,7 +412,7 @@ async def test_set_stall_interaction(flow, scheduler, start):
             'xtriggers': {'never': 'xrandom(0)'},
             'graph': {
                 'R1': '''
-                    # add a pending xtrigger so that when we unstall the
+                    # add a pending xtrigger so that when we un-stall the
                     # workflow (via "cylc set") there are no downstream impacts
                     # See https://github.com/cylc/cylc-flow/issues/7157
                     @never => b
