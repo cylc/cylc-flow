@@ -94,9 +94,17 @@ To avoid overwriting existing run directories, workflows that already ran can
 only be restarted from prior state. To start again, "cylc install" a new copy
 or "cylc clean" the existing run directory.
 
-By default, new runs begin at the start of the graph, determined by the initial
-cycle point. You can also begin at a later cycle point (--start-cycle-point),
-or at specified tasks (--start-task) within the graph.
+By default, new runs begin at the start of the graph (at the "initial cycle
+point") and continue to the end of the graph (the "final cycle point", which
+can be overriden with the --final-cycle-point command option).
+
+However you can begin a run part way into the graph (with --start-cycle-point
+or --start-task) and finish before the end of the graph (by configuring
+"stop after cycle point" or with the --stop-cycle-point command option).
+
+Note if you override a configured stop or final cycle point with these command
+options, the new values will be stored in the DB and persist over restarts. To
+revert to configured values on restart use (e.g). --final-cycle-point=reload.
 
 For convenience, any dependence on tasks prior to the start cycle point (or to
 the cycle point of the earliest task specified by --start-task) will be taken
@@ -190,9 +198,11 @@ PLAY_OPTIONS = [
         ["--final-cycle-point", "--fcp"],
         help=(
             "Set the final cycle point. This command line option overrides"
-            " the workflow config option"
-            " '[scheduling]final cycle point'. "),
-        metavar="CYCLE_POINT",
+            " the workflow config option '[scheduling]final cycle point'. "
+            "The new value will persist over restarts unless you use"
+            "--fcp=reload to revert to the configured value."
+        ),
+        metavar="CYCLE_POINT or 'reload'",
         action='store',
         dest="fcp",
         sources={'play'},
@@ -204,8 +214,11 @@ PLAY_OPTIONS = [
             " have PASSED this cycle point. (Not to be confused"
             " the final cycle point.) This command line option overrides"
             " the workflow config option"
-            " '[scheduling]stop after cycle point'."),
-        metavar="CYCLE_POINT",
+            " '[scheduling]stop after cycle point'."
+            "The new value will persist over restarts unless you use"
+            "--stopcp=reload to revert to the configured value."
+        ),
+        metavar="CYCLE_POINT or 'reload'",
         action='store',
         dest="stopcp",
         sources={'play'},
