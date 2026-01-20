@@ -18,9 +18,6 @@
 # Test that a long output from an event handler is not going to hang or die.
 
 . "$(dirname "$0")/test_header"
-if ! python3 -c 'from select import poll' 2>'/dev/null'; then
-    skip_all '"select.poll" not supported on this OS'
-fi
 
 set_test_number 10
 
