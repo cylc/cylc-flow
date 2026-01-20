@@ -198,9 +198,9 @@ PLAY_OPTIONS = [
         ["--final-cycle-point", "--fcp"],
         help=(
             "Set the final cycle point. This command line option overrides"
-            " the workflow config option '[scheduling]final cycle point'. "
-            "The new value will persist over restarts unless you use"
-            "--fcp=reload to revert to the configured value."
+            " the workflow config option '[scheduling]final cycle point'."
+            " The new value will persist over restarts unless you use"
+            " --fcp=reload to revert to the configured value."
         ),
         metavar="CYCLE_POINT or 'reload'",
         action='store',
@@ -215,8 +215,8 @@ PLAY_OPTIONS = [
             " the final cycle point.) This command line option overrides"
             " the workflow config option"
             " '[scheduling]stop after cycle point'."
-            "The new value will persist over restarts unless you use"
-            "--stopcp=reload to revert to the configured value."
+            " The new value will persist over restarts unless you use"
+            " --stopcp=reload to revert to the configured value."
         ),
         metavar="CYCLE_POINT or 'reload'",
         action='store',
