@@ -580,11 +580,11 @@ def test_get_pyproject_toml__depr(
 
 
 @pytest.mark.parametrize(
-    'input_, error',
+    'input_, output',
     [
         param(
             {'exclude': ['hey', 'there', 'Delilah']},
-            None,
+            True,
             id='it works'
         ),
         param(
@@ -619,18 +619,22 @@ def test_get_pyproject_toml__depr(
         ),
         param(
             {'ignore': ['U008']},
-            None,
+            'warn',
             id='valid, but deprecated linter code'
         ),
     ]
 )
-def test_validate_toml_items(input_, error):
+def test_validate_toml_items(input_, output, caplog):
     """It chucks out the wrong sort of items."""
-    if error is not None:
-        with pytest.raises(CylcError, match=error):
+    if output not in [True, 'warn']:
+        with pytest.raises(CylcError, match=output):
             validate_toml_items(input_)
-    else:
+    elif output is True:
+        assert validate_toml_items(input_) is output
+    elif output == 'warn':
         assert validate_toml_items(input_) is True
+        assert 'U008 is a deprecated linter code' in caplog.messages
+
 
 
 @pytest.mark.parametrize(

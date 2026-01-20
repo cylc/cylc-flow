@@ -122,6 +122,7 @@ DEPR_LINT_SECTION = 'cylc-lint'
 IGNORE = 'ignore'
 EXCLUDE = 'exclude'
 RULESETS = 'rulesets'
+WARN = 'warn'
 MAX_LINE_LENGTH = 'max-line-length'
 
 DEPRECATED_ENV_VARS = {
@@ -819,6 +820,8 @@ EXTRA_TOML_VALIDATION = {
             '{item} not valid: Ignore codes should be in the form X001',
         lambda x: x in parse_checks(['728', 'style']) or x in REMOVED_CHECKS:
             '{item} is a not a known linter code.',
+        lambda x: WARN if x in REMOVED_CHECKS else True:
+            '{item} is a deprecated linter code',
     },
     RULESETS: {
         lambda item: item in ALL_RULESETS:
@@ -898,6 +901,8 @@ def validate_toml_items(tomldata):
                         raise CylcError(
                             message.format(item=item)
                         )
+                    elif check(item) == WARN:
+                        LOG.warning(message.format(item=item))
     return True
 
 
