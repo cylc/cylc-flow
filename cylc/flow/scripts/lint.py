@@ -161,6 +161,10 @@ DEPRECATED_STRING_TEMPLATES = {
 
 
 LIST_ITEM = '\n    * '
+FUNCTION = 'function'
+
+# Don't remove deprecated check.
+REMOVED_CHECKS = ['U008']
 
 
 deprecated_string_templates = {
@@ -483,9 +487,6 @@ def list_wrapper(line: str, check: Callable) -> Optional[Dict[str, str]]:
     if result:
         return {'vars': '\n    * '.join(result)}
     return None
-
-
-FUNCTION = 'function'
 
 STYLE_GUIDE = (
     'https://cylc.github.io/cylc-doc/stable/html/workflow-design-guide/'
@@ -816,8 +817,8 @@ EXTRA_TOML_VALIDATION = {
     IGNORE: {
         lambda x: re.match(r'[A-Z]\d\d\d', x):
             '{item} not valid: Ignore codes should be in the form X001',
-        lambda x: x in parse_checks(['728', 'style']):
-            '{item} is a not a known linter code.'
+        lambda x: x in parse_checks(['728', 'style']) or x in REMOVED_CHECKS:
+            '{item} is a not a known linter code.',
     },
     RULESETS: {
         lambda item: item in ALL_RULESETS:

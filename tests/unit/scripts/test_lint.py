@@ -616,7 +616,12 @@ def test_get_pyproject_toml__depr(
             {'ignore': ['R999']},
             'R999 is a not a known linter code.',
             id='it fails with non-existant checks ignored'
-        )
+        ),
+        param(
+            {'ignore': ['U008']},
+            None,
+            id='valid, but deprecated linter code'
+        ),
     ]
 )
 def test_validate_toml_items(input_, error):
