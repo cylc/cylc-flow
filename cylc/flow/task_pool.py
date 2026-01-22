@@ -2476,6 +2476,7 @@ class TaskPool:
                     itask,
                     logging.WARNING,
                     TASK_OUTPUT_EXPIRED,
+                    forced=True,
                 )
 
     def task_succeeded(self, id_):
