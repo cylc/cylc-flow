@@ -20,13 +20,22 @@ import logging
 from typing import Any as Fixture
 from unittest.mock import Mock
 
+import pytest
+
 from cylc.flow import CYLC_LOG
-from cylc.flow.job_runner_mgr import JOB_FILES_REMOVED_MESSAGE
+from cylc.flow.cycling.integer import IntegerPoint
+from cylc.flow.job_runner_mgr import (
+    JOB_FILES_REMOVED_MESSAGE,
+    JobRunnerManager,
+)
 from cylc.flow.scheduler import Scheduler
+from cylc.flow.subprocctx import SubProcContext
 from cylc.flow.task_state import (
     TASK_STATUS_FAILED,
     TASK_STATUS_RUNNING,
 )
+
+OUT_PREFIX = JobRunnerManager.OUT_PREFIX_SUMMARY
 
 
 async def test_run_job_cmd_no_hosts_error(
@@ -293,3 +302,143 @@ async def test__prep_submit_task_job_impl_handles_all_old_platform_settings(
             schd.task_job_mgr._prep_submit_task_job(task_a)
 
         assert task_a.platform['name'] == 'bakery'
+
+
+async def test_manip_task_jobs_callback(flow, scheduler, start, log_filter):
+    """Test the _manip_task_jobs_callback function.
+    This function should handle and log:
+    * Invalid lines in output.
+    * Output for tasks it wasn't expecting to find.
+    * Missing output for tasks it was expecting to find.
+    This function should not handle or log:
+    * Exceptions in callbacks, these are internal errors which should cause a
+      crash.
+    """
+    # create a dummy subprocess call
+    ctx = SubProcContext('my-key', 'my-cmd')
+    ctx.ret_code = 0
+
+    # create standin callback functions
+    calls = []
+
+    def callback(*args, **kwargs):
+        """A callback which logs the call and passes."""
+        calls.append((args, kwargs))
+
+    def error_callback(*args, **kwargs):
+        """A callback which logs the call and fails."""
+        callback(*args, **kwargs)
+        raise Exception('exception-in-callback')
+
+    def get_callback_calls():
+        """Return all non-error callback calls and clear the calls list.
+
+        Returns:
+            {(task_name, state), ...}
+        """
+        ret = {
+            (call[0][0].identity, call[0][2].split('|')[-1].strip())
+            for call in calls
+        }
+        calls.clear()
+        return ret
+
+    # create a workflow with two tasks
+    id_ = flow({
+        'scheduling': {
+            'graph': {'R1': 'one & two'}
+        }
+    })
+    schd = scheduler(id_)
+    schd: Scheduler
+    async with start(schd) as log:
+        # put the two tasks into the submitted state
+        one = schd.pool.get_task(IntegerPoint('1'), 'one')
+        one.state.reset('submitted')
+        one.submit_num = 1
+        two = schd.pool.get_task(IntegerPoint('1'), 'two')
+        two.state.reset('submitted')
+        two.submit_num = 1
+
+        # -- Case 1
+        # test command output with a mixture of valid / invalid / irrelevant
+        # items
+        ctx.out = '\n'.join((
+            # invalid command output:
+            f'{OUT_PREFIX} elephant',
+            # valid output for a task we were not expecting:
+            f'{OUT_PREFIX} 20000101T00Z|1/no-such-task/01|running',
+            # valid output for a task we were expecting:
+            f'{OUT_PREFIX} 20000101T00Z|1/one/01|running',
+        ))
+
+        # it should log the errors along with the exception summary
+        schd.task_job_mgr._manip_task_jobs_callback(
+            ctx, schd.pool.get_tasks(), callback,
+        )
+        assert log_filter(
+            contains=(
+                "Unhandled my-key output:"
+                " 20000101T00Z|1/no-such-task/01|running"
+                "\nKeyError: ('1', 'no-such-task', '01')"
+            ),
+        )
+        assert log_filter(
+            contains=(
+                'Unhandled my-key output: elephant'
+                '\nIndexError: list index out of range'
+            ),
+        )
+        log.clear()
+
+        # it should make two callback calls:
+        assert get_callback_calls() == {
+            # one call for the task "one" with the "running" status received in
+            # the message:
+            ('1/one', 'running'),
+            # one call for the task "two" (which we expected to appear in the
+            # output but wasn't there) with the error status "1":
+            ('1/two', '1')
+        }
+
+        # -- Case 2
+        # test an exception in the callback for valid output
+        ctx.out = '\n'.join((
+            # invalid command output:
+            f'{OUT_PREFIX} elephant',
+            # valid output for a task we were expecting:
+            f'{OUT_PREFIX} 20000101T00Z|1/one/01|running',
+        ))
+
+        # the exception should not be caught - it will kill the scheduler
+        with pytest.raises(Exception, match='exception-in-callback'):
+            schd.task_job_mgr._manip_task_jobs_callback(
+                ctx, schd.pool.get_tasks(), error_callback,
+            )
+
+        # it should log any errors that occur before the failure
+        assert log_filter(contains='Unhandled my-key output: elephant')
+        log.clear()
+
+        # the callback should have been called for the one valid entry
+        assert get_callback_calls() == {('1/one', 'running')}
+
+        # -- Case 3
+        # test an exception in the callback for a "bad_task"
+        ctx.out = '\n'.join((
+            # invalid command output:
+            f'{OUT_PREFIX} elephant',
+        ))
+
+        # the exception should not be caught - it will kill the scheduler
+        with pytest.raises(Exception, match='exception-in-callback'):
+            schd.task_job_mgr._manip_task_jobs_callback(
+                ctx, schd.pool.get_tasks(), error_callback,
+            )
+
+        # it should log any errors that occur before the failure
+        assert log_filter(contains='Unhandled my-key output: elephant')
+        log.clear()
+
+        # the callback should have been called for a "bad_task" (status of "1")
+        assert get_callback_calls() == {('1/one', '1')}
