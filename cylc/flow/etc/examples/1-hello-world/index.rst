@@ -1,12 +1,14 @@
 Hello World
 -----------
 
+.. n.b: get-resources will strip the number and install to ~/cylc-src
+
 .. admonition:: Get a copy of this example
    :class: hint
 
    .. code-block:: console
 
-      $ cylc get-resources examples/1-hello-world ~/cylc-src/hello-world
+      $ cylc get-resources examples/1-hello-world
 
 In the time honoured tradition, this is the minimal Cylc workflow:
 
