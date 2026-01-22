@@ -2185,6 +2185,21 @@ class Remove(Mutation, TaskMutation):
                 By default, tasks will be removed from all flows.
             ''')
         )
+        no_spawn = Boolean(
+            default_value=False,
+            description=sstrip('''
+                "Do not spawn successors before removal."
+
+                This usually only applies to parentless tasks whose next
+                instance(s) are either spawned automatically to the runahead
+                limit or sequentially on xtrigger satisfaction.
+
+                If `false` the scheduler will spawn the next task instance
+                as normal (default).
+
+                If `true` the scheduler will not spawn the next task instance.
+            ''')
+        )
 
 
 class SetPrereqsAndOutputs(Mutation, TaskMutation):
