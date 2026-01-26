@@ -278,6 +278,8 @@ async def view_log(
     If remote is True, we are executing on a remote host for a log file there.
 
     """
+    # Resolve NN symlinks etc.
+    logpath = os.path.realpath(logpath)
     # The log file path may contain '$USER' to be evaluated on the job host.
     if mode == PRINT:
         # Print location even if the workflow does not exist yet.
