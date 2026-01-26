@@ -104,7 +104,7 @@ or --start-task) and finish before the end of the graph (by configuring
 
 Note if you override a configured stop or final cycle point with these command
 options, the new values will be stored in the DB and persist over restarts. To
-revert to configured values on restart use (e.g). --final-cycle-point=reload.
+revert to configured values on restart use (e.g.) --final-cycle-point=reload.
 
 For convenience, any dependence on tasks prior to the start cycle point (or to
 the cycle point of the earliest task specified by --start-task) will be taken
