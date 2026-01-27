@@ -1066,7 +1066,7 @@ async def test__family_ascent_point_update(flow, scheduler, run, validate):
 
         assert data[schd.id]['workflow'].contains_retry is False
 
-        await asyncio.sleep(1)
+        await schd._main_loop()
 
         assert data[schd.id]['workflow'].contains_retry is True
         for family_proxy in data[schd.id]['family_proxies'].values():
