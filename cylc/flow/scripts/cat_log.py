@@ -641,6 +641,8 @@ def _main(
                 print('\n'.join(files))
                 print(err, file=sys.stderr)
                 sys.exit(proc.returncode)
+            else:
+                sys.exit(proc)
 
         else:
             # Local task job or local job log.
