@@ -41,7 +41,7 @@
             RESOLUTION = 0.2
 
             # The area to generate forecasts for (lng1, lat1, lng2, lat2)
-            DOMAIN = -12,46,12,61
+            DOMAIN = -12,46,12,61  # Do not change!
 
 
     [[get_observations<station>]]
