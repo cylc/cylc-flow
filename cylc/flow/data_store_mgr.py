@@ -2237,6 +2237,9 @@ class DataStoreMgr:
                         is_held_total += child_node.is_held_total
                         is_queued_total += child_node.is_queued_total
                         is_runahead_total += child_node.is_runahead_total
+                        is_retry |= child_node.is_retry
+                        is_wallclock |= child_node.is_wallclock
+                        is_xtriggered |= child_node.is_xtriggered
                         # add active child state totals to active count.
                         active_counter += Counter(
                             dict(child_node.state_totals)

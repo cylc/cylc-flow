@@ -1019,3 +1019,55 @@ async def test_job_estimated_finish_time(one_conf, flow, scheduler, start):
             get_pb_job(schd, itask).estimated_finish_time
             == f'{date}06:01:40Z'
         )
+
+
+async def test__family_ascent_point_update(flow, scheduler, run, validate):
+    """Check that task states are cascaded up the family tree
+    to the root family and the workflow "containsRetry" flag.
+
+    https://github.com/cylc/cylc-flow/issues/7174
+    """
+    wid = flow({
+        'scheduling': {
+            'initial cycle point': '3333',
+            'graph': {
+                'R1': (
+                    'FAM'
+                    '\n@wallclock => is_wallclock'
+                    '\n@echo_false => is_xt'
+                )
+            },
+            'xtriggers': {
+                'wallclock': 'wall_clock()',
+                'echo_false': 'echo(succeed=False)'
+            }
+        },
+        'runtime': {
+            'FAM': {},
+            'is_retry': {
+                'inherit': 'FAM',
+                'execution retry delays': 'PT10M',
+                'simulation': {
+                    'fail cycle points': 'all',
+                    'default run length': 'PT0S'
+                }
+            },
+            'normal': {'inherit': 'FAM'},
+            'is_wallclock': {'inherit': 'FAM'},
+            'is_xt': {'inherit': 'FAM'},
+        }
+    })
+    is_flags = ['is_retry', 'is_wallclock', 'is_xtriggered']
+    validate(wid)
+    schd = scheduler(wid, paused_start=False)
+    async with run(schd):
+        data = schd.data_store_mgr.data
+
+        assert data[schd.id]['workflow'].contains_retry is False
+
+        await schd._main_loop()
+
+        assert data[schd.id]['workflow'].contains_retry is True
+        for family_proxy in data[schd.id]['family_proxies'].values():
+            for attribute in is_flags:
+                assert getattr(family_proxy, attribute) is True
