@@ -21,7 +21,7 @@ from cylc.flow.scripts.profiler import (parse_memory_file,
                                         get_cgroup_name,
                                         get_cgroup_version,
                                         get_cgroup_paths,
-                                        get_resource_usage,
+                                        get_profiler_data,
                                         stop_profiler,
                                         profile,
                                         Process)
@@ -57,7 +57,6 @@ def test_stop_profiler(mocker, monkeypatch, tmpdir):
     with pytest.raises(SystemExit) as excinfo:
         stop_profiler(process_object, 1)
 
-    assert excinfo.type == SystemExit
     assert excinfo.value.code == 0
 
 
@@ -70,11 +69,11 @@ def test_get_resource_usage(mocker, monkeypatch, tmpdir):
         memory_allocated_path=None,
         cgroup_version=1)
 
-    max_rss, cpu_time, memory_allocated = get_resource_usage(process_object)
-
-    assert max_rss == 0
-    assert cpu_time == 0
-    assert memory_allocated == 0
+    assert get_profiler_data(process_object) == {
+        'max_rss': 0,
+        'cpu_time': 0,
+        'memory_allocated': 0,
+    }
 
 
 def test_parse_memory_file(mocker, tmpdir):

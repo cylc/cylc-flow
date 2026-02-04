@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+echo 'running my-model'
+sleep 2
+
+case $(( RANDOM % 3 )) in;
+  0)
+    echo 'succeeded'
+    exit 0
+    ;;
+  1)
+    echo 'ERROR: NaN'
+    exit 1
+    ;;
+  2)
+    echo 'ERROR: Configuration issue'
+    exit 2
+    ;;

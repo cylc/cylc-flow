@@ -20,6 +20,7 @@ Profiler which periodically polls cgroups to track
 the resource usage of jobs running on the node.
 """
 
+import json
 import os
 import re
 import sys
@@ -50,11 +51,13 @@ class Process:
     cgroup_version: int
 
 
-def stop_profiler(process, comms_timeout, *args):
-    """This function will be executed when the SIGINT signal is sent
-     to this process"""
+def stop_profiler(process, comms_timeout, *_args):
+    """Stop the profiler and return its data to the sceduler.
 
-    max_rss, cpu_time, memory_allocated = get_resource_usage(process)
+    This function will be executed when the SIGINT signal is sent to this
+    process.
+    """
+    profiler_data = get_profiler_data(process)
 
     graphql_mutation = """
     mutation($WORKFLOWS: [WorkflowID]!,
@@ -70,9 +73,8 @@ def stop_profiler(process, comms_timeout, *args):
         "WORKFLOWS": [os.environ.get('CYLC_WORKFLOW_ID')],
         "MESSAGES": [[
             "DEBUG",
-            f"cpu_time {cpu_time} "
-            f"max_rss {max_rss} "
-            f"mem_alloc {memory_allocated}"]],
+            f'_cylc_profiler: {json.dumps(profiler_data)}',
+        ]],
         "JOB": os.environ.get('CYLC_TASK_JOB'),
         "TIME": "now"
     }
@@ -91,17 +93,24 @@ def stop_profiler(process, comms_timeout, *args):
     sys.exit(0)
 
 
-def get_resource_usage(process):
+def get_profiler_data(process):
     # If a task fails instantly, or finishes very quickly (< 1 second),
     # the get config function doesn't have time to run
-    if (process.cgroup_memory_path is None
-            or process.cgroup_cpu_path is None
-            or process.memory_allocated_path is None):
-        return 0, 0, 0
-    max_rss = parse_memory_file(process)
-    cpu_time = parse_cpu_file(process)
-    memory_allocated = parse_memory_allocated(process)
-    return max_rss, cpu_time, memory_allocated
+    if (
+        process.cgroup_memory_path is None
+        or process.cgroup_cpu_path is None
+        or process.memory_allocated_path is None
+    ):
+        max_rss = cpu_time = memory_allocated = 0
+    else:
+        max_rss = parse_memory_file(process)
+        cpu_time = parse_cpu_file(process)
+        memory_allocated = parse_memory_allocated(process)
+    return {
+        'max_rss': max_rss,
+        'cpu_time': cpu_time,
+        'memory_allocated': memory_allocated,
+    }
 
 
 def parse_memory_file(process: Process):
