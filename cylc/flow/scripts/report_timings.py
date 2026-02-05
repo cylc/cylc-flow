@@ -52,6 +52,7 @@ import contextlib
 import io as StringIO
 import sys
 from collections import Counter
+from functools import partial
 from typing import TYPE_CHECKING
 
 from cylc.flow.exceptions import CylcError
@@ -106,11 +107,17 @@ def format_html(row_buf, output):
     summary.write_summary(output)
 
 
+def format_generic(row_buf, output, format):
+    PandasSummary(row_buf).write_summary(output, f'to_{format}')
+
+
 # suported output formats
 FORMATS = {
     'raw': format_raw,
     'summary': format_summary,
     'html': format_html,
+    'csv': partial(format_generic, format='csv'),
+    'json': partial(format_generic, format='json'),
 }
 
 
@@ -121,7 +128,10 @@ def get_option_parser() -> COP:
     )
     parser.add_option(
         '--format', '-t',
-        help='Select output format (default=summary).',
+        help=(
+            'Select output format (default=summary). Available formats: '
+            + ', '.join(FORMATS)
+        ),
         action='store',
         default='summary',
         choices=list(FORMATS)
@@ -279,6 +289,19 @@ class TimingSummary:
         return dt.total_seconds()
 
 
+class PandasSummary(TimingSummary):
+    """Generic Form designed to leverage the power of pandas.DataFrame.to*
+    methods.
+    """
+    def read_timings(self, filepath_or_buffer):
+        self.data = [i.split() for i in filepath_or_buffer.readlines()]
+
+    def write_summary(self, buf, method, *args, **kwargs):
+        import pandas as pd
+        df = pd.DataFrame(self.data[1:], columns=self.data[0])
+        buf.write(getattr(df, method)(*args, **kwargs))
+
+
 class TextTimingSummary(TimingSummary):
     """Timing summary in text form."""
 
@@ -339,7 +362,7 @@ class HTMLTimingSummary(TimingSummary):
             }
         """
 
-        buf.write('<html><head><style>%s</style></head><body>' % css)
+        buf.write('<!DOCTYPE html><html><head><style>%s</style></head><body>' % css)
 
     def write_summary_footer(self, buf):
         buf.write('</body></html>')
@@ -358,6 +381,7 @@ class HTMLTimingSummary(TimingSummary):
         )
         ax.invert_yaxis()
         ax.set_xlabel('Seconds')
+        plt.xticks(rotation=90)
         plt.tight_layout()
         plt.gcf().savefig(buf, format='svg')
         table = df_describe[category].to_html(
