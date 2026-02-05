@@ -1214,15 +1214,10 @@ class DataStoreMgr:
             boundary_nodes = {active_id}
         # associate
         for tp_id in boundary_nodes:
-            try:
-                self.prune_trigger_nodes.setdefault(tp_id, set()).update(
-                    active_walk['walk_ids']
-                )
-                self.prune_trigger_nodes[tp_id].discard(tp_id)
-            except KeyError:
-                self.prune_trigger_nodes.setdefault(tp_id, set()).add(
-                    active_id
-                )
+            self.prune_trigger_nodes.setdefault(tp_id, set()).update(
+                active_walk['walk_ids']
+            )
+            self.prune_trigger_nodes[tp_id].discard(tp_id)
         # flag manual triggers for pruning on deletion.
         if is_manual_submit:
             self.prune_trigger_nodes.setdefault(active_id, set()).add(
@@ -1279,20 +1274,21 @@ class DataStoreMgr:
             self.updates_pending = True
         # flagged isolates/end-of-branch nodes for pruning on removal
         if (
-                tp_id in self.prune_trigger_nodes and
-                tp_id in self.prune_trigger_nodes[tp_id]
+            tp_id in self.prune_trigger_nodes and
+            tp_id in self.prune_trigger_nodes[tp_id]
         ):
             self.prune_flagged_nodes.update(self.prune_trigger_nodes[tp_id])
-            del self.prune_trigger_nodes[tp_id]
         elif (
-                tp_id in self.n_window_nodes and
-                self.n_window_nodes[tp_id].isdisjoint(self.all_task_pool)
+            tp_id in self.n_window_nodes and
+            self.n_window_nodes[tp_id].isdisjoint(self.all_task_pool)
         ):
             self.prune_flagged_nodes.add(tp_id)
         elif tp_id in self.n_window_node_walks:
             self.prune_flagged_nodes.update(
                 self.n_window_node_walks[tp_id]['walk_ids']
             )
+        if tp_id in self.prune_trigger_nodes:
+            del self.prune_trigger_nodes[tp_id]
         self.update_window_depths = True
         self.updates_pending = True
 
@@ -1930,6 +1926,7 @@ class DataStoreMgr:
 
         # Clear window walks, and walk from scratch.
         self.prune_flagged_nodes.clear()
+        self.prune_trigger_nodes.clear()
         self.n_window_node_walks.clear()
         for tp_id in self.all_task_pool:
             tokens = Tokens(tp_id)
@@ -2021,6 +2018,10 @@ class DataStoreMgr:
         # Absolute triggers may be present in task pool, so recheck.
         # Clear the rest.
         self.prune_flagged_nodes.intersection_update(self.all_task_pool)
+        # Clear any boundary prune triggers not in the window.
+        for trigger_id in set(
+                self.prune_trigger_nodes).difference(self.all_n_window_nodes):
+            del self.prune_trigger_nodes[trigger_id]
 
         tp_data = self.data[self.workflow_id][TASK_PROXIES]
         tp_added = self.added[TASK_PROXIES]
