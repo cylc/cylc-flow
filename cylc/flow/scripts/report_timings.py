@@ -108,7 +108,7 @@ def format_html(row_buf, output):
 
 
 def format_generic(row_buf, output, format):
-    PandasSummary(row_buf).write_summary(output, f'to_{format}')
+    PandasTimingsRaw(row_buf).write_summary(output, f'to_{format}')
 
 
 # suported output formats
@@ -289,7 +289,7 @@ class TimingSummary:
         return dt.total_seconds()
 
 
-class PandasSummary(TimingSummary):
+class PandasTimingsRaw(TimingSummary):
     """Generic Form designed to leverage the power of pandas.DataFrame.to*
     methods.
     """
