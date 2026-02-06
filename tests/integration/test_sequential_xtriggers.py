@@ -82,11 +82,8 @@ async def test_remove(sequential: Scheduler, start):
                 break
             sequential.xtrigger_mgr.call_xtriggers_async(foo)
 
-        # for some reason this doesn't work in the loop
-        await sequential._main_loop()
-        await sequential._main_loop()
-        await sequential._main_loop()
-        await sequential._main_loop()
+        for _ in range(4):
+            await sequential._main_loop()
 
         assert list_cycles(sequential) == [
             '2001',
