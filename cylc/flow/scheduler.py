@@ -77,6 +77,7 @@ from cylc.flow.exceptions import (
     CommandFailedError,
     CylcError,
     InputError,
+    PlatformLookupError,
 )
 import cylc.flow.flags
 from cylc.flow.flow_mgr import (
@@ -516,7 +517,7 @@ class Scheduler:
 
         self.profiler.log_memory("scheduler.py: before load_tasks")
         if self.is_restart:
-            self._load_pool_from_db()
+            await self._load_pool_from_db()
             if self.restored_stop_task_id is not None:
                 self.pool.set_stop_task(self.restored_stop_task_id)
         elif self.options.starttask:
@@ -863,15 +864,16 @@ class Scheduler:
         LOG.info(f"{start_type} start from {self.config.start_point}")
         self.pool.load_from_point()
 
-    def _load_pool_from_db(self):
+    async def _load_pool_from_db(self):
         """Load task pool from DB, for a restart."""
         self.workflow_db_mgr.pri_dao.select_broadcast_states(
             self.broadcast_mgr.load_db_broadcast_states)
         self.broadcast_mgr.post_load_db_coerce()
         self.workflow_db_mgr.pri_dao.select_task_job_run_times(
             self._load_task_run_times)
-        self.workflow_db_mgr.pri_dao.select_task_pool_for_restart(
-            self.pool.load_db_task_pool_for_restart)
+        await self.load_db_task_pool_for_restart(
+            self.workflow_db_mgr.pri_dao.select_task_pool_for_restart()
+        )
         self.workflow_db_mgr.pri_dao.select_jobs_for_restart(
             self.data_store_mgr.insert_db_job)
         self.workflow_db_mgr.pri_dao.select_task_action_timers(
@@ -890,6 +892,151 @@ class Scheduler:
 
         self.pool.load_db_tasks_to_hold()
         self.pool.update_flow_mgr()
+
+    async def load_db_task_pool_for_restart(self, tasks):
+        """Load tasks from DB task pool/states/jobs tables.
+
+        Output completion status is loaded from the DB, and tasks recorded
+        as submitted or running are polled to confirm their true status.
+        Tasks are added to queues again on release from runahead pool.
+
+        Raises:
+            PlatformLookupError:
+                If any tasks present in the database cannot be reloaded due to
+                missing platform definitions, unless the platform is only
+                required by orphan tasks which have been removed by reload.
+
+        """
+        LOG.info("LOADING task proxies")
+
+        # active tasks removed by restart
+        orphan_task_names: set[str] = set()
+
+        # platforms used by active tasks which are no longer present
+        missing_platform_names: set[str] = set()
+
+        # platforms used by active tasks that were removed by restart which are
+        # no longer present (non critical, but good to log)
+        missing_orphan_platform_names: set[str] = set()
+
+        # active tasks removed by restart which *can* and *should* be killed
+        orphans_to_kill: 'list[TaskProxy]' = []
+
+        for (
+            cycle,
+            name,
+            flow_nums,
+            flow_wait,
+            is_manual_submit,
+            is_late,
+            status,
+            is_held,
+            submit_num,
+            _,
+            platform_name,
+            time_submit,
+            time_run,
+            timeout,
+            outputs_str,
+        ) in tasks:
+            if name not in self.config.taskdefs:
+                # build a set of orphan tasks
+                # WARNING: TaskDefs may be created for orphan tasks via
+                # `load_restart_task`, so this test may only return `True`
+                # for the first instance of the task to pass through this code
+                orphan_task_names.add(name)
+            try:
+                if itask := self.pool.load_restart_task(
+                    cycle,
+                    name,
+                    flow_nums,
+                    flow_wait,
+                    is_manual_submit,
+                    is_late,
+                    status,
+                    is_held,
+                    submit_num,
+                    platform_name,
+                    time_submit,
+                    time_run,
+                    timeout,
+                    outputs_str,
+                    name in orphan_task_names,
+                ):
+                    orphans_to_kill.append(itask)
+            except PlatformLookupError:
+                if platform_name:
+                    if name in orphan_task_names:
+                        missing_orphan_platform_names.add(platform_name)
+                    else:
+                        missing_platform_names.add(platform_name)
+
+        # If any of the platforms could not be found, raise an exception
+        # and stop trying to play this workflow:
+        if missing_platform_names or missing_orphan_platform_names:
+            msg = (
+                "The following platforms are not defined in"
+                " the global.cylc file:"
+            )
+            for platform in sorted((
+                *missing_platform_names, *missing_orphan_platform_names
+            )):
+                msg += f"\n * {platform}"
+            if missing_platform_names:
+                raise PlatformLookupError(msg)
+            else:
+                LOG.warning(msg)
+
+        if orphans_to_kill:
+            self.handle_graph_change('restart', orphans_to_kill)
+
+    def handle_graph_change(
+        self,
+        cause: Literal['reload'] | Literal['restart'],
+        orphan_tasks: 'Iterable[TaskProxy]',
+        added_tasks: 'Iterable[str] | None' = None,
+    ) -> None:
+        """Handle a workflow graph configuration change.
+
+        * Kill and remove tasks orphaned by reload.
+        * Log any removed tasks.
+        * Log and added tasks.
+
+        If tasks are removed from the workflow graph by either reload or
+        restart, this method should be called on any lingering proxies left in
+        the pool.
+
+        Args:
+            itasks: Orphaned task proxies to remove.
+            cause: The reason the tasks were removed.
+
+        """
+        if not orphan_tasks and not added_tasks:
+            # no graph change to report
+            return
+
+        if cause == 'reload':
+            # NOTE: on restart these tasks are not added into the pool so do
+            # not require removing
+            for itask in orphan_tasks:
+                self.pool.remove(itask, f'removed by {cause}', logging.DEBUG)
+
+        msg = f'Graph changed due to {cause}'
+        if orphan_tasks:
+            msg += '\n' + '\n  * '.join(
+                ('Removed tasks:', *sorted(map(str, orphan_tasks)))
+            )
+        if added_tasks is not None:
+            if added_tasks:
+                msg += '\n' + '\n  * '.join(
+                    ('Added tasks:', *sorted(added_tasks))
+                )
+            else:
+                msg += '\nAdded tasks: None'
+
+        LOG.info(msg)
+
+        self.kill_tasks(orphan_tasks, warn=False)
 
     def restart_remote_init(self):
         """Remote init for all submitted/running tasks in the pool."""
@@ -1070,7 +1217,14 @@ class Scheduler:
             itasks: Tasks to kill.
             warn: Whether to warn about tasks that are not in a killable state.
 
-        Returns number of tasks that could not be killed.
+        Returns:
+            The number of tasks that could not be killed.
+
+        Warning:
+            This method may be called on tasks which have been removed by
+            reload or restart so do not belong to a family and may have a blank
+            taskdef.
+
         """
         jobless = self.get_run_mode() == RunMode.SIMULATION
         to_kill: List[TaskProxy] = []
@@ -1095,7 +1249,7 @@ class Scheduler:
                 "Tasks not killable: "
                 f"{', '.join(sorted(t.identity for t in unkillable))}"
             )
-        if not jobless:
+        if to_kill:
             self.task_job_mgr.kill_task_jobs(to_kill)
 
         return len(unkillable)

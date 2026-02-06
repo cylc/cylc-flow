@@ -37,7 +37,6 @@ from typing import (
 )
 
 from cylc.flow import LOG
-from cylc.flow.exceptions import PlatformLookupError
 import cylc.flow.flags
 from cylc.flow.flow_mgr import stringify_flow_nums
 from cylc.flow.util import (
@@ -933,17 +932,26 @@ class CylcWorkflowDAO:
         for row_idx, row in enumerate(self.connect().execute(stmt)):
             callback(row_idx, list(row))
 
-    def select_task_pool_for_restart(self, callback):
-        """Select from task_pool+task_states+task_jobs for restart.
-
-        Invoke callback(row_idx, row) on each row, where each row contains:
-        the fields in the SELECT statement below.
-
-        Raises:
-            PlatformLookupError: Do not start up if platforms for running
-            tasks cannot be found in global.cylc. This exception should
-            not be caught.
-        """
+    def select_task_pool_for_restart(
+        self,
+    ) -> Iterable[tuple[
+        str,
+        str,
+        str,
+        int,
+        int,
+        Any | None,
+        str,
+        int,
+        int,
+        int | None,
+        str | None,
+        str | None,
+        str | None,
+        float | None,
+        str,
+    ]]:
+        """Select from task_pool+task_states+task_jobs for restart."""
         form_stmt = r"""
             SELECT
                 %(task_pool)s.cycle,
@@ -996,24 +1004,7 @@ class CylcWorkflowDAO:
             "task_outputs": self.TABLE_TASK_OUTPUTS,
         }
         stmt = form_stmt % form_data
-
-        # Run the callback, collecting any platform errors to be handled later:
-        platform_errors = []
-        for row_idx, row in enumerate(self.connect().execute(stmt)):
-            platform_error = callback(row_idx, list(row))
-            if platform_error:
-                platform_errors.append(platform_error)
-
-        # If any of the platforms could not be found, raise an exception
-        # and stop trying to play this workflow:
-        if platform_errors:
-            msg = (
-                "The following platforms are not defined in"
-                " the global.cylc file:"
-            )
-            for platform in platform_errors:
-                msg += f"\n * {platform}"
-            raise PlatformLookupError(msg)
+        return self.connect().execute(stmt)
 
     def select_task_prerequisites(
         self, cycle: str, name: str, flow_nums: str
