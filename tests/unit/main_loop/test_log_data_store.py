@@ -73,5 +73,5 @@ def test_iter_data_store():
     assert (
         list(_iter_data_store({'x': {'a': 1, 'workflow': 2, 'c': 3}}))
     ) == [
-        ('a', 1), ('c', 3)
+        ('a', 1), ('workflow', [2]), ('c', 3)
     ]
