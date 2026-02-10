@@ -663,14 +663,24 @@ class DataStoreMgr:
         self.all_n_window_nodes = set()
         self.n_window_nodes = {}
         self.n_window_edges = set()
+        # The walk information for window nodes, which is used for
+        # pre-populating new walks (if possible) and node depth calculations.
         self.n_window_node_walks = {}
         self.n_window_completed_walks = set()
         self.n_window_depths = {}
         self.update_window_depths = False
         self.db_load_task_proxies: Dict[str, Tuple[TaskProxy, bool]] = {}
+        # Family node IDs that have been pruned. Sent with deltas and used for
+        # exclusion from state total and other calculations.
         self.family_pruned_ids = set()
+        # Collects walk node IDs associated with a boundary node so that nodes
+        # of isolates, adjacent paths, and it's own path can be flagged for
+        # pruning.
         self.prune_trigger_nodes = {}
+        # Node ids flagged for pruning.
+        # Those not in active paths will be pruned.
         self.prune_flagged_nodes = set()
+        # Set of removed task proxies to avoid applying/sending deltas.
         self.pruned_task_proxies = set()
         self.updates_pending = False
         self.updates_pending_follow_on = False
