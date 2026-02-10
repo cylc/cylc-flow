@@ -38,7 +38,13 @@ try:
 except ModuleNotFoundError:
     PLT = False
 
-from pympler.asizeof import asized
+from pympler.asizeof import asizeof, Asizer
+
+
+STORE_OTHER = {
+    'added',
+    'updated',
+}
 
 
 @startup
@@ -51,18 +57,40 @@ async def init(scheduler, state):
         state['objects'][key] = []
         state['size'][key] = []
 
+    for attr_name in STORE_OTHER:
+        state['objects'][attr_name] = []
+        state['size'][attr_name] = []
+
+    state['objects']['data_store_mgr'] = []
+    state['size']['data_store_mgr'] = []
+
 
 @periodic
 async def log_data_store(scheduler, state):
     """Count the number of objects and the data store size."""
     state['times'].append(time())
-    for key, value in _iter_data_store(scheduler.data_store_mgr.data):
+    ds = scheduler.data_store_mgr
+    for key, value in _iter_data_store(ds.data):
         state['objects'][key].append(
             len(value)
         )
         state['size'][key].append(
-            asized(value).size
+            asizeof(value)
         )
+
+    for attr_name in STORE_OTHER:
+        attr_value = getattr(ds, attr_name)
+        state['objects'][attr_name].append(
+            len(attr_value)
+        )
+        state['size'][attr_name].append(
+            asizeof(attr_value)
+        )
+
+    asizer = Asizer()
+    asizer.exclude_refs(scheduler)
+    state['objects']['data_store_mgr'].append(1)
+    state['size']['data_store_mgr'].append(asizer.asizeof(ds))
 
 
 @shutdown
@@ -75,7 +103,9 @@ async def report(scheduler, state):
 def _iter_data_store(data_store):
     for item in data_store.values():
         for key, value in item.items():
-            if key != 'workflow':
+            if key == 'workflow':
+                yield (key, [value])
+            else:
                 yield (key, value)
         # there should only be one workflow in the data store
         break
