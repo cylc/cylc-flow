@@ -895,6 +895,7 @@ class TaskPool:
         itask: 'TaskProxy',
         reason: Optional[str] = None,
         log_level: int | None = None,
+        spawn_successor: bool = True,
     ) -> None:
         """Remove a task from the pool.
 
@@ -906,6 +907,9 @@ class TaskPool:
             log_level:
                 Level to log the removal at, if not specified, the level will
                 be determined automatically.
+            spawn_successor:
+                If True, non SoD spawning (i.e, parentless / sequentual
+                xtrigger spawning) will take place,
 
         Warning:
             This method may be called on tasks which have been removed by
@@ -919,7 +923,7 @@ class TaskPool:
         # xtriggers are no longer relevant -> remove them
         self.xtrigger_mgr.force_satisfy_all(itask, log=False)
 
-        if itask.state.is_runahead and itask.flow_nums:
+        if spawn_successor and itask.state.is_runahead and itask.flow_nums:
             # If removing a parentless runahead-limited task
             # auto-spawn its next instance first.
             self.spawn_if_parentless(
@@ -933,7 +937,7 @@ class TaskPool:
         # Mark as transient in case itask is still processed in other contexts.
         itask.transient = True
 
-        if itask.is_xtrigger_sequential:
+        if spawn_successor and itask.is_xtrigger_sequential:
             self.xtrigger_mgr.sequential_has_spawned_next.discard(
                 itask.identity
             )
@@ -982,7 +986,7 @@ class TaskPool:
             del itask
 
             # removing this task could nudge the runahead limit forward
-            if self.compute_runahead():
+            if spawn_successor and self.compute_runahead():
                 self.release_runahead_tasks()
 
     def get_tasks(self) -> List[TaskProxy]:

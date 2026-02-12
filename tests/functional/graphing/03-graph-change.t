@@ -18,11 +18,17 @@
 
 . "$(dirname "$0")/test_header"
 
-set_test_number 8
+set_test_number 16
 
-init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
+for change_type in reload restart; do
+  init_workflow "${TEST_NAME_BASE}-${change_type}" <<__FLOW_CONFIG__
 [scheduler]
   allow implicit tasks = True
+  [[events]]
+    stall timeout = PT0S
+    abort on stall timeout = True
+    inactivity timeout = PT60S
+    abort on inactivity timeout = True
 
 [scheduling]
   cycling mode = integer
@@ -31,6 +37,7 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
   runahead limit = P1
   [[graph]]
     P1 = """
+      # TODO: consider @wall_clock => a
       a => b & z:started => c  # MARKER
       b[-P1] => b
     """
@@ -41,30 +48,40 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
     script = sleep 60
   [[b]]
     script = """
-      if [[ $CYLC_TASK_CYCLE_POINT == 2 ]]; then
+      if [[ \$CYLC_TASK_CYCLE_POINT == 2 ]]; then
         cylc__job__poll_grep_workflow_log -E '1/c.*succeeded'
         cylc__job__poll_grep_workflow_log -E '1/z.*running'
         cylc__job__poll_grep_workflow_log -E '2/z.*running'
 
-        sed -i 's/.*MARKER/      d => b => e /' "$CYLC_WORKFLOW_RUN_DIR/flow.cylc"
-        cylc reload "$CYLC_WORKFLOW_ID"
+        sed -i 's/.*MARKER/      d => b => e /' "\$CYLC_WORKFLOW_RUN_DIR/flow.cylc"
+        if [[ $change_type == reload ]]; then
+          cylc reload "\$CYLC_WORKFLOW_ID"
+        else
+          cylc stop --now --now "\$CYLC_WORKFLOW_ID"
+          sleep 1
+          cylc play "\$CYLC_WORKFLOW_ID"
+        fi
       fi
     """
   [[stop]]
     script = """
         cylc__job__poll_grep_workflow_log -E '2/e.*running'
-        cylc stop "${CYLC_WORKFLOW_ID}"
+        cylc stop "\${CYLC_WORKFLOW_ID}"
     """
 __FLOW_CONFIG__
 
 
-workflow_run_ok "${TEST_NAME_BASE}-run" cylc play -N "${WORKFLOW_NAME}"
+  workflow_run_ok "${TEST_NAME_BASE}-${change_type}-run" cylc play -N "${WORKFLOW_NAME}"
+  if [[ $change_type == restart ]]; then
+    sleep 5
+    poll_workflow_stopped
+  fi
 
-TEST_NAME="${TEST_NAME_BASE}-tree"
-LOG_DIR="${HOME}/cylc-run/${WORKFLOW_NAME}/log"
-run_ok "$TEST_NAME" tree -L 2 --noreport --charset=ascii "${LOG_DIR}/job"
-sed -i '1d' "${TEST_NAME}.stdout"
-cmp_ok "${TEST_NAME}.stdout" << '__OUT__'
+  TEST_NAME="${TEST_NAME_BASE}-${change_type}-tree"
+  LOG_DIR="${HOME}/cylc-run/${WORKFLOW_NAME}/log"
+  run_ok "$TEST_NAME" tree -L 2 --noreport --charset=ascii "${LOG_DIR}/job"
+  sed -i '1d' "${TEST_NAME}.stdout"
+  cmp_ok "${TEST_NAME}.stdout" << '__OUT__'
 |-- 1
 |   |-- a
 |   |-- b
@@ -78,16 +95,17 @@ cmp_ok "${TEST_NAME}.stdout" << '__OUT__'
     `-- z
 __OUT__
 
-grep_ok 'jobs-kill' "${LOG_DIR}/job/1/z/01/job-activity.log"
-grep_ok 'jobs-kill' "${LOG_DIR}/job/2/z/01/job-activity.log"
-grep_ok 'succeeded' "${LOG_DIR}/job/2/e/01/job.out"
+  grep_ok 'jobs-kill' "${LOG_DIR}/job/1/z/01/job-activity.log"
+  grep_ok 'jobs-kill' "${LOG_DIR}/job/2/z/01/job-activity.log"
+  grep_ok 'succeeded' "${LOG_DIR}/job/2/e/01/job.out"
 
-TEST_NAME="${TEST_NAME_BASE}-db"
-run_ok "$TEST_NAME" sqlite3 "${LOG_DIR}/db" "SELECT name, cycle, status FROM task_pool;"
-cmp_ok "${TEST_NAME}.stdout" << __HERE__
-a|4|waiting
+  TEST_NAME="${TEST_NAME_BASE}-${change_type}-db"
+  run_ok "$TEST_NAME" sqlite3 "${LOG_DIR}/db" "SELECT name, cycle, status FROM task_pool;"
+  cmp_ok "${TEST_NAME}.stdout" << __HERE__
 b|3|waiting
 __HERE__
 
-#purge
+  purge
+done
+
 exit

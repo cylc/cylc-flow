@@ -1019,7 +1019,17 @@ class Scheduler:
             # NOTE: on restart these tasks are not added into the pool so do
             # not require removing
             for itask in orphan_tasks:
-                self.pool.remove(itask, f'removed by {cause}', logging.DEBUG)
+                self.pool.remove(
+                    itask,
+                    f'removed by {cause}',
+                    logging.DEBUG,
+                    # ensure parentless / sequential xtrigger tasks are not
+                    # spawned ahead into future cycles
+                    spawn_successor=False,
+                )
+            # this may have nudged the runahead limit forward
+            self.pool.compute_runahead()
+            self.pool.release_runahead_tasks()
 
         msg = f'Graph changed due to {cause}'
         if orphan_tasks:
