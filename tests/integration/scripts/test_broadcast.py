@@ -14,12 +14,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
+
 from ansimarkup import strip as cstrip
+import pytest
 
 from cylc.flow.network.client import WorkflowRuntimeClient
 from cylc.flow.option_parsers import Options
 from cylc.flow.rundb import CylcWorkflowDAO
-from cylc.flow.scripts.broadcast import _main, get_option_parser
+from cylc.flow.scheduler import Scheduler
+from cylc.flow.scripts.broadcast import (
+    _main,
+    get_option_parser,
+)
 from cylc.flow.util import sstrip
 
 
@@ -314,3 +321,51 @@ async def test_internal_error(one, start, capsys, monkeypatch, log_filter):
 
         # the error should be logged server-side too
         assert log_filter(contains='FooBar')
+
+
+async def test_broadcast_auto_upgraded_settings(
+    one: Scheduler,
+    start,
+    log_filter,
+    caplog: pytest.LogCaptureFixture,
+    capsys: pytest.CaptureFixture,
+):
+    """Test broadcast of deprecated/obsolete settings."""
+    opts = {
+        'point_strings': ['1'],
+        'namespaces': ['root'],
+    }
+    async with start(one):
+        # Test deprecated setting that is moved to a different section by
+        # the auto-upgrader should still work.
+        rets = await _main(
+            BroadcastOptions(
+                settings=['[job]execution time limit=PT1H'], **opts
+            ),
+            one.workflow,
+        )
+        assert set(rets.values()) == {True}
+        assert log_filter(
+            logging.WARNING, regex=r"Deprecated config.* upgraded.* broadcast"
+        )
+
+        stdout, stderr = capsys.readouterr()
+        assert "Traceback" not in stdout + stderr
+        caplog.clear()
+
+        # Test obsolete setting that is removed by the auto-upgrader should
+        # be rejected.
+        rets = await _main(
+            BroadcastOptions(
+                settings=['extra log files=whatever'], **opts
+            ),
+            one.workflow,
+        )
+        assert set(rets.values()) == {False}
+        assert log_filter(
+            logging.WARNING,
+            regex=r"Obsolete config.* rejected by the broadcast",
+        )
+        stdout, stderr = capsys.readouterr()
+        assert "InputError: No valid settings to broadcast" in stderr
+        assert "Traceback" not in stdout + stderr
