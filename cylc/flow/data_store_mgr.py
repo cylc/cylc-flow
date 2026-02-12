@@ -658,6 +658,7 @@ class DataStoreMgr:
         # internal delta
         self.delta_queues = {self.workflow_id: {}}
         self.publish_deltas = []
+
         # internal n-window
         self.all_task_pool = set()
         self.all_n_window_nodes = set()
@@ -673,15 +674,19 @@ class DataStoreMgr:
         # Family node IDs that have been pruned. Sent with deltas and used for
         # exclusion from state total and other calculations.
         self.family_pruned_ids = set()
-        # Collects walk node IDs associated with a boundary node so that nodes
-        # of isolates, adjacent paths, and it's own path can be flagged for
-        # pruning.
+        # Boundary nodes are those nodes at the boundary of the window, and
+        # these are used to trigger pruning for associated nodes.
+        # self.prune_trigger_nodes collects walk node IDs associated with a
+        # boundary node so that nodes of isolates, adjacent paths, and it's
+        # own path can be flagged for pruning.
         self.prune_trigger_nodes = {}
         # Node ids flagged for pruning.
-        # Those not in active paths will be pruned.
+        # Those not in active paths (the walk paths of active tasks) will be
+        # pruned.
         self.prune_flagged_nodes = set()
-        # Set of removed task proxies to avoid applying/sending deltas.
+        # Set of removed task proxies to avoid applying/sending new deltas.
         self.pruned_task_proxies = set()
+
         self.updates_pending = False
         self.updates_pending_follow_on = False
         self.publish_pending = False
