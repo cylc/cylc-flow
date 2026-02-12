@@ -42,8 +42,11 @@ Pruning of data-store elements is done using the collection/set of nodes
 generated at the boundary of an active node's graph walk and registering active
 node's parents against them. Once active, these boundary nodes act as the prune
 triggers for the associated parent nodes. Set operations are used to do a diff
-between the nodes of active paths (paths whose node is in n=0)
-and the nodes of flagged paths (whose boundary node(s) have become active).
+between the nodes of active paths (paths whose node is in n=0) and the nodes of
+flagged paths (whose boundary node(s) have become active).
+This method is used to avoid "blinking", where a task becomes non-active then
+is removed (along with it's window/walk) before a descendant is added, causing
+it to disapear then reappear in the store (and, hence, UIs).
 
 Updates are created by the event/task/job managers.
 
@@ -1293,6 +1296,8 @@ class DataStoreMgr:
             tp_id in self.prune_trigger_nodes[tp_id]
         ):
             self.prune_flagged_nodes.update(self.prune_trigger_nodes[tp_id])
+        # If, at the time of removal, no desendents are active then only
+        # flag the node not the entire walk.
         elif (
             tp_id in self.n_window_nodes and
             self.n_window_nodes[tp_id].isdisjoint(self.all_task_pool)
