@@ -27,8 +27,6 @@ import json
 from pathlib import Path
 from time import time
 
-from matplotlib.lines import lineStyles
-
 from cylc.flow.main_loop import (startup, shutdown, periodic)
 
 
@@ -84,7 +82,10 @@ def _iter_data_store(data_store_mgr):
         if (
             key != 'data'
             and not key.startswith('__')
-            and isinstance(value := getattr(data_store_mgr, key), (list, dict))
+            and isinstance(
+                value := getattr(data_store_mgr, key),
+                (list, dict, set)
+            )
         ):
             yield (key, value)
 
@@ -112,7 +113,7 @@ def _dump(state, path):
     return True
 
 
-def _plot(state, path, min_size_kb=2):
+def _plot(state, path, min_size_percent=2):
     if (
         not PLT
         or len(state['times']) < 2
@@ -122,18 +123,30 @@ def _plot(state, path, min_size_kb=2):
     # extract snapshot times
     times = [tick - state['times'][0] for tick in state['times']]
 
+    max_size = max(
+        size
+        for sizes in state['size'].values()
+        for size in sizes
+    )
+
     # filter attributes by the minimum size
-    min_size_bytes = min_size_kb * 1000
+    min_size_bytes = max_size * (min_size_percent / 100)
     filtered_keys = {
         key
         for key, sizes in state['size'].items()
-        if any(size > min_size_bytes for size in sizes)
+        if (
+            any(size > min_size_bytes for size in sizes)
+            or key.startswith('data.')
+        )
     }
 
     # plot
     fig = plt.figure(figsize=(15, 8))
     ax1 = fig.add_subplot(111)
-    fig.suptitle(f'data_store_mgr attrs > {min_size_kb}kb')
+    fig.suptitle(
+        f'data_store_mgr data & attrs above {min_size_percent}% of largest'
+        f' (> {int(min_size_bytes / 1000)}kb)'
+    )
 
     # plot sizes
     ax1.set_xlabel('Time (s)')
