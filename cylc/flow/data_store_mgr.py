@@ -2039,6 +2039,13 @@ class DataStoreMgr:
         # Clear the rest.
         self.prune_flagged_nodes.intersection_update(self.all_task_pool)
         # Clear any boundary prune triggers not in the window.
+        # This can happen where the graph has paths not taken, i.e.:
+        # ```
+        # foo => a
+        # foo:failed => b
+        # ```
+        # So if `foo` then `a`, which when active/removed is the prune trigger
+        # for `foo`.. However, `b` is not used so delete the trigger here.
         for trigger_id in set(
                 self.prune_trigger_nodes).difference(self.all_n_window_nodes):
             del self.prune_trigger_nodes[trigger_id]
