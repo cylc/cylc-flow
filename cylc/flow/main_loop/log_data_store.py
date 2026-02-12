@@ -57,7 +57,7 @@ async def log_data_store(scheduler, state):
     """Count the number of objects and the data store size."""
     state['times'].append(time())
     for key, value in _iter_data_store(scheduler.data_store_mgr):
-        if isinstance(value, (list, dict)):
+        if isinstance(value, (list, dict, set)):
             state['objects'][key].append(
                 len(value)
             )
@@ -144,7 +144,7 @@ def _plot(state, path, min_size_percent=2):
     fig = plt.figure(figsize=(15, 8))
     ax1 = fig.add_subplot(111)
     fig.suptitle(
-        f'data_store_mgr data & attrs above {min_size_percent}% of largest'
+        f'data_store_mgr data and attrs above {min_size_percent}% of largest'
         f' (> {int(min_size_bytes / 1000)}kb)'
     )
 
