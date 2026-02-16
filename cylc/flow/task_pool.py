@@ -40,7 +40,6 @@ from cylc.flow.cycling.loader import (
     standardise_point_string,
 )
 from cylc.flow.exceptions import (
-    PlatformLookupError,
     PointParsingError,
     WorkflowConfigError,
 )
@@ -530,23 +529,37 @@ class TaskPool:
             # no matching entries
             return False
 
-    def load_db_task_pool_for_restart(self, row_idx, row):
-        """Load tasks from DB task pool/states/jobs tables.
+    def load_restart_task(
+        self,
+        cycle,
+        name,
+        flow_nums,
+        flow_wait,
+        is_manual_submit,
+        is_late,
+        status,
+        is_held,
+        submit_num,
+        platform_name,
+        time_submit,
+        time_run,
+        timeout,
+        outputs_str,
+        is_orphan,
+    ) -> 'TaskProxy | None':
+        """Load a task proxy from the database entry.
 
-        Output completion status is loaded from the DB, and tasks recorded
-        as submitted or running are polled to confirm their true status.
-        Tasks are added to queues again on release from runahead pool.
+        Args:
+            is_orphan:
+                If "True" the task proxy will be created but it will be
+                returned rather than being added to the pool. This is to allow
+                the task to be operated on (i.e, killed).
 
         Returns:
-            Names of platform if attempting to look up that platform
-            has led to a PlatformNotFoundError.
+            The task proxy if `is_orphan is True` else `None`.
+
         """
-        if row_idx == 0:
-            LOG.info("LOADING task proxies")
         # Create a task proxy corresponding to this DB entry.
-        (cycle, name, flow_nums, flow_wait, is_manual_submit, is_late, status,
-         is_held, submit_num, _, platform_name, time_submit, time_run, timeout,
-         outputs_str) = row
         try:
             itask = TaskProxy(
                 self.tokens,
@@ -563,27 +576,19 @@ class TaskPool:
                     self.xtrigger_mgr.xtriggers.sequential_xtrigger_labels
                 ),
             )
-
-        except WorkflowConfigError:
-            LOG.exception(
-                f'ignoring task {name} from the workflow run database\n'
-                '(its task definition has probably been deleted).')
         except Exception:
             LOG.exception(f'could not load task {name}')
         else:
             if status in (
-                    TASK_STATUS_SUBMITTED,
-                    TASK_STATUS_RUNNING,
-                    TASK_STATUS_FAILED,
-                    TASK_STATUS_SUCCEEDED
+                TASK_STATUS_SUBMITTED,
+                TASK_STATUS_RUNNING,
+                TASK_STATUS_FAILED,
+                TASK_STATUS_SUCCEEDED
             ):
                 # update the task proxy with platform
                 # If we get a failure from the platform selection function
                 # set task status to submit-failed.
-                try:
-                    itask.platform = get_platform(platform_name)
-                except PlatformLookupError:
-                    return platform_name
+                itask.platform = get_platform(platform_name)
 
                 if time_submit:
                     itask.set_summary_time('submitted', time_submit)
@@ -597,11 +602,14 @@ class TaskPool:
                 # Re-prepare same submit.
                 itask.submit_num -= 1
 
+            if is_orphan:
+                return itask
+
             # Running or finished task can have completed custom outputs.
             if itask.state(
-                    TASK_STATUS_RUNNING,
-                    TASK_STATUS_FAILED,
-                    TASK_STATUS_SUCCEEDED
+                TASK_STATUS_RUNNING,
+                TASK_STATUS_FAILED,
+                TASK_STATUS_SUCCEEDED
             ):
                 for message in json.loads(outputs_str):
                     itask.state.outputs.set_message_complete(message)
@@ -662,6 +670,7 @@ class TaskPool:
                 or itask.is_manual_submit
             ):
                 self.rh_release_and_queue(itask)
+        return None
 
     def load_db_task_action_timers(self, row_idx: int, row: Iterable) -> None:
         """Load a task action timer, e.g. event handlers, retry states."""
@@ -881,15 +890,40 @@ class TaskPool:
             if ntask is not None and not is_in_pool:
                 self.add_to_pool(ntask)
 
-    def remove(self, itask: 'TaskProxy', reason: Optional[str] = None) -> None:
-        """Remove a task from the pool."""
+    def remove(
+        self,
+        itask: 'TaskProxy',
+        reason: Optional[str] = None,
+        log_level: int | None = None,
+        spawn_successor: bool = True,
+    ) -> None:
+        """Remove a task from the pool.
+
+        Args:
+            itask:
+                The task to remove.
+            reason:
+                Explanation to be logged along with the removal.
+            log_level:
+                Level to log the removal at, if not specified, the level will
+                be determined automatically.
+            spawn_successor:
+                If True, non SoD spawning (i.e, parentless / sequentual
+                xtrigger spawning) will take place,
+
+        Warning:
+            This method may be called on tasks which have been removed by
+            reload or restart so do not belong to a family and may have a blank
+            taskdef.
+
+        """
         # the held state is no longer relevant -> remove it
         self.release_held_active_task(itask)
 
         # xtriggers are no longer relevant -> remove them
         self.xtrigger_mgr.force_satisfy_all(itask, log=False)
 
-        if itask.state.is_runahead and itask.flow_nums:
+        if spawn_successor and itask.state.is_runahead and itask.flow_nums:
             # If removing a parentless runahead-limited task
             # auto-spawn its next instance first.
             self.spawn_if_parentless(
@@ -903,7 +937,7 @@ class TaskPool:
         # Mark as transient in case itask is still processed in other contexts.
         itask.transient = True
 
-        if itask.is_xtrigger_sequential:
+        if spawn_successor and itask.is_xtrigger_sequential:
             self.xtrigger_mgr.sequential_has_spawned_next.discard(
                 itask.identity
             )
@@ -943,7 +977,7 @@ class TaskPool:
             elif reason == self.REMOVED_BY_PREREQ:
                 level = logging.INFO
 
-            LOG.log(level, f"[{itask}] {msg}")
+            LOG.log(log_level or level, f"[{itask}] {msg}")
 
             # ensure this task is written to the DB before moving on
             # https://github.com/cylc/cylc-flow/issues/6315
@@ -952,7 +986,7 @@ class TaskPool:
             del itask
 
             # removing this task could nudge the runahead limit forward
-            if self.compute_runahead():
+            if spawn_successor and self.compute_runahead():
                 self.release_runahead_tasks()
 
     def get_tasks(self) -> List[TaskProxy]:
@@ -1131,70 +1165,39 @@ class TaskPool:
 
         self.config should already be updated for the reload.
         """
-        self.stop_point = self.config.stop_point or self.config.final_point
-
-        # find any old tasks that have been removed from the workflow
-        old_task_name_list = self.task_name_list
-        self.task_name_list = self.config.get_task_name_list()
-        orphans = [
-            task
-            for task in old_task_name_list
-            if task not in self.task_name_list
-        ]
-
-        # adjust the new workflow config to handle the orphans
-        self.config.adopt_orphans(orphans)
-
         LOG.info("Reloading task definitions.")
         tasks = self.get_tasks()
-        # Log tasks orphaned by a reload but not currently in the task pool.
-        for name in orphans:
-            if name not in (itask.tdef.name for itask in tasks):
-                LOG.info("Removed task: '%s'", name)
+        self.stop_point = self.config.stop_point or self.config.final_point
+        self.task_name_list = self.config.get_task_name_list()
+
         # Store lists of tasks which were active before reload.
         warn_tasks: List[str] = []
         _warn_tasks: List[str] = []
 
         for itask in tasks:
-            if itask.tdef.name in orphans:
-                if (
-                    itask.state(TASK_STATUS_WAITING)
-                    or itask.state.is_held
-                    or itask.state.is_queued
-                ):
-                    # Remove orphaned task if it hasn't started running yet.
-                    self.remove(itask, 'task definition removed')
-                else:
-                    # Keep active orphaned task, but stop it from spawning.
-                    itask.graph_children = {}
-                    LOG.info(
-                        f"[{itask}] will not spawn children "
-                        "- task definition removed"
-                    )
-            else:
-                new_task = TaskProxy(
-                    self.tokens,
-                    self.config.get_taskdef(itask.tdef.name),
-                    itask.point,
-                    itask.flow_nums,
-                    itask.state.status,
-                    sequential_xtrigger_labels=(
-                        self.xtrigger_mgr.xtriggers.sequential_xtrigger_labels
-                    ),
-                )
-                itask.copy_to_reload_successor(
-                    new_task,
-                    self.check_task_output,
-                )
-                self._swap_out(new_task)
-                self.data_store_mgr.delta_task_prerequisite(new_task)
-                LOG.info(f"[{itask}] reloaded task definition")
+            new_task = TaskProxy(
+                self.tokens,
+                self.config.get_taskdef(itask.tdef.name),
+                itask.point,
+                itask.flow_nums,
+                itask.state.status,
+                sequential_xtrigger_labels=(
+                    self.xtrigger_mgr.xtriggers.sequential_xtrigger_labels
+                ),
+            )
+            itask.copy_to_reload_successor(
+                new_task,
+                self.check_task_output,
+            )
+            self._swap_out(new_task)
+            self.data_store_mgr.delta_task_prerequisite(new_task)
+            LOG.info(f"[{itask}] reloaded task definition")
 
-                if itask.state(*TASK_STATUSES_ACTIVE):
-                    warn_tasks.append(str(itask))
-                elif itask.state(TASK_STATUS_PREPARING):
-                    # Job file might have been written at this point?
-                    _warn_tasks.append(str(itask))
+            if itask.state(*TASK_STATUSES_ACTIVE):
+                warn_tasks.append(str(itask))
+            elif itask.state(TASK_STATUS_PREPARING):
+                # Job file might have been written at this point?
+                _warn_tasks.append(str(itask))
 
         for may, tasks in (('', warn_tasks), ('may be', _warn_tasks)):
             if tasks:
