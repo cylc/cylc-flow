@@ -35,10 +35,12 @@ for change_type in reload restart; do
   initial cycle point = 1
   stop after cycle point = 3
   runahead limit = P1
+  [[xtriggers]]
+    xtrig = xrandom(100, sequential=True)
   [[graph]]
     P1 = """
-      # TODO: consider @wall_clock => a
-      a => b & z:started => c  # MARKER
+      @xtrig => a1  # MARKER
+      a1 & a2 => b & z:started => c  # MARKER
       b[-P1] => b
     """
     R1/2 = b => stop
@@ -83,12 +85,14 @@ __FLOW_CONFIG__
   sed -i '1d' "${TEST_NAME}.stdout"
   cmp_ok "${TEST_NAME}.stdout" << '__OUT__'
 |-- 1
-|   |-- a
+|   |-- a1
+|   |-- a2
 |   |-- b
 |   |-- c
 |   `-- z
 `-- 2
-    |-- a
+    |-- a1
+    |-- a2
     |-- b
     |-- e
     |-- stop
