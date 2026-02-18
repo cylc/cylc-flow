@@ -21,11 +21,14 @@ from typing import Any as Fixture
 from unittest.mock import Mock
 
 from cylc.flow import CYLC_LOG
+from cylc.flow.commands import poll_tasks, run_cmd
 from cylc.flow.job_runner_mgr import JOB_FILES_REMOVED_MESSAGE
+from cylc.flow.platforms import get_platform
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_state import (
     TASK_STATUS_FAILED,
     TASK_STATUS_RUNNING,
+    TASK_STATUS_SUBMITTED,
 )
 
 
@@ -258,6 +261,62 @@ async def test_poll_job_deleted_log_folder(
     assert log_filter(
         logging.ERROR, f"job log directory {job_id} no longer exists"
     )
+
+
+async def test_manual_poll_resets_bad_hosts(
+    flow,
+    scheduler,
+    start,
+    mock_glbl_cfg,
+):
+    """Manual poll should be attempted even if all hosts are "bad".
+
+    Automated polling will be skipped in the event that all of a platform's
+    hosts are in the known "bad hosts" list.
+
+    Manual poll (similar to manual trigger), will reset the bad hosts list in
+    this eventuality in order to ensure the operation is attempted anyway.
+
+    See https://github.com/cylc/cylc-flow/issues/7029
+    """
+    mock_glbl_cfg(
+        'cylc.flow.platforms.glbl_cfg',
+        '''
+        [platforms]
+            [[my-remote]]
+                hosts = abc
+        ''',
+    )
+    id_ = flow({
+        'scheduling': {
+            'graph': {
+                'R1': 'foo',
+            },
+        },
+        'runtime': {
+            'foo': {
+                'platform': 'my-remote',
+            },
+        },
+    })
+    schd: 'Scheduler' = scheduler(id_, run_mode='live')
+    async with start(schd):
+        # make it look like the task is submitted
+        itask = schd.pool.get_tasks()[0]
+        itask.platform = get_platform('my-remote')
+        itask.state_reset(TASK_STATUS_SUBMITTED)
+
+        # mark all of the hosts as bad hosts
+        schd.task_events_mgr.bad_hosts.update(itask.platform['hosts'])
+
+        # request a manual poll
+        await run_cmd(poll_tasks(schd, [itask.tokens.relative_id]))
+
+        # the bad hosts set should be empty
+        assert not schd.task_events_mgr.bad_hosts
+
+        # and a poll command should have been issued
+        assert len(schd.proc_pool.queuings)
 
 
 async def test__prep_submit_task_job_impl_handles_all_old_platform_settings(
