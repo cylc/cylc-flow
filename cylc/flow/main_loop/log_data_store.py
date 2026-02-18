@@ -90,8 +90,8 @@ def _iter_data_store(data_store_mgr):
             yield (key, value)
 
     # the individual components of the "data" attribute
-    for item in data_store_mgr.data.values():
-        for key, value in item.items():
+    for datum in data_store_mgr.data.values():
+        for key, value in datum.items():
             if key == 'workflow':
                 yield (f'data.{key}', [value])
             else:
