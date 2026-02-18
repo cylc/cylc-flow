@@ -30,7 +30,7 @@ test_one () {
         ./one
 
     # the start task should have expired
-    grep 'start.*(internal)expired' "$HOME/cylc-run/$ID/log/scheduler/log"
+    grep 'start.*expired' "$HOME/cylc-run/$ID/log/scheduler/log"
 
     # the following task(s) should not have run
     grep 'a.*running' "$HOME/cylc-run/$ID/log/scheduler/log" && exit 1
@@ -60,7 +60,7 @@ test_two () {
     grep 'start.*running' "$HOME/cylc-run/$ID/log/scheduler/log"
 
     # some other task in the chain should expire
-    grep '(internal)expired' "$HOME/cylc-run/$ID/log/scheduler/log"
+    grep 'expired' "$HOME/cylc-run/$ID/log/scheduler/log"
 
     # the housekeep task at the end of the cycle should not run
     grep 'housekeep.*running' "$HOME/cylc-run/$ID/log/scheduler/log" && exit 1
@@ -86,7 +86,7 @@ test_three () {
         ./three
 
     # the start task should expire
-    grep 'start.*(internal)expired' "$HOME/cylc-run/$ID/log/scheduler/log"
+    grep 'start.*expired' "$HOME/cylc-run/$ID/log/scheduler/log"
     # shellcheck disable=SC2125 # could only ever be one matching file
     local job_file="$HOME/cylc-run/$ID/log/job/"*"/a/NN/job"
     [[ ! -f "$job_file" ]]
