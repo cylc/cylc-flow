@@ -42,8 +42,11 @@ Pruning of data-store elements is done using the collection/set of nodes
 generated at the boundary of an active node's graph walk and registering active
 node's parents against them. Once active, these boundary nodes act as the prune
 triggers for the associated parent nodes. Set operations are used to do a diff
-between the nodes of active paths (paths whose node is in n=0)
-and the nodes of flagged paths (whose boundary node(s) have become active).
+between the nodes of active paths (paths whose node is in n=0) and the nodes of
+flagged paths (whose boundary node(s) have become active).
+This method is used to avoid "blinking", where a task becomes non-active then
+is removed (along with it's window/walk) before a descendant is added, causing
+it to disapear then reappear in the store (and, hence, UIs).
 
 Updates are created by the event/task/job managers.
 
@@ -658,20 +661,35 @@ class DataStoreMgr:
         # internal delta
         self.delta_queues = {self.workflow_id: {}}
         self.publish_deltas = []
+
         # internal n-window
         self.all_task_pool = set()
         self.all_n_window_nodes = set()
         self.n_window_nodes = {}
         self.n_window_edges = set()
+        # The walk information for window nodes, which is used for
+        # pre-populating new walks (if possible) and node depth calculations.
         self.n_window_node_walks = {}
         self.n_window_completed_walks = set()
         self.n_window_depths = {}
         self.update_window_depths = False
         self.db_load_task_proxies: Dict[str, Tuple[TaskProxy, bool]] = {}
+        # Family node IDs that have been pruned. Sent with deltas and used for
+        # exclusion from state total and other calculations.
         self.family_pruned_ids = set()
+        # Boundary nodes are those nodes at the boundary of the window, and
+        # these are used to trigger pruning for associated nodes.
+        # self.prune_trigger_nodes collects walk node IDs associated with a
+        # boundary node so that nodes of isolates, adjacent paths, and it's
+        # own path can be flagged for pruning.
         self.prune_trigger_nodes = {}
+        # Node ids flagged for pruning.
+        # Those not in active paths (the walk paths of active tasks) will be
+        # pruned.
         self.prune_flagged_nodes = set()
+        # Set of removed task proxies to avoid applying/sending new deltas.
         self.pruned_task_proxies = set()
+
         self.updates_pending = False
         self.updates_pending_follow_on = False
         self.publish_pending = False
@@ -1214,15 +1232,10 @@ class DataStoreMgr:
             boundary_nodes = {active_id}
         # associate
         for tp_id in boundary_nodes:
-            try:
-                self.prune_trigger_nodes.setdefault(tp_id, set()).update(
-                    active_walk['walk_ids']
-                )
-                self.prune_trigger_nodes[tp_id].discard(tp_id)
-            except KeyError:
-                self.prune_trigger_nodes.setdefault(tp_id, set()).add(
-                    active_id
-                )
+            self.prune_trigger_nodes.setdefault(tp_id, set()).update(
+                active_walk['walk_ids']
+            )
+            self.prune_trigger_nodes[tp_id].discard(tp_id)
         # flag manual triggers for pruning on deletion.
         if is_manual_submit:
             self.prune_trigger_nodes.setdefault(active_id, set()).add(
@@ -1279,20 +1292,23 @@ class DataStoreMgr:
             self.updates_pending = True
         # flagged isolates/end-of-branch nodes for pruning on removal
         if (
-                tp_id in self.prune_trigger_nodes and
-                tp_id in self.prune_trigger_nodes[tp_id]
+            tp_id in self.prune_trigger_nodes and
+            tp_id in self.prune_trigger_nodes[tp_id]
         ):
             self.prune_flagged_nodes.update(self.prune_trigger_nodes[tp_id])
-            del self.prune_trigger_nodes[tp_id]
+        # If, at the time of removal, no desendents are active then only
+        # flag the node not the entire walk.
         elif (
-                tp_id in self.n_window_nodes and
-                self.n_window_nodes[tp_id].isdisjoint(self.all_task_pool)
+            tp_id in self.n_window_nodes and
+            self.n_window_nodes[tp_id].isdisjoint(self.all_task_pool)
         ):
             self.prune_flagged_nodes.add(tp_id)
         elif tp_id in self.n_window_node_walks:
             self.prune_flagged_nodes.update(
                 self.n_window_node_walks[tp_id]['walk_ids']
             )
+        if tp_id in self.prune_trigger_nodes:
+            del self.prune_trigger_nodes[tp_id]
         self.update_window_depths = True
         self.updates_pending = True
 
@@ -1930,6 +1946,7 @@ class DataStoreMgr:
 
         # Clear window walks, and walk from scratch.
         self.prune_flagged_nodes.clear()
+        self.prune_trigger_nodes.clear()
         self.n_window_node_walks.clear()
         for tp_id in self.all_task_pool:
             tokens = Tokens(tp_id)
@@ -2021,6 +2038,17 @@ class DataStoreMgr:
         # Absolute triggers may be present in task pool, so recheck.
         # Clear the rest.
         self.prune_flagged_nodes.intersection_update(self.all_task_pool)
+        # Clear any boundary prune triggers not in the window.
+        # This can happen where the graph has paths not taken, i.e.:
+        # ```
+        # foo => a
+        # foo:failed => b
+        # ```
+        # So if `foo` then `a`, which when active/removed is the prune trigger
+        # for `foo`.. However, `b` is not used so delete the trigger here.
+        for trigger_id in set(
+                self.prune_trigger_nodes).difference(self.all_n_window_nodes):
+            del self.prune_trigger_nodes[trigger_id]
 
         tp_data = self.data[self.workflow_id][TASK_PROXIES]
         tp_added = self.added[TASK_PROXIES]

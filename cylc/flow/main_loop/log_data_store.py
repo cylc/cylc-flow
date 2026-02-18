@@ -38,7 +38,7 @@ try:
 except ModuleNotFoundError:
     PLT = False
 
-from pympler.asizeof import asized
+from pympler.asizeof import asizeof
 
 
 @startup
@@ -47,7 +47,7 @@ async def init(scheduler, state):
     state['objects'] = {}
     state['size'] = {}
     state['times'] = []
-    for key, _ in _iter_data_store(scheduler.data_store_mgr.data):
+    for key, _ in _iter_data_store(scheduler.data_store_mgr):
         state['objects'][key] = []
         state['size'][key] = []
 
@@ -56,12 +56,13 @@ async def init(scheduler, state):
 async def log_data_store(scheduler, state):
     """Count the number of objects and the data store size."""
     state['times'].append(time())
-    for key, value in _iter_data_store(scheduler.data_store_mgr.data):
-        state['objects'][key].append(
-            len(value)
-        )
+    for key, value in _iter_data_store(scheduler.data_store_mgr):
+        if isinstance(value, (list, dict, set)):
+            state['objects'][key].append(
+                len(value)
+            )
         state['size'][key].append(
-            asized(value).size
+            asizeof(value)
         )
 
 
@@ -72,11 +73,29 @@ async def report(scheduler, state):
     _plot(state, scheduler.workflow_run_dir)
 
 
-def _iter_data_store(data_store):
-    for item in data_store.values():
-        for key, value in item.items():
-            if key != 'workflow':
-                yield (key, value)
+def _iter_data_store(data_store_mgr):
+    # the data store itself (for a total measurement)
+    yield ('data_store_mgr (total)', data_store_mgr)
+
+    # the top-level attributes of the data store
+    for key in dir(data_store_mgr):
+        if (
+            key != 'data'
+            and not key.startswith('__')
+            and isinstance(
+                value := getattr(data_store_mgr, key),
+                (list, dict, set)
+            )
+        ):
+            yield (key, value)
+
+    # the individual components of the "data" attribute
+    for datum in data_store_mgr.data.values():
+        for key, value in datum.items():
+            if key == 'workflow':
+                yield (f'data.{key}', [value])
+            else:
+                yield (f'data.{key}', value)
         # there should only be one workflow in the data store
         break
 
@@ -94,34 +113,61 @@ def _dump(state, path):
     return True
 
 
-def _plot(state, path):
+def _plot(state, path, min_size_percent=2):
     if (
-            not PLT
-            or len(state['times']) < 2
+        not PLT
+        or len(state['times']) < 2
     ):
         return False
 
+    # extract snapshot times
     times = [tick - state['times'][0] for tick in state['times']]
-    _, ax1 = plt.subplots(figsize=(10, 7.5))
 
+    max_size = max(
+        size
+        for sizes in state['size'].values()
+        for size in sizes
+    )
+
+    # filter attributes by the minimum size
+    min_size_bytes = max_size * (min_size_percent / 100)
+    filtered_keys = {
+        key
+        for key, sizes in state['size'].items()
+        if (
+            any(size > min_size_bytes for size in sizes)
+            or key.startswith('data.')
+        )
+    }
+
+    # plot
+    fig = plt.figure(figsize=(15, 8))
+    ax1 = fig.add_subplot(111)
+    fig.suptitle(
+        f'data_store_mgr data and attrs above {min_size_percent}% of largest'
+        f' (> {int(min_size_bytes / 1000)}kb)'
+    )
+
+    # plot sizes
     ax1.set_xlabel('Time (s)')
+    ax1.set_ylabel('Size (kb)')
+    for key, sizes in state['size'].items():
+        if key in filtered_keys:
+            ax1.plot(times, [x / 1000 for x in sizes], label=key)
 
-    ax1.set_ylabel('Objects')
-    lines = [
-        ax1.plot(times, objects, label=key)[0]
-        for key, objects in state['objects'].items()
-    ]
-
+    # plot # objects
     ax2 = ax1.twinx()
-    ax2.set_ylabel('Size (kb)')
-    for sizes in state['size'].values():
-        ax2.plot(times, [x / 1000 for x in sizes], linestyle=':')
+    ax2.set_ylabel('Objects')
+    for key, objects in state['objects'].items():
+        if objects and key in filtered_keys:
+            ax2.plot(times, objects, label=key, linestyle=':')
 
-    ax1.legend(lines, state['objects'], loc=0)
+    # legends
+    ax1.legend(loc=0)
     ax2.legend(
         (ax1.get_children()[0], ax2.get_children()[0]),
-        ('objects', 'size'),
-        loc=1
+        ('size', 'objects'),
+        loc=0
     )
 
     # start the x-axis at zero
