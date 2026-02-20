@@ -164,6 +164,7 @@ message PbJob {
 }
 
 message PbTask {
+    reserved 7;
     optional string stamp = 1;
     optional string id = 2;
     optional string name = 3;
@@ -245,6 +246,7 @@ message PbTaskProxy {
 }
 
 message PbFamily {
+    reserved 6;
     optional string stamp = 1;
     optional string id = 2;
     optional string name = 3;
