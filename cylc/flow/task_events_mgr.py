@@ -27,12 +27,12 @@ This module provides logic to:
 
 from contextlib import suppress
 from enum import Enum
+import logging
 from logging import (
     DEBUG,
     INFO,
     getLevelName,
 )
-import logging
 import os
 from pathlib import Path
 import shlex
@@ -67,6 +67,7 @@ from cylc.flow.hostuserutil import (
     get_user,
     is_remote_platform,
 )
+from cylc.flow.loggingutil import LOG_once
 from cylc.flow.parsec.config import ItemNotFoundError
 from cylc.flow.pathutil import (
     get_remote_workflow_run_job_dir,
@@ -228,26 +229,31 @@ def log_task_job_activity(
     level: int | None = None,
 ):
     """Log an activity for a task job."""
-    ctx_str = str(ctx)
-    if not ctx_str:
+    message = str(ctx)
+    if not message:
         return
     if isinstance(ctx.cmd_key, tuple):  # An event handler
         submit_num = ctx.cmd_key[-1]
     job_activity_log = get_task_job_activity_log(
         workflow, point, name, submit_num)
     try:
-        with open(os.path.expandvars(job_activity_log), "ab") as handle:
-            handle.write((ctx_str + '\n').encode())
+        with open(os.path.expandvars(job_activity_log), "a") as handle:
+            print(message, file=handle)
     except IOError:
         # This happens when there is no job directory. E.g., if a job host
         # selection command causes a submission failure, or if a waiting task
         # expires before a job log directory is otherwise needed.
         # (Don't log the exception content, it looks like a bug).
         level = logging.INFO
+    else:
+        # If we successfully wrote to the job activity log file, then only
+        # log the command + ret code in the scheduler log, and only once
+        # to avoid spamming
+        message = ctx.cmd_str
     if ctx.cmd and ctx.ret_code:
         level = logging.ERROR
     if level is not None:
-        LOG.log(level, ctx_str)
+        LOG_once(level, message)
 
 
 class EventData(Enum):
