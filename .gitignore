@@ -11,6 +11,9 @@ __pycache__/
 # vscode
 .vscode
 
+# pycharm
+.idea
+
 # processed workflow configs
 *.rc.processed
 *.cylc.processed
