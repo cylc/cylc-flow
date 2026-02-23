@@ -569,20 +569,26 @@ def pycoverage(cmd_args):  # pragma: no cover
                 coverage data was successfully recorded to
                 a .coverage_commands_captured file in the Cylc
                 working directory.
+            '3'
+                Collect coverage for a UI server entry point.
 
     """
+    with open('/home/users/tim.pillinger/delme.txt', 'a') as fh:
+        print(f'>>> cylc {" ".join(cmd_args)}', file=fh)
     cylc_coverage = os.environ.get('CYLC_COVERAGE')
-    if cylc_coverage not in ('1', '2'):
+    if cylc_coverage not in ('1', '2', '3'):
         yield
         return
+    module_path = 'cylc.uiserver' if cylc_coverage == '3' else 'cylc.flow'
 
     # import here to avoid unnecessary imports when not running coverage
-    import cylc.flow
+    import importlib
+    module = importlib.import_module(module_path)
     import coverage
     from pathlib import Path
 
     # the cylc working directory
-    cylc_wc = Path(cylc.flow.__file__).parents[2]
+    cylc_wc = Path(module.__file__).parents[2]
 
     # initiate coverage
     try:
@@ -611,8 +617,12 @@ def pycoverage(cmd_args):  # pragma: no cover
         yield
     finally:
         # stop the coverage and save the data
+        with open('/home/users/tim.pillinger/delme.txt', 'a') as fh:
+            print(f'    Writing Cov', file=fh)
+
         cov.stop()
         cov.save()
+
         if cylc_coverage == '2':
             with open(cylc_wc / '.coverage_commands_captured', 'a+') as ccc:
                 ccc.write(
