@@ -619,7 +619,7 @@ def pycoverage(cmd_args):  # pragma: no cover
     finally:
         # stop the coverage and save the data
         with open('/home/users/tim.pillinger/delme.txt', 'a') as fh:
-            print(f'    Writing Cov', file=fh)
+            print('    Writing Cov', file=fh)
 
         cov.stop()
         cov.save()
