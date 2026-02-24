@@ -572,7 +572,14 @@ def pycoverage(cmd_args):  # pragma: no cover
             '3'
                 Collect coverage for a UI server entry point.
 
+
     """
+    def sigterm_response():
+        with open('/home/users/tim.pillinger/delme.txt', 'a') as fh:
+            print(f'Welcome to sigterm handler', file=fh)
+    import signal
+    signal.signal(signal.SIGTERM, lambda: sigterm_response)
+
     with open('/home/users/tim.pillinger/delme.txt', 'a') as fh:
         print(f'>>> cylc {" ".join(cmd_args)}', file=fh)
     cylc_coverage = os.environ.get('CYLC_COVERAGE')
@@ -599,7 +606,7 @@ def pycoverage(cmd_args):  # pragma: no cover
             # data and will dump empty coverage files where they run.
             config_file=str(cylc_wc / '.coveragerc'),
             data_file=str(cylc_wc / '.coverage'),
-            source=[str(cylc_wc / 'cylc')]
+            # source=[str(cylc_wc / 'cylc')]
         )
     except coverage.misc.CoverageException as exc:
         raise Exception(
@@ -612,9 +619,18 @@ def pycoverage(cmd_args):  # pragma: no cover
 
     # start the coverage running
     cov.start()
+    import signal
+
+
+
+
     try:
         # yield control back to cylc, return once the command exits
         yield
+    except KeyboardInterrupt:
+        with open('/home/users/tim.pillinger/delme.txt', 'a') as fh:
+            print(f'SIGINT?', file=fh)
+
     finally:
         # stop the coverage and save the data
         with open('/home/users/tim.pillinger/delme.txt', 'a') as fh:
