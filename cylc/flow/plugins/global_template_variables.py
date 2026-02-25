@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 
 
 def pre_configure(srcdir: 'Path', opts: 'Values') -> dict:
-    ret = {
+    return {
         TEMPLATE_VARIABLES: {
             key: eval_var(value)
             for key, value in glbl_cfg()
@@ -36,5 +36,3 @@ def pre_configure(srcdir: 'Path', opts: 'Values') -> dict:
             .items()
         }
     }
-    print('RET', ret)
-    return ret
