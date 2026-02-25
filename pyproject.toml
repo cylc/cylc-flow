@@ -187,7 +187,7 @@ log_tracemalloc = "cylc.flow.main_loop.log_tracemalloc"
 global_template_variables = "cylc.flow.plugins.global_template_variables:pre_configure"
 
 [project.entry-points."cylc.post_install"]
-log_vc_info = "cylc.flow.install_plugins.log_vc_info:main"
+log_vc_info = "cylc.flow.plugins.log_vc_info:main"
 
 [project.entry-points."cylc.xtriggers"]
 # NOTE: Built-in xtrigger modules
