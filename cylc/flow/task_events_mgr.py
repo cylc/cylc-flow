@@ -718,7 +718,8 @@ class TaskEventsManager():
                 The submit number of the task relevant for the message.
                 If not specified, use latest submit number.
             forced:
-                If this message is due to manual completion or not (cylc set)
+                True, if this message is due to manual (as opposed to natural)
+                output completion.
 
         Return:
             False: in normal circumstances.

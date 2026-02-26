@@ -1581,7 +1581,7 @@ class TaskPool:
             if self.config.experimental.expire_triggers:
                 self.task_queue_mgr.remove_task(c_task)
                 self.task_events_mgr.process_message(
-                    c_task, logging.WARNING, TASK_OUTPUT_EXPIRED
+                    c_task, logging.WARNING, TASK_OUTPUT_EXPIRED, forced=True
                 )
             else:
                 self.remove(c_task, self.__class__.SUICIDE_MSG)
@@ -2476,6 +2476,7 @@ class TaskPool:
                     itask,
                     logging.WARNING,
                     TASK_OUTPUT_EXPIRED,
+                    forced=True,
                 )
 
     def task_succeeded(self, id_):
