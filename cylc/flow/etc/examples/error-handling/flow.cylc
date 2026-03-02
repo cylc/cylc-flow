@@ -1,9 +1,0 @@
-[scheduling]
-    [[graph]]
-        R1 = """
-            foo => bar
-        """
-
-[runtime]
-    [[foo]]
-        script = my-model
