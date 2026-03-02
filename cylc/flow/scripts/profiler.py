@@ -61,7 +61,7 @@ def stop_profiler(process, comms_timeout, *_args):
         os.environ['CYLC_WORKFLOW_ID'],
         os.environ['CYLC_TASK_JOB'],
         [['DEBUG', f'_cylc_profiler: {json.dumps(profiler_data)}']],
-        comms_timeout = comms_timeout,
+        comms_timeout=comms_timeout,
     )
     sys.exit(0)
 

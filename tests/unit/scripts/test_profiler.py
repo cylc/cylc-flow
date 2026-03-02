@@ -30,7 +30,7 @@ from unittest import mock
 from cylc.flow.exceptions import CylcProfilerError
 
 
-def test_stop_profiler(mocker, monkeypatch, tmpdir):
+def test_stop_profiler(monkeypatch, tmpdir):
     monkeypatch.setenv('CYLC_WORKFLOW_ID', "test_value")
 
     class MockedClient:
@@ -39,8 +39,6 @@ def test_stop_profiler(mocker, monkeypatch, tmpdir):
 
         async def async_request(self, *a, **k):
             pass
-
-    mocker.patch("cylc.flow.scripts.profiler.get_client", MockedClient)
 
     mem_file = tmpdir.join("memory_file.txt")
     mem_file.write('total_rss 1234')
@@ -60,7 +58,7 @@ def test_stop_profiler(mocker, monkeypatch, tmpdir):
     assert excinfo.value.code == 0
 
 
-def test_get_resource_usage(mocker, monkeypatch, tmpdir):
+def test_get_resource_usage(monkeypatch, tmpdir):
     monkeypatch.setenv('CYLC_WORKFLOW_ID', "test_value")
 
     process_object = Process(
@@ -76,7 +74,7 @@ def test_get_resource_usage(mocker, monkeypatch, tmpdir):
     }
 
 
-def test_parse_memory_file(mocker, tmpdir):
+def test_parse_memory_file(tmpdir):
 
     mem_file_v1 = tmpdir.join("memory_file_v1.txt")
     mem_file_v1.write('total_rss=1024')
