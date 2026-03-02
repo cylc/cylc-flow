@@ -26,16 +26,15 @@ import re
 import sys
 import time
 import signal
-import asyncio
 
 from pathlib import Path
 from functools import partial
 from dataclasses import dataclass
 
 from cylc.flow.exceptions import CylcProfilerError
-from cylc.flow.terminal import cli_function
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.network.client_factory import get_client
+from cylc.flow.task_message import record_messages
+from cylc.flow.terminal import cli_function
 
 
 PID_REGEX = re.compile(r"([^:]*\d{6,}.*)")
@@ -52,55 +51,29 @@ class Process:
 
 
 def stop_profiler(process, comms_timeout, *_args):
-    """Stop the profiler and return its data to the sceduler.
+    """Stop the profiler and return its data to the scheduler.
 
-    This function will be executed when the SIGINT signal is sent to this
-    process.
+    This function will be executed when the profiler receives a stop signal.
     """
     profiler_data = get_profiler_data(process)
 
-    graphql_mutation = """
-    mutation($WORKFLOWS: [WorkflowID]!,
-        $MESSAGES: [[String]], $JOB: String!, $TIME: String) {
-            message(workflows: $WORKFLOWS, messages:$MESSAGES,
-            taskJob:$JOB, eventTime:$TIME) {
-        result
-      }
-    }
-    """
-
-    graphql_request_variables = {
-        "WORKFLOWS": [os.environ.get('CYLC_WORKFLOW_ID')],
-        "MESSAGES": [[
-            "DEBUG",
-            f'_cylc_profiler: {json.dumps(profiler_data)}',
-        ]],
-        "JOB": os.environ.get('CYLC_TASK_JOB'),
-        "TIME": "now"
-    }
-
-    pclient = get_client(os.environ.get('CYLC_WORKFLOW_ID'),
-                         timeout=comms_timeout)
-
-    async def send_cylc_message():
-        await pclient.async_request(
-            'graphql',
-            {'request_string': graphql_mutation,
-             'variables': graphql_request_variables},
-        )
-
-    asyncio.run(send_cylc_message())
+    record_messages(
+        os.environ['CYLC_WORKFLOW_ID'],
+        os.environ['CYLC_TASK_JOB'],
+        [['DEBUG', f'_cylc_profiler: {json.dumps(profiler_data)}']],
+        comms_timeout = comms_timeout,
+    )
     sys.exit(0)
 
 
 def get_profiler_data(process):
-    # If a task fails instantly, or finishes very quickly (< 1 second),
-    # the get config function doesn't have time to run
     if (
         process.cgroup_memory_path is None
         or process.cgroup_cpu_path is None
         or process.memory_allocated_path is None
     ):
+        # If a task fails instantly, or finishes very quickly (< 1 second),
+        # the get config function doesn't have time to run
         max_rss = cpu_time = memory_allocated = 0
     else:
         max_rss = parse_memory_file(process)
@@ -188,7 +161,7 @@ def get_cgroup_name():
 
     # fugly hack to allow functional tests to use test data
     if 'profiler_test_env_var' in os.environ:
-        return os.getenv('profiler_test_env_var')
+        return os.environ['profiler_test_env_var']
 
     # Get the PID of the current process
     pid = os.getpid()
@@ -279,8 +252,3 @@ def _main(options) -> None:
 
     # run profiler run
     profile(process, options.delay)
-
-
-if __name__ == "__main__":
-    arg_parser = get_option_parser()
-    _main(arg_parser.parse_args([]))
