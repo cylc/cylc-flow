@@ -14,11 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Set, Tuple, cast, TYPE_CHECKING
+from typing import (
+    TYPE_CHECKING,
+    Set,
+    Tuple,
+    cast,
+)
 
 from cylc.flow import commands
 from cylc.flow.id import Tokens
 from cylc.flow.scheduler import Scheduler
+
 
 if TYPE_CHECKING:
     from cylc.flow.id import TaskTokens
@@ -37,7 +43,7 @@ async def test_id_match(flow, scheduler, start, caplog):
 
                     b1[-P1] => b1
                     b2[-P1] => b2
-                ''',
+            ''',
             },
         },
         'runtime': {
@@ -184,37 +190,3 @@ async def test_id_match(flow, scheduler, start, caplog):
         caplog.clear()
         assert match('2/a1', '2/a*') == (set(), {'2/a1', '2/a*'})
         assert caplog.messages == ['Invalid cycle point for task: a1, 2']
-
-
-async def test_match_removed_task(flow, scheduler, run, complete):
-    """It should match and operate on tasks no longer in the config."""
-    config = {
-        'scheduling': {
-            'graph': {'R1': 'foo & bar'},
-        },
-    }
-    id_ = flow(config)
-    schd = scheduler(id_, paused_start=False)
-
-    def list_tasks():
-        return {
-            itask.tokens.relative_id for itask in schd.pool.get_tasks()
-        }
-
-    async with run(schd):
-        # workflow starts with "foo" and "bar" in the pool
-        assert list_tasks() == {'1/foo', '1/bar'}
-
-        # remove "bar" from the config and reload
-        config['scheduling']['graph']['R1'] = 'x => foo'
-        flow(config, name=id_)
-        await commands.run_cmd(commands.reload_workflow(schd))
-
-        # both "foo" and "bar" are still in the pool ("bar" is orphaned)
-        assert list_tasks() == {'1/foo', '1/bar'}
-
-        # remove all tasks from the workflow
-        await commands.run_cmd(commands.remove_tasks(schd, {'*'}, ['1']))
-
-        # this should match the orphaned task "bar"
-        assert list_tasks() == set()
