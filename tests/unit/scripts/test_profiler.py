@@ -32,7 +32,7 @@ from cylc.flow.exceptions import CylcProfilerError
 
 def test_stop_profiler(monkeypatch, tmpdir):
     monkeypatch.setenv('CYLC_WORKFLOW_ID', "test_value")
-
+    monkeypatch.setenv('CYLC_TASK_JOB', "test_task_job")
     class MockedClient:
         def __init__(self, *a, **k):
             pass
