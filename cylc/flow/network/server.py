@@ -440,7 +440,6 @@ class WorkflowRuntimeServer:
         pb_msg = self.schd.data_store_mgr.get_workflow_only()
         return pb_msg.SerializeToString()
 
-    @authorise()
     @expose
     def pb_data_elements(self, element_type: str, **_kwargs) -> bytes:
         """Send the specified data elements in delta form.

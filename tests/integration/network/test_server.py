@@ -86,9 +86,7 @@ def test_pb_workflow_only(myflow):
     """Test Protobuf workflow only endpoint method."""
     data = PB_METHOD_MAP['pb_workflow_only']()
     data.ParseFromString(
-        call_server_method(
-            myflow.server.pb_workflow_only
-        )
+        myflow.server.pb_workflow_only()
     )
     assert data.workflow.id == myflow.id
 
