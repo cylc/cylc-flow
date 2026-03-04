@@ -43,7 +43,7 @@ async def test_json_basic(setup, capsys):
 
 
 async def test_json_workflow_cfg(flow, capsys):
-    """It fills in values from CLI."""
+    """It fills config in values from CLI."""
     wid = flow(
         {
             'scheduling': {'graph': {'P1D': 'foo'}},
@@ -54,7 +54,7 @@ async def test_json_workflow_cfg(flow, capsys):
     ConfigOptions = Options(parser)
     opts = ConfigOptions()
     opts.json = True
-    opts.icp = '    '
+    opts.icp = '1000'
 
     await _main(parser, opts, wid)
 
