@@ -111,6 +111,15 @@ def get_option_parser() -> COP:
             "overrides any settings it shares with those higher up."),
         action="store_true", default=False, dest="print_hierarchy")
 
+    parser.add_option(
+        '--json',
+        help=(
+            'Returns config as JSON rather than Cylc Config format.'),
+        default=False,
+        action='store_true',
+        dest='json'
+    )
+
     parser.add_option(icp_option)
 
     platform_listing_options_group = parser.add_option_group(
@@ -140,6 +149,28 @@ def get_option_parser() -> COP:
     return parser
 
 
+def json_opt_check(parser, options):
+    """Return an error if --json and incompatible options used.
+    """
+    not_with_json = {
+        '--print-hierarchy': 'print_hierarchy',
+        '--platform-names': 'print_platform_names',
+        '--platforms': 'print_platforms'
+    }
+
+    if not options.json:
+        return
+
+    not_with_json = [
+        name for name, dest
+        in not_with_json.items()
+        if options.__dict__[dest]]
+
+    if not_with_json:
+        parser.error(
+            f'--json incompatible with {" or ".join(not_with_json)}')
+
+
 def get_config_file_hierarchy(workflow_id: Optional[str] = None) -> List[str]:
     filepaths = [os.path.join(path, glbl_cfg().CONF_BASENAME)
                  for _, path in glbl_cfg().conf_dir_hierarchy]
@@ -164,6 +195,7 @@ async def _main(
     options: 'Values',
     *ids,
 ) -> None:
+    json_opt_check(parser, options)
 
     if options.print_platform_names and options.print_platforms:
         options.print_platform_names = False
@@ -189,7 +221,8 @@ async def _main(
             options.item,
             not options.defaults,
             oneline=options.oneline,
-            none_str=options.none_str
+            none_str=options.none_str,
+            json=options.json,
         )
         return
 
@@ -219,5 +252,6 @@ async def _main(
         options.item,
         not options.defaults,
         oneline=options.oneline,
-        none_str=options.none_str
+        none_str=options.none_str,
+        json=options.json
     )
