@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Run command on a remote, (i.e. a remote [user@]host)."""
 
+import asyncio
 import os
 from pathlib import Path
 from posix import WIFSIGNALED
@@ -76,17 +77,38 @@ def get_proc_ancestors():
         pid = ppid
 
 
-def watch_and_kill(proc):
-    """Kill proc if my PPID (etc.) changed - e.g. ssh connection dropped."""
+async def watch_and_kill(proc, interval=None):
+    """Watch a process and kill it if any of its parent processes change.
+
+    Processes exist in a tree which inherits from the process with PID 1.
+
+    If a parent process dies, the child will be re-assigned a new parent.
+    This can happen:
+    * If the parent is killed but the signal is not propagated to its children
+      (or is caught and swallowed).
+    * If an SSH connection drops.
+
+    This coroutine monitors the parents of a process and will kill the child
+    if any of its parents change.
+
+    Args:
+        proc:
+            The process to monitor and kill if needed.
+        interval:
+            The polling interval to check the parent process tree in seconds.
+            If not provided, this will default to the environment variable
+            "CYLC_PROC_POLL_INTERVAL" if set, else 60.
+
+    """
     gpa = get_proc_ancestors()
     # Allow customising the interval to allow tests to run faster:
-    interval = float(os.getenv('CYLC_PROC_POLL_INTERVAL', 60))
+    interval = interval or float(os.getenv('CYLC_PROC_POLL_INTERVAL', 60))
     while True:
-        sleep(interval)
+        await asyncio.sleep(interval)
         if proc.poll() is not None:
             break
         if get_proc_ancestors() != gpa:
-            sleep(1)
+            await asyncio.sleep(1)
             os.kill(proc.pid, signal.SIGTERM)
             break
 

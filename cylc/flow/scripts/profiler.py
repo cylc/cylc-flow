@@ -20,6 +20,7 @@ Profiler which periodically polls cgroups to track
 the resource usage of jobs running on the node.
 """
 
+import asyncio
 import json
 import os
 import re
@@ -30,9 +31,11 @@ import signal
 from pathlib import Path
 from functools import partial
 from dataclasses import dataclass
+from subprocess import Popen, PIPE
 
 from cylc.flow.exceptions import CylcProfilerError
 from cylc.flow.option_parsers import CylcOptionParser as COP
+from cylc.flow.remote import watch_and_kill
 from cylc.flow.task_message import record_messages
 from cylc.flow.terminal import cli_function
 
@@ -207,14 +210,14 @@ def get_cgroup_paths(location) -> Process:
             err, "Unable to determine cgroup version") from err
 
 
-def profile(_process: Process, delay, keep_looping=lambda: True):
+async def profile(_process: Process, delay, keep_looping=lambda: True):
     # The infinite loop that will constantly poll the cgroup
     # The lambda function is used to allow the loop to be stopped in unit tests
 
     while keep_looping():
         # Write cpu / memory usage data to disk
         # CPU_TIME = parse_cpu_file(process.cgroup_cpu_path, version)
-        time.sleep(delay)
+        await asyncio.sleep(delay)
 
 
 def get_option_parser() -> COP:
@@ -237,10 +240,10 @@ def get_option_parser() -> COP:
 @cli_function(get_option_parser)
 def main(_parser: COP, options) -> None:
     """CLI main."""
-    _main(options)
+    asyncio.run(_main(options))
 
 
-def _main(options) -> None:
+async def _main(options) -> None:
     # get cgroup information
     process = get_cgroup_paths(options.cgroup_location)
 
@@ -250,5 +253,18 @@ def _main(options) -> None:
     signal.signal(signal.SIGHUP, _stop_profiler)
     signal.signal(signal.SIGTERM, _stop_profiler)
 
-    # run profiler run
-    profile(process, options.delay)
+    proc = Popen(  # nosec
+        ["ps", "-p", str(os.getpid()), "-oppid="],
+        stdout=PIPE,
+        stderr=PIPE,
+        text=True
+    )
+    # the profiler will run until one of these coroutines calls `sys.exit`:
+    await asyncio.gather(
+        # run the profiler itself
+        profile(process, options.delay),
+
+        # kill the profiler if its PPID changes
+        # (i.e, if the job exits before the profiler does)
+        watch_and_kill(proc),
+    )
