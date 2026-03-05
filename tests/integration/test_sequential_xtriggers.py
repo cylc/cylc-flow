@@ -71,7 +71,6 @@ async def test_remove(sequential: Scheduler, start):
             if foo.state(is_runahead=True):
                 break
             sequential.xtrigger_mgr.call_xtriggers_async(foo)
-            sequential.pool.spawn_parentless_sequential_xtriggers()
         assert list_cycles(sequential) == [
             '2000',
             '2001',
@@ -139,7 +138,6 @@ async def test_set_prereqs(sequential, start):
         # satisfy foo's xtriggers - it should spawn next instance
         sequential.pool.set_prereqs_and_outputs(
             {TaskTokens('2000', 'foo')}, [], ['xtrigger/all:succeeded'], [])
-        sequential.pool.spawn_parentless_sequential_xtriggers()
 
         assert list_cycles(sequential) == ['2000', '2001']
 

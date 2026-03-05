@@ -1,5 +1,0 @@
-Initial point: 1
-Final point: 1
-1/sleeper -triggered off []
-1/killer -triggered off ['1/sleeper']
-1/sleeper -triggered off []

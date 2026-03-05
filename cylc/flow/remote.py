@@ -111,6 +111,7 @@ async def watch_and_kill(proc, interval=None):
             await asyncio.sleep(1)
             os.kill(proc.pid, signal.SIGTERM)
             break
+        sleep(interval)
 
 
 def run_cmd(
@@ -279,7 +280,7 @@ def construct_rsync_over_ssh_cmd(
     # Note to future devs - be wary of changing the order of the following
     # rsync options, rsync is very particular about order of in/ex-cludes.
     rsync_cmd.extend(rsync_options)
-    for exclude in ['log', 'share', 'work']:
+    for exclude in ['/log', '/share', '/work']:
         rsync_cmd.append(f"--exclude={exclude}")
     for include in DEFAULT_INCLUDES:
         rsync_cmd.append(f"--include={include}")

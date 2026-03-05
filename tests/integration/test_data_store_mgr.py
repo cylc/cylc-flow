@@ -51,6 +51,7 @@ from cylc.flow.network.log_stream_handler import ProtobufStreamHandler
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_events_mgr import TaskEventsManager
 from cylc.flow.task_outputs import (
+    TASK_OUTPUT_FAILED,
     TASK_OUTPUT_STARTED,
     TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUCCEEDED,
@@ -663,6 +664,118 @@ async def test_absolute_graph_edges(flow, scheduler, start):
         }
 
 
+async def test_group_state_on_window_resize(flow, scheduler, start):
+    """Test group state change on n-window resize. This method will expand
+    and reduce the data-store to change the family/root states.
+
+    See: https://github.com/cylc/cylc-flow/issues/7115
+    """
+    id_ = flow({
+        'scheduling': {
+            'graph': {
+                'R1': 'foo:failed => bar'
+            }
+        },
+        'runtime': {
+            'FOOBAR': {},
+            'FOO': {
+                'inherit': 'FOOBAR'
+            },
+            'foo': {
+                'inherit': 'FOO',
+            },
+            'BAR': {
+                'inherit': 'FOOBAR'
+            },
+            'bar': {
+                'inherit': 'BAR'
+            }
+        }
+    })
+    schd = scheduler(id_)
+    async with start(schd):
+        # initialise the data store
+        await schd.update_data_structure()
+        w_id = schd.data_store_mgr.workflow_id
+        data = schd.data_store_mgr.data[w_id]
+        schd.pool.hold_tasks({TaskTokens('1', 'bar')})
+        await schd.update_data_structure()
+        # At startup foo/FOO/FOOBAR/root should be waiting
+        assert {
+            t.state
+            for t in data[TASK_PROXIES].values()
+        } == {TASK_STATUS_WAITING}
+        assert {
+            data[FAMILY_PROXIES][f_id].state
+            for f_id in [
+                schd.data_store_mgr.id_.duplicate(cycle='1', task=t).id
+                for t in ['FOO', 'FOOBAR', 'root']
+            ]
+        } == {TASK_STATUS_WAITING}
+
+        # Set foo to failed, spawn in bar, remove foo
+        itask = schd.pool._get_task_by_id('1/foo')
+        itask.state.reset(TASK_STATUS_FAILED)
+        schd.pool.spawn_on_output(itask, TASK_OUTPUT_FAILED)
+        schd.data_store_mgr.delta_task_state(itask)
+        schd.pool.remove(itask, 'Test removal')
+        schd.data_store_mgr.update_data_structure()
+        # With both tasks there should be a mix failed and waiting
+        assert {
+            t.state
+            for t in data[TASK_PROXIES].values()
+        } == {TASK_STATUS_FAILED, TASK_STATUS_WAITING}
+        assert [
+            data[FAMILY_PROXIES][f_id].state
+            for f_id in [
+                schd.data_store_mgr.id_.duplicate(cycle='1', task=t).id
+                for t in ['FOO', 'BAR', 'FOOBAR', 'root']
+            ]
+        ] == [
+            TASK_STATUS_FAILED,
+            TASK_STATUS_WAITING,
+            TASK_STATUS_FAILED,
+            TASK_STATUS_FAILED,
+        ]
+
+        # Window size reduction to remove failed state task
+        schd.data_store_mgr.set_graph_window_extent(0)
+        schd.data_store_mgr.update_data_structure()
+        # Now bar/BAR/FOOBAR/root should be waiting
+        assert {
+            t.state
+            for t in data[TASK_PROXIES].values()
+        } == {TASK_STATUS_WAITING}
+        assert {
+            data[FAMILY_PROXIES][f_id].state
+            for f_id in [
+                schd.data_store_mgr.id_.duplicate(cycle='1', task=t).id
+                for t in ['BAR', 'FOOBAR', 'root']
+            ]
+        } == {TASK_STATUS_WAITING}
+
+        # Window size increase to add failed state task again
+        schd.data_store_mgr.set_graph_window_extent(1)
+        schd.data_store_mgr.update_data_structure()
+        # Again there should be a mix failed and waiting states
+        assert {
+            t.state
+            for t in data[TASK_PROXIES].values()
+        } == {TASK_STATUS_FAILED, TASK_STATUS_WAITING}
+        assert [
+            data[FAMILY_PROXIES][f_id].state
+            for f_id in [
+                schd.data_store_mgr.id_.duplicate(cycle='1', task=t).id
+                for t in ['FOO', 'BAR', 'FOOBAR', 'root']
+            ]
+        ] == [
+            TASK_STATUS_FAILED,
+            TASK_STATUS_WAITING,
+            TASK_STATUS_FAILED,
+            TASK_STATUS_FAILED,
+        ]
+
+
 async def test_flow_numbers(flow, scheduler, start):
     """It should update flow numbers when a task is triggered.
 
@@ -906,3 +1019,55 @@ async def test_job_estimated_finish_time(one_conf, flow, scheduler, start):
             get_pb_job(schd, itask).estimated_finish_time
             == f'{date}06:01:40Z'
         )
+
+
+async def test__family_ascent_point_update(flow, scheduler, run, validate):
+    """Check that task states are cascaded up the family tree
+    to the root family and the workflow "containsRetry" flag.
+
+    https://github.com/cylc/cylc-flow/issues/7174
+    """
+    wid = flow({
+        'scheduling': {
+            'initial cycle point': '3333',
+            'graph': {
+                'R1': (
+                    'FAM'
+                    '\n@wallclock => is_wallclock'
+                    '\n@echo_false => is_xt'
+                )
+            },
+            'xtriggers': {
+                'wallclock': 'wall_clock()',
+                'echo_false': 'echo(succeed=False)'
+            }
+        },
+        'runtime': {
+            'FAM': {},
+            'is_retry': {
+                'inherit': 'FAM',
+                'execution retry delays': 'PT10M',
+                'simulation': {
+                    'fail cycle points': 'all',
+                    'default run length': 'PT0S'
+                }
+            },
+            'normal': {'inherit': 'FAM'},
+            'is_wallclock': {'inherit': 'FAM'},
+            'is_xt': {'inherit': 'FAM'},
+        }
+    })
+    is_flags = ['is_retry', 'is_wallclock', 'is_xtriggered']
+    validate(wid)
+    schd = scheduler(wid, paused_start=False)
+    async with run(schd):
+        data = schd.data_store_mgr.data
+
+        assert data[schd.id]['workflow'].contains_retry is False
+
+        await schd._main_loop()
+
+        assert data[schd.id]['workflow'].contains_retry is True
+        for family_proxy in data[schd.id]['family_proxies'].values():
+            for attribute in is_flags:
+                assert getattr(family_proxy, attribute) is True

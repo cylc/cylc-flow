@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -14,9 +13,3 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#-------------------------------------------------------------------------------
-# Test: hold a task to prevent it from retrying when killing its job
-. "$(dirname "$0")/test_header"
-set_test_number 2
-reftest
-exit

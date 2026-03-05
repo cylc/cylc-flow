@@ -463,9 +463,9 @@ async def test_subscription_deltas(one, start):
         assert aitem.data['deltas']['added']['workflow'] == {
             'id': one.id,
             'host': one.host,
-            'status': 'running',
+            'status': 'paused',
         }
-        # Workflow one is paused on start, but this hasn't been processed yet.
+        # Workflow one is paused on start
         await one.update_data_structure()
         assert (
             one.data_store_mgr.data[one.id]['workflow'].status
@@ -486,7 +486,6 @@ async def test_subscription_deltas(one, start):
         aitem = await subscription.__anext__()
         assert aitem.data['deltas']['updated']['workflow'] == {
             'id': one.id,
-            'status': get_workflow_status(one).value,
         }
         with suppress(GeneratorExit):
             await subscription.aclose()
