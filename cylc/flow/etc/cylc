@@ -34,8 +34,6 @@
 # Intercept "cylc", "rose", "rosie" and "isodatetime" commands and re-invoke
 # them with the version selected via the environment variables described below.
 #
-# Additional legacy logic is used when calling Rose with Cylc 7.
-#
 # ENVIRONMENT VARIABLES
 # ---------------------
 #
@@ -77,13 +75,6 @@
 # Other symlinks can be created in order to create additional named environments
 # for selection using CYLC_VERSION. e.g. ln -s cylc-8.0.1-1 cylc-next
 #
-# Legacy Cylc 7 and Rose 2019.01 versions can also be installed into environments
-# in the ROOT location. The legacy support for rose edit, rosie and cylc review
-# requires cylc-7 and rose-2019.01 symlinks to be created to the preferred
-# environments.
-# e.g.    ln -s cylc-7.9.5 cylc-7
-#         ln -s rose-2019.01.7 rose-2019.01
-#
 ##############################!!! EDIT ME !!!##################################
 # Centrally installed Cylc releases:
 CYLC_HOME_ROOT="${CYLC_HOME_ROOT:-/opt}"
@@ -91,7 +82,7 @@ CYLC_HOME_ROOT="${CYLC_HOME_ROOT:-/opt}"
 # Users can set CYLC_HOME_ROOT_ALT as well (see above), e.g.:
 # CYLC_HOME_ROOT_ALT=${HOME}/miniconda3/envs
 
-# Global config locations for Cylc 8 & Rose 2 (defaults: /etc/cylc & /etc/rose)
+# Global config locations for Cylc & Rose (defaults: /etc/cylc & /etc/rose)
 # export CYLC_SITE_CONF_PATH="${CYLC_SITE_CONF_PATH:-/etc/cylc}"
 # export ROSE_SITE_CONF_PATH="${ROSE_SITE_CONF_PATH:-/etc/rose}"
 ###############################################################################
@@ -132,48 +123,14 @@ if [[ -z "${CYLC_HOME}" ]]; then
     fi
 fi
 
-# Legacy support for Rose
-if [[ ${0##*/} =~ ^ros ]]; then
-    # Prior to Cylc 8, Rose used a standalone installation
-    if [[ -n "${CYLC_ENV_NAME}" ]]; then
-        ROSE_HOME_ROOT="${ROSE_HOME_ROOT:-$CYLC_HOME_ROOT}"
-        if [[ ${CYLC_ENV_NAME:-} =~ ^cylc-7 ]]; then
-            # Cylc 7: Use ROSE_HOME / ROSE_VERSION to select the installation
-            if [[ -z "${ROSE_HOME:-}" ]]; then
-                if [[ -n "${ROSE_VERSION:-}" ]]; then
-                    CYLC_HOME="${ROSE_HOME_ROOT}/rose-${ROSE_VERSION}"
-                else
-                    # Use default version (symlink)
-                    CYLC_HOME="${ROSE_HOME_ROOT}/rose"
-                fi
-            else
-                CYLC_HOME="${ROSE_HOME}"
-            fi
-        elif [[ ${1:-} == "edit" || ${1:-} == "config-edit" || \
-                ${0##*/} == "rosie" ]]; then
-            # Cylc 8: Use Rose 2019.01 to run "rose config-edit" or "rosie"
-            CYLC_HOME="${ROSE_HOME_ROOT}/rose-2019.01"
-        fi
-    elif [[ -z "${CYLC_ENV_NAME}" ]]; then
-        # If CYLC_HOME was set externally, use ROSE_HOME if it is set
-        CYLC_HOME="${ROSE_HOME:-$CYLC_HOME}"
-    fi
-fi
-
-# Legacy support for cylc review
-if [[ ${0##*/} == "cylc" && ${1:-} == "review" && \
-      ! ${CYLC_ENV_NAME:-} =~ ^cylc-7 ]]; then
-    # Cylc 8: Use Cylc 7 to run "review"
-    CYLC_HOME="${CYLC_HOME_ROOT}/cylc-7"
-fi
-
 if [[ ! -x "${CYLC_HOME}/bin/${0##*/}" ]]; then
     echo 1>&2 "ERROR: ${0##*/} not found in ${CYLC_HOME}"
     exit 1
 fi
 
 # Set PATH when running cylc hub so that configurable-http-proxy can find node
-if [[ ${0##*/} == "cylc" && ${1:-} == "hub" ]]; then
+# and when running cylc graph so that it can find Graphviz
+if [[ ${0##*/} == "cylc" && ${1:-} =~ ^(graph|hub)$ ]]; then
     PATH=${PATH}:${CYLC_HOME}/bin
 fi
 

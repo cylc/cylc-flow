@@ -2848,7 +2848,7 @@ class WorkflowConfig:
                     )
             if upgraded and not cylc.flow.flags.cylc7_back_compat:
                 LOG.warning(
-                    f"{upgrader.DEPR_MSG}\n"
+                    f"{upgrader.depr_msg}\n"
                     f" * (8.0.0) [scheduler][events][{setting}] "
                     + ', '.join(f'{k} -> {v}' for k, v in upgraded.items())
                 )

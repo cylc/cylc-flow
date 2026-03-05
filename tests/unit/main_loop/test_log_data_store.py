@@ -70,8 +70,16 @@ def test_plot(test_data, tmp_path):
 
 
 def test_iter_data_store():
+    class DataStore:
+        tracker = {'this': 'that'}
+        data = {'x': {'a': 1, 'workflow': 2, 'c': 3}}
+    ds = DataStore()
     assert (
-        list(_iter_data_store({'x': {'a': 1, 'workflow': 2, 'c': 3}}))
+        list(_iter_data_store(ds))
     ) == [
-        ('a', 1), ('c', 3)
+        ('data_store_mgr (total)', ds),
+        ('tracker', {'this': 'that'}),
+        ('data.a', 1),
+        ('data.workflow', [2]),
+        ('data.c', 3)
     ]

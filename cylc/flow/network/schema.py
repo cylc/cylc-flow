@@ -751,14 +751,35 @@ class Workflow(ObjectType):
         description="The scheduler's run-mode e.g. `live`.",
     )
     is_held_total = Int(
-        description='The number of "held" tasks.',
+        description=sstrip('''
+            The number of "held" tasks.
+
+            Deprecated: Use `contains_held`.
+        '''),
+        deprecation_reason='unused',
     )
     is_queued_total = Int(
-        description='The number of queued tasks.',
+        description=sstrip('''
+            The number of queued tasks.
+
+            Deprecated: No replacement.
+        '''),
+        deprecation_reason='unused',
     )
     is_runahead_total = Int(
         description=sstrip('''
             The number of tasks which are held back by the runahead limit.
+
+            Deprecated: No replacement.
+        '''),
+        deprecation_reason='unused',
+    )
+    contains_held = Boolean(
+        description='True if the n=0 window contains any held tasks.'
+    )
+    contains_retry = Boolean(
+        description=sstrip('''
+            True if the n=0 window contains any tasks waiting automatic retry.
         ''')
     )
     state_totals = GenericScalar(
@@ -990,14 +1011,6 @@ class Task(ObjectType):
     depth = Int(
         description='The family inheritance depth.'
     )
-    proxies = graphene.List(
-        lambda: TaskProxy,
-        description="Associated cycle point proxies",
-        args=PROXY_ARGS,
-        strip_null=STRIP_NULL_DEFAULT,
-        delta_store=DELTA_STORE_DEFAULT,
-        delta_type=DELTA_TYPE_DEFAULT,
-        resolver=get_nodes_by_ids)
     parents = graphene.List(
         lambda: Family,
         description="Family definition parent.",
@@ -1240,14 +1253,6 @@ class Family(ObjectType):
     meta = Field(NodeMeta)
     runtime = Field(Runtime)
     depth = Int()
-    proxies = graphene.List(
-        lambda: FamilyProxy,
-        description='Associated family proxy instances.',
-        args=PROXY_ARGS,
-        strip_null=STRIP_NULL_DEFAULT,
-        delta_store=DELTA_STORE_DEFAULT,
-        delta_type=DELTA_TYPE_DEFAULT,
-        resolver=get_nodes_by_ids)
     parents = graphene.List(
         lambda: Family,
         description='Families that this family directly inherits from.',

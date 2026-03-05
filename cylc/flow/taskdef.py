@@ -419,18 +419,24 @@ class TaskDef:
             p_next = min(adjusted)
         return p_next
 
-    def is_parentless(self, point):
-        """Return True if task has no parents at point.
+    def is_parentless(self, point: 'PointBase', cutoff: 'PointBase') -> bool:
+        """Return True if task has no parents at the given point.
 
         Tasks are considered parentless if they have:
           - no parents at all
-          - all parents < initial cycle point
+          - all parents < cutoff cycle point
           - only absolute triggers
 
         Absolute-triggered tasks are auto-spawned like true parentless tasks,
         (once the trigger is satisfied they are effectively parentless) but
         with a prerequisite that gets satisfied when the absolute output is
         completed at runtime.
+
+        Args:
+            point: The cycle point to check.
+            cutoff: This should be the start cycle point for the startup
+                spawning, or the intial cycle point for manually triggered
+                tasks.
         """
         if not self.graph_parents:
             # No parents at any point
@@ -441,7 +447,7 @@ class TaskDef:
         parent_points = self.get_parent_points(point)
         return (
             not parent_points
-            or all(x < self.start_point for x in parent_points)
+            or all(x < cutoff for x in parent_points)
             or self.has_only_abs_triggers(point)
         )
 

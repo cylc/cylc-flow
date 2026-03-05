@@ -45,7 +45,7 @@ BOOL_SYMBOLS: Dict[bool, str] = {
     True: '✓'
 }
 
-_NAT_SORT_SPLIT = re.compile(r'([\d\.]+)')
+_NAT_SORT_SPLIT = re.compile(r'(\d+(?:\.\d+)?)')
 
 
 def uniq(iterable):
@@ -117,7 +117,17 @@ def natural_sort_key(key: str, fcns=(int, str)) -> List[Any]:
         >>> natural_sort_key('a1.23b', fcns=(float, str))
         ['a', 1.23, 'b']
         >>> natural_sort_key('a.b')
-        ['a', '.', 'b']
+        ['a.b']
+        >>> natural_sort_key('a0.b')
+        ['a', 0, '.b']
+
+        # Default type casting
+        >>> natural_sort_key('a0.1b')
+        ['a', '0.1', 'b']
+
+        # Custom type casting
+        >>> natural_sort_key('a0.1b', fcns=(int, float, str))
+        ['a', 0.1, 'b']
 
     """
     ret = []
@@ -146,6 +156,11 @@ def natural_sort(items: List[str], fcns=(int, str)) -> None:
         >>> natural_sort(lst)
         >>> lst
         ['1a', 'a1']
+
+        >>> lst = ['a0.b', 'a0b']
+        >>> natural_sort(lst)
+        >>> lst
+        ['a0.b', 'a0b']
 
     """
     items.sort(key=partial(natural_sort_key, fcns=fcns))

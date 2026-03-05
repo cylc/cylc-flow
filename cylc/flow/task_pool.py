@@ -88,6 +88,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_WAITING,
     TASK_STATUSES_ACTIVE,
     TASK_STATUSES_FINAL,
+    status_geq,
 )
 from cylc.flow.task_trigger import TaskTrigger
 from cylc.flow.util import deserialise_set
@@ -210,8 +211,9 @@ class TaskPool:
             self.config.runtime['descendants']
         )
 
-        self.tasks_to_hold: Set[Tuple[str, 'PointBase']] = set()
-        self.tasks_to_trigger_now: Set['TaskProxy'] = set()
+        self.tasks_to_hold: set[tuple[str, 'PointBase']] = set()
+        self.tasks_to_trigger_now: set['TaskProxy'] = set()
+        self.pre_start_tasks_to_trigger: set[tuple[str, 'PointBase']] = set()
 
     def set_stop_task(self, task_id):
         """Set stop after a task."""
@@ -269,6 +271,10 @@ class TaskPool:
         """Add a task to the pool."""
 
         self.active_tasks.setdefault(itask.point, {})
+        if itask.identity in self.active_tasks[itask.point]:
+            # If logged, something has gone wrong.
+            LOG.debug(f"{itask.identity} not added to n=0: already exists")
+            return None
         self.active_tasks[itask.point][itask.identity] = itask
         self.active_tasks_changed = True
         LOG.debug(f"[{itask}] added to the n=0 window")
@@ -657,9 +663,6 @@ class TaskPool:
             ):
                 self.rh_release_and_queue(itask)
 
-            self.compute_runahead()
-            self.release_runahead_tasks()
-
     def load_db_task_action_timers(self, row_idx: int, row: Iterable) -> None:
         """Load a task action timer, e.g. event handlers, retry states."""
         if row_idx == 0:
@@ -836,9 +839,11 @@ class TaskPool:
         longer parentless, and/or hit the runahead limit.
 
         """
-        if not flow_nums or point is None:
-            # Force-triggered no-flow task.
-            # Or called with an invalid next_point.
+        if (
+            not flow_nums  # Force-triggered no-flow task
+            or point is None  # Reached end of sequence?
+            or point < self.config.start_point  # Warm start
+        ):
             return
         if self.runahead_limit_point is None:
             self.compute_runahead()
@@ -847,7 +852,7 @@ class TaskPool:
 
         is_xtrig_sequential = False
         while point is not None and (point <= self.runahead_limit_point):
-            if tdef.is_parentless(point):
+            if tdef.is_parentless(point, cutoff=self.config.start_point):
                 ntask, is_in_pool, is_xtrig_sequential = (
                     self.get_or_spawn_task(point, tdef, flow_nums)
                 )
@@ -865,7 +870,11 @@ class TaskPool:
 
     def spawn_if_parentless(self, tdef, point, flow_nums):
         """Spawn a task if parentless, regardless of runahead limit."""
-        if flow_nums and point is not None and tdef.is_parentless(point):
+        if (
+            flow_nums
+            and point is not None
+            and tdef.is_parentless(point, cutoff=self.config.start_point)
+        ):
             ntask, is_in_pool, _ = self.get_or_spawn_task(
                 point, tdef, flow_nums
             )
@@ -874,6 +883,11 @@ class TaskPool:
 
     def remove(self, itask: 'TaskProxy', reason: Optional[str] = None) -> None:
         """Remove a task from the pool."""
+        # the held state is no longer relevant -> remove it
+        self.release_held_active_task(itask)
+
+        # xtriggers are no longer relevant -> remove them
+        self.xtrigger_mgr.force_satisfy_all(itask, log=False)
 
         if itask.state.is_runahead and itask.flow_nums:
             # If removing a parentless runahead-limited task
@@ -890,7 +904,6 @@ class TaskPool:
         itask.transient = True
 
         if itask.is_xtrigger_sequential:
-            self.xtrigger_mgr.sequential_spawn_next.discard(itask.identity)
             self.xtrigger_mgr.sequential_has_spawned_next.discard(
                 itask.identity
             )
@@ -901,6 +914,9 @@ class TaskPool:
             pass
         else:
             self.tasks_to_trigger_now.discard(itask)
+            self.pre_start_tasks_to_trigger.discard(
+                (itask.tdef.name, itask.point)
+            )
             self.tasks_removed = True
             self.active_tasks_changed = True
             if not self.active_tasks[itask.point]:
@@ -1501,9 +1517,12 @@ class TaskPool:
             self.remove_if_complete(itask, output)
             return
 
+        if status_geq(itask.state.status, TASK_STATUS_PREPARING):
+            # task has begun submission -> clear all xtriggers
+            self.xtrigger_mgr.force_satisfy_all(itask, log=False)
+
         suicide = []
         for c_name, c_point, is_abs in children:
-
             if is_abs:
                 self.abs_outputs_done.add(
                     (str(itask.point), itask.tdef.name, output))
@@ -1719,8 +1738,8 @@ class TaskPool:
         return True
 
     def _get_task_history(
-        self, name: str, point: 'PointBase', flow_nums: Set[int]
-    ) -> Tuple[int, Optional[str], bool]:
+        self, name: str, point: 'PointBase', flow_nums: 'FlowNums'
+    ) -> tuple[int, str | None, bool]:
         """Get submit_num, status, flow_wait for point/name in flow_nums.
 
         Args:
@@ -1758,7 +1777,10 @@ class TaskPool:
         return submit_num, status, flow_wait
 
     def _load_historical_outputs(self, itask: 'TaskProxy') -> None:
-        """Load a task's historical outputs from the DB."""
+        """Load a task's historical outputs from the DB.
+
+        NOTE this creates a task_states/task_outputs DB entry if not present.
+        """
         info = self.workflow_db_mgr.pri_dao.select_task_outputs(
             itask.tdef.name, str(itask.point))
         if not info:
@@ -1795,9 +1817,9 @@ class TaskPool:
         self,
         name: str,
         point: 'PointBase',
-        flow_nums: Set[int],
+        flow_nums: 'FlowNums',
         flow_wait: bool = False,
-    ) -> Optional[TaskProxy]:
+    ) -> TaskProxy | None:
         """Return a new task proxy for the given flow if possible.
 
         We need to hit the DB for:
@@ -1818,8 +1840,18 @@ class TaskPool:
             self._get_task_history(name, point, flow_nums)
         )
 
+        if (
+            not prev_status
+            and point < self.config.start_point
+            and flow_nums.issuperset({1})
+            # Warm start - treat pre-startcp tasks as already run in flow=1,
+            # unless manually triggered:
+            and (name, point) not in self.pre_start_tasks_to_trigger
+        ):
+            return None
+
         # Create the task proxy with any completed outputs loaded.
-        itask = self._get_task_proxy_db_outputs(
+        itask = self._load_db_task_proxy(
             point,
             self.config.get_taskdef(name),
             flow_nums,
@@ -1833,12 +1865,19 @@ class TaskPool:
         if (
             prev_status is not None
             and not itask.state.outputs.get_completed_outputs()
+            and not self.config.experimental.expire_triggers
         ):
-            # If itask has any history in this flow but no completed outputs
-            # we can infer it has just been deliberately removed (N.B. not
-            # by `cylc remove`), so don't immediately respawn it.
-            # TODO (follow-up work):
-            # - this logic fails if task removed after some outputs completed
+            # If itask has any history but no completed outputs, it must have
+            # been removed by suicide trigger (not by `cylc remove` which
+            # erases task history).
+            #
+            # This was a bodge to prevent suicided tasks from respawning via
+            # other dependencies, given that suicide leaves no DB record.
+            # The bodge fails if any outputs were completed before suicide.
+            #
+            # The reimplementation of suicide triggers as expire triggers
+            # renders this bodge obsolete. TODO: remove this code block on
+            # migrating expire triggers from "experimental" to standard.
             LOG.info(f"Not respawning {point}/{name} - task was removed")
             return None
 
@@ -1917,7 +1956,7 @@ class TaskPool:
         self.workflow_db_mgr.put_update_task_flow_wait(itask)
         return None
 
-    def _get_task_proxy_db_outputs(
+    def _load_db_task_proxy(
         self,
         point: 'PointBase',
         taskdef: 'TaskDef',
@@ -1927,8 +1966,11 @@ class TaskPool:
         transient: bool = False,
         is_manual_submit: bool = False,
         submit_num: int = 0,
-    ) -> Optional['TaskProxy']:
-        """Spawn a task, update outputs from DB."""
+    ) -> 'TaskProxy | None':
+        """Spawn a task, update outputs from DB.
+
+        NOTE this creates a task_states/task_outputs DB entry if not present.
+        """
 
         if not self.can_be_spawned(taskdef.name, point):
             return None
@@ -2132,7 +2174,7 @@ class TaskPool:
                     no_op = False
                 else:
                     # Outputs (may be empty list)
-                    trans = self._get_task_proxy_db_outputs(
+                    trans = self._load_db_task_proxy(
                         icycle, tdef, flow_nums,
                         flow_wait=flow_wait, transient=True
                     )
@@ -2211,7 +2253,7 @@ class TaskPool:
         itask: 'TaskProxy',
         outputs: Iterable[str],
     ) -> bool:
-        """Set requested outputs on a task proxy and spawn children.
+        """Manually set requested outputs on a task proxy and spawn children.
 
         If no outputs were specified and the task has no required outputs to
         set, set the "success pathway" outputs in the same way that skip mode
@@ -2219,7 +2261,9 @@ class TaskPool:
 
         Designated flows should already be merged to the task proxy.
 
-        Returns True if any outputs were set, else False.
+        Returns:
+            True if any outputs were set, else False.
+
         """
         no_op = True
         outputs = set(outputs)
@@ -2389,13 +2433,6 @@ class TaskPool:
         # Task may be set running before xtrigger is satisfied,
         # if so check/spawn if xtrigger sequential.
         self.check_spawn_psx_task(itask)
-
-    def spawn_parentless_sequential_xtriggers(self):
-        """Spawn successor(s) of parentless wall clock satisfied tasks."""
-        while self.xtrigger_mgr.sequential_spawn_next:
-            taskid = self.xtrigger_mgr.sequential_spawn_next.pop()
-            itask = self._get_task_by_id(taskid)
-            self.check_spawn_psx_task(itask)
 
     def check_spawn_psx_task(self, itask: 'TaskProxy') -> None:
         """Check and spawn parentless sequential xtriggered task (psx)."""

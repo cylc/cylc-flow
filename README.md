@@ -30,7 +30,7 @@ domains.
 conda install cylc-flow
 
 # extract an example to run
-cylc get-resources examples/2-integer-cycling ~/cylc-src/integer-cycling
+cylc get-resources examples/2-integer-cycling
 
 # install and run it
 cylc vip integer-cycling  # vip = validate, install and play
@@ -81,7 +81,7 @@ Quick summary of major changes:
 
 [![License](https://img.shields.io/github/license/cylc/cylc-flow.svg?color=lightgrey)](https://github.com/cylc/cylc-flow/blob/master/COPYING)
 
-Copyright (C) 2008-<span actions:bind='current-year'>2025</span> NIWA & British Crown (Met Office) & Contributors.
+Copyright (C) 2008-<span actions:bind='current-year'>2026</span> NIWA & British Crown (Met Office) & Contributors.
 
 Cylc is free software: you can redistribute it and/or modify it under the terms
 of the GNU General Public License as published by the Free Software Foundation,

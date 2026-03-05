@@ -43,17 +43,28 @@ class upgrader:
     SITE_CONFIG = 'site config'
     USER_CONFIG = 'user config'
 
-    DEPR_MSG = (
+    DEPR_TEMPLATE = (
         "Deprecated config items were automatically upgraded. "
-        "Please alter your workflow to use the new syntax."
+        "Please alter your {} to use the new syntax."
+    )
+    depr_msg = DEPR_TEMPLATE.format('workflow')
+
+    obslt_msg = (
+        "Obsolete config items were automatically deleted. "
+        "Please check your workflow and remove them permanently."
     )
 
-    def __init__(self, cfg, descr):
+    def __init__(self, cfg: dict, descr: str, broadcast: bool = False):
         """Store the config dict to be upgraded if necessary."""
         self.cfg = cfg
         self.descr = descr
         # upgrades must be ordered in case several act on the same item
-        self.upgrades = OrderedDict()
+        self.upgrades: OrderedDict[str, list[dict]] = OrderedDict()
+        if broadcast:
+            self.depr_msg = self.DEPR_TEMPLATE.format('broadcast')
+            self.obslt_msg = (
+                "Obsolete config items were rejected by the broadcast."
+            )
 
     def deprecate(
         self, vn, oldkeys, newkeys=None,
@@ -255,13 +266,9 @@ class upgrader:
                 # Log at warning level.
                 level = WARNING
             if obsoletions:
-                LOG.log(
-                    level,
-                    "Obsolete config items were automatically deleted."
-                    " Please check your workflow and remove them permanently."
-                )
+                LOG.log(level, self.obslt_msg)
             if deprecations:
-                LOG.log(level, self.DEPR_MSG)
+                LOG.log(level, self.depr_msg)
 
             for vn, msgs in warnings.items():
                 for msg in msgs:

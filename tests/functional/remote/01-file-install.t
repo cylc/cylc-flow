@@ -23,7 +23,7 @@ set_test_number 6
 
 create_files () {
     # dump some files into the run dir
-    for DIR in "bin" "ana" "app" "etc" "lib" "dir1" "dir2"
+    for DIR in "bin" "ana" "app" "etc" "lib" "dir1" "dir2" "etc/share" "share"
     do
         mkdir -p "${WORKFLOW_RUN_DIR}/${DIR}"
         touch "${WORKFLOW_RUN_DIR}/${DIR}/moo"
@@ -65,6 +65,7 @@ ${RUN_DIR_REL}/ana/moo
 ${RUN_DIR_REL}/app/moo
 ${RUN_DIR_REL}/bin/moo
 ${RUN_DIR_REL}/etc/moo
+${RUN_DIR_REL}/etc/share/moo
 ${RUN_DIR_REL}/lib/moo
 __OUT__
 
@@ -102,6 +103,7 @@ ${RUN_DIR_REL}/bin/moo
 ${RUN_DIR_REL}/dir1/moo
 ${RUN_DIR_REL}/dir2/moo
 ${RUN_DIR_REL}/etc/moo
+${RUN_DIR_REL}/etc/share/moo
 ${RUN_DIR_REL}/file1
 ${RUN_DIR_REL}/file2
 ${RUN_DIR_REL}/lib/moo

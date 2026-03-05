@@ -16,10 +16,17 @@
 """Wall clock related utilities."""
 
 from calendar import timegm
-from datetime import datetime, timedelta, timezone
+from datetime import (
+    datetime,
+    timedelta,
+    timezone,
+)
 
 from metomi.isodatetime.timezone import (
-    get_local_time_zone_format, get_local_time_zone, TimeZoneFormatMode)
+    TimeZoneFormatMode,
+    get_local_time_zone,
+    get_local_time_zone_format,
+)
 
 
 DATE_TIME_FORMAT_BASIC = "%Y%m%dT%H%M%S"
@@ -37,26 +44,20 @@ TIME_FORMAT_BASIC_SUB_SECOND = "%H%M%S.%f"
 TIME_FORMAT_EXTENDED = "%H:%M:%S"
 TIME_FORMAT_EXTENDED_SUB_SECOND = "%H:%M:%S.%f"
 
-TIME_ZONE_STRING_LOCAL_BASIC = get_local_time_zone_format(
-    TimeZoneFormatMode.reduced)
-TIME_ZONE_STRING_LOCAL_EXTENDED = get_local_time_zone_format(
-    TimeZoneFormatMode.extended)
 TIME_ZONE_STRING_UTC = "Z"
-TIME_ZONE_UTC_UTC_OFFSET = (0, 0)
-TIME_ZONE_LOCAL_UTC_OFFSET = get_local_time_zone()
-TIME_ZONE_LOCAL_UTC_OFFSET_HOURS = TIME_ZONE_LOCAL_UTC_OFFSET[0]
-TIME_ZONE_LOCAL_UTC_OFFSET_MINUTES = TIME_ZONE_LOCAL_UTC_OFFSET[1]
 
 TIME_ZONE_LOCAL_INFO = {
-    "hours": TIME_ZONE_LOCAL_UTC_OFFSET[0],
-    "minutes": TIME_ZONE_LOCAL_UTC_OFFSET[1],
-    "string_basic": TIME_ZONE_STRING_LOCAL_BASIC,
-    "string_extended": TIME_ZONE_STRING_LOCAL_EXTENDED
+    "hours": get_local_time_zone()[0],
+    "minutes": get_local_time_zone()[1],
+    "string_basic": get_local_time_zone_format(
+        TimeZoneFormatMode.reduced),
+    "string_extended": get_local_time_zone_format(
+        TimeZoneFormatMode.extended)
 }
 
 TIME_ZONE_UTC_INFO = {
-    "hours": TIME_ZONE_UTC_UTC_OFFSET[0],
-    "minutes": TIME_ZONE_UTC_UTC_OFFSET[1],
+    "hours": 0,
+    "minutes": 0,
     "string_basic": TIME_ZONE_STRING_UTC,
     "string_extended": TIME_ZONE_STRING_UTC
 }
@@ -74,8 +75,9 @@ def set_utc_mode(mode):
     _FLAGS['utc_mode'] = bool(mode)
 
 
-def now(override_use_utc=None):
-    """Return a current-time datetime.datetime and a UTC timezone flag.
+def now(override_use_utc: bool | None = None) -> tuple[datetime, bool]:
+    """Return a current-time, timezone-aware datetime.datetime and a flag
+    indicating whether it is UTC or not.
 
     Keyword arguments:
     override_use_utc (default None) - a boolean (or None) that, if
@@ -85,9 +87,9 @@ def now(override_use_utc=None):
 
     """
     if override_use_utc or (override_use_utc is None and _FLAGS['utc_mode']):
-        return datetime.utcnow(), False
+        return datetime.now(timezone.utc), False
     else:
-        return datetime.now(), True
+        return datetime.now().astimezone(), True
 
 
 def get_current_time_string(display_sub_seconds=False, override_use_utc=None,
@@ -113,66 +115,50 @@ def get_current_time_string(display_sub_seconds=False, override_use_utc=None,
                            use_basic_format=use_basic_format)
 
 
-def get_time_string(date_time, display_sub_seconds=False,
-                    override_use_utc=None, use_basic_format=False,
-                    date_time_is_local=False, custom_time_zone_info=None):
+def get_time_string(
+    date_time: datetime,
+    display_sub_seconds: bool = False,
+    override_use_utc: bool | None = None,
+    use_basic_format: bool = False,
+    date_time_is_local: bool = False,
+):
     """Return a string representing the current system time.
 
-    Arguments:
-    date_time - a datetime.datetime object.
-
-    Keyword arguments:
-    display_sub_seconds (default False) - a boolean that, if True,
-    switches on microsecond reporting
-    override_use_utc (default None) - a boolean (or None) that, if
-    True, switches on utc time zone reporting. If False, it switches
-    off utc time zone reporting (even if _FLAGS['utc_mode'] is True). If None,
-    the _FLAGS['utc_mode'] boolean is used.
-    use_basic_format (default False) - a boolean that, if True,
-    represents the date/time without "-" or ":" delimiters. This is
-    most useful for filenames where ":" may cause problems.
-    date_time_is_local - a boolean that, if True, indicates that
-    the date_time argument object is in the local time zone, not UTC.
-    custom_time_zone_info (default None) - a dictionary that enforces
-    a particular time zone. It looks like {"hours": _hours,
-    "minutes": _minutes, "string": _string} where _hours and _minutes
-    are the hours and minutes offset from UTC and _string is the string
-    to use as the time zone designator.
+    Args:
+        date_time: Datetime to operate on.
+        display_sub_seconds:
+            Switch on microsecond reporting.
+        override_use_utc:
+            Switch on utc time zone reporting.
+            If False, it switches off utc time zone reporting even
+            if ``_FLAGS['utc_mode']`` is True).
+            If None, the ``_FLAGS['utc_mode']`` boolean is used.
+        use_basic_format:
+            Represent the date/time without "-" or ":"
+            delimiters. This is useful for filenames, where ":" may
+            cause problems.
+        date_time_is_local:
+            Indicates that the date_time argument
+            object is in the local time zone, not UTC.
 
     """
-    time_zone_string = None
-    if custom_time_zone_info is not None:
-        custom_hours = custom_time_zone_info["hours"]
-        custom_minutes = custom_time_zone_info["minutes"]
-        if use_basic_format:
-            custom_string = custom_time_zone_info["string_basic"]
-        else:
-            custom_string = custom_time_zone_info["string_extended"]
-        if date_time_is_local:
-            date_time_hours = TIME_ZONE_LOCAL_UTC_OFFSET_HOURS
-            date_time_minutes = TIME_ZONE_LOCAL_UTC_OFFSET_MINUTES
-        else:
-            date_time_hours, date_time_minutes = (0, 0)
-        diff_hours = custom_hours - date_time_hours
-        diff_minutes = custom_minutes - date_time_minutes
-        date_time = date_time + timedelta(
-            hours=diff_hours, minutes=diff_minutes)
-        time_zone_string = custom_string
-    elif override_use_utc or (override_use_utc is None and _FLAGS['utc_mode']):
+    local_tz = get_local_time_zone()
+    if override_use_utc or (override_use_utc is None and _FLAGS['utc_mode']):
         time_zone_string = TIME_ZONE_STRING_UTC
         if date_time_is_local:
             date_time = date_time - timedelta(
-                hours=TIME_ZONE_LOCAL_UTC_OFFSET_HOURS,
-                minutes=TIME_ZONE_LOCAL_UTC_OFFSET_MINUTES
+                hours=local_tz[0],
+                minutes=local_tz[1]
             )
     else:
         if use_basic_format:
-            time_zone_string = TIME_ZONE_STRING_LOCAL_BASIC
+            time_zone_string = get_local_time_zone_format(
+                TimeZoneFormatMode.reduced)
         else:
-            time_zone_string = TIME_ZONE_STRING_LOCAL_EXTENDED
+            time_zone_string = get_local_time_zone_format(
+                TimeZoneFormatMode.extended)
         if not date_time_is_local:
-            diff_hours = TIME_ZONE_LOCAL_UTC_OFFSET_HOURS
-            diff_minutes = TIME_ZONE_LOCAL_UTC_OFFSET_MINUTES
+            diff_hours, diff_minutes = local_tz
             date_time = date_time + timedelta(
                 hours=diff_hours, minutes=diff_minutes)
     if use_basic_format:
@@ -187,9 +173,11 @@ def get_time_string(date_time, display_sub_seconds=False,
     return date_time_string + time_zone_string
 
 
-def get_time_string_from_unix_time(unix_time, display_sub_seconds=False,
-                                   use_basic_format=False,
-                                   custom_time_zone_info=None):
+def get_time_string_from_unix_time(
+    unix_time: float,
+    display_sub_seconds: bool = False,
+    use_basic_format: bool = False,
+) -> str:
     """Convert a unix timestamp into a local time zone datetime.datetime.
 
     Arguments:
@@ -202,20 +190,15 @@ def get_time_string_from_unix_time(unix_time, display_sub_seconds=False,
     use_basic_format (default False) - a boolean that, if True,
     represents the date/time without "-" or ":" delimiters. This is
     most useful for filenames where ":" may cause problems.
-    custom_time_zone_info (default None) - a dictionary that enforces
-    a particular time zone. It looks like {"hours": _hours,
-    "minutes": _minutes, "string": _string} where _hours and _minutes
-    are the hours and minutes offset from UTC and _string is the string
-    to use as the time zone designator.
 
     """
-    date_time = datetime.fromtimestamp(unix_time, timezone.utc)
-    return get_time_string(date_time,
-                           display_sub_seconds=display_sub_seconds,
-                           use_basic_format=use_basic_format,
-                           override_use_utc=None,
-                           date_time_is_local=False,
-                           custom_time_zone_info=custom_time_zone_info)
+    return get_time_string(
+        datetime.fromtimestamp(unix_time, timezone.utc),
+        display_sub_seconds=display_sub_seconds,
+        use_basic_format=use_basic_format,
+        override_use_utc=None,
+        date_time_is_local=False,
+    )
 
 
 def get_unix_time_from_time_string(datetime_string):

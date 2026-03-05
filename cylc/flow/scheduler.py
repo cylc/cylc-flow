@@ -404,12 +404,7 @@ class Scheduler:
         self.workflow_event_handler = WorkflowEventHandler(self.proc_pool)
 
         self.xtrigger_mgr = XtriggerManager(
-            self.workflow,
-            user=self.owner,
-            broadcast_mgr=self.broadcast_mgr,
-            workflow_db_mgr=self.workflow_db_mgr,
-            data_store_mgr=self.data_store_mgr,
-            proc_pool=self.proc_pool,
+            self,
             workflow_run_dir=self.workflow_run_dir,
             workflow_share_dir=self.workflow_share_dir,
         )
@@ -466,6 +461,9 @@ class Scheduler:
                     f"{og_run_mode.value} mode:"
                     f" You can't restart it in {run_mode.value} mode."
                 )
+
+        if self.options.paused_start:
+            self.pause_workflow('Paused on start up')
 
         self.profiler.log_memory("scheduler.py: before load_flow_file")
         try:
@@ -590,9 +588,6 @@ class Scheduler:
             holdcp = self.config.cfg['scheduling']['hold after cycle point']
         if holdcp is not None:
             await commands.run_cmd(commands.set_hold_point(self, holdcp))
-
-        if self.options.paused_start:
-            self.pause_workflow('Paused on start up')
 
         self.profiler.log_memory("scheduler.py: begin run while loop")
         self.is_updated = True
@@ -885,6 +880,13 @@ class Scheduler:
             self.xtrigger_mgr.load_xtrigger_for_restart)
         self.workflow_db_mgr.pri_dao.select_abs_outputs_for_restart(
             self.pool.load_abs_outputs_for_restart)
+
+        # Compute and release runahead tasks once after loading all tasks from
+        # the DB. This also causes spawning of parentless tasks out to the
+        # runahead limit, which may be necessary here if the stop point or
+        # runahead limit was changed for the restart.
+        self.pool.compute_runahead()
+        self.pool.release_runahead_tasks()
 
         self.pool.load_db_tasks_to_hold()
         self.pool.update_flow_mgr()
@@ -1513,6 +1515,7 @@ class Scheduler:
             # ... no
             pass
         elif self.auto_restart_mode == AutoRestartMode.RESTART_NORMAL:
+
             # ... yes - wait for preparing jobs to see if they're local and
             # wait for local jobs to complete before restarting
             #    * Avoid polling issues - see #2843
@@ -1536,7 +1539,13 @@ class Scheduler:
                              'complete before attempting restart')
                     break
             else:  # no break
-                self._set_stop(StopMode.REQUEST_NOW_NOW)
+                if self.pool.pre_start_tasks_to_trigger:
+                    LOG.info(
+                        'Waiting for pre start-cycle tasks to complete before'
+                        ' attempting restart'
+                    )
+                else:
+                    self._set_stop(StopMode.REQUEST_NOW_NOW)
         elif (  # noqa: SIM106
             self.auto_restart_mode == AutoRestartMode.FORCE_STOP
         ):
@@ -1650,9 +1659,6 @@ class Scheduler:
             if itask.is_ready_to_run() and not itask.is_manual_submit:
                 self.pool.queue_task(itask)
 
-        if self.xtrigger_mgr.sequential_spawn_next:
-            self.pool.spawn_parentless_sequential_xtriggers()
-
         if self.xtrigger_mgr.do_housekeeping:
             self.xtrigger_mgr.housekeep(self.pool.get_tasks())
         self.pool.clock_expire_tasks()
@@ -1713,7 +1719,9 @@ class Scheduler:
         if has_updated:
             if not self.is_reloaded:
                 # (A reload cannot un-stall workflow by itself)
-                self.is_stalled = False
+                if self.is_stalled:
+                    self.is_stalled = False
+                    self.update_data_store()
             self.is_reloaded = False
 
             # Reset workflow and task updated flags.
@@ -1825,11 +1833,9 @@ class Scheduler:
             return True
         if self.is_paused:  # cannot be stalled it's not even running
             return False
-        is_stalled = self.pool.is_stalled()
-        if is_stalled != self.is_stalled:
+        if self.pool.is_stalled():
+            self.is_stalled = True
             self.update_data_store()
-            self.is_stalled = is_stalled
-        if self.is_stalled:
             LOG.critical("Workflow stalled")
             self.run_event_handlers(self.EVENT_STALL, 'workflow stalled')
             with suppress(KeyError):
@@ -1876,10 +1882,7 @@ class Scheduler:
 
         if hasattr(self, 'proc_pool'):
             try:
-                self.proc_pool.close()
-                if self.proc_pool.is_not_done():
-                    self.proc_pool.terminate()
-                self.proc_pool.process()
+                self.proc_pool.terminate()
             except Exception as exc:
                 LOG.exception(exc)
 

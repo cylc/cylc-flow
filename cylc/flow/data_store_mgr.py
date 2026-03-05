@@ -42,8 +42,11 @@ Pruning of data-store elements is done using the collection/set of nodes
 generated at the boundary of an active node's graph walk and registering active
 node's parents against them. Once active, these boundary nodes act as the prune
 triggers for the associated parent nodes. Set operations are used to do a diff
-between the nodes of active paths (paths whose node is in n=0)
-and the nodes of flagged paths (whose boundary node(s) have become active).
+between the nodes of active paths (paths whose node is in n=0) and the nodes of
+flagged paths (whose boundary node(s) have become active).
+This method is used to avoid "blinking", where a task becomes non-active then
+is removed (along with it's window/walk) before a descendant is added, causing
+it to disapear then reappear in the store (and, hence, UIs).
 
 Updates are created by the event/task/job managers.
 
@@ -494,9 +497,6 @@ def apply_delta(key, delta, data):
             # The suppression of key/value errors is to avoid
             # elements and their relationships missing on reload.
             if key == TASK_PROXIES:
-                # remove relationship from task
-                with suppress(KeyError, ValueError):
-                    data[TASKS][data[key][del_id].task].proxies.remove(del_id)
                 # remove relationship from parent/family
                 with suppress(KeyError, ValueError):
                     data[FAMILY_PROXIES][
@@ -506,10 +506,6 @@ def apply_delta(key, delta, data):
                 with suppress(KeyError, ValueError):
                     getattr(data[WORKFLOW], key).remove(del_id)
             elif key == FAMILY_PROXIES:
-                with suppress(KeyError, ValueError):
-                    data[FAMILIES][
-                        data[key][del_id].family
-                    ].proxies.remove(del_id)
                 with suppress(KeyError, ValueError):
                     data[FAMILY_PROXIES][
                         data[key][del_id].first_parent
@@ -658,20 +654,35 @@ class DataStoreMgr:
         # internal delta
         self.delta_queues = {self.workflow_id: {}}
         self.publish_deltas = []
+
         # internal n-window
         self.all_task_pool = set()
         self.all_n_window_nodes = set()
         self.n_window_nodes = {}
         self.n_window_edges = set()
+        # The walk information for window nodes, which is used for
+        # pre-populating new walks (if possible) and node depth calculations.
         self.n_window_node_walks = {}
         self.n_window_completed_walks = set()
         self.n_window_depths = {}
         self.update_window_depths = False
         self.db_load_task_proxies: Dict[str, Tuple[TaskProxy, bool]] = {}
+        # Family node IDs that have been pruned. Sent with deltas and used for
+        # exclusion from state total and other calculations.
         self.family_pruned_ids = set()
+        # Boundary nodes are those nodes at the boundary of the window, and
+        # these are used to trigger pruning for associated nodes.
+        # self.prune_trigger_nodes collects walk node IDs associated with a
+        # boundary node so that nodes of isolates, adjacent paths, and it's
+        # own path can be flagged for pruning.
         self.prune_trigger_nodes = {}
+        # Node ids flagged for pruning.
+        # Those not in active paths (the walk paths of active tasks) will be
+        # pruned.
         self.prune_flagged_nodes = set()
+        # Set of removed task proxies to avoid applying/sending new deltas.
         self.pruned_task_proxies = set()
+
         self.updates_pending = False
         self.updates_pending_follow_on = False
         self.publish_pending = False
@@ -1214,15 +1225,10 @@ class DataStoreMgr:
             boundary_nodes = {active_id}
         # associate
         for tp_id in boundary_nodes:
-            try:
-                self.prune_trigger_nodes.setdefault(tp_id, set()).update(
-                    active_walk['walk_ids']
-                )
-                self.prune_trigger_nodes[tp_id].discard(tp_id)
-            except KeyError:
-                self.prune_trigger_nodes.setdefault(tp_id, set()).add(
-                    active_id
-                )
+            self.prune_trigger_nodes.setdefault(tp_id, set()).update(
+                active_walk['walk_ids']
+            )
+            self.prune_trigger_nodes[tp_id].discard(tp_id)
         # flag manual triggers for pruning on deletion.
         if is_manual_submit:
             self.prune_trigger_nodes.setdefault(active_id, set()).add(
@@ -1279,20 +1285,23 @@ class DataStoreMgr:
             self.updates_pending = True
         # flagged isolates/end-of-branch nodes for pruning on removal
         if (
-                tp_id in self.prune_trigger_nodes and
-                tp_id in self.prune_trigger_nodes[tp_id]
+            tp_id in self.prune_trigger_nodes and
+            tp_id in self.prune_trigger_nodes[tp_id]
         ):
             self.prune_flagged_nodes.update(self.prune_trigger_nodes[tp_id])
-            del self.prune_trigger_nodes[tp_id]
+        # If, at the time of removal, no desendents are active then only
+        # flag the node not the entire walk.
         elif (
-                tp_id in self.n_window_nodes and
-                self.n_window_nodes[tp_id].isdisjoint(self.all_task_pool)
+            tp_id in self.n_window_nodes and
+            self.n_window_nodes[tp_id].isdisjoint(self.all_task_pool)
         ):
             self.prune_flagged_nodes.add(tp_id)
         elif tp_id in self.n_window_node_walks:
             self.prune_flagged_nodes.update(
                 self.n_window_node_walks[tp_id]['walk_ids']
             )
+        if tp_id in self.prune_trigger_nodes:
+            del self.prune_trigger_nodes[tp_id]
         self.update_window_depths = True
         self.updates_pending = True
 
@@ -1407,13 +1416,6 @@ class DataStoreMgr:
 
         self.added[TASK_PROXIES][tp_id] = tproxy
         getattr(self.updated[WORKFLOW], TASK_PROXIES).append(tp_id)
-        self.updated[TASKS].setdefault(
-            t_id,
-            PbTask(
-                stamp=f'{t_id}@{update_time}',
-                id=t_id,
-            )
-        ).proxies.append(tp_id)
         self.generate_ghost_family(tproxy.first_parent, child_task=tp_id)
         self.state_update_families.add(tproxy.first_parent)
 
@@ -1538,11 +1540,6 @@ class DataStoreMgr:
 
             self.added[FAMILY_PROXIES][fp_id] = fp_delta
             fp_parent = fp_delta
-            # Add ref ID to family element
-            f_delta = PbFamily(id=fam.id, stamp=f'{fam.id}@{update_time}')
-            f_delta.proxies.append(fp_id)
-            self.updated[FAMILIES].setdefault(
-                fam.id, PbFamily(id=fam.id)).MergeFrom(f_delta)
             # Add ref ID to workflow element
             getattr(self.updated[WORKFLOW], FAMILY_PROXIES).append(fp_id)
             # Generate this families parent if it not root.
@@ -1930,6 +1927,7 @@ class DataStoreMgr:
 
         # Clear window walks, and walk from scratch.
         self.prune_flagged_nodes.clear()
+        self.prune_trigger_nodes.clear()
         self.n_window_node_walks.clear()
         for tp_id in self.all_task_pool:
             tokens = Tokens(tp_id)
@@ -2021,6 +2019,17 @@ class DataStoreMgr:
         # Absolute triggers may be present in task pool, so recheck.
         # Clear the rest.
         self.prune_flagged_nodes.intersection_update(self.all_task_pool)
+        # Clear any boundary prune triggers not in the window.
+        # This can happen where the graph has paths not taken, i.e.:
+        # ```
+        # foo => a
+        # foo:failed => b
+        # ```
+        # So if `foo` then `a`, which when active/removed is the prune trigger
+        # for `foo`.. However, `b` is not used so delete the trigger here.
+        for trigger_id in set(
+                self.prune_trigger_nodes).difference(self.all_n_window_nodes):
+            del self.prune_trigger_nodes[trigger_id]
 
         tp_data = self.data[self.workflow_id][TASK_PROXIES]
         tp_added = self.added[TASK_PROXIES]
@@ -2189,6 +2198,7 @@ class DataStoreMgr:
         all_nodes = self.all_n_window_nodes
         fp_added = self.added[FAMILY_PROXIES]
         fp_data = self.data[self.workflow_id][FAMILY_PROXIES]
+        fp_updated = self.updated[FAMILY_PROXIES]
         if fp_id in fp_data:
             fam_node = fp_data[fp_id]
         elif fp_id in fp_added:
@@ -2200,13 +2210,19 @@ class DataStoreMgr:
                 self.updated_state_families.add(fp_id)
                 self.state_update_families.remove(fp_id)
             return
-        # Gather child families, then check/update recursively
-        for child_fam_id in fam_node.child_families:
+        fam_updated_node = fp_updated.get(fp_id)
+        # Gather child families, then check/update recursively.
+        # Use all new and existing child families that are not destined
+        # to be pruned.
+        child_fams = set(fam_node.child_families)
+        if fam_updated_node:
+            child_fams.update(fam_updated_node.child_families)
+        child_fams.difference_update(self.family_pruned_ids)
+        for child_fam_id in child_fams:
             if child_fam_id in self.updated_state_families:
                 continue
             self._family_ascent_point_update(child_fam_id)
         if fp_id in self.state_update_families:
-            fp_updated = self.updated[FAMILY_PROXIES]
             tp_data = self.data[self.workflow_id][TASK_PROXIES]
             tp_updated = self.updated[TASK_PROXIES]
             tp_added = self.added[TASK_PROXIES]
@@ -2222,7 +2238,7 @@ class DataStoreMgr:
             is_xtriggered = False
             graph_depth = self.n_edge_distance
             # Gather the counts and totals of child families.
-            for child_id in fam_node.child_families:
+            for child_id in child_fams:
                 child_node = fp_updated.get(child_id, fp_data.get(child_id))
                 if child_node is not None:
                     # if child family is active/n=0
@@ -2230,6 +2246,9 @@ class DataStoreMgr:
                         is_held_total += child_node.is_held_total
                         is_queued_total += child_node.is_queued_total
                         is_runahead_total += child_node.is_runahead_total
+                        is_retry |= child_node.is_retry
+                        is_wallclock |= child_node.is_wallclock
+                        is_xtriggered |= child_node.is_xtriggered
                         # add active child state totals to active count.
                         active_counter += Counter(
                             dict(child_node.state_totals)
@@ -2237,8 +2256,14 @@ class DataStoreMgr:
                     state_set.add(child_node.state)
                     if child_node.graph_depth < graph_depth:
                         graph_depth = child_node.graph_depth
-            # Gather all child task states
-            for tp_id in fam_node.child_tasks:
+            # Gather all child task states.
+            # Use all new and existing child tasks that are not destined
+            # to be pruned.
+            child_tasks = set(fam_node.child_tasks)
+            if fam_updated_node:
+                child_tasks.update(fam_updated_node.child_tasks)
+            child_tasks.difference_update(self.pruned_task_proxies)
+            for tp_id in child_tasks:
                 is_active = False
                 if all_nodes and tp_id not in all_nodes:
                     continue
@@ -2341,6 +2366,7 @@ class DataStoreMgr:
             is_held_total = 0
             is_queued_total = 0
             is_runahead_total = 0
+            contains_retry = False
             for root_id in set(
                     [n.id
                      for n in data[FAMILY_PROXIES].values()
@@ -2359,14 +2385,24 @@ class DataStoreMgr:
                     is_queued_total += root_node.is_queued_total
                     is_runahead_total += root_node.is_runahead_total
                     state_counter += Counter(dict(root_node.state_totals))
+                    contains_retry = contains_retry or root_node.is_retry
             w_delta.states[:] = state_counter.keys()
             for state, state_cnt in state_counter.items():
                 w_delta.state_totals[state] = state_cnt
 
             w_delta.states_updated = True
+            w_delta.contains_held = bool(is_held_total)
+            w_delta.contains_retry = contains_retry
+
+            # BACK COMPAT: is_held_total, is_queued_total, is_runahead_total
+            # From: 8.6.2
+            # These fields were added, but have probably never been used.
+            # They are marked as deprecated in GraphQL pending possible
+            # deletion in a future release (to cut down on message cruft)
             w_delta.is_held_total = is_held_total
             w_delta.is_queued_total = is_queued_total
             w_delta.is_runahead_total = is_runahead_total
+
             delta_set = True
 
             for state, tp_queue in self.latest_state_tasks.items():

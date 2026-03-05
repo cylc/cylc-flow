@@ -14,10 +14,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import pytest
+from datetime import (
+    datetime,
+    timedelta,
+    timezone,
+)
 
 from metomi.isodatetime.data import CALENDAR
-from cylc.flow.wallclock import get_unix_time_from_time_string
+import pytest
+from pytest import param
+
+from cylc.flow.wallclock import (
+    get_current_time_string,
+    get_time_string,
+    get_unix_time_from_time_string,
+)
 
 
 @pytest.mark.parametrize(
@@ -60,3 +71,57 @@ def test_get_unix_time_from_time_string_360(time_str, time_sec):
 def test_get_unix_time_from_time_string_error(value, error):
     with pytest.raises(error):
         get_unix_time_from_time_string(value)
+
+
+@pytest.mark.parametrize('tz_info', [
+    pytest.param(None, id="naive"),
+    pytest.param(timezone.utc, id="utc-tz-aware"),
+    pytest.param(timezone(timedelta(hours=5)), id="custom-tz-aware"),
+])
+def test_get_time_string_tzinfo(tz_info, set_timezone):
+    """Basic check it handles naive and timezone-aware datetime objects.
+
+    Currently we just ignore the timezone information in the datetime object.
+    """
+    set_timezone('UTC')
+    assert get_time_string(
+        datetime(2077, 2, 8, 13, 42, 39, 123456, tz_info)
+    ) == '2077-02-08T13:42:39Z'
+
+
+def test_get_current_time_string(set_timezone):
+    """It reacts to local time zone changes.
+
+    https://github.com/cylc/cylc-flow/issues/6701
+    """
+    set_timezone('XXX-19:17')
+    res = get_current_time_string()
+    assert res[-6:] == '+19:17'
+
+
+@pytest.mark.parametrize(
+    'arg, kwargs, expect',
+    (
+        param(
+            datetime(2000, 12, 13, 15, 30, 12, 123456),
+            {},
+            '2000-12-14T10:47:12+19:17',
+            id='good',
+        ),
+        param(
+            datetime(2000, 12, 13, 15, 30, 12, 123456),
+            {'date_time_is_local': True},
+            '2000-12-13T15:30:12+19:17',
+            id='dt_is_local',
+        ),
+        param(
+            datetime(2000, 12, 13, 15, 30, 12, 123456),
+            {'use_basic_format': True},
+            '20001214T104712+1917',
+            id='basic_format',
+        ),
+    ),
+)
+def test_get_time_string(set_timezone, arg, kwargs, expect):
+    set_timezone('XXX-19:17')
+    assert get_time_string(arg, **kwargs) == expect
