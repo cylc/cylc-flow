@@ -72,14 +72,14 @@ workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --debug --no-detach "${WORKFLO
 # were received before the succeeded message
 log_scan "${TEST_NAME_BASE}-task-succeeded" \
     "${WORKFLOW_RUN_DIR}/log/scheduler/log" 1 0 \
-    '1/the_good.*(received)cpu_time.*max_rss*' \
-    '1/the_good.*(received)succeeded'
+    '1/the_good.*(received)_cylc_profiler.*cpu_time' \
+     '1/the_good.*(received)succeeded'
 
 # ensure the cpu and memory messages were received and that these messages
 # were received before the failed message
 log_scan "${TEST_NAME_BASE}-task-succeeded" \
     "${WORKFLOW_RUN_DIR}/log/scheduler/log" 1 0 \
-    '1/the_bad.*(received)cpu_time.*max_rss*' \
+    '1/the_bad.*(received)_cylc_profiler.*cpu_time.*' \
     '1/the_bad.*failed'
 
 # ensure this task succeeded despite the broken profiler configuration
