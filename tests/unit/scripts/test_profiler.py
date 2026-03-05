@@ -309,6 +309,7 @@ def test_get_cgroup_paths(mocker):
         get_cgroup_paths("test_location/")
     assert "Unable to determine cgroup version" in str(excinfo.value)
 
+
 @pytest.mark.asyncio
 async def test_profile_data(mocker):
     # This test should run without error
@@ -335,6 +336,7 @@ def options(mocker):
     opts.comms_timeout = 10
     opts.delay = 1
     return opts
+
 
 @pytest.mark.asyncio
 async def test_main(mocker, options):
