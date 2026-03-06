@@ -16,6 +16,7 @@
 #
 # Tests for functions contained in cylc.flow.scripts.profiler
 import os
+import asyncio
 from unittest import mock
 
 import pytest
@@ -36,16 +37,15 @@ from cylc.flow.scripts.profiler import (
 )
 
 
-def test_stop_profiler(monkeypatch, tmpdir):
+@pytest.mark.asyncio
+async def test_stop_profiler(monkeypatch, tmpdir):
     monkeypatch.setenv('CYLC_WORKFLOW_ID', "test_value")
     monkeypatch.setenv('CYLC_TASK_JOB', "test_task_job")
 
-    class MockedClient:
-        def __init__(self, *a, **k):
-            pass
-
-        async def async_request(self, *a, **k):
-            pass
+    # Mock the async record_messages function with AsyncMock
+    monkeypatch.setattr(
+        'cylc.flow.scripts.profiler.record_messages', mock.AsyncMock()
+    )
 
     mem_file = tmpdir.join("memory_file.txt")
     mem_file.write('total_rss 1234')
@@ -60,7 +60,7 @@ def test_stop_profiler(monkeypatch, tmpdir):
         memory_allocated_path=mem_allocated_file,
         cgroup_version=1)
     with pytest.raises(SystemExit) as excinfo:
-        stop_profiler(process_object, 1)
+        await stop_profiler(process_object, 1)
 
     assert excinfo.value.code == 0
 
@@ -347,13 +347,23 @@ async def test_main(mocker, options):
     mock_get_cgroup_paths = mocker.patch(
         "cylc.flow.scripts.profiler.get_cgroup_paths"
     )
-    mock_signal = mocker.patch("cylc.flow.scripts.profiler.signal.signal")
+    # Mock the loop and its add_signal_handler method
+    mock_loop = mocker.patch('asyncio.get_running_loop').return_value
     mock_profile = mocker.patch("cylc.flow.scripts.profiler.profile")
+    mock_watch_and_kill = mocker.patch(
+        "cylc.flow.scripts.profiler.watch_and_kill"
+    )
 
     mock_get_cgroup_paths.return_value = mocker.Mock()
 
-    await _main(options)
+    # Mock asyncio.gather to raise an exception to break the loop
+    mocker.patch(
+        "asyncio.gather", side_effect=asyncio.CancelledError
+    )
+    with pytest.raises(asyncio.CancelledError):
+        await _main(options)
 
     mock_get_cgroup_paths.assert_called_once_with("/fake/path")
-    assert mock_signal.call_count == 3
+    assert mock_loop.add_signal_handler.call_count == 3
     mock_profile.assert_called_once()
+    mock_watch_and_kill.assert_called_once()

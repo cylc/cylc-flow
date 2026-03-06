@@ -52,14 +52,14 @@ class Process:
     cgroup_version: int
 
 
-def stop_profiler(process, comms_timeout, *_args):
+async def stop_profiler(process, comms_timeout, *_args):
     """Stop the profiler and return its data to the scheduler.
 
     This function will be executed when the profiler receives a stop signal.
     """
     profiler_data = get_profiler_data(process)
 
-    record_messages(
+    await record_messages(
         os.environ['CYLC_WORKFLOW_ID'],
         os.environ['CYLC_TASK_JOB'],
         [['DEBUG', f'_cylc_profiler: {json.dumps(profiler_data)}']],
@@ -247,17 +247,16 @@ async def _main(options) -> None:
     process = get_cgroup_paths(options.cgroup_location)
 
     # Register the stop_profiler function with the signal library
-    _stop_profiler = partial(stop_profiler, process, options.comms_timeout)
-    signal.signal(signal.SIGINT, _stop_profiler)
-    signal.signal(signal.SIGHUP, _stop_profiler)
-    signal.signal(signal.SIGTERM, _stop_profiler)
+    loop = asyncio.get_running_loop()
+    for sig in (signal.SIGINT, signal.SIGHUP, signal.SIGTERM):
+        loop.add_signal_handler(
+            sig,
+            lambda: asyncio.create_task(
+                stop_profiler(process, options.comms_timeout)
+            ),
+        )
 
-    proc = Popen(  # nosec
-        ["ps", "-p", str(os.getpid()), "-oppid="],
-        stdout=PIPE,
-        stderr=PIPE,
-        text=True
-    )
+    proc = Popen(["ps", "-p", str(os.getpid())]) # nosec
     # the profiler will run until one of these coroutines calls `sys.exit`:
     await asyncio.gather(
         # run the profiler itself
