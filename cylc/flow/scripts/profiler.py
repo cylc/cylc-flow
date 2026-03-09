@@ -26,6 +26,7 @@ import os
 import re
 import sys
 import signal
+import psutil
 
 from pathlib import Path
 from functools import partial
@@ -52,14 +53,14 @@ class Process:
     cgroup_version: int
 
 
-async def stop_profiler(process, comms_timeout, *_args):
+def stop_profiler(process, comms_timeout, *_args):
     """Stop the profiler and return its data to the scheduler.
 
     This function will be executed when the profiler receives a stop signal.
     """
     profiler_data = get_profiler_data(process)
 
-    await record_messages(
+    record_messages(
         os.environ['CYLC_WORKFLOW_ID'],
         os.environ['CYLC_TASK_JOB'],
         [['DEBUG', f'_cylc_profiler: {json.dumps(profiler_data)}']],
@@ -247,6 +248,8 @@ async def _main(options) -> None:
     process = get_cgroup_paths(options.cgroup_location)
 
     # Register the stop_profiler function with the signal library
+    # The signal library doesn't work with asyncio, so we have to use the
+    # loop's add_signal_handler function instead
     loop = asyncio.get_running_loop()
     for sig in (signal.SIGINT, signal.SIGHUP, signal.SIGTERM):
         loop.add_signal_handler(
@@ -256,7 +259,6 @@ async def _main(options) -> None:
             ),
         )
 
-    proc = Popen(["ps", "-p", str(os.getpid())]) # nosec
     # the profiler will run until one of these coroutines calls `sys.exit`:
     await asyncio.gather(
         # run the profiler itself
@@ -264,5 +266,5 @@ async def _main(options) -> None:
 
         # kill the profiler if its PPID changes
         # (i.e, if the job exits before the profiler does)
-        watch_and_kill(proc),
+        watch_and_kill(psutil.Process(os.getpid())),
     )

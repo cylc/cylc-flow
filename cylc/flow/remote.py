@@ -105,13 +105,13 @@ async def watch_and_kill(proc, interval=None):
     interval = interval or float(os.getenv('CYLC_PROC_POLL_INTERVAL', 60))
     while True:
         await asyncio.sleep(interval)
-        if proc.poll() is not None:
+        if proc.is_running() is False:
             break
-        if get_proc_ancestors() != gpa:
+        new_gpa = get_proc_ancestors()
+        if new_gpa != gpa:
             await asyncio.sleep(1)
             os.kill(proc.pid, signal.SIGTERM)
-            break
-        sleep(interval)
+            return True
 
 
 def run_cmd(
