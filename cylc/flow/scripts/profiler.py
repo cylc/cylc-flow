@@ -29,9 +29,7 @@ import signal
 import psutil
 
 from pathlib import Path
-from functools import partial
 from dataclasses import dataclass
-from subprocess import Popen, PIPE
 
 from cylc.flow.exceptions import CylcProfilerError
 from cylc.flow.option_parsers import CylcOptionParser as COP

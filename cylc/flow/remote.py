@@ -33,7 +33,6 @@ from subprocess import (
     Popen,
 )
 import sys
-from time import sleep
 from typing import (
     Any,
     Dict,
