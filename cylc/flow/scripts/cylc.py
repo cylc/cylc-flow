@@ -569,27 +569,24 @@ def pycoverage(cmd_args):  # pragma: no cover
                 coverage data was successfully recorded to
                 a .coverage_commands_captured file in the Cylc
                 working directory.
-            '3'
-                Collect coverage for a UI server entry point.
-
 
     """
-    with open('/home/users/tim.pillinger/delme.txt', 'a') as fh:
-        print(f'>>> cylc {" ".join(cmd_args)}', file=fh)
     cylc_coverage = os.environ.get('CYLC_COVERAGE')
-    if cylc_coverage not in ('1', '2', '3'):
+    if cylc_coverage not in ('1', '2'):
         yield
         return
-    module_path = 'cylc.uiserver' if cylc_coverage == '3' else 'cylc.flow'
 
     # import here to avoid unnecessary imports when not running coverage
-    import importlib
-    module = importlib.import_module(module_path)
+    import cylc.flow
     import coverage
     from pathlib import Path
 
     # the cylc working directory
-    cylc_wc = Path(module.__file__).parents[2]
+    if 'CYLC_COVERAGE_BASE' in os.environ:
+        cylc_wc = Path(os.environ['CYLC_COVERAGE_BASE'])
+    else:
+        cylc_wc = Path(cylc.flow.__file__).parents[2]
+    print(f'START: {sys.argv[1:]}', file=sys.stderr)
 
     # initiate coverage
     try:
@@ -600,7 +597,7 @@ def pycoverage(cmd_args):  # pragma: no cover
             # data and will dump empty coverage files where they run.
             config_file=str(cylc_wc / '.coveragerc'),
             data_file=str(cylc_wc / '.coverage'),
-            # source=[str(cylc_wc / 'cylc')]
+            source=[str(cylc_wc / 'cylc')]
         )
     except coverage.misc.CoverageException as exc:
         raise Exception(
@@ -611,25 +608,27 @@ def pycoverage(cmd_args):  # pragma: no cover
             '\n\n*****************************\n\n'
         ) from exc
 
-    # start the coverage running
-    cov.start()
-    try:
-        # yield control back to cylc, return once the command exits
-        yield
-    finally:
-        # stop the coverage and save the data
-        with open('/home/users/tim.pillinger/delme.txt', 'a') as fh:
-            print('    Writing Cov', file=fh)
 
+    def cov_stop(*a, **k):
+        print(f'STOP: {sys.argv[1:]}', file=sys.stderr)
         cov.stop()
         cov.save()
-
         if cylc_coverage == '2':
             with open(cylc_wc / '.coverage_commands_captured', 'a+') as ccc:
                 ccc.write(
                     '$ cylc ' + (' '.join(cmd_args) + '\n'),
                 )
 
+    # start the coverage running
+    cov.start()
+    import signal
+    signal.signal(signal.SIGINT, cov_stop)
+    try:
+        # yield control back to cylc, return once the command exits
+        yield
+    finally:
+        # stop the coverage and save the data
+        cov_stop()
 
 def get_arg_parser():
     parser = argparse.ArgumentParser(add_help=False)
