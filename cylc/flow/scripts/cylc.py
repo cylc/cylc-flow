@@ -580,13 +580,13 @@ def pycoverage(cmd_args):  # pragma: no cover
     import cylc.flow
     import coverage
     from pathlib import Path
+    import signal
 
     # the cylc working directory
     if 'CYLC_COVERAGE_BASE' in os.environ:
         cylc_wc = Path(os.environ['CYLC_COVERAGE_BASE'])
     else:
         cylc_wc = Path(cylc.flow.__file__).parents[2]
-    print(f'START: {sys.argv[1:]}', file=sys.stderr)
 
     # initiate coverage
     try:
@@ -608,9 +608,7 @@ def pycoverage(cmd_args):  # pragma: no cover
             '\n\n*****************************\n\n'
         ) from exc
 
-
     def cov_stop(*a, **k):
-        print(f'STOP: {sys.argv[1:]}', file=sys.stderr)
         cov.stop()
         cov.save()
         if cylc_coverage == '2':
@@ -621,7 +619,6 @@ def pycoverage(cmd_args):  # pragma: no cover
 
     # start the coverage running
     cov.start()
-    import signal
     signal.signal(signal.SIGINT, cov_stop)
     try:
         # yield control back to cylc, return once the command exits
@@ -629,6 +626,7 @@ def pycoverage(cmd_args):  # pragma: no cover
     finally:
         # stop the coverage and save the data
         cov_stop()
+
 
 def get_arg_parser():
     parser = argparse.ArgumentParser(add_help=False)
