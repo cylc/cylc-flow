@@ -576,9 +576,14 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
         yielded GraphQL subscription objects.
 
         """
-        # NOTE: we don't expect workflows to be returned in definition order
-        # so it is ok to use `set` here
-        workflow_ids = set(args.get('workflows', args.get('ids', ())))
+
+        args['workflows'] = [
+            Tokens(w_id)
+            for w_id in args.get('workflows', args.get('ids', ()))
+        ]
+        # NOTE: we don't expect workflows to be returned in definition
+        # order so it is ok to use `set` here
+        workflow_ids = {w.id for w in args['workflows']}
 
         sub_id = uuid4()
         info.context['sub_id'] = sub_id
@@ -602,19 +607,26 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
         flow_delta_queues: Dict[str, queue.Queue[Tuple[str, dict]]] = {}
         try:
             # Iterate over the queue yielding deltas
-            w_ids = workflow_ids
             sub_resolver = SUB_RESOLVERS.get(to_snake_case(info.field_name))
             interval = args['ignore_interval']
             old_time = 0.0
+            w_ids = workflow_ids
             while True:
+                old_ids = w_ids
                 if not workflow_ids:
-                    old_ids = w_ids
                     # NOTE: we don't expect workflows to be returned in
                     # definition order so it is ok to use `set` here
                     w_ids = set(delta_queues.keys())
-                    for remove_id in old_ids.difference(w_ids):
-                        if remove_id in self.delta_store[sub_id]:
-                            del self.delta_store[sub_id][remove_id]
+                elif not w_ids.issubset(self.data_store_mgr.data):
+                    # make sure new flows matching the args are picked up
+                    w_ids = {
+                        flow[WORKFLOW].id
+                        for flow in self.data_store_mgr.data.values()
+                        if workflow_filter(flow, args)
+                    }
+                for remove_id in old_ids.difference(w_ids):
+                    if remove_id in self.delta_store[sub_id]:
+                        del self.delta_store[sub_id][remove_id]
                 for w_id in w_ids:
                     if w_id in self.data_store_mgr.data:
                         if sub_id not in delta_queues[w_id]:

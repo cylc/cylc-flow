@@ -59,8 +59,8 @@ if TYPE_CHECKING:
 # maps server methods to the protobuf message (for client/UIS import)
 PB_METHOD_MAP: Dict[str, Any] = {
     'pb_entire_workflow': PbEntireWorkflow,
-    'pb_workflow_only': PbEntireWorkflow,
-    'pb_data_elements': DELTAS_MAP
+    'pb_data_elements': PbEntireWorkflow,
+    'pb_delta_elements': DELTAS_MAP
 }
 
 
@@ -432,17 +432,20 @@ class WorkflowRuntimeServer:
         return pb_msg.SerializeToString()
 
     @expose
-    def pb_workflow_only(self, **_kwargs) -> bytes:
-        """Send only the workflow data, not tasks etc.
+    def pb_data_elements(self, elements: Iterable, **_kwargs) -> bytes:
+        """Send only the selected data elements.
+
+        Args:
+            elements: Keys from DATA_TEMPLATE dictionary.
 
         Returns serialised Protobuf message
         """
-        pb_msg = self.schd.data_store_mgr.get_workflow_only()
+        pb_msg = self.schd.data_store_mgr.get_data_elements(elements)
         return pb_msg.SerializeToString()
 
     @expose
-    def pb_data_elements(self, element_type: str, **_kwargs) -> bytes:
-        """Send the specified data elements in delta form.
+    def pb_delta_elements(self, element_type: str, **_kwargs) -> bytes:
+        """Send the specified data elements in delta added form.
 
         Args:
             element_type: Key from DELTAS_MAP dictionary.
@@ -450,5 +453,5 @@ class WorkflowRuntimeServer:
         Returns serialised Protobuf message
 
         """
-        pb_msg = self.schd.data_store_mgr.get_data_elements(element_type)
+        pb_msg = self.schd.data_store_mgr.get_delta_elements(element_type)
         return pb_msg.SerializeToString()
