@@ -63,12 +63,12 @@ def test_graphql_error(myflow):
         assert "Cannot query field 'alsonotafield'" in excinfo
 
 
-def test_pb_data_elements(myflow):
+def test_pb_delta_elements(myflow):
     """Test Protobuf elements endpoint method."""
     element_type = 'workflow'
-    data = PB_METHOD_MAP['pb_data_elements'][element_type]()
+    data = PB_METHOD_MAP['pb_delta_elements'][element_type]()
     data.ParseFromString(
-        myflow.server.pb_data_elements(element_type)
+        myflow.server.pb_delta_elements(element_type)
     )
     assert data.added.id == myflow.id
 
@@ -82,13 +82,14 @@ def test_pb_entire_workflow(myflow):
     assert data.workflow.id == myflow.id
 
 
-def test_pb_workflow_only(myflow):
-    """Test Protobuf workflow only endpoint method."""
-    data = PB_METHOD_MAP['pb_workflow_only']()
+def test_pb_data_elements(myflow):
+    """Test Protobuf elements endpoint method."""
+    element_type = 'workflow'
+    data = PB_METHOD_MAP['pb_data_elements']()
     data.ParseFromString(
-        myflow.server.pb_workflow_only()
+        myflow.server.pb_data_elements([element_type])
     )
-    assert data.workflow.id == myflow.id
+    assert getattr(data, element_type).id == myflow.id
 
 
 async def test_stop(one: Scheduler, start):
