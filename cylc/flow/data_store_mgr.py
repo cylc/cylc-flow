@@ -3088,20 +3088,26 @@ class DataStoreMgr:
 
         return workflow_msg
 
-    def get_workflow_only(self):
-        """Gather workflow summary data into a Protobuf message.
+    def get_data_elements(self, elements: Iterable):
+        """Gather data requested elements into a Protobuf message.
 
-        No tasks / cycles, etc, just workflow stuff.
+        Args:
+            elements (Iterable):
+                Iterable of keys from DATA dictionary.
 
         Returns:
             cylc.flow.data_messages_pb2.PbEntireWorkflow
 
         """
 
+        data = self.data[self.workflow_id]
+
         workflow_msg = PbEntireWorkflow()
-        workflow_msg.workflow.CopyFrom(
-            self.data[self.workflow_id][WORKFLOW]
-        )
+        for element in (e for e in elements if e in DATA_TEMPLATE):
+            if element == WORKFLOW:
+                getattr(workflow_msg, element).CopyFrom(data[element])
+            else:
+                getattr(workflow_msg, element).extend(data[element].values())
 
         return workflow_msg
 
@@ -3120,7 +3126,7 @@ class DataStoreMgr:
         self.publish_pending = True
         return deepcopy(result)
 
-    def get_data_elements(self, element_type):
+    def get_delta_elements(self, element_type):
         """Get elements of a given type in the form of a delta.
 
         Args:
@@ -3169,7 +3175,7 @@ class DataStoreMgr:
     async def set_query_sync_levels(
         self,
         w_ids: Iterable[str],
-        level: Optional[str] = None,
+        level: Optional[Iterable[str]] = None,
         expire_delay: Optional[float] = None,
     ):
         """Set a workflow sync level."""

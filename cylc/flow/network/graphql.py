@@ -51,6 +51,15 @@ STRIP_OPS = {'query', 'subscription'}
 U = TypeVar("U")
 
 
+def extract_ast_fields(ast: Any, fields: set) -> Any:
+    """Recurse through a document/AST to extract field names."""
+    if ast.kind == 'field':
+        fields.add(ast.name.value)
+    if getattr(ast, 'selection_set', None):
+        for selection in ast.selection_set.selections:
+            extract_ast_fields(selection, fields)
+
+
 def grow_tree(tree, path, leaves=None):
     """Additively grows tree with leaves at terminal of new branch.
 
