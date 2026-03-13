@@ -25,7 +25,13 @@ from graphql import (
 
 from cylc.flow.data_messages_pb2 import PbTaskProxy, PbPrerequisite
 from cylc.flow.network.graphql import (
-    CylcVisitor, null_setter, strip_null, async_next, NULL_VALUE, grow_tree
+    CylcVisitor,
+    null_setter,
+    strip_null,
+    async_next,
+    NULL_VALUE,
+    grow_tree,
+    extract_ast_fields
 )
 from cylc.flow.network.schema import schema
 
@@ -242,3 +248,62 @@ async def test_strip_null(pre_result, expected_result):
 def test_grow_tree(expect, tree, path, leaves):
     grow_tree(tree, path, leaves)
     assert tree == expect
+
+
+@pytest.mark.parametrize(
+    'query,'
+    'expected_result',
+    [
+        pytest.param(
+            '''
+            query {
+                workflows {
+                    id
+                }
+            }
+            ''',
+            {'workflows', 'id'},
+            id="simple query"
+        ),
+        pytest.param(
+            '''
+            query {
+                ...WorkflowData
+            }
+            fragment WorkflowData on workflows {
+                workflows {
+                    id
+                }
+            }
+            ''',
+            {'workflows', 'id'},
+            id="query with a fragment"
+        ),
+        pytest.param(
+            '''
+            subscription {
+                workflows {
+                    taskProxies {
+                        id
+                        jobs {
+                            id
+                            state
+                        }
+                    }
+                }
+            }
+            ''',
+            {'workflows', 'taskProxies', 'id', 'jobs', 'state'},
+            id="subscription with nested selection sets"
+        ),
+    ]
+)
+def test_extract_ast_fields(query, expected_result):
+    """Test field extraction on basic doc string."""
+    document = parse(query)
+    fields = set()
+    for _def in document.definitions:
+        extract_ast_fields(_def, fields)
+    for frag in getattr(document, 'fragments', {}).values():
+        extract_ast_fields(frag, fields)
+    assert fields == expected_result
