@@ -419,6 +419,19 @@ class TaskDef:
             p_next = min(adjusted)
         return p_next
 
+    def next_point_parentless(self, point: 'PointBase', cutoff: 'PointBase'):
+        """Return the next cycle point >= point where parentless."""
+        p_next = None
+        adjusted = []
+        for seq in self.sequences:
+            nxt = seq.get_next_point(point)
+            if nxt and self.is_parentless(nxt, cutoff):
+                # may be None if beyond the sequence bounds
+                adjusted.append(nxt)
+        if adjusted:
+            p_next = min(adjusted)
+        return p_next
+
     def is_parentless(self, point: 'PointBase', cutoff: 'PointBase') -> bool:
         """Return True if task has no parents at the given point.
 
