@@ -70,5 +70,16 @@ def test_embedded_url(link):
         except HTTPError as exc:
             # Allowing 403 - just because a site forbids us doesn't mean the
             # link is wrong.
-            if exc.code != 403:
+            if exc.code != 403 and exc.code != 429:
                 raise Exception(f'{exc} | {link}')
+            if exc.code == 429:
+                # We are being rate limited - sleep and retry a few times
+                # before giving up:
+                for attempt in range(10):
+                    sleep(10 * attempt)
+                    try:
+                        request.urlopen(link).getcode()
+                        break
+                    except HTTPError as exc:
+                        if exc.code == 429:
+                            pass
