@@ -37,8 +37,7 @@ from cylc.flow.scripts.profiler import (
 )
 
 
-@pytest.mark.asyncio
-async def test_stop_profiler(monkeypatch, tmpdir):
+def test_stop_profiler(monkeypatch, tmpdir):
     monkeypatch.setenv('CYLC_WORKFLOW_ID', "test_value")
     monkeypatch.setenv('CYLC_TASK_JOB', "test_task_job")
 
@@ -60,7 +59,7 @@ async def test_stop_profiler(monkeypatch, tmpdir):
         memory_allocated_path=mem_allocated_file,
         cgroup_version=1)
     with pytest.raises(SystemExit) as excinfo:
-        await stop_profiler(process_object, 1)
+        stop_profiler(process_object, 1)
 
     assert excinfo.value.code == 0
 
@@ -310,7 +309,6 @@ def test_get_cgroup_paths(mocker):
     assert "Unable to determine cgroup version" in str(excinfo.value)
 
 
-@pytest.mark.asyncio
 async def test_profile_data(mocker):
     # This test should run without error
     mocker.patch("cylc.flow.scripts.profiler.get_cgroup_name",
@@ -333,37 +331,45 @@ async def test_profile_data(mocker):
 def options(mocker):
     opts = mocker.Mock()
     opts.cgroup_location = "/fake/path"
+    opts.cgroup_memory_path = "/another/fake/path"
     opts.comms_timeout = 10
     opts.delay = 1
     return opts
 
 
-@pytest.mark.asyncio
 async def test_main(mocker, options):
+    # Mock Cylc env vars
+    os.environ['CYLC_WORKFLOW_ID'] = "Exit Light"
+    os.environ['CYLC_TASK_JOB'] = "Enter Night"
 
-    # Speed up the test by reducing the poll interval
-    os.environ['CYLC_PROC_POLL_INTERVAL'] = "5"
+    # Mock the gets and parse functions to return something sensible
+    # without needing actual files
+    mocker.patch("cylc.flow.scripts.profiler.get_cgroup_paths",
+        return_value=Process(
+            cgroup_memory_path="/some/place/memory.stat",
+            cgroup_cpu_path="/some/place/cpu.stat",
+            memory_allocated_path="/some/place",
+            cgroup_version=2,
+            ))
+    mocker.patch("cylc.flow.scripts.profiler.parse_memory_file",
+                 return_value=1234)
+    mocker.patch("cylc.flow.scripts.profiler.parse_cpu_file",
+                 return_value=5678)
+    mocker.patch("cylc.flow.scripts.profiler.parse_memory_allocated",
+                 return_value=90)
 
-    mock_get_cgroup_paths = mocker.patch(
-        "cylc.flow.scripts.profiler.get_cgroup_paths"
-    )
-    # Mock the loop and its add_signal_handler method
-    mock_loop = mocker.patch('asyncio.get_running_loop').return_value
+    mock_signal = mocker.patch("cylc.flow.scripts.profiler.signal.signal")
     mock_profile = mocker.patch("cylc.flow.scripts.profiler.profile")
     mock_watch_and_kill = mocker.patch(
         "cylc.flow.scripts.profiler.watch_and_kill"
     )
 
-    mock_get_cgroup_paths.return_value = mocker.Mock()
+    await _main(options)
 
-    # Mock asyncio.gather to raise an exception to break the loop
-    mocker.patch(
-        "asyncio.gather", side_effect=asyncio.CancelledError
-    )
-    with pytest.raises(asyncio.CancelledError):
-        await _main(options)
+    # Make sure the 3 types of kill signal are registered.
+    assert mock_signal.call_count == 3
 
-    mock_get_cgroup_paths.assert_called_once_with("/fake/path")
-    assert mock_loop.add_signal_handler.call_count == 3
+    # Ensure the profiler and watch and kill functions are called by
+    # asyncio.gather
     mock_profile.assert_called_once()
     mock_watch_and_kill.assert_called_once()

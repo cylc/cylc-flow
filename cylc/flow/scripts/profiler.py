@@ -27,6 +27,7 @@ import re
 import sys
 import signal
 import psutil
+import functools
 
 from pathlib import Path
 from dataclasses import dataclass
@@ -252,9 +253,7 @@ async def _main(options) -> None:
     for sig in (signal.SIGINT, signal.SIGHUP, signal.SIGTERM):
         loop.add_signal_handler(
             sig,
-            lambda: asyncio.create_task(
-                stop_profiler(process, options.comms_timeout)
-            ),
+            functools.partial(stop_profiler, process, options.comms_timeout)
         )
 
     # the profiler will run until one of these coroutines calls `sys.exit`:
