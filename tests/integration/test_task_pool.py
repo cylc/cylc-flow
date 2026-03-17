@@ -2579,20 +2579,14 @@ async def test_start_tasks(
             }
         )
 
-        # Check xtriggers
-        for itask in itasks:
-            schd.pool.xtrigger_mgr.call_xtriggers_async(itask)
-            schd.pool.rh_release_and_queue(itask)
+        await schd._main_loop()
 
-        # Release tasks that are ready to run.
-        schd.release_tasks_to_run()
-
-        # It should submit 2050/foo, 2051/foo, 2050/baz
+        # It should submit 2050/foo, 2050/baz
         # It should not submit 2050/bar (waiting on clock trigger)
+        # It should not submit 2051/foo (runahead limited)
         assert (
             set(itask.identity for itask in submitted_tasks) == {
                 "2050/foo",
-                "2051/foo",
                 "2050/baz",
             }
         )

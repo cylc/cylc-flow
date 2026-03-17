@@ -844,6 +844,8 @@ class Scheduler:
             flow=[FLOW_NEW],
             flow_descr=f"original flow from {self.options.starttask}"
         )
+        self.pool.spawn_to_runahead_limit()
+        self.pool.queue_if_ready()
 
     def _load_pool_from_point(self):
         """Load task pool for a cycle point, for a new run.
@@ -880,13 +882,6 @@ class Scheduler:
             self.xtrigger_mgr.load_xtrigger_for_restart)
         self.workflow_db_mgr.pri_dao.select_abs_outputs_for_restart(
             self.pool.load_abs_outputs_for_restart)
-
-        # Compute and release runahead tasks once after loading all tasks from
-        # the DB. This also causes spawning of parentless tasks out to the
-        # runahead limit, which may be necessary here if the stop point or
-        # runahead limit was changed for the restart.
-        self.pool.compute_runahead()
-        self.pool.release_runahead_tasks()
 
         self.pool.load_db_tasks_to_hold()
         self.pool.update_flow_mgr()
@@ -1622,7 +1617,12 @@ class Scheduler:
 
     async def _main_loop(self) -> None:
         """A single iteration of the main loop."""
+
         tinit = time()
+
+        self.pool.compute_runahead()
+        self.pool.release_runahead_tasks()
+        await self.workflow_shutdown()
 
         # Useful for debugging core scheduler issues:
         # import logging
@@ -1657,10 +1657,13 @@ class Scheduler:
                     itask, self.ext_trigger_queue)
 
             if itask.is_ready_to_run() and not itask.is_manual_submit:
+                if itask.is_xtrigger_sequential:
+                    self.pool.spawn_next_parentless(itask)
                 self.pool.queue_task(itask)
 
         if self.xtrigger_mgr.do_housekeeping:
             self.xtrigger_mgr.housekeep(self.pool.get_tasks())
+
         self.pool.clock_expire_tasks()
         self.release_tasks_to_run()
 
@@ -1717,11 +1720,10 @@ class Scheduler:
             await self.update_data_structure()
 
         if has_updated:
-            if not self.is_reloaded:
+            if not self.is_reloaded and self.is_stalled:
                 # (A reload cannot un-stall workflow by itself)
-                if self.is_stalled:
-                    self.is_stalled = False
-                    self.update_data_store()
+                self.is_stalled = False
+                self.update_data_store()
             self.is_reloaded = False
 
             # Reset workflow and task updated flags.
@@ -1743,8 +1745,9 @@ class Scheduler:
         # Shutdown workflow if timeouts have occurred
         self.timeout_check()
 
-        # Does the workflow need to shutdown on task failure?
-        await self.workflow_shutdown()
+        # # Does the workflow need to shutdown on task failure?
+        # move up to top
+        # await self.workflow_shutdown()
 
         if self.options.profile_mode:
             self.update_profiler_logs(tinit)
