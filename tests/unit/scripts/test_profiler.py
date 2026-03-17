@@ -16,7 +16,6 @@
 #
 # Tests for functions contained in cylc.flow.scripts.profiler
 import os
-import asyncio
 from unittest import mock
 
 import pytest
@@ -345,12 +344,11 @@ async def test_main(mocker, options):
     # Mock the gets and parse functions to return something sensible
     # without needing actual files
     mocker.patch("cylc.flow.scripts.profiler.get_cgroup_paths",
-        return_value=Process(
-            cgroup_memory_path="/some/place/memory.stat",
-            cgroup_cpu_path="/some/place/cpu.stat",
-            memory_allocated_path="/some/place",
-            cgroup_version=2,
-            ))
+                 return_value=Process(
+                     cgroup_memory_path="/some/place/memory.stat",
+                     cgroup_cpu_path="/some/place/cpu.stat",
+                     memory_allocated_path="/some/place",
+                     cgroup_version=2))
     mocker.patch("cylc.flow.scripts.profiler.parse_memory_file",
                  return_value=1234)
     mocker.patch("cylc.flow.scripts.profiler.parse_cpu_file",
