@@ -1,4 +1,7 @@
 #!jinja2
+
+{% set RESOLUTION = 0.2 %}
+
 [scheduling]
     # Start the workflow 7 hours before now ignoring minutes and seconds
     # * previous(T-00) takes the current time ignoring minutes and seconds.
@@ -52,7 +55,7 @@
         script = consolidate-observations
         [[[environment]]]
             # The dimensions of each grid cell in degrees.
-            RESOLUTION = 0.2
+            RESOLUTION = {{ RESOLUTION }}
             # The area to generate forecasts for (lng1, lat1, lng2, lat2)
             DOMAIN = -12,46,12,61  # Do not change!
 
@@ -60,7 +63,7 @@
         script = get-rainfall
         [[[environment]]]
             # The dimensions of each grid cell in degrees.
-            RESOLUTION = 0.2
+            RESOLUTION = {{ RESOLUTION }}
             # The area to generate forecasts for (lng1, lat1, lng2, lat2)
             DOMAIN = -12,46,12,61  # Do not change!
 
@@ -68,7 +71,7 @@
         script = forecast 60 5  # Generate 5 forecasts at 60 minute intervals.
         [[[environment]]]
             # The dimensions of each grid cell in degrees.
-            RESOLUTION = 0.2
+            RESOLUTION = {{ RESOLUTION }}
             # The area to generate forecasts for (lng1, lat1, lng2, lat2)
             DOMAIN = -12,46,12,61  # Do not change!
             # The path to the files containing wind data (the {variables} will
@@ -88,7 +91,7 @@
         script = post-process exeter 60
         [[[environment]]]
             # The dimensions of each grid cell in degrees.
-            RESOLUTION = 0.2
+            RESOLUTION = {{ RESOLUTION }}
             # The area to generate forecasts for (lng1, lat1, lng2, lat2)
             DOMAIN = -12,46,12,61  # Do not change!
 
