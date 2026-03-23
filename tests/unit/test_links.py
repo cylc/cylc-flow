@@ -22,12 +22,13 @@ Reason for doing this here:
   for them to show up in Cylc.
 """
 
-import fnmatch
 import os
-from pathlib import Path
 import re
-from time import sleep
 import pytest
+import fnmatch
+
+from time import sleep
+from pathlib import Path
 from urllib import request
 from urllib.error import HTTPError
 
@@ -54,8 +55,13 @@ def get_links():
 
 
 def make_request(link):
-    """Make an HTTP request, using GITHUB_TOKEN for GitHub URLs
-     if available."""
+    """Make an HTTP request, using GITHUB_TOKEN for GitHub URLs if available.
+
+    The GITHUB_TOKEN environment variable contains a GitHub Actions token.
+    This is used to authenticate the workflow requests to github.com, which
+    helps avoid rate limiting (unauthenticated requests are limited to 60/hour,
+    authenticated to 5000/hour).
+    """
     req = request.Request(link)
     github_token = os.environ.get('GITHUB_TOKEN')
     if github_token and 'github.com' in link:
