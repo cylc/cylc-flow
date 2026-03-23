@@ -23,6 +23,7 @@ Reason for doing this here:
 """
 
 import fnmatch
+import os
 from pathlib import Path
 import re
 from time import sleep
@@ -52,6 +53,16 @@ def get_links():
     })
 
 
+def make_request(link):
+    """Make an HTTP request, using GITHUB_TOKEN for GitHub URLs
+     if available."""
+    req = request.Request(link)
+    github_token = os.environ.get('GITHUB_TOKEN')
+    if github_token and 'github.com' in link:
+        req.add_header('Authorization', f'token {github_token}')
+    return request.urlopen(req).getcode()
+
+
 @pytest.mark.linkcheck
 @pytest.mark.parametrize('link', get_links())
 def test_embedded_url(link):
@@ -61,25 +72,21 @@ def test_embedded_url(link):
     to run in parallel
     """
     try:
-        request.urlopen(link).getcode()
+        make_request(link)
     except HTTPError:
         # Sleep and retry to reduce risk of flakiness:
         sleep(10)
         try:
-            request.urlopen(link).getcode()
+            make_request(link)
         except HTTPError as exc:
-            # Allowing 403 - just because a site forbids us doesn't mean the
-            # link is wrong.
-            if exc.code != 403 and exc.code != 429:
+            # Allowing 403 (forbidden) & 429 (rate-limited) as the link
+            # is probably valid, but we are blocked.
+            if exc.code in {403, 429}:
+                pytest.skip(f'{exc} | {link}')
+
+            # Sleep and retry to reduce risk of flakiness:
+            sleep(10)
+            try:
+                make_request(link)
+            except HTTPError as exc:
                 raise Exception(f'{exc} | {link}')
-            if exc.code == 429:
-                # We are being rate limited - sleep and retry a few times
-                # before giving up:
-                for attempt in range(10):
-                    sleep(10 * attempt)
-                    try:
-                        request.urlopen(link).getcode()
-                        break
-                    except HTTPError as exc:
-                        if exc.code == 429:
-                            pass

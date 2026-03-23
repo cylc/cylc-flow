@@ -151,7 +151,9 @@ jobs:
         uses: cylc/release-actions/towncrier-draft@v1
 
       - name: Linkcheck
-        run: pytest -m linkcheck --dist=load --color=yes -n 10 tests/unit/test_links.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pytest -m linkcheck -rs --dist=load --color=yes -n 10 tests/unit/test_links.py
 
   codecov:
     needs: test
