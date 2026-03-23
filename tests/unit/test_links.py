@@ -89,10 +89,4 @@ def test_embedded_url(link):
             # is probably valid, but we are blocked.
             if exc.code in {403, 429}:
                 pytest.skip(f'{exc} | {link}')
-
-            # Sleep and retry to reduce risk of flakiness:
-            sleep(10)
-            try:
-                make_request(link)
-            except HTTPError as exc:
-                raise Exception(f'{exc} | {link}')
+            raise Exception(f'{exc} | {link}')
