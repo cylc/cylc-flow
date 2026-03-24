@@ -92,7 +92,6 @@ class HostUtil:
         self._host_exs = {}  # host: socket.gethostbyname_ex(host), ...
         self._remote_hosts = {}  # host: is_remote, ...
         self.user_pwent = None
-        self.remote_users = {}
 
     @staticmethod
     def get_local_ip_address(target):
@@ -195,7 +194,6 @@ class HostUtil:
                 self.user_pwent = pwd.getpwnam(my_user_name)
             else:
                 self.user_pwent = pwd.getpwuid(os.getuid())
-            self.remote_users.update(((self.user_pwent.pw_name, False),))
         return self.user_pwent
 
     def is_remote_host(self, name):
@@ -221,22 +219,6 @@ class HostUtil:
                     self._remote_hosts[name] = (
                         host_info != self._get_host_info())
         return self._remote_hosts[name]
-
-    def is_remote_user(self, name):
-        """Return True if name is not a name of the current user.
-
-        Return False if name is None.
-        Return True if name is not in the password database.
-        """
-        if not name:
-            return False
-        if name not in self.remote_users:
-            try:
-                self.remote_users[name] = (
-                    pwd.getpwnam(name) != self._get_user_pwent())
-            except KeyError:
-                self.remote_users[name] = True
-        return self.remote_users[name]
 
     def _is_remote_platform(self, platform):
         """Return True if any job host in platform have different IP address
@@ -295,8 +277,3 @@ def is_remote_platform(platform):
 def is_remote_host(name):
     """Shorthand for HostUtil.get_inst().is_remote_host(name)."""
     return HostUtil.get_inst().is_remote_host(name)
-
-
-def is_remote_user(name):
-    """Return True if name is not a name of the current user."""
-    return HostUtil.get_inst().is_remote_user(name)
