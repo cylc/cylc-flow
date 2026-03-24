@@ -45,6 +45,7 @@ returning the IP address associated with this socket.
 """
 
 from contextlib import suppress
+import getpass
 import os
 import pwd
 import socket
@@ -91,7 +92,7 @@ class HostUtil:
         self._host = None  # preferred name of localhost
         self._host_exs = {}  # host: socket.gethostbyname_ex(host), ...
         self._remote_hosts = {}  # host: is_remote, ...
-        self.user_pwent = None
+        self._user_pwent = None
 
     @staticmethod
     def get_local_ip_address(target):
@@ -180,7 +181,9 @@ class HostUtil:
 
     def get_user(self):
         """Return name of current user."""
-        return self._get_user_pwent().pw_name
+        # NOTE: don't use pwnam
+        # see https://github.com/cylc/cylc-flow/issues/7240
+        return getpass.getuser()
 
     def get_user_home(self):
         """Return home directory of current user."""
@@ -188,13 +191,13 @@ class HostUtil:
 
     def _get_user_pwent(self):
         """Ensure self.user_pwent is set to current user's password entry."""
-        if self.user_pwent is None:
+        if self._user_pwent is None:
             my_user_name = os.environ.get('USER')
             if my_user_name:
-                self.user_pwent = pwd.getpwnam(my_user_name)
+                self._user_pwent = pwd.getpwnam(my_user_name)
             else:
-                self.user_pwent = pwd.getpwuid(os.getuid())
-        return self.user_pwent
+                self._user_pwent = pwd.getpwuid(os.getuid())
+        return self._user_pwent
 
     def is_remote_host(self, name):
         """Return True if name has different IP address than the current host.
