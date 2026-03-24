@@ -36,6 +36,7 @@ EXCLUDE = [
     r'*//www.gnu.org/licenses/',
     r'*//my-site.com/*',
     r'*//ahost/%(owner)s/notes/%(workflow)s',
+    r'*//www.h2g2.com/*',
     r'*//web.archive.org/*'
 ]
 

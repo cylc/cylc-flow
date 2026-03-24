@@ -153,7 +153,7 @@ jobs:
       - name: Linkcheck
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pytest -m linkcheck -rs --dist=load --color=yes -n 10 tests/unit/test_links.py
+        run: pytest -m linkcheck -ra --dist=load --color=yes -n 10 tests/unit/test_links.py
 
   codecov:
     needs: test
