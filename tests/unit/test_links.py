@@ -22,11 +22,13 @@ Reason for doing this here:
   for them to show up in Cylc.
 """
 
-import fnmatch
-from pathlib import Path
+import os
 import re
-from time import sleep
 import pytest
+import fnmatch
+
+from time import sleep
+from pathlib import Path
 from urllib import request
 from urllib.error import HTTPError
 
@@ -34,6 +36,7 @@ EXCLUDE = [
     r'*//www.gnu.org/licenses/',
     r'*//my-site.com/*',
     r'*//ahost/%(owner)s/notes/%(workflow)s',
+    r'*//www.h2g2.com/*',
     r'*//web.archive.org/*'
 ]
 
@@ -52,6 +55,21 @@ def get_links():
     })
 
 
+def make_request(link):
+    """Make an HTTP request, using GITHUB_TOKEN for GitHub URLs if available.
+
+    The GITHUB_TOKEN environment variable contains a GitHub Actions token.
+    This is used to authenticate the workflow requests to github.com, which
+    helps avoid rate limiting (unauthenticated requests are limited to 60/hour,
+    authenticated to 5000/hour).
+    """
+    req = request.Request(link)
+    github_token = os.environ.get('GITHUB_TOKEN')
+    if github_token and 'github.com' in link:
+        req.add_header('Authorization', f'token {github_token}')
+    return request.urlopen(req).getcode()
+
+
 @pytest.mark.linkcheck
 @pytest.mark.parametrize('link', get_links())
 def test_embedded_url(link):
@@ -61,14 +79,15 @@ def test_embedded_url(link):
     to run in parallel
     """
     try:
-        request.urlopen(link).getcode()
-    except HTTPError:
+        make_request(link)
+    except HTTPError as exc:
+        # Allowing 403 (forbidden) & 429 (rate-limited) as the link
+        # is probably valid, but we are blocked.
+        if exc.code in {403, 429}:
+            pytest.skip(f'{exc} | {link}')
         # Sleep and retry to reduce risk of flakiness:
         sleep(10)
         try:
-            request.urlopen(link).getcode()
+            make_request(link)
         except HTTPError as exc:
-            # Allowing 403 - just because a site forbids us doesn't mean the
-            # link is wrong.
-            if exc.code != 403:
-                raise Exception(f'{exc} | {link}')
+            raise Exception(f'{exc} | {link}')
