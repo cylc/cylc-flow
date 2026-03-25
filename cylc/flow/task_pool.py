@@ -2304,6 +2304,15 @@ class TaskPool:
             itask.state_reset(is_runahead=False, is_queued=False)
             self.task_queue_mgr.remove_task(itask)
 
+        if (
+            itask.state(*TASK_STATUSES_FINAL)
+            and not itask.state.outputs.is_complete()
+        ):
+            # Add future final-incomplete tasks to the pool for visibility.
+            # (See https://github.com/cylc/cylc-flow/issues/6383).
+            self.add_to_pool(itask)
+            LOG.debug(f"[{itask}] adding future incomplete task to n=0.")
+
         if no_op:
             return False
 
