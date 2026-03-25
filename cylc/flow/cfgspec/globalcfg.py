@@ -1000,7 +1000,7 @@ with Conf('global.cylc', desc='''
                 beyond which Cylc will not attempt to start new schedulers on
                 a host.
 
-                .. _psutil: https://psutil.readthedocs.io/en/latest/
+                .. _psutil: https://psutil.readthedocs.io/
 
                 This should be a multiline string containing Python expressions
                 to rank and/or filter hosts. All `psutil`_ attributes are
