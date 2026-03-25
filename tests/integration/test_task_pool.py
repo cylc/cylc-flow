@@ -2323,7 +2323,7 @@ async def test_expire_dequeue_with_retries(
     }
 
     if expire_type == 'clock-expire':
-        # configre foo to clock-expire
+        # configure foo to clock-expire
         conf['scheduling']['special tasks'] = {'clock-expire': 'foo(PT0S)'}
 
         # run the clock-expire logic
