@@ -1493,7 +1493,10 @@ async def test_set_outputs_future(
         {
             'scheduling': {
                 'graph': {
-                    'R1': "a:x & a:y => b => c"
+                    'R1': """
+                        a:x & a:y => b => c
+                        a:y => f
+                    """
                 }
             },
             'runtime': {
@@ -1517,6 +1520,12 @@ async def test_set_outputs_future(
         schd.pool.set_prereqs_and_outputs(
             {TaskTokens('1', 'b')}, ["succeeded"], [], [])
         assert schd.pool.get_task_ids() == {"1/a", "1/c"}
+
+        # setting inactive task f failed should add it to n=0 as final
+        # incomplete - see https://github.com/cylc/cylc-flow/pull/7248
+        schd.pool.set_prereqs_and_outputs(
+            {TaskTokens('1', 'f')}, ["failed"], [], [])
+        assert schd.pool.get_task_ids() == {"1/a", "1/c", "1/f"}
 
         schd.pool.set_prereqs_and_outputs(
             items={TaskTokens('1', 'a')},
