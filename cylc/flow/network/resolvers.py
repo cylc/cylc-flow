@@ -309,7 +309,7 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
     # Query resolvers
     async def get_workflow_by_id(self, args):
         """Return a workflow store by ID."""
-        try:
+        with suppress(KeyError):
             if 'sub_id' in args:
                 if args['delta_store']:
                     return self.delta_store[args['sub_id']][args['id']][
@@ -319,8 +319,6 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
                     [self.data_store_mgr.data[args['id']][WORKFLOW].id]
                 )
             return self.data_store_mgr.data[args['id']][WORKFLOW]
-        except KeyError:
-            return None
 
     async def get_workflows_data(self, args: Dict[str, Any]):
         """Return list of data from workflows."""
