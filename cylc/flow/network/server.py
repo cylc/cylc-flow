@@ -17,6 +17,7 @@
 """Server for workflow runtime API."""
 
 import asyncio
+from contextlib import suppress
 from queue import Queue
 from textwrap import dedent
 from time import sleep
@@ -362,14 +363,12 @@ class WorkflowRuntimeServer:
                 if getattr(getattr(self, method), 'exposed', False)
             ]
 
-        try:
+        with suppress(AttributeError):
             method = getattr(self, endpoint)
-        except AttributeError:
-            return 'No method by name "%s"' % endpoint
-        if method.exposed:
-            head, tail = method.__doc__.split('\n', 1)
-            tail = dedent(tail)
-            return '%s\n%s' % (head, tail)
+            if method.exposed:
+                head, tail = method.__doc__.split('\n', 1)
+                tail = dedent(tail)
+                return '%s\n%s' % (head, tail)
         return 'No method by name "%s"' % endpoint
 
     @expose
