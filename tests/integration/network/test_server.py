@@ -33,6 +33,21 @@ async def myflow(mod_flow, mod_scheduler, mod_run, mod_one_conf):
         yield schd
 
 
+def test_api(myflow):
+    """Test api endpoint."""
+    # method exists and is exposed
+    ret = myflow.server.api(endpoint='api')
+    assert 'Return information about this API.' in ret
+
+    # method does not exist
+    ret = myflow.server.api(endpoint='spaghetti')
+    assert ret == 'No method by name "spaghetti"'
+
+    # method exists but not exposed
+    ret = myflow.server.api(endpoint='operate')
+    assert ret == 'No method by name "operate"'
+
+
 def test_graphql(myflow):
     """Test GraphQL endpoint method."""
     request_string = f'''
