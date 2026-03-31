@@ -56,7 +56,8 @@ def test_stop_profiler(monkeypatch, tmpdir):
         cgroup_memory_path=mem_file,
         cgroup_cpu_path=cpu_file,
         memory_allocated_path=mem_allocated_file,
-        cgroup_version=1)
+        cgroup_version=1,
+        max_rss=0)
     with pytest.raises(SystemExit) as excinfo:
         stop_profiler(process_object, 1)
 
@@ -70,7 +71,8 @@ def test_get_resource_usage(monkeypatch, tmpdir):
         cgroup_memory_path=None,
         cgroup_cpu_path=None,
         memory_allocated_path=None,
-        cgroup_version=1)
+        cgroup_version=1,
+        max_rss=0)
 
     assert get_profiler_data(process_object) == {
         'max_rss': 0,
@@ -94,17 +96,20 @@ def test_parse_memory_file(tmpdir):
         cgroup_memory_path=mem_file_v1,
         cgroup_cpu_path=cpu_file,
         memory_allocated_path=mem_allocated_file,
-        cgroup_version=1)
+        cgroup_version=1,
+        max_rss=0)
     good_process_object_v2 = Process(
         cgroup_memory_path=mem_file_v2,
         cgroup_cpu_path=cpu_file,
         memory_allocated_path=mem_allocated_file,
-        cgroup_version=2)
+        cgroup_version=2,
+        max_rss=0)
     bad_process_object = Process(
         cgroup_memory_path='',
         cgroup_cpu_path='',
         memory_allocated_path='',
-        cgroup_version=1)
+        cgroup_version=1,
+        max_rss=0)
 
     with pytest.raises(CylcProfilerError) as excinfo:
         parse_memory_file(bad_process_object)
@@ -135,27 +140,32 @@ def test_parse_cpu_file(tmpdir):
         cgroup_memory_path=mem_file,
         cgroup_cpu_path=cpu_file_v1_good,
         memory_allocated_path=mem_allocated_file,
-        cgroup_version=1)
+        cgroup_version=1,
+        max_rss=0)
     good_process_object_v2 = Process(
         cgroup_memory_path=mem_file,
         cgroup_cpu_path=cpu_file_v2_good,
         memory_allocated_path=mem_allocated_file,
-        cgroup_version=2)
+        cgroup_version=2,
+        max_rss=0)
     bad_process_object_v1_1 = Process(
         cgroup_memory_path='',
         cgroup_cpu_path='',
         memory_allocated_path='',
-        cgroup_version=1)
+        cgroup_version=1,
+        max_rss = 0)
     bad_process_object_v1_2 = Process(
         cgroup_memory_path=mem_file,
         cgroup_cpu_path=cpu_file_v1_bad,
         memory_allocated_path=mem_allocated_file,
-        cgroup_version=1)
+        cgroup_version=1,
+        max_rss=0)
     bad_process_object_v2 = Process(
         cgroup_memory_path=mem_file,
         cgroup_cpu_path=cpu_file_v2_bad,
         memory_allocated_path=mem_allocated_file,
-        cgroup_version=2)
+        cgroup_version=2,
+        max_rss=0)
 
     assert parse_cpu_file(good_process_object_v1) == 1234
     assert parse_cpu_file(good_process_object_v2) == 1234567
@@ -193,19 +203,22 @@ def test_parse_memory_allocated(tmp_path_factory):
         cgroup_memory_path='',
         cgroup_cpu_path='',
         memory_allocated_path=str(good_mem_dir),
-        cgroup_version=1)
+        cgroup_version=1,
+        max_rss=0)
 
     good_process_object_v2 = Process(
         cgroup_memory_path='',
         cgroup_cpu_path='',
         memory_allocated_path=str(good_mem_dir),
-        cgroup_version=2)
+        cgroup_version=2,
+        max_rss=0)
 
     bad_process_object_v2_1 = Process(
         cgroup_memory_path='',
         cgroup_cpu_path='',
         memory_allocated_path='/',
-        cgroup_version=2)
+        cgroup_version=2,
+        max_rss=0)
 
     assert parse_memory_allocated(good_process_object_v1) == 0
     assert parse_memory_allocated(good_process_object_v2) == 99999
@@ -244,7 +257,8 @@ def test_parse_memory_allocated(tmp_path_factory):
         cgroup_memory_path='',
         cgroup_cpu_path='',
         memory_allocated_path=str(dir_5),
-        cgroup_version=2)
+        cgroup_version=2,
+        max_rss=0)
 
     assert parse_memory_allocated(bad_process_object_v2_2) == 0
 
@@ -348,7 +362,8 @@ async def test_main(mocker, options):
                      cgroup_memory_path="/some/place/memory.stat",
                      cgroup_cpu_path="/some/place/cpu.stat",
                      memory_allocated_path="/some/place",
-                     cgroup_version=2))
+                     cgroup_version=2,
+                     max_rss=0,))
     mocker.patch("cylc.flow.scripts.profiler.parse_memory_file",
                  return_value=1234)
     mocker.patch("cylc.flow.scripts.profiler.parse_cpu_file",

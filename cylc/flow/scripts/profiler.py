@@ -47,6 +47,7 @@ RE_INT = re.compile(r'\d+')
 class Process:
     """Class for representing CPU and Memory usage of a process"""
     cgroup_memory_path: str
+    max_rss: int
     cgroup_cpu_path: str
     memory_allocated_path: str
     cgroup_version: int
@@ -78,7 +79,7 @@ def get_profiler_data(process):
         # the get config function doesn't have time to run
         max_rss = cpu_time = memory_allocated = 0
     else:
-        max_rss = parse_memory_file(process)
+        max_rss = process.max_rss
         cpu_time = parse_cpu_file(process)
         memory_allocated = parse_memory_allocated(process)
     return {
@@ -192,6 +193,7 @@ def get_cgroup_paths(location) -> Process:
                 cgroup_name + "/" + "cpu.stat",
                 memory_allocated_path=location + cgroup_name,
                 cgroup_version=cgroup_version,
+                max_rss=0,
             )
 
         elif cgroup_version == 1:
@@ -202,6 +204,7 @@ def get_cgroup_paths(location) -> Process:
                 cgroup_name + "/cpuacct.usage",
                 memory_allocated_path="",
                 cgroup_version=cgroup_version,
+                max_rss=0,
             )
         raise Exception
     except Exception as err:
@@ -214,8 +217,10 @@ async def profile(_process: Process, delay, keep_looping=lambda: True):
     # The lambda function is used to allow the loop to be stopped in unit tests
 
     while keep_looping():
-        # Write cpu / memory usage data to disk
-        # CPU_TIME = parse_cpu_file(process.cgroup_cpu_path, version)
+        # Polling the cgroup for memory and keeping track of the max rss value
+        max_rss = parse_memory_file(_process)
+        if max_rss > _process.max_rss:
+            _process.max_rss = max_rss
         await asyncio.sleep(delay)
 
 
