@@ -36,7 +36,8 @@ from cylc.flow.scripts.profiler import (
 )
 
 
-def test_stop_profiler(monkeypatch, tmpdir):
+@pytest.mark.asyncio
+async def test_stop_profiler(monkeypatch, tmpdir):
     monkeypatch.setenv('CYLC_WORKFLOW_ID', "test_value")
     monkeypatch.setenv('CYLC_TASK_JOB', "test_task_job")
 
@@ -58,10 +59,8 @@ def test_stop_profiler(monkeypatch, tmpdir):
         memory_allocated_path=mem_allocated_file,
         cgroup_version=1,
         max_rss=0)
-    with pytest.raises(SystemExit) as excinfo:
-        stop_profiler(process_object, 1)
 
-    assert excinfo.value.code == 0
+    await stop_profiler(process_object, 1, [])
 
 
 def test_get_resource_usage(monkeypatch, tmpdir):

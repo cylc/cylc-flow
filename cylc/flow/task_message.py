@@ -92,7 +92,7 @@ def split_run_signal(message: str) -> tuple[str, str | None]:
     return prefix, signal[0] if signal else None
 
 
-def record_messages(
+async def record_messages(
     workflow: str,
     job_id: str,
     messages: List[list],
@@ -115,7 +115,8 @@ def record_messages(
         override_use_utc=(os.getenv('CYLC_UTC') == 'True'))
     write_messages(workflow, job_id, messages, event_time)
     if get_comms_method() != CommsMeth.POLL:
-        send_messages(workflow, job_id, messages, event_time, comms_timeout)
+        await send_messages(workflow, job_id, messages,
+                            event_time, comms_timeout)
 
 
 def write_messages(workflow, job_id, messages, event_time):
@@ -131,7 +132,7 @@ def write_messages(workflow, job_id, messages, event_time):
     _append_job_status_file(workflow, job_id, event_time, messages)
 
 
-def send_messages(
+async def send_messages(
     workflow: str,
     job_id: str,
     messages: List[list],
@@ -163,7 +164,7 @@ def send_messages(
             'messages': messages,
         }
     }
-    pclient('graphql', mutation_kwargs)
+    await pclient.async_request('graphql', mutation_kwargs)
 
 
 def _append_job_status_file(workflow, job_id, event_time, messages):

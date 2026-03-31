@@ -21,13 +21,12 @@ the resource usage of jobs running on the node.
 """
 
 import asyncio
+from contextlib import suppress
 import json
 import os
 import re
-import sys
 import signal
 import psutil
-import functools
 
 from pathlib import Path
 from dataclasses import dataclass
@@ -53,20 +52,25 @@ class Process:
     cgroup_version: int
 
 
-def stop_profiler(process, comms_timeout, *_args):
+async def stop_profiler(process, comms_timeout, tasks, *_args):
     """Stop the profiler and return its data to the scheduler.
 
     This function will be executed when the profiler receives a stop signal.
     """
+    # stop the profiler
+    for task in tasks:
+        task.cancel()
+
+    # extract the stats
     profiler_data = get_profiler_data(process)
 
-    record_messages(
+    # send a task message to the scheduler / write message to job.status file
+    await record_messages(
         os.environ['CYLC_WORKFLOW_ID'],
         os.environ['CYLC_TASK_JOB'],
         [['DEBUG', f'_cylc_profiler: {json.dumps(profiler_data)}']],
         comms_timeout=comms_timeout,
     )
-    sys.exit(0)
 
 
 def get_profiler_data(process):
@@ -219,7 +223,7 @@ async def profile(_process: Process, delay, keep_looping=lambda: True):
     while keep_looping():
         # Polling the cgroup for memory and keeping track of the max rss value
         max_rss = parse_memory_file(_process)
-        if max_rss > _process.max_rss:
+        if max_rss is not None and max_rss > _process.max_rss:
             _process.max_rss = max_rss
         await asyncio.sleep(delay)
 
@@ -244,12 +248,16 @@ def get_option_parser() -> COP:
 @cli_function(get_option_parser)
 def main(_parser: COP, options) -> None:
     """CLI main."""
-    asyncio.run(_main(options))
+    with suppress(SystemExit, asyncio.exceptions.CancelledError, Exception):
+        asyncio.run(_main(options))
 
 
 async def _main(options) -> None:
     # get cgroup information
     process = get_cgroup_paths(options.cgroup_location)
+
+    # list of asyncio tasks
+    tasks = []
 
     # Register the stop_profiler function with the signal library
     # The signal library doesn't work with asyncio, so we have to use the
@@ -258,15 +266,18 @@ async def _main(options) -> None:
     for sig in (signal.SIGINT, signal.SIGHUP, signal.SIGTERM):
         loop.add_signal_handler(
             sig,
-            functools.partial(stop_profiler, process, options.comms_timeout)
+            lambda: asyncio.create_task(
+                stop_profiler(process, options.comms_timeout, tasks)
+            ),
         )
 
     # the profiler will run until one of these coroutines calls `sys.exit`:
-    await asyncio.gather(
+    tasks.extend([
         # run the profiler itself
-        profile(process, options.delay),
+        asyncio.create_task(profile(process, options.delay)),
 
         # kill the profiler if its PPID changes
         # (i.e, if the job exits before the profiler does)
-        watch_and_kill(psutil.Process(os.getpid())),
-    )
+        asyncio.create_task(watch_and_kill(psutil.Process(os.getpid()))),
+    ])
+    await asyncio.gather(*tasks)

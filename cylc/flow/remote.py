@@ -34,6 +34,7 @@ from subprocess import (
 )
 import sys
 from typing import (
+    TYPE_CHECKING,
     Any,
     Dict,
     List,
@@ -56,6 +57,9 @@ from cylc.flow.platforms import (
 )
 from cylc.flow.util import format_cmd
 
+if TYPE_CHECKING:
+    import psutil
+
 
 def get_proc_ancestors():
     """Return list of parent PIDs back to init."""
@@ -76,7 +80,10 @@ def get_proc_ancestors():
         pid = ppid
 
 
-async def watch_and_kill(proc, interval=None):
+async def watch_and_kill(
+    proc: 'psutil.Process',
+    interval: float | None = None,
+):
     """Watch a process and kill it if any of its parent processes change.
 
     Processes exist in a tree which inherits from the process with PID 1.

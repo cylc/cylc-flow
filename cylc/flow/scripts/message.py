@@ -93,12 +93,13 @@ identifier.
 """
 
 
+import asyncio
 from logging import getLevelName, INFO
 import os
 import sys
 from typing import TYPE_CHECKING
 
-from cylc.flow.id_cli import parse_id
+from cylc.flow.id_cli import parse_id_async
 from cylc.flow.option_parsers import (
     WORKFLOW_ID_ARG_DOC,
     CylcOptionParser as COP
@@ -142,6 +143,10 @@ def main(parser: COP, options: 'Values', *args: str) -> None:
     if not args:
         parser.error('No message supplied')
         return
+    asyncio.run(_main(options, args))
+
+
+async def _main(options, args):
     if len(args) <= 2:
         # BACK COMPAT: args <= 2
         # from:
@@ -160,7 +165,7 @@ def main(parser: COP, options: 'Values', *args: str) -> None:
         message_strs = list(args)
     else:
         workflow_id, job_id, *message_strs = args
-        workflow_id, *_ = parse_id(
+        workflow_id, *_ = await parse_id_async(
             workflow_id,
             constraint='workflows',
         )
@@ -198,4 +203,4 @@ def main(parser: COP, options: 'Values', *args: str) -> None:
             messages.append([options.severity, message_str.strip()])
         else:
             messages.append([getLevelName(INFO), message_str.strip()])
-    record_messages(workflow_id, job_id, messages)
+    await record_messages(workflow_id, job_id, messages)

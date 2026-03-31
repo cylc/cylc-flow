@@ -61,6 +61,7 @@ Examples:
   $ cylc cat-log foo//2020/bar -m f
 """
 
+import asyncio
 import os
 from contextlib import suppress
 from glob import glob
@@ -70,10 +71,12 @@ from subprocess import Popen, PIPE, DEVNULL
 import sys
 from typing import TYPE_CHECKING
 
+from psutil import Process
+
 from cylc.flow.exceptions import InputError
 import cylc.flow.flags
 from cylc.flow.hostuserutil import is_remote_platform
-from cylc.flow.id_cli import parse_id
+from cylc.flow.id_cli import parse_id_async
 from cylc.flow.log_level import verbosity_to_opts
 from cylc.flow.option_parsers import (
     ID_MULTI_ARG_DOC,
@@ -244,7 +247,7 @@ def _check_fs_path(path):
         )
 
 
-def view_log(
+async def view_log(
     logpath,
     mode,
     tailer_tmpl,
@@ -308,7 +311,7 @@ def view_log(
         proc = Popen(shlex.split(cmd), stdin=DEVNULL)  # nosec
         # * batchview command is user configurable
         with suppress(KeyboardInterrupt):
-            watch_and_kill(proc)
+            await watch_and_kill(Process(proc.pid))
         return proc.wait()
 
 
@@ -414,10 +417,10 @@ def main(
 ):
     """Wrapper around the main script for simpler testing.
     """
-    _main(parser, options, *ids, color=color)
+    asyncio.run(_main(parser, options, *ids, color=color))
 
 
-def _main(
+async def _main(
     parser: COP,
     options: 'Values',
     *ids,
@@ -445,7 +448,7 @@ def _main(
             batchview_cmd = options.remote_args[3]
         except IndexError:
             batchview_cmd = None
-        res = view_log(
+        res = await view_log(
             logpath,
             mode,
             tail_tmpl,
@@ -458,7 +461,7 @@ def _main(
             sys.exit(res)
         return
 
-    workflow_id, tokens, _ = parse_id(*ids, constraint='mixed')
+    workflow_id, tokens, _ = await parse_id_async(*ids, constraint='mixed')
 
     # Get long-format mode.
     try:
@@ -522,7 +525,7 @@ def _main(
         tail_tmpl = os.path.expandvars(
             get_platform()["tail command template"]
         )
-        out = view_log(
+        out = await view_log(
             log_file_path,
             mode,
             tail_tmpl,
@@ -679,7 +682,7 @@ def _main(
             # Local task job or local job log.
             logpath = os.path.join(local_log_dir, options.filename)
             tail_tmpl = os.path.expandvars(platform["tail command template"])
-            out = view_log(
+            out = await view_log(
                 logpath,
                 mode,
                 tail_tmpl,
