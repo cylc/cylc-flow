@@ -153,7 +153,7 @@ def test_parse_cpu_file(tmpdir):
         cgroup_cpu_path='',
         memory_allocated_path='',
         cgroup_version=1,
-        max_rss = 0)
+        max_rss=0)
     bad_process_object_v1_2 = Process(
         cgroup_memory_path=mem_file,
         cgroup_cpu_path=cpu_file_v1_bad,
