@@ -257,7 +257,7 @@ async def _main(options) -> None:
     process = get_cgroup_paths(options.cgroup_location)
 
     # list of asyncio tasks
-    tasks = []
+    tasks: list[asyncio.Task] = []
 
     # Register the stop_profiler function with the signal library
     # The signal library doesn't work with asyncio, so we have to use the
