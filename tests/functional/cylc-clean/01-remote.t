@@ -123,7 +123,7 @@ dump_std "$TEST_NAME"
 
 TEST_NAME="run-dir-not-exist-post-clean.local"
 # (Could use the function `exists_ok` here instead, but this keeps it consistent with the remote test below)
-if [[ ! -a "$WORKFLOW_RUN_DIR" ]]; then
+if [[ ! -e "$WORKFLOW_RUN_DIR" ]]; then
     ok "$TEST_NAME"
 else
     fail "$TEST_NAME"

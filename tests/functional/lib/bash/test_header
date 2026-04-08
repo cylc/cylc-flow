@@ -508,7 +508,7 @@ exists_ok() {
     local FILE="$1"
     local TEST_NAME
     TEST_NAME="$(basename "${FILE}")-file-exists-ok"
-    if [[ -a $FILE ]]; then
+    if [[ -e $FILE ]]; then
         ok "${TEST_NAME}"
         return
     fi
@@ -521,7 +521,7 @@ exists_fail() {
     local FILE="$1"
     local TEST_NAME
     TEST_NAME="$(basename "${FILE}")-file-exists-fail"
-    if [[ ! -a "${FILE}" ]]; then
+    if [[ ! -e "${FILE}" ]]; then
         ok "${TEST_NAME}"
         return
     fi
