@@ -310,9 +310,12 @@ async def view_log(
             cmd = tailer_tmpl % {"filename": shlex.quote(str(logpath))}
         proc = Popen(shlex.split(cmd), stdin=DEVNULL)  # nosec
         # * batchview command is user configurable
-        with suppress(KeyboardInterrupt):
-            await watch_and_kill(Process(proc.pid))
-        return proc.wait()
+        watcher = asyncio.create_task(watch_and_kill(Process(proc.pid)))
+        try:
+            ret = proc.wait()
+        finally:
+            watcher.cancel()
+        return ret
 
 
 def get_option_parser() -> COP:

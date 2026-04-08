@@ -19,7 +19,7 @@
 # or when tail is killed.
 
 . "$(dirname "$0")/test_header"
-set_test_number 1
+set_test_number 2
 
 # Get PID of tail cmd given the parent cat-log PPID
 get_tail_pid() {
@@ -33,7 +33,7 @@ __EOF__
 log_file="${WORKFLOW_RUN_DIR}/log/foo.log"
 echo "Hello, Mr. Thompson" > "$log_file"
 
-export CYLC_PROC_POLL_INTERVAL=0.5
+
 
 TEST_NAME="${TEST_NAME_BASE}-delete"
 cylc cat-log --mode=tail "$WORKFLOW_NAME" -f foo.log 2>&1 &
