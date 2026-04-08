@@ -100,6 +100,7 @@ requests_).
  - Paul Armstrong
  - Paul Earnshaw
  - Christopher Bennett
+ - Ryan Boult
 <!-- end-shortlog -->
 
 (All contributors are identifiable with email addresses in the git version
