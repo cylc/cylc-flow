@@ -1166,6 +1166,7 @@ async def test_future_trigger_final_point(
     async with start(schd):
         for itask in schd.pool.get_tasks():
             schd.pool.spawn_on_output(itask, "succeeded")
+        await schd._main_loop()
         assert log_filter(
             regex=(
                 ".*1/baz.*not spawned: a prerequisite is beyond"

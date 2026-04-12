@@ -844,8 +844,12 @@ class Scheduler:
             flow=[FLOW_NEW],
             flow_descr=f"original flow from {self.options.starttask}"
         )
+        # Spawning to the runahead limit immediately is not strictly necessary
+        # as it would occur over several scheduler main loop iterations; we do
+        # it mainly for compatibility with integration tests pre PR #7237.
         self.pool.spawn_to_runahead_limit()
-        self.pool.queue_if_ready()
+        for itask in self.pool.get_tasks():
+            self.pool.queue_if_ready(itask)
 
     def _load_pool_from_point(self):
         """Load task pool for a cycle point, for a new run.
@@ -1656,10 +1660,7 @@ class Scheduler:
                 self.broadcast_mgr.check_ext_triggers(
                     itask, self.ext_trigger_queue)
 
-            if itask.is_ready_to_run() and not itask.is_manual_submit:
-                if itask.is_xtrigger_sequential:
-                    self.pool.spawn_next_parentless(itask)
-                self.pool.queue_task(itask)
+            self.pool.queue_if_ready(itask)
 
         if self.xtrigger_mgr.do_housekeeping:
             self.xtrigger_mgr.housekeep(self.pool.get_tasks())
@@ -1744,10 +1745,6 @@ class Scheduler:
 
         # Shutdown workflow if timeouts have occurred
         self.timeout_check()
-
-        # # Does the workflow need to shutdown on task failure?
-        # move up to top
-        # await self.workflow_shutdown()
 
         if self.options.profile_mode:
             self.update_profiler_logs(tinit)
