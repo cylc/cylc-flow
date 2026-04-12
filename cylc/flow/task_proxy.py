@@ -471,10 +471,6 @@ class TaskProxy:
         except (AttributeError, KeyError):
             return 0
 
-    def next_point(self):
-        """Return the next cycle point."""
-        return self.tdef.next_point(self.point)
-
     def is_ready_to_run(self) -> bool:
         """Is this task ready to run?
 
