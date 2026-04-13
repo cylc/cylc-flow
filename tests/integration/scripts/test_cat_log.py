@@ -39,7 +39,6 @@ def brokendir(run_dir):
     shutil.rmtree(brokendir)
 
 
-@pytest.mark.asyncio
 async def test_fail_no_file(flow):
     """It produces a helpful error if there is no workflow log file.
     """
@@ -49,7 +48,6 @@ async def test_fail_no_file(flow):
         await cat_log(parser, Options(parser)(), id_)
 
 
-@pytest.mark.asyncio
 async def test_fail_rotation_out_of_range(flow):
     """It produces a helpful error if rotation number > number of log files.
     """
@@ -70,7 +68,6 @@ async def test_fail_rotation_out_of_range(flow):
         await cat_log(parser, Options(parser)(rotation_num=1), id_)
 
 
-@pytest.mark.asyncio
 async def test_bad_workflow(run_dir):
     """Test "cylc cat-log" with bad workflow name."""
     parser = cat_log_gop()
@@ -83,9 +80,8 @@ async def test_bad_workflow(run_dir):
         await cat_log(parser, Options(parser)(filename='l'), BAD_NAME)
 
 
-@pytest.mark.asyncio
 async def test_bad_workflow2(run_dir, brokendir, capsys):
-    """Check a non existent file in a valid workflow results in error.
+    """Check a non-existent file in a valid workflow results in error.
     """
     parser = cat_log_gop()
     with pytest.raises(SystemExit, match='1'):
@@ -100,7 +96,6 @@ async def test_bad_workflow2(run_dir, brokendir, capsys):
     assert capsys.readouterr().err == msg
 
 
-@pytest.mark.asyncio
 async def test_bad_task_dir(run_dir, brokendir, capsys):
     """Check a non-existent job log dir in a valid workflow results in error.
     """
