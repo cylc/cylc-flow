@@ -16,18 +16,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Cylc profile test
-# NOTE: This test will run the Cylc profiler on the given test platform.
-# The test platform may need to be configured for this to work (e.g.
-# "cgroups path" may need to be set).
 
 . "$(dirname "$0")/test_header"
 
 if [[ "$OSTYPE" != "linux-gnu"* ]]; then
-    skip_all "Tests not compatibile with $OSTYPE"
+    skip_all "Tests not compatible with $OSTYPE"
 fi
 
 set_test_number 7
 
+# Set up test data
 mkdir -p "${PWD}/cgroups_test_data"
 
 echo 'anon 12345678' > cgroups_test_data/memory.stat
