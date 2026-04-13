@@ -1705,6 +1705,8 @@ class Scheduler:
         # Update state summary, database, and uifeed
         self.workflow_db_mgr.put_task_event_timers(self.task_events_mgr)
 
+        self.pool.release_runahead_tasks()
+
         # List of task whose states have changed.
         updated_task_list = [
             t for t in self.pool.get_tasks() if t.state.is_updated]
