@@ -38,6 +38,8 @@ from cylc.flow.scripts.profiler import (
 
 @pytest.mark.asyncio
 async def test_stop_profiler(monkeypatch, tmpdir):
+    """It should stop the profiler and send the data to the scheduler when
+    it receives a stop signal."""
     monkeypatch.setenv('CYLC_WORKFLOW_ID', "test_value")
     monkeypatch.setenv('CYLC_TASK_JOB', "test_task_job")
 
@@ -64,6 +66,7 @@ async def test_stop_profiler(monkeypatch, tmpdir):
 
 
 def test_get_resource_usage(monkeypatch, tmpdir):
+    """It should return the resource usage data of the process."""
     monkeypatch.setenv('CYLC_WORKFLOW_ID', "test_value")
 
     process_object = Process(
@@ -81,7 +84,7 @@ def test_get_resource_usage(monkeypatch, tmpdir):
 
 
 def test_parse_memory_file(tmpdir):
-
+    """It should return the memory usage of the process."""
     mem_file_v1 = tmpdir.join("memory_file_v1.txt")
     mem_file_v1.write('total_rss=1024')
     mem_file_v2 = tmpdir.join("memory_file_v2.txt")
@@ -120,7 +123,7 @@ def test_parse_memory_file(tmpdir):
 
 
 def test_parse_cpu_file(tmpdir):
-
+    """It should return the cpu usage of the process."""
     mem_file = tmpdir.join("memory_file.txt")
     mem_file.write('1024')
     cpu_file_v1_good = tmpdir.join("cpu_file_v1_good.txt")
@@ -181,7 +184,7 @@ def test_parse_cpu_file(tmpdir):
 
 
 def test_get_cgroup_name(mocker):
-
+    """It should return the cgroup name of the process."""
     mock_file = mocker.mock_open(read_data="0::bad/test/cgroup/place")
     mocker.patch("builtins.open", mock_file)
     with pytest.raises(CylcProfilerError):
@@ -193,6 +196,7 @@ def test_get_cgroup_name(mocker):
 
 
 def test_parse_memory_allocated(tmp_path_factory):
+    """It should return the memory allocated to the process."""
     good_mem_dir = tmp_path_factory.mktemp("mem_dir")
     mem_allocated_file = good_mem_dir / "memory.max"
     mem_allocated_file.write_text('99999')
@@ -263,7 +267,7 @@ def test_parse_memory_allocated(tmp_path_factory):
 
 
 def test_get_cgroup_name_file_not_found(mocker):
-
+    """It should raise an error if the cgroup file is not found."""
     def mock_os_pid():
         return 'The Thing That Should Not Be'
 
@@ -274,7 +278,7 @@ def test_get_cgroup_name_file_not_found(mocker):
 
 
 def test_get_cgroup_version(mocker):
-
+    """It should return the cgroup version of the process."""
     # Mock the Path.exists function call to return True
     mocker.patch("pathlib.Path.exists", return_value=True)
     assert get_cgroup_version('stuff/in/place',
@@ -293,6 +297,7 @@ def test_get_cgroup_version(mocker):
 
 
 def test_get_cgroup_paths(mocker):
+    """It should return the cgroup paths of the process."""
     mocker.patch("cylc.flow.scripts.profiler.get_cgroup_name",
                  return_value='test_name')
     mocker.patch("cylc.flow.scripts.profiler.get_cgroup_version",
@@ -322,7 +327,7 @@ def test_get_cgroup_paths(mocker):
 
 
 async def test_profile_data(mocker):
-    # This test should run without error
+    """"""
     mocker.patch("cylc.flow.scripts.profiler.get_cgroup_name",
                  return_value='test_name')
     mocker.patch("cylc.flow.scripts.profiler.get_cgroup_version",
@@ -350,6 +355,7 @@ def options(mocker):
 
 
 async def test_main(mocker, options):
+    """It should run the profiler and watch and kill functions concurrently."""
     # Mock Cylc env vars
     os.environ['CYLC_WORKFLOW_ID'] = "Exit Light"
     os.environ['CYLC_TASK_JOB'] = "Enter Night"
