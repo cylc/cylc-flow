@@ -235,7 +235,7 @@ class BroadcastMgr:
     # to:
     #    8.1.x
     # remove at:
-    #    8.x
+    #    8.7
     def post_load_db_coerce(self):
         """Coerce DB loaded values to config objects, i.e. DurationFloat."""
         for namespaces in self.broadcasts.values():
