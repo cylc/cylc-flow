@@ -641,7 +641,6 @@ def test_simple(set_cycling_type):
         str(p_start),
         str(p_stop),
     )
-    sequence.set_offset(-ISO8601Interval("PT10M"))
     point = sequence.get_next_point(ISO8601Point("20100808T0000"))
     assert point == ISO8601Point("20100808T0010")
     output = []
