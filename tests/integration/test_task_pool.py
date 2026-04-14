@@ -2683,3 +2683,29 @@ async def test_add_to_pool(
         schd.pool.add_to_pool(a_1)
 
         assert "1/a not added to n=0: already exists" in caplog.text
+
+
+async def test_parentless_spawning(flow, scheduler, run, complete):
+    """Check that parentless spawning works even if parented in some cycles.
+
+    Parentless spawning could be blocked if a parented cycle ended up at
+    the runahead limit. See https://github.com/cylc/cylc-flow/pull/7237.
+
+    """
+    cfg = {
+        'scheduling': {
+            'cycling mode': 'integer',
+            'initial cycle point': '1',
+            'runahead limit': 'P0',
+            'graph': {
+                'P1': 'b',
+                'R1/2/P0': 'a => b',
+            }
+        },
+    }
+    id_ = flow(cfg)
+    schd = scheduler(id_, paused_start=False)
+    async with run(schd):
+        await complete(schd, "2/b")
+        # The task pool should not be empty now.
+        assert schd.pool.get_tasks() != []
