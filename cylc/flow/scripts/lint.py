@@ -116,7 +116,7 @@ LINT_SECTION = '.'.join(LINT_TABLE)
 # to:
 #    8.3.0
 # remove at:
-#    8.4.0 ?
+#    8.7
 DEPR_LINT_SECTION = 'cylc-lint'
 
 IGNORE = 'ignore'

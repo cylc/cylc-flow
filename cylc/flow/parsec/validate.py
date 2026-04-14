@@ -1276,7 +1276,7 @@ class BroadcastConfigValidator(CylcConfigValidator):
     # to:
     #    8.1.x
     # remove at:
-    #    8.x
+    #    8.7
     @classmethod
     def coerce_interval(cls, value, keys):
         """Coerce an ISO 8601 interval into seconds.
