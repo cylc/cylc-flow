@@ -322,8 +322,7 @@ class SequenceBase(metaclass=ABCMeta):
 
     Subclasses should provide values for TYPE and TYPE_SORT_KEY.
     They should also provide get_async_expr, get_interval,
-    get_offset & set_offset (deprecated), is_on_sequence,
-    get_nearest_prev_point, get_next_point,
+    is_on_sequence, get_nearest_prev_point, get_next_point,
     get_next_point_on_sequence, get_first_point
     get_start_point, and get_stop_point.
 
@@ -360,16 +359,6 @@ class SequenceBase(metaclass=ABCMeta):
     @abstractmethod
     def get_interval(self):
         """Return the cycling interval of this sequence."""
-        pass
-
-    @abstractmethod
-    def get_offset(self):
-        """Deprecated: return the offset used for this sequence."""
-        pass
-
-    @abstractmethod
-    def set_offset(self, i_offset):
-        """Deprecated: alter state to offset the entire sequence."""
         pass
 
     # NOTE: not using @abstractmethod because we need to

@@ -445,21 +445,6 @@ class ISO8601Sequence(SequenceBase):
         """Return the interval between points in this sequence."""
         return self.step
 
-    def get_offset(self):
-        """Deprecated: return the offset used for this sequence."""
-        return self.offset
-
-    def set_offset(self, i_offset):
-        """Deprecated: alter state to i_offset the entire sequence."""
-        self.recurrence += interval_parse(str(i_offset))
-        self._cached_first_point_values = {}
-        self._cached_next_point_values = {}
-        self._cached_valid_point_booleans = {}
-        self._cached_recent_valid_points = []
-        self.value = str(self.recurrence) + '!' + str(self.exclusions)
-        if self.exclusions:
-            self.value += '!' + str(self.exclusions)
-
     # lru_cache'd see __init__()
     def _is_on_sequence(self, point):
         """Return True if point is on-sequence."""
