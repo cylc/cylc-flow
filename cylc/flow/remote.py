@@ -32,7 +32,10 @@ from subprocess import (
     Popen,
 )
 import sys
-from time import sleep
+from time import (
+    sleep,
+    time,
+)
 from typing import (
     Any,
     Dict,
@@ -79,18 +82,19 @@ def get_proc_ancestors():
 def watch_and_kill(proc):
     """Kill proc if my PPID (etc.) changed - e.g. ssh connection dropped."""
     gpa = get_proc_ancestors()
-    interval = 1  # secs
-    count = 0
+    ps_interval = 60  # secs
+    last_ps_time = time()
     while True:
-        count += 1
         if proc.poll() is not None:
             break
-        if round(count * interval) % 60 and get_proc_ancestors() != gpa:
-            # (Only run ps command once a minute)
-            sleep(1)
-            os.kill(proc.pid, signal.SIGTERM)
-            break
-        sleep(interval)
+        if time() - last_ps_time > ps_interval:
+            # Run ps command
+            if get_proc_ancestors() != gpa:
+                sleep(1)
+                os.kill(proc.pid, signal.SIGTERM)
+                break
+            last_ps_time = time()
+        sleep(1)
 
 
 def run_cmd(
