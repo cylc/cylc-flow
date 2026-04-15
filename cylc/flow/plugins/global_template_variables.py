@@ -14,11 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Plugin which loads global template variables.
+
+This loads variables from ``global.cylc[install][template variables]``,
+provisioning them for use in ``flow.cylc``.
+"""
+
 from typing import TYPE_CHECKING
 
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.parsec.fileparse import TEMPLATE_VARIABLES
-from cylc.flow.templatevars import eval_var
 
 
 if TYPE_CHECKING:
@@ -29,10 +34,5 @@ if TYPE_CHECKING:
 
 def pre_configure(srcdir: 'Path', opts: 'Values') -> dict:
     return {
-        TEMPLATE_VARIABLES: {
-            key: eval_var(value)
-            for key, value in glbl_cfg()
-            .get(['install', 'template variables'])
-            .items()
-        }
+        TEMPLATE_VARIABLES: glbl_cfg().get(['install', 'template variables'])
     }
