@@ -1411,13 +1411,13 @@ with Conf('global.cylc', desc='''
 
             .. versionadded:: 8.7.0
         '''):
-            Conf('<key>', VDR.V_STRING, None, desc='''
+            Conf('<key>', VDR.V_TEMPLATE_VARIABLE, 'None', desc='''
                 A template variable in Python syntax.
 
                 .. rubric:: Examples:
 
-                   * ``SITE = "my-site"``
-                   * ``PLATFORMS = {"hpc": "my-hpc", "cluster": "my-cluster}``
+                * ``SITE = "my-site"``
+                * ``PLATFORMS = {"hpc": "my-hpc", "cluster": "my-cluster}``
             ''')
     with Conf('platforms', desc='''
         Platforms allow you to define compute resources available at your
