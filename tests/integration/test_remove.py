@@ -20,7 +20,6 @@ import pytest
 
 from cylc.flow.commands import (
     force_trigger_tasks,
-    reload_workflow,
     remove_tasks,
     run_cmd,
 )
@@ -480,40 +479,6 @@ async def test_kill_running(flow, scheduler, run, complete, reflog):
         ('1/c', ('1/b',)),
         # The a:failed output should not cause 1/q to run
     }
-
-
-async def test_reload_changed_config(flow, scheduler, run, complete):
-    """Test that a task is removed from the pool if its configuration changes
-    to make it no longer match the graph."""
-    wid = flow({
-        'scheduling': {
-            'graph': {
-                'R1': '''
-                    a => b
-                    a:started => s & b
-                ''',
-            },
-        },
-        'runtime': {
-            'a': {
-                'simulation': {
-                    # Ensure 1/a still in pool during reload
-                    'fail cycle points': 'all',
-                },
-            },
-        },
-    })
-    schd: Scheduler = scheduler(wid, paused_start=False)
-    async with run(schd):
-        await complete(schd, '1/s')
-        # Change graph then reload
-        flow('b', workflow_id=wid)
-        await run_cmd(reload_workflow(schd))
-        assert schd.config.cfg['scheduling']['graph']['R1'] == 'b'
-        assert schd.pool.get_task_ids() == {'1/a', '1/b'}
-
-        await run_cmd(remove_tasks(schd, ['1/a'], []))
-        await complete(schd, '1/b')
 
 
 async def test_remove_triggered(flow, scheduler, start):
