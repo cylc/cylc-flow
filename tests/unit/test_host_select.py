@@ -52,28 +52,28 @@ localhost_aliases = [
 ]
 
 
-def test_localhost():
+async def test_localhost():
     """Basic test with one host to choose from."""
-    assert select_host([localhost]) == (
+    assert await select_host([localhost]) == (
         localhost,
         localhost_fqdn
     )
 
 
-def test_unique():
+async def test_unique():
     """Basic test choosing from multiple forms of localhost"""
-    name, fqdn = select_host(
+    name, fqdn = await select_host(
         localhost_aliases + [localhost]
     )
     assert name in localhost_aliases + [localhost]
     assert fqdn == localhost_fqdn
 
 
-def test_filter():
+async def test_filter():
     """Test that hosts are filtered out if specified."""
     message = 'Localhost not allowed'
     with pytest.raises(HostSelectException) as excinfo:
-        select_host(
+        await select_host(
             [localhost],
             blacklist=[localhost],
             blacklist_name=message
@@ -81,21 +81,21 @@ def test_filter():
     assert message in str(excinfo.value)
 
 
-def test_filter_invalid_blacklist(log_filter):
+async def test_filter_invalid_blacklist(log_filter):
     """Test that invalid blacklist doesn't bring down the program."""
-    result = select_host(
+    result = await select_host(
         [localhost], blacklist=[f'non_exist_{token_hex(4)}']
     )
     assert result[0] == localhost
     assert log_filter(logging.WARNING, "Could not resolve blacklisted host")
 
 
-def test_rankings():
+async def test_rankings():
     """Positive test that rankings are evaluated.
 
     (doesn't prove anything by itself hence test_unreasonable_rankings)
     """
-    assert select_host(
+    assert await select_host(
         [localhost],
         ranking_string='''
             # if this test fails due to race conditions
@@ -108,13 +108,13 @@ def test_rankings():
     ) == (localhost, localhost_fqdn)
 
 
-def test_unreasonable_rankings():
+async def test_unreasonable_rankings():
     """Negative test that rankings are evaluated.
 
     (doesn't prove anything by itself hence test_rankings)
     """
     with pytest.raises(HostSelectException) as excinfo:
-        select_host(
+        await select_host(
             [localhost],
             ranking_string='''
                 # if this test fails due to race conditions
@@ -130,10 +130,10 @@ def test_unreasonable_rankings():
     ) in str(excinfo.value)
 
 
-def test_metric_command_failure():
+async def test_metric_command_failure():
     """If the psutil command (or SSH) fails ensure the host is excluded."""
     with pytest.raises(HostSelectException) as excinfo:
-        select_host(
+        await select_host(
             [localhost],
             ranking_string='''
                 # elephant is not a psutil attribute
@@ -147,7 +147,7 @@ def test_metric_command_failure():
     assert excinfo.value.data[localhost_fqdn]['returncode'] == 2
 
 
-def test_workflow_host_select(mock_glbl_cfg):
+async def test_workflow_host_select(mock_glbl_cfg):
     """Run the workflow_host_select mechanism."""
     mock_glbl_cfg(
         'cylc.flow.host_select.glbl_cfg',
@@ -157,10 +157,10 @@ def test_workflow_host_select(mock_glbl_cfg):
                     available= {localhost}
         '''
     )
-    assert select_workflow_host() == (localhost, localhost_fqdn)
+    assert await select_workflow_host() == (localhost, localhost_fqdn)
 
 
-def test_workflow_host_select_default(mock_glbl_cfg):
+async def test_workflow_host_select_default(mock_glbl_cfg):
     """Ensure "localhost" is provided as a default host."""
     mock_glbl_cfg(
         'cylc.flow.host_select.glbl_cfg',
@@ -170,7 +170,7 @@ def test_workflow_host_select_default(mock_glbl_cfg):
                     available =
         '''
     )
-    hostname, host_fqdn = select_workflow_host()
+    hostname, host_fqdn = await select_workflow_host()
     assert hostname in localhost_aliases + [localhost]
     assert host_fqdn == localhost_fqdn
 
@@ -180,7 +180,7 @@ def test_workflow_host_select_default(mock_glbl_cfg):
     localhost == localhost_fqdn,
     reason='Cannot condemn a host unless is has a safe unique fqdn.'
 )
-def test_workflow_host_select_condemned(mock_glbl_cfg):
+async def test_workflow_host_select_condemned(mock_glbl_cfg):
     """Ensure condemned hosts are filtered out."""
     mock_glbl_cfg(
         'cylc.flow.host_select.glbl_cfg',
@@ -192,7 +192,7 @@ def test_workflow_host_select_condemned(mock_glbl_cfg):
         '''
     )
     with pytest.raises(HostSelectException) as excinfo:
-        select_workflow_host()
+        await select_workflow_host()
     assert 'blacklisted' in str(excinfo.value)
     assert 'condemned host' in str(excinfo.value)
 
@@ -215,14 +215,14 @@ def test_condemned_host_ambiguous(mock_glbl_cfg):
     assert 'ambiguous host' in excinfo.value.msg
 
 
-def test_get_metrics_no_hosts_error(caplog):
+async def test_get_metrics_no_hosts_error(caplog):
     """It should handle SSH errors.
 
     If a host is not contactable then it should be shipped.
     """
     caplog.set_level(logging.WARN, CYLC_LOG)
     data = {}
-    host_stats = _get_metrics(['not-a-host'], None, data)
+    host_stats = await _get_metrics(['not-a-host'], None, data)
     # a warning should be logged
     assert len(caplog.records) == 1
     # no data for the host should be returned
