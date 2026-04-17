@@ -101,6 +101,7 @@ requests_).
  - Paul Earnshaw
  - Christopher Bennett
  - Ryan Boult
+ - Mike Taves
 <!-- end-shortlog -->
 
 (All contributors are identifiable with email addresses in the git version

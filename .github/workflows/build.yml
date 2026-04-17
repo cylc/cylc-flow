@@ -9,7 +9,6 @@ on:
       - 'README.md'       # check markdown is valid
       - 'MANIFEST.in'     # check packaging
       - 'pyproject.toml'  # check build config
-      - 'setup.cfg'       # check deps and project config
       - '.gitignore'
       - '.github/workflows/build.yml'
 

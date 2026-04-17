@@ -6,7 +6,6 @@ on:
       - 'conda-environment.yml'
       - '.github/workflows/test_conda-build.yml'
       - 'pyproject.toml'
-      - 'setup.cfg'
   schedule:
     - cron: '17 22 * * 6'  # Every Saturday at 22:17
   workflow_dispatch:
