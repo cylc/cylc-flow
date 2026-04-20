@@ -36,22 +36,23 @@ from cylc.flow.scripts.profiler import (
 )
 
 
-@pytest.mark.asyncio
 async def test_stop_profiler(monkeypatch, tmpdir):
-    """It should stop the profiler and send the data to the scheduler when
-    it receives a stop signal."""
+    """It should capture and record data profiler is stopped."""
     monkeypatch.setenv('CYLC_WORKFLOW_ID', "test_value")
     monkeypatch.setenv('CYLC_TASK_JOB', "test_task_job")
 
-    # Mock the async record_messages function with AsyncMock
+    # capture record_messages calls
+    record_messages = mock.AsyncMock()
     monkeypatch.setattr(
-        'cylc.flow.scripts.profiler.record_messages', mock.AsyncMock()
+        'cylc.flow.scripts.profiler.record_messages', record_messages
     )
 
+    # mock the cGroup filesystem
     mem_file = tmpdir.join("memory_file.txt")
-    mem_file.write('total_rss 1234')
+    mem_file.write('total_rss=1234')
     cpu_file = tmpdir.join("cpu_file.txt")
-    cpu_file.write('5678')
+    cpu_file.write('5678000')
+    # NOTE: memory allocated is not available for cGroups v1
     mem_allocated_file = tmpdir.join("memory_allocated.txt")
     mem_allocated_file.write('99999')
 
@@ -60,15 +61,31 @@ async def test_stop_profiler(monkeypatch, tmpdir):
         cgroup_cpu_path=cpu_file,
         memory_allocated_path=mem_allocated_file,
         cgroup_version=1,
-        max_rss=0)
+        max_rss=42,
+    )
 
+    # tell the profiler to stop
     await stop_profiler(process_object, 1, [])
 
+    # the profiler should record a "cylc message" with the profiler data
+    assert record_messages.call_args_list == [
+        mock.call(
+            'test_value',
+            'test_task_job',
+            [
+                [
+                    'DEBUG',
+                    '_cylc_profiler:'
+                    ' {"max_rss": 42, "cpu_time": 5, "memory_allocated": 0}',
+                ]
+            ],
+            comms_timeout=1,
+        )
+    ]
 
-def test_get_resource_usage(monkeypatch, tmpdir):
-    """It should return the resource usage data of the process."""
-    monkeypatch.setenv('CYLC_WORKFLOW_ID', "test_value")
 
+def test_get_resource_usage():
+    """It should return 0 if cGroup information is not provided."""
     process_object = Process(
         cgroup_memory_path=None,
         cgroup_cpu_path=None,
@@ -306,8 +323,6 @@ def test_get_cgroup_paths(mocker):
     assert process.cgroup_memory_path == "test_location/test_name/memory.stat"
     assert process.cgroup_cpu_path == "test_location/test_name/cpu.stat"
 
-    mocker.patch("cylc.flow.scripts.profiler.get_cgroup_name",
-                 return_value='test_name')
     mocker.patch("cylc.flow.scripts.profiler.get_cgroup_version",
                  return_value=1)
 
@@ -317,8 +332,6 @@ def test_get_cgroup_paths(mocker):
     assert (process.cgroup_cpu_path ==
             "test_location/cpu/test_name/cpuacct.usage")
 
-    mocker.patch("cylc.flow.scripts.profiler.get_cgroup_name",
-                 return_value='test_name')
     mocker.patch("cylc.flow.scripts.profiler.get_cgroup_version",
                  return_value=3)
     with pytest.raises(CylcProfilerError) as excinfo:
