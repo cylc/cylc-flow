@@ -76,7 +76,7 @@ async def test_stop_profiler(monkeypatch, tmpdir):
                 [
                     'DEBUG',
                     '_cylc_profiler:'
-                    ' {"max_rss": 42, "cpu_time": 5, "memory_allocated": 0}',
+                    ' {"max_rss": 42, "cpu_time": 6, "memory_allocated": 0}',
                 ]
             ],
             comms_timeout=1,
@@ -186,8 +186,8 @@ def test_parse_cpu_file(tmpdir):
         cgroup_version=2,
         max_rss=0)
 
-    assert parse_cpu_file(good_process_object_v1) == 1234
-    assert parse_cpu_file(good_process_object_v2) == 1234567
+    assert parse_cpu_file(good_process_object_v1) == 1235
+    assert parse_cpu_file(good_process_object_v2) == 1234568
 
     with pytest.raises(CylcProfilerError) as excinfo:
         parse_cpu_file(bad_process_object_v1_1)
@@ -280,7 +280,14 @@ def test_parse_memory_allocated(tmp_path_factory):
         cgroup_version=2,
         max_rss=0)
 
+    # The function should return 0 if it cannot find a memory.max file with
+    # a value
     assert parse_memory_allocated(bad_process_object_v2_2) == 0
+
+    # Add a memory.max file with a value to the top level directory
+    # and check it is read
+    mem_file_1.write_text("99999")
+    assert parse_memory_allocated(bad_process_object_v2_2) == 99999
 
 
 def test_get_cgroup_name_file_not_found(mocker):
@@ -340,7 +347,8 @@ def test_get_cgroup_paths(mocker):
 
 
 async def test_profile_data(mocker):
-    """"""
+    """Test the profile function with mocked data to ensure it calls the parse
+    functions and handles the data correctly."""
     mocker.patch("cylc.flow.scripts.profiler.get_cgroup_name",
                  return_value='test_name')
     mocker.patch("cylc.flow.scripts.profiler.get_cgroup_version",

@@ -134,14 +134,14 @@ def parse_cpu_file(process: Process) -> int:
             with open(process.cgroup_cpu_path, 'r') as f:
                 for line in f:
                     if "usage_usec" in line:
-                        return int(RE_INT.findall(line)[0]) // 1000
+                        return round(int(RE_INT.findall(line)[0]) / 1000)
             raise FileNotFoundError(process.cgroup_cpu_path)
 
         elif process.cgroup_version == 1:
             with open(process.cgroup_cpu_path, 'r') as f:
                 for line in f:
                     # Cgroups v1 uses nanoseconds
-                    return int(line) // 1000000
+                    return round(int(line) / 1000000)
             raise FileNotFoundError(process.cgroup_cpu_path)
 
     except Exception as err:
