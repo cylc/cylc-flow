@@ -114,8 +114,9 @@ if TYPE_CHECKING:
 COMMANDS: 'Dict[str, Command]' = {}
 
 
-# BACK COMPAT: handle --flow=all
-# FROM: 8.4 clients.
+# BACK COMPAT: handle --flow=all from earlier clients
+# FROM: 8.0
+# TO: 8.5.0
 # REMOVE AT: 8.8
 def back_compat_flow_all(flow: List[str]) -> List[str]:
     """From 8.5 the old --flow=all is just the default.
