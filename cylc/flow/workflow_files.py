@@ -27,6 +27,7 @@ from enum import Enum
 import errno
 from collections import deque
 import os
+import shlex
 from pathlib import Path
 import re
 import shutil
@@ -70,7 +71,6 @@ from cylc.flow.pathutil import (
     make_localhost_symlinks,
 )
 from cylc.flow.unicode_rules import WorkflowNameValidator
-from cylc.flow.util import cli_format
 
 
 def handle_rmtree_err(
@@ -402,7 +402,7 @@ def _is_process_running(
         >>> _is_process_running(
         ...     'localhost',
         ...     proc.pid,
-        ...     cli_format(proc.cmdline()),
+        ...     shlex.join(proc.cmdline()),
         ... )
         True
 
@@ -452,7 +452,7 @@ def _is_process_running(
     if proc.returncode:
         # the psutil call failed in some other way e.g. network issues
         LOG.warning(
-            f'$ {cli_format(cmd)}  # returned {proc.returncode}\n{err}'
+            f'$ {shlex.join(cmd)}  # returned {proc.returncode}\n{err}'
         )
         error = True
     else:
@@ -469,7 +469,7 @@ def _is_process_running(
             f'\n{command}'
         )
 
-    return cli_format(process) == command
+    return shlex.join(process) == command
 
 
 def detect_old_contact_file(
