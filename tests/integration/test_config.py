@@ -837,3 +837,76 @@ async def test_icp_now_reload(
             f'{expected_icp}/foo',
         }
         assert not log_filter(level=logging.WARNING)
+
+
+@pytest.mark.parametrize(
+    'a, b, c, d, validation_fail, err',
+    (
+        ('initial', 'start', 'stop', 'final', True, False),
+        ('initial', 'start', 'final', 'stop', True, WorkflowConfigError),
+        ('initial', 'stop', 'start', 'final', False, WorkflowConfigError),
+        ('initial', 'stop', 'final', 'start', False, WorkflowConfigError),
+        ('initial', 'final', 'start', 'stop', True, WorkflowConfigError),
+        ('initial', 'final', 'stop', 'start', True, WorkflowConfigError),
+        ('start', 'initial', 'stop', 'final', False, WorkflowConfigError),
+        ('start', 'initial', 'final', 'stop', True, WorkflowConfigError),
+        ('start', 'stop', 'initial', 'final', True, WorkflowConfigError),
+        ('start', 'stop', 'final', 'initial', True, WorkflowConfigError),
+        ('start', 'final', 'initial', 'stop', True, WorkflowConfigError),
+        ('start', 'final', 'stop', 'initial', True, WorkflowConfigError),
+        ('stop', 'initial', 'start', 'final', True, WorkflowConfigError),
+        ('stop', 'initial', 'final', 'start', True, WorkflowConfigError),
+        ('stop', 'start', 'initial', 'final', True, WorkflowConfigError),
+        ('stop', 'start', 'final', 'initial', True, WorkflowConfigError),
+        ('stop', 'final', 'initial', 'start', True, WorkflowConfigError),
+        ('stop', 'final', 'start', 'initial', True, WorkflowConfigError),
+        ('final', 'initial', 'start', 'stop', True, WorkflowConfigError),
+        ('final', 'initial', 'stop', 'start', True, WorkflowConfigError),
+        ('final', 'start', 'initial', 'stop', True, WorkflowConfigError),
+        ('final', 'start', 'stop', 'initial', True, WorkflowConfigError),
+        ('final', 'stop', 'initial', 'start', True, WorkflowConfigError),
+        ('final', 'stop', 'start', 'initial', True, WorkflowConfigError),
+    )
+)
+async def test_milestone_cycle_points(
+    a,
+    b,
+    c,
+    d,
+    validation_fail,
+    err,
+    flow,
+    validate,
+    scheduler,
+    start,
+    log_filter,
+    caplog,
+):
+    """Ensure that all combinations of initial, start, stop and final cycle
+    point return sensible warnings or errors.
+    """
+    order = dict(zip((a, b, c, d), [2000, 2001, 2002, 2003]))
+
+    wid = flow({
+        'scheduling': {
+            'initial cycle point': order['initial'],
+            'stop after cycle point': order['stop'],
+            'final cycle point': order['final'],
+            'graph': {'P1Y': 'foo'}
+        },
+    })
+    if validation_fail:
+        if not err:
+            validate(wid)
+        elif isinstance(err, str):
+            validate(wid)
+            assert err in caplog.messages
+        else:
+            with pytest.raises(err):
+                validate(wid)
+
+    else:
+        schd = scheduler(wid, startcp=str(order['start']))
+        with pytest.raises(err):
+            async with start(schd):
+                pass
