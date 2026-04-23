@@ -38,6 +38,8 @@ from cylc.flow.parsec.exceptions import (
     ListValueError, IllegalValueError, IllegalItemError)
 from cylc.flow.subprocctx import SubFuncContext
 
+from cylc.flow.parsec.util import filter_keys
+
 
 class ParsecValidator:
     """Type validator and coercer for configurations.
@@ -181,7 +183,15 @@ class ParsecValidator:
             for key, value in cfg.items():
                 if key not in spec:
                     if '__MANY__' not in spec:
-                        raise IllegalItemError(keys, key)
+                        possible_keys = [x.name for x in spec]
+                        likely_keys = filter_keys(possible_keys, key)
+                        if likely_keys == []:
+                            raise IllegalItemError(keys, key)
+                        msg = (
+                            f'{key} is not a valid configuration,'
+                            f' did you mean {", ".join(likely_keys)}'
+                        )
+                        raise IllegalItemError(keys, key, msg=msg)
                     else:
                         # only accept the item if its value is of the same type
                         # as that of the __MANY__  item, i.e. dict or not-dict.
