@@ -33,6 +33,10 @@ from subprocess import (
     Popen,
 )
 import sys
+from time import (
+    sleep,
+    time,
+)
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -107,17 +111,19 @@ async def watch_and_kill(
 
     """
     gpa = get_proc_ancestors()
-    # Allow customising the interval to allow tests to run faster:
-    interval = interval or float(os.getenv('CYLC_PROC_POLL_INTERVAL', 60))
+    ps_interval = 60  # secs
+    last_ps_time = time()
     while True:
-        await asyncio.sleep(interval)
-        if proc.is_running() is False:
+        if proc.poll() is not None:
             break
-        new_gpa = get_proc_ancestors()
-        if new_gpa != gpa:
-            await asyncio.sleep(1)
-            os.kill(proc.pid, signal.SIGTERM)
-            return True
+        if time() - last_ps_time > ps_interval:
+            # Run ps command
+            if get_proc_ancestors() != gpa:
+                sleep(1)
+                os.kill(proc.pid, signal.SIGTERM)
+                break
+            last_ps_time = time()
+        sleep(1)
 
 
 def run_cmd(
