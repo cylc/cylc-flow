@@ -23,6 +23,7 @@ import cylc.flow
 from cylc.flow.remote import (
     construct_rsync_over_ssh_cmd,
     construct_ssh_cmd,
+    get_proc_ancestors,
     run_cmd,
 )
 
@@ -138,3 +139,10 @@ def test_construct_ssh_cmd_forward_env(monkeypatch: pytest.MonkeyPatch):
     ]
     cmd = construct_ssh_cmd(['play'], config, host)
     assert cmd == expect
+
+
+def test_get_proc_ancestors__basic():
+    """It should return a list of ancestor PIDs, starting with the parent."""
+    gpa = get_proc_ancestors()
+    assert len(gpa) > 1
+    assert gpa[0] == os.getppid()

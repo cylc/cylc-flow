@@ -13,6 +13,10 @@ from cylc.flow.scripts.cylc import pycoverage
 
 if __name__ == '__main__':
 
+    # Ignore SIGHUP (death of controlling process) for all processes, as
+    # this might give a false positive test result:
+    signal.signal(signal.SIGHUP, lambda *_: None)
+
     def log_start(proc_type: str):
         print(f'start {proc_type}')
 
@@ -57,6 +61,18 @@ if __name__ == '__main__':
 
 
 def test_watch_and_kill():
+    """It should detect changes in the process tree.
+
+    When this test runs, we get the following process tree:
+    pytest
+    `-- launcher
+        `-- parent
+             `-- child
+
+    The test then kills the launcher process, changing the process tree.
+    The parent running watch_and_kill() should detect this when monitoring the
+    child's process tree and terminate the child.
+    """
     launcher = Popen(
         [sys.executable, __file__, 'launcher'], stdout=PIPE, text=True
     )
