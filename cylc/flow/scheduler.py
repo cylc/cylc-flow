@@ -20,6 +20,7 @@ from collections import deque
 from contextlib import suppress
 import logging
 import os
+import shlex
 from pathlib import Path
 from queue import (
     Empty,
@@ -160,7 +161,6 @@ from cylc.flow.templatevars import (
     get_template_vars,
 )
 from cylc.flow.timer import Timer
-from cylc.flow.util import cli_format
 from cylc.flow.wallclock import (
     get_current_time_string,
     get_time_string_from_unix_time as time2str,
@@ -1134,7 +1134,7 @@ class Scheduler:
             fields.PID:
                 str(proc.pid),
             fields.COMMAND:
-                cli_format(proc.cmdline()),
+                shlex.join(proc.cmdline()),
             fields.PUBLISH_PORT:
                 str(self.server.pub_port),
             fields.WORKFLOW_RUN_DIR_ON_WORKFLOW_HOST:
