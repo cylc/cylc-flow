@@ -244,18 +244,57 @@ class TaskPool:
             self.active_tasks[itask.point][itask.identity] = itask
             self.active_tasks_changed = True
 
+    def spawn_to_runahead_limit(self):
+        """Spawn the task pool out to the runahead limit in one go.
+
+        Not strictly necessary, it will spawn ahead per main loop iteration,
+        but useful back-compat for tests that expect this prior to GH #....
+
+        """
+        self.compute_runahead()
+        while self.release_runahead_tasks():
+            pass
+
+    def queue_if_ready(self, itask: 'TaskProxy') -> None:
+        """Queue itask if it is ready to run.
+
+        Spawn next instance of sequential xtriggered tasks at this time too.
+
+        """
+        if (
+            itask.state(TASK_STATUS_WAITING)
+            and not itask.state.is_queued
+            and not itask.state.is_runahead
+            and not itask.is_manual_submit
+            and itask.is_ready_to_run()
+        ):
+            self.queue_task(itask)
+            if itask.is_xtrigger_sequential:
+                self.spawn_next_parentless(itask)
+
     def load_from_point(self):
         """Load the task pool for the workflow start point.
 
-        Add every parentless task out to the runahead limit.
+        Spawn the first parentless instance (if any) of every task.
+
         """
-        flow_num = self.flow_mgr.get_flow(
-            meta=f"original flow from {self.config.start_point}")
-        self.compute_runahead()
+        flow_nums = {
+            self.flow_mgr.get_flow(
+                meta=f"original flow from {self.config.start_point}")
+        }
         for name in self.task_name_list:
             tdef = self.config.get_taskdef(name)
-            point = tdef.first_point(self.config.start_point)
-            self.spawn_to_rh_limit(tdef, point, {flow_num})
+            point = tdef.next_point_parentless(self.config.start_point)
+            if point:
+                ntask, _, _ = self.get_or_spawn_task(point, tdef, flow_nums)
+                if ntask is not None:
+                    self.add_to_pool(ntask)
+        # Spawning to the runahead limit immediately is not strictly necessary
+        # as it would occur over several scheduler main loop iterations; we do
+        # it mainly for compatibility with integration tests pre PR #7237.
+        self.spawn_to_runahead_limit()
+        for itask in self.get_tasks():
+            self.queue_if_ready(itask)
 
     def db_add_new_flow_rows(self, itask: TaskProxy) -> None:
         """Add new rows to DB task tables that record flow_nums.
@@ -321,13 +360,12 @@ class TaskPool:
         ]
 
         for itask in release_me:
-            self.rh_release_and_queue(itask)
+            # Release the task.
+            if itask.state_reset(is_runahead=False):
+                self.data_store_mgr.delta_task_state(itask)
+            # Spawn the next parentless instance (if there is one) on release.
             if itask.flow_nums and not itask.is_xtrigger_sequential:
-                self.spawn_to_rh_limit(
-                    itask.tdef,
-                    itask.tdef.next_point(itask.point),
-                    itask.flow_nums
-                )
+                self.spawn_next_parentless(itask)
             released = True
 
         return released
@@ -660,8 +698,10 @@ class TaskPool:
                     TASK_STATUS_EXPIRED
                 )
                 or itask.is_manual_submit
+            ) and (
+                itask.state_reset(is_runahead=False)
             ):
-                self.rh_release_and_queue(itask)
+                self.data_store_mgr.delta_task_state(itask)
 
     def load_db_task_action_timers(self, row_idx: int, row: Iterable) -> None:
         """Load a task action timer, e.g. event handlers, retry states."""
@@ -761,18 +801,6 @@ class TaskPool:
             self.workflow_db_mgr.pri_dao.select_tasks_to_hold()
         )
 
-    def rh_release_and_queue(self, itask) -> None:
-        """Release a task from runahead limiting, and queue it if ready.
-
-        Check the task against the RH limit before calling this method (in
-        forced triggering we need to release even if beyond the limit).
-        """
-        if itask.state_reset(is_runahead=False):
-            self.data_store_mgr.delta_task_state(itask)
-        if itask.is_ready_to_run():
-            # (otherwise waiting on xtriggers etc.)
-            self.queue_task(itask)
-
     def get_or_spawn_task(
         self,
         point: 'PointBase',
@@ -825,60 +853,24 @@ class TaskPool:
         # ntask may still be None
         return ntask, is_in_pool, is_xtrig_sequential
 
-    def spawn_to_rh_limit(
-        self,
-        tdef: 'TaskDef',
-        point: Optional['PointBase'],
-        flow_nums: 'FlowNums',
-    ) -> None:
-        """Spawn parentless task instances from point to runahead limit.
-
-        Sequentially checked xtriggers will spawn the next occurrence of their
-        corresponding tasks. These tasks will keep spawning until they depend
-        on any unsatisfied xtrigger of the same sequential behavior, are no
-        longer parentless, and/or hit the runahead limit.
-
-        """
+    def spawn_next_parentless(self, itask: 'TaskProxy') -> None:
+        """Spawn next parentless instance of this task."""
         if (
-            not flow_nums  # Force-triggered no-flow task
-            or point is None  # Reached end of sequence?
-            or point < self.config.start_point  # Warm start
+            not itask.flow_nums  # Force-triggered no-flow task
+            or itask.point < self.config.start_point  # Warm start
         ):
             return
-        if self.runahead_limit_point is None:
-            self.compute_runahead()
-            if self.runahead_limit_point is None:
-                return
-
-        is_xtrig_sequential = False
-        while point is not None and (point <= self.runahead_limit_point):
-            if tdef.is_parentless(point, cutoff=self.config.start_point):
-                ntask, is_in_pool, is_xtrig_sequential = (
-                    self.get_or_spawn_task(point, tdef, flow_nums)
-                )
-                if ntask is not None:
-                    if not is_in_pool:
-                        self.add_to_pool(ntask)
-                    self.rh_release_and_queue(ntask)
-                if is_xtrig_sequential:
-                    break
-            point = tdef.next_point(point)
-
-        # Once more for the runahead-limited task (don't release it).
-        if not is_xtrig_sequential:
-            self.spawn_if_parentless(tdef, point, flow_nums)
-
-    def spawn_if_parentless(self, tdef, point, flow_nums):
-        """Spawn a task if parentless, regardless of runahead limit."""
-        if (
-            flow_nums
-            and point is not None
-            and tdef.is_parentless(point, cutoff=self.config.start_point)
-        ):
-            ntask, is_in_pool, _ = self.get_or_spawn_task(
-                point, tdef, flow_nums
+        point = itask.tdef.next_point_parentless(
+            self.config.start_point, itask.point)
+        if point is not None:
+            ntask, is_in_pool, _ = (
+                self.get_or_spawn_task(point, itask.tdef, itask.flow_nums)
             )
             if ntask is not None and not is_in_pool:
+                LOG.debug(
+                    f"Next parentless instance of {itask.identity}"
+                    f" is {ntask.identity}"
+                )
                 self.add_to_pool(ntask)
 
     def remove(self, itask: 'TaskProxy', reason: Optional[str] = None) -> None:
@@ -889,24 +881,19 @@ class TaskPool:
         # xtriggers are no longer relevant -> remove them
         self.xtrigger_mgr.force_satisfy_all(itask, log=False)
 
-        if itask.state.is_runahead and itask.flow_nums:
+        if (
+            itask.flow_nums and (
+                itask.state.is_runahead or itask.is_xtrigger_sequential
+            )
+        ):
             # If removing a parentless runahead-limited task
             # auto-spawn its next instance first.
-            self.spawn_if_parentless(
-                itask.tdef,
-                itask.tdef.next_point(itask.point),
-                itask.flow_nums
-            )
+            self.spawn_next_parentless(itask)
 
         msg = f"removed from the n=0 window: {reason or 'completed'}"
 
         # Mark as transient in case itask is still processed in other contexts.
         itask.transient = True
-
-        if itask.is_xtrigger_sequential:
-            self.xtrigger_mgr.sequential_has_spawned_next.discard(
-                itask.identity
-            )
 
         try:
             del self.active_tasks[itask.point][itask.identity]
@@ -950,10 +937,6 @@ class TaskPool:
             self.workflow_db_mgr.process_queued_ops()
 
             del itask
-
-            # removing this task could nudge the runahead limit forward
-            if self.compute_runahead():
-                self.release_runahead_tasks()
 
     def get_tasks(self) -> List[TaskProxy]:
         """Return a list of task proxies in the task pool."""
@@ -1110,8 +1093,8 @@ class TaskPool:
             ):
                 max_offset = itask.tdef.max_future_prereq_offset
         self.max_future_offset = max_offset
-        if max_offset != orig and self.compute_runahead(force=True):
-            self.release_runahead_tasks()
+        if max_offset != orig:
+            self.compute_runahead(force=True)
 
     def reload(self, config: 'WorkflowConfig') -> None:
         self.config = config   # store the updated config
@@ -1210,18 +1193,10 @@ class TaskPool:
             self.config.runtime['descendants']
         )
 
-        if self.compute_runahead():
-            self.release_runahead_tasks()
-
         # Now queue all tasks that are ready to run
         for itask in self.get_tasks():
             # Recreate data store elements from task pool.
             self.create_data_store_elements(itask)
-            if itask.state.is_queued:
-                # Already queued
-                continue
-            if itask.is_ready_to_run() and not itask.state.is_runahead:
-                self.queue_task(itask)
 
     def set_stop_point(self, stop_point: 'PointBase') -> bool:
         """Set the workflow stop cycle point.
@@ -1564,12 +1539,6 @@ class TaskPool:
                     if not in_pool:
                         self.add_to_pool(t)
 
-                    if (
-                        self.runahead_limit_point is not None
-                        and t.point <= self.runahead_limit_point
-                    ):
-                        self.rh_release_and_queue(t)
-
                     # Event-driven suicide.
                     if (
                         t.state.suicide_prerequisites and
@@ -1626,9 +1595,6 @@ class TaskPool:
             if not itask.state(TASK_STATUS_FAILED, TASK_OUTPUT_SUBMIT_FAILED):
                 self.remove(itask)
                 ret = True
-            # Recompute runahead either way; failed tasks don't count in C7.
-            if self.compute_runahead():
-                self.release_runahead_tasks()
             return ret
 
         if not itask.state.outputs.is_complete():
@@ -1646,8 +1612,6 @@ class TaskPool:
             return False
 
         self.remove(itask)
-        if self.compute_runahead():
-            self.release_runahead_tasks()
         return True
 
     def spawn_on_all_outputs(
@@ -1668,7 +1632,7 @@ class TaskPool:
         if not itask.flow_nums:
             return
 
-        for _trigger, message, is_completed in itask.state.outputs:
+        for _, message, is_completed in itask.state.outputs:
             if completed_only and not is_completed:
                 continue
             try:
@@ -1697,11 +1661,6 @@ class TaskPool:
                     )
                     self.data_store_mgr.delta_task_prerequisite(c_task)
                 self.add_to_pool(c_task)
-                if (
-                    self.runahead_limit_point is not None
-                    and c_task.point <= self.runahead_limit_point
-                ):
-                    self.rh_release_and_queue(c_task)
 
     def can_be_spawned(self, name: str, point: 'PointBase') -> bool:
         """Return True if a point/name is within graph bounds."""
@@ -2098,8 +2057,6 @@ class TaskPool:
         """
         matched, _unmatched = self.id_match(set(items))
 
-        no_op = True
-
         # Clean and separate requested prerequisite and xtrigger specs.
         if prereqs != ['all']:
             set_all = False
@@ -2146,15 +2103,12 @@ class TaskPool:
                     self.merge_flows(itask, flow_nums)
                     self._set_prereqs_itask(
                         itask, valid_prereqs, valid_xtrigs, set_all)
-                    no_op = False
                 else:
                     # Outputs (may be empty list)
                     # Spawn as if seq xtrig of parentless task was satisfied,
                     # with associated task producing these outputs.
                     self.merge_flows(itask, flow_nums)
-                    self.check_spawn_psx_task(itask)
                     self._set_outputs_itask(itask, outputs)
-                    no_op = False
 
             else:
                 # set inactive task
@@ -2171,24 +2125,18 @@ class TaskPool:
                     self._set_prereqs_tdef(
                         icycle, tdef, valid_prereqs, valid_xtrigs, flow_nums,
                         flow_wait, set_all)
-                    no_op = False
                 else:
                     # Outputs (may be empty list)
                     trans = self._load_db_task_proxy(
                         icycle, tdef, flow_nums,
                         flow_wait=flow_wait, transient=True
                     )
-                    if trans and self._set_outputs_itask(trans, outputs):
-                        no_op = False
+                    if trans:
+                        self._set_outputs_itask(trans, outputs)
 
         if warnings_flow_none:
             msg = '\n  * '.join(warnings_flow_none)
             LOG.warning(f"Already active - ignoring no-flow set: \n  * {msg}")
-
-        if not no_op:
-            # for "cylc play --start-tasks" compute runahead after spawning
-            self.compute_runahead()
-            self.release_runahead_tasks()
 
     def _get_valid_prereqs(
         self, prereqs: Set[PrereqTuple], tdef: 'TaskDef', point: 'PointBase'
@@ -2330,17 +2278,6 @@ class TaskPool:
         # xtriggers, including "all"
         self.xtrigger_mgr.force_satisfy(itask, xtrigs)
 
-        if (
-            itask.state.is_runahead
-            and self.runahead_limit_point is not None
-            and itask.point <= self.runahead_limit_point
-        ):
-            self.spawn_to_rh_limit(
-                itask.tdef,
-                itask.tdef.next_point(itask.point),
-                itask.flow_nums
-            )
-
     def _set_prereqs_tdef(
         self,
         point: 'PointBase',
@@ -2404,15 +2341,6 @@ class TaskPool:
             # (could also be unhandled failed)
             self.data_store_mgr.delta_task_state(itask)
 
-        if itask.state_reset(is_runahead=False):
-            # Can force trigger runahead-limited tasks.
-            self.data_store_mgr.delta_task_state(itask)
-            self.spawn_to_rh_limit(
-                itask.tdef,
-                itask.tdef.next_point(itask.point),
-                itask.flow_nums
-            )
-
         if not itask.state.is_queued:
             # queue it if limiting
             active, _ = self.count_active_tasks()
@@ -2429,30 +2357,6 @@ class TaskPool:
             # If not queued now, record the task as ready to run.
             itask.waiting_on_job_prep = True
             self.tasks_to_trigger_now.add(itask)
-
-        # Task may be set running before xtrigger is satisfied,
-        # if so check/spawn if xtrigger sequential.
-        self.check_spawn_psx_task(itask)
-
-    def check_spawn_psx_task(self, itask: 'TaskProxy') -> None:
-        """Check and spawn parentless sequential xtriggered task (psx)."""
-        # Will spawn out to RH limit or next parentless clock trigger
-        # or non-parentless.
-        if (
-            itask.is_xtrigger_sequential
-            and (
-                itask.identity not in
-                self.xtrigger_mgr.sequential_has_spawned_next
-            )
-        ):
-            self.xtrigger_mgr.sequential_has_spawned_next.add(
-                itask.identity
-            )
-            self.spawn_to_rh_limit(
-                itask.tdef,
-                itask.tdef.next_point(itask.point),
-                itask.flow_nums
-            )
 
     def clock_expire_tasks(self):
         """Expire any tasks past their clock-expiry time."""
@@ -2507,9 +2411,6 @@ class TaskPool:
                 ):
                     # Don't spawn successor if the task is parentless.
                     self.remove(itask, "flow stopped")
-
-        if self.compute_runahead():
-            self.release_runahead_tasks()
 
     def log_task_pool(self, log_lvl=logging.DEBUG):
         """Log content of task pool, for debugging."""
@@ -2583,5 +2484,3 @@ class TaskPool:
             LOG.info(f"[{itask}] spawning on pre-merge outputs")
             itask.flow_wait = False
             self.spawn_on_all_outputs(itask, completed_only=True)
-            self.spawn_to_rh_limit(
-                itask.tdef, itask.next_point(), itask.flow_nums)

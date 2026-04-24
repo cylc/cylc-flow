@@ -268,6 +268,7 @@ async def test_set_mutation(
 
             # wait for the command to be received and run it
             await process_command(schd)
+            await schd._main_loop()
 
             # close the error dialogue
             # NOTE: This hides an asyncio error that does not occur outside of
