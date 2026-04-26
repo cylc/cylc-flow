@@ -93,20 +93,29 @@ class WorkflowSubscriber(ZMQSocketBase):
         for topic in self.topics:
             self.socket.setsockopt(zmq.SUBSCRIBE, topic)
 
+    def unsubscribe_topic(self, topic):
+        if topic in self.topics:
+            self.socket.setsockopt(zmq.UNSUBSCRIBE, topic)
+            self.topics.discard(topic)
+
+    def subscribe_topic(self, topic):
+        if topic not in self.topics:
+            self.socket.setsockopt(zmq.SUBSCRIBE, topic)
+            self.topics.add(topic)
+
     async def subscribe(self, msg_handler, *args, **kwargs):
         """Subscribe to updates from the provided socket."""
         while True:
-            if self.stopping:
-                break
             try:
                 [topic, msg] = await self.socket.recv_multipart(
                     flags=zmq.NOBLOCK)
+                if callable(msg_handler):
+                    msg_handler(topic, msg, *args, **kwargs)
+                else:
+                    data = json.loads(msg)
+                    sys.stdout.write(
+                        json.dumps(data, indent=4) + '\n')
             except zmq.ZMQError:
                 await asyncio.sleep(NO_RECEIVE_INTERVAL)
-                continue
-            if callable(msg_handler):
-                msg_handler(topic, msg, *args, **kwargs)
-            else:
-                data = json.loads(msg)
-                sys.stdout.write(
-                    json.dumps(data, indent=4) + '\n')
+            if self.stopping:
+                break

@@ -69,6 +69,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Dict,
+    Iterable,
     List,
     Literal,
     Optional,
@@ -3087,6 +3088,29 @@ class DataStoreMgr:
 
         return workflow_msg
 
+    def get_data_elements(self, elements: Iterable):
+        """Gather data requested elements into a Protobuf message.
+
+        Args:
+            elements (Iterable):
+                Iterable of keys from DATA dictionary.
+
+        Returns:
+            cylc.flow.data_messages_pb2.PbEntireWorkflow
+
+        """
+
+        data = self.data[self.workflow_id]
+
+        workflow_msg = PbEntireWorkflow()
+        for element in (e for e in elements if e in DATA_TEMPLATE):
+            if element == WORKFLOW:
+                getattr(workflow_msg, element).CopyFrom(data[element])
+            else:
+                getattr(workflow_msg, element).extend(data[element].values())
+
+        return workflow_msg
+
     def get_publish_deltas(self):
         """Return deltas for publishing."""
         all_deltas = DELTAS_MAP[ALL_DELTAS]()
@@ -3102,7 +3126,7 @@ class DataStoreMgr:
         self.publish_pending = True
         return deepcopy(result)
 
-    def get_data_elements(self, element_type):
+    def get_delta_elements(self, element_type):
         """Get elements of a given type in the form of a delta.
 
         Args:
@@ -3134,3 +3158,25 @@ class DataStoreMgr:
                 f'$edge|{left_tokens.relative_id}|{right_tokens.relative_id}'
             )
         ).id
+
+    # subscription stubs
+    def graphql_sub_interrogate(self, sub_id, info):
+        """Scope data requirements."""
+        pass
+
+    async def graphql_sub_data_match(self, w_id, sub_id):
+        """Match store data level to requested graphql subscription."""
+        pass
+
+    async def graphql_sub_discard(self, sub_id):
+        """Discard graphql subscription references."""
+        pass
+
+    async def set_query_sync_levels(
+        self,
+        w_ids: Iterable[str],
+        level: Optional[Iterable[str]] = None,
+        expire_delay: Optional[float] = None,
+    ):
+        """Set a workflow sync level."""
+        pass

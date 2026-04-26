@@ -15,6 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import asyncio
+import io
+import json
+from contextlib import redirect_stdout
 
 from cylc.flow.network.subscriber import (
     WorkflowSubscriber,
@@ -22,8 +25,12 @@ from cylc.flow.network.subscriber import (
 )
 
 
-async def test_publisher(flow, scheduler, run, one_conf, port_range):
-    """It should publish deltas when the flow starts."""
+def bespoke_encoder(data):
+    return data.encode('utf-8')
+
+
+async def test_subscriber(flow, scheduler, run, one_conf, port_range):
+    """It should recieve publish deltas when the flow starts."""
     id_ = flow(one_conf)
     schd = scheduler(id_, paused_start=False)
     async with run(schd):
@@ -36,12 +43,36 @@ async def test_publisher(flow, scheduler, run, one_conf, port_range):
         )
 
         subscriber.unsubscribe_topic(b'shutdown')
+        # test unsubscribe non-subscribed
+        subscriber.unsubscribe_topic(b'workflow')
+        assert subscriber.topics == set()
+        subscriber.subscribe_topic(b'workflow')
+        # test subscribe to already-subscribed
         subscriber.subscribe_topic(b'workflow')
         assert subscriber.topics == {b'workflow'}
+
+        # create a subscriber2 with no specified host/port and
+        # a bespoke topic/message
+        subscriber2 = WorkflowSubscriber(
+            schd.workflow,
+            topics=[b'bespoke']
+        )
+        bespoke_msg = {'this': 'that'}
+        bespoke_json = json.dumps(bespoke_msg, indent=4)
+        await schd.server.publisher.publish(
+            *[(b'bespoke', bespoke_json, bespoke_encoder)]
+        )
 
         async with asyncio.timeout(2):
             # wait for the first delta from the workflow
             btopic, msg = await subscriber.socket.recv_multipart()
+            # get the published bespoke msg
+            f = io.StringIO()
+            with redirect_stdout(f):
+                subscriber2.stopping = True
+                await subscriber2.subscribe(msg_handler=None)
+        # test the default message handling
+        assert f.getvalue() == bespoke_json + '\n'
 
         _, delta = process_delta_msg(btopic, msg, None)
         for key in ('added', 'updated'):

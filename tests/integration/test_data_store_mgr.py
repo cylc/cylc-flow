@@ -235,15 +235,17 @@ def test_generate_graph_elements(mod_harness):
     assert len(data[TASK_PROXIES]) == len(task_defs)
 
 
-def test_get_data_elements(mod_harness):
+def test_get_data_delta_elements(mod_harness):
     schd, data = mod_harness
-    flow_msg = schd.data_store_mgr.get_data_elements(TASK_PROXIES)
-    assert len(flow_msg.added) == len(data[TASK_PROXIES])
+    w_id = schd.data_store_mgr.workflow_id
+    flow_msg = schd.data_store_mgr.get_data_elements([TASK_PROXIES, WORKFLOW])
+    assert len(getattr(flow_msg, TASK_PROXIES)) == len(data[TASK_PROXIES])
+    assert getattr(flow_msg, WORKFLOW).id == w_id
 
-    flow_msg = schd.data_store_mgr.get_data_elements(WORKFLOW)
+    flow_msg = schd.data_store_mgr.get_delta_elements(WORKFLOW)
     assert flow_msg.added.last_updated == data[WORKFLOW].last_updated
 
-    none_msg = schd.data_store_mgr.get_data_elements('fraggle')
+    none_msg = schd.data_store_mgr.get_delta_elements('fraggle')
     assert len(none_msg.ListFields()) == 0
 
 
@@ -794,7 +796,10 @@ async def test_flow_numbers(flow, scheduler, start):
         await schd.update_data_structure()
 
         # the task should not have a flow number as it is n>0
-        ds_task = schd.data_store_mgr.get_data_elements(TASK_PROXIES).added[1]
+        ds_task = getattr(
+            schd.data_store_mgr.get_data_elements([TASK_PROXIES]),
+            TASK_PROXIES
+        )[1]
         assert ds_task.name == 'b'
         assert ds_task.flow_nums == '[]'
 
@@ -805,7 +810,7 @@ async def test_flow_numbers(flow, scheduler, start):
         await schd.update_data_structure()
 
         # the task should now exist in the new flow
-        ds_task = schd.data_store_mgr.get_data_elements(TASK_PROXIES).added[1]
+        ds_task = schd.data_store_mgr.get_delta_elements(TASK_PROXIES).added[1]
         assert ds_task.name == 'b'
         assert ds_task.flow_nums == '[2]'
 
