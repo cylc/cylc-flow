@@ -13,6 +13,17 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+    Test set for the filter_keys function, tests a series of different
+    keys to evaluate whether they get the correct possible output.
+
+    real_test_data : List[String]
+        A real examples of a list of 40 possible keys
+
+    parametrize: test cases
+        The list of different key inputs and expected outputs for that key.
+
+"""
 from cylc.flow.parsec.util import filter_keys
 import pytest
 real_test_data = ['completion', 'platform', 'inherit', 'script',
