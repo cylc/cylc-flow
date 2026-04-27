@@ -31,7 +31,6 @@ from subprocess import (
 import sys
 from time import monotonic
 from typing import (
-    TYPE_CHECKING,
     Any,
     Dict,
     List,
