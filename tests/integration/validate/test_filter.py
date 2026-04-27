@@ -20,6 +20,11 @@ from cylc.flow.parsec.exceptions import IllegalItemError
 
 
 def test_filtered_keys_error(flow, validate):
+    """
+    Test evaluates an invalid key: 'retry delays', and checks that
+    this returns an IllegalItemError. REGEX for the event possible keys
+    change.
+    """
     id_ = flow({
         'scheduling': {
             'graph': {

@@ -418,6 +418,14 @@ def filter_keys(possible_keys: list[str], key: str) -> list[str]:
     Finds likelihood bases on ratio of correct letters to total letters,
     returns the two highest.
 
+    Functions by using the Counter class to get a list of number
+    counts for the entered key, finds the intersection between it and
+    the current possible key, totals the count, doubles it and divides
+    by the total number of letters in both entered and possible key
+    to get a ratio where 1 is an exact match. Sorts the keys by ratio,
+    accepts the highest match if more than 20% similar and accepts
+    the second highest if it's also high.
+
     Args:
         possible_keys:
             The list of all possible keys
@@ -448,9 +456,12 @@ def filter_keys(possible_keys: list[str], key: str) -> list[str]:
         filtered_keys.append((possible_key, ratio))
 
     filtered_keys.sort(key=lambda x: x[1], reverse=True)
+    # no similar keys to suggest
     if filtered_keys[0][1] < 0.2:
         return []
 
+    # pick the most likely suggestion, and any others
+    # within a 90% of the similarity score of it
     final_keys = [filtered_keys[0]]
     if len(filtered_keys) > 1 and filtered_keys[1][1] > final_keys[0][1] * .9:
         final_keys.append(filtered_keys[1])
