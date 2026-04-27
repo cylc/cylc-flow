@@ -20,7 +20,7 @@ The copy and override functions below assume values are either dicts
 """
 
 from copy import copy
-from collections import deque
+from collections import deque, Counter
 import re
 import sys
 
@@ -410,3 +410,63 @@ def expand_many_section(config):
             name = dequote(name.strip()).strip()
             replicate(ret.setdefault(name, {}), section)
     return ret
+
+
+def filter_keys(possible_keys: list[str], key: str) -> list[str]:
+    """Filters possible keys into most likely key based off current key
+
+    Finds likelihood bases on ratio of correct letters to total letters,
+    returns the two highest.
+
+    Functions by using the Counter class to get a list of number
+    counts for the entered key, finds the intersection between it and
+    the current possible key, totals the count, doubles it and divides
+    by the total number of letters in both entered and possible key
+    to get a ratio where 1 is an exact match. Sorts the keys by ratio,
+    accepts the highest match if more than 20% similar and accepts
+    the second highest if it's also high.
+
+    Args:
+        possible_keys:
+            The list of all possible keys
+        key:
+            Key value being validated
+
+    Returns:
+        A list of filtered keys
+    """
+    filtered_keys: list[tuple[str, float]] = []
+    key_counter = Counter(key)
+    for possible_key in possible_keys:
+        possible_key_counter = Counter(possible_key)
+
+        # simple ratio for whole key
+        similarity = key_counter & possible_key_counter
+        ratio = (similarity.total() * 2) / (len(key) + len(possible_key))
+
+        # possible more accurate ratios for individual words
+        parsed_possible_key = possible_key.split(" ")
+        for possible_word in parsed_possible_key:
+            possible_word_counter = Counter(possible_word)
+            similarity = key_counter & possible_word_counter
+            word_ratio = (similarity.total() * 2)
+            word_ratio = word_ratio / (len(key) + len(possible_word_counter))
+            if word_ratio > ratio:
+                ratio = word_ratio
+        filtered_keys.append((possible_key, ratio))
+
+    filtered_keys.sort(key=lambda x: x[1], reverse=True)
+    if filtered_keys[0][1] < 0.2:
+        # no similar keys to suggest
+        return []
+
+    # pick the most likely suggestion, and any others
+    # within a 90% of the similarity score of it
+    final_keys = [filtered_keys[0]]
+    if len(filtered_keys) > 1 and filtered_keys[1][1] > final_keys[0][1] * .9:
+        final_keys.append(filtered_keys[1])
+
+    return [
+        final_keys[i][0]
+        for i in range(0, len(final_keys))
+    ]

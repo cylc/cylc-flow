@@ -24,9 +24,7 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}"
 run_fail "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
-cmp_ok "${TEST_NAME}.stderr" <<__END__
-IllegalItemError: [scheduling]initial cycle time
-__END__
+grep_ok 'IllegalItemError: \[scheduling\]initial cycle time.*' "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
 purge
 exit
