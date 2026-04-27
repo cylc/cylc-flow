@@ -40,6 +40,8 @@ from typing import (
     overload,
 )
 
+import psutil
+
 from cylc.flow import (
     LOG,
     __version__ as CYLC_VERSION,
@@ -51,9 +53,6 @@ from cylc.flow.platforms import (
     get_platform,
 )
 from cylc.flow.util import format_cmd
-
-if TYPE_CHECKING:
-    import psutil
 
 
 def get_proc_ancestors(proc: psutil.Process | None = None) -> list[int]:
