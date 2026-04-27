@@ -210,8 +210,8 @@ include-package-data = true
 version = {attr = "cylc.flow.__version__"}
 
 [tool.setuptools.packages.find]
-include = ["cylc", "cylc.*"]
-namespaces = false
+include = ["cylc*"]
+namespaces = true
 
 [tool.towncrier]
 directory = "changes.d"
