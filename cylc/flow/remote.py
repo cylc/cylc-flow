@@ -40,8 +40,6 @@ from typing import (
     overload,
 )
 
-import psutil
-
 from cylc.flow import (
     LOG,
     __version__ as CYLC_VERSION,
