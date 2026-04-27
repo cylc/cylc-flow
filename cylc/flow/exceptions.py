@@ -529,3 +529,16 @@ class InvalidCompletionExpression(CylcError):
 
     def __str__(self):
         return self.message
+
+
+class CylcProfilerError(CylcError):
+    """Exception for errors raised from the cylc profiler. These errors do not
+    affect workflows functionally, just stats gathering. We don't want to
+    panic users."""
+    def __init__(self, exc: Exception, error_msg: str) -> None:
+        CylcError.__init__(
+            self,
+            f"{exc}. {error_msg}. This error came from the Cylc profiler"
+            f" and is not a problem with your workflow. Statistics gathering "
+            f"for the analysis view may be incomplete."
+        )

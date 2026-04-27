@@ -653,7 +653,7 @@ def main() -> None:  # pragma: no cover
 
 
 def _main(opts, cmd_args) -> int:
-    """Implemnent the Cylc CLI.
+    """Implement the Cylc CLI.
 
     Returns the exit code as an integer.
     """
