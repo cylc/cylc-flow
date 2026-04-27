@@ -157,7 +157,7 @@ async def test_remote_tidy(
 
     notthisone_msg = (
         'platform: notthisone - clean up did not complete'
-        '\nUnable to find contactable host for notthisone'
+        '\nUnable to find contactable host for platform: notthisone'
     )
     assert notthisone_msg in records
 

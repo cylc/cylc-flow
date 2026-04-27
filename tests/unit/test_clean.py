@@ -14,12 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import asyncio
+from copy import deepcopy
 from glob import iglob
 import logging
 import os
 from pathlib import Path
 import shutil
-from subprocess import Popen
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -40,9 +41,7 @@ from cylc.flow import (
     clean as cylc_clean,
 )
 from cylc.flow.clean import (
-    RemoteCleanTuple,
     _clean_using_glob,
-    _remote_clean_cmd,
     clean,
     glob_in_run_dir,
     init_clean,
@@ -55,7 +54,6 @@ from cylc.flow.exceptions import (
     WorkflowFilesError,
 )
 from cylc.flow.pathutil import parse_rm_dirs
-from cylc.flow.platforms import get_host_from_platform
 from cylc.flow.scripts.clean import CleanOptions
 from cylc.flow.workflow_files import (
     WorkflowFiles,
@@ -156,12 +154,12 @@ def test_clean_check__fail(
         )
     ]
 )
-def test_init_clean(
-    db_platforms: List[str],
-    opts: Dict[str, Any],
+async def test_init_clean(
+    db_platforms: list[str],
+    opts: dict[str, Any],
     clean_called: bool,
     remote_clean_called: bool,
-    monkeypatch: pytest.MonkeyPatch, monkeymock: 'MonkeyMock',
+    monkeypatch: pytest.MonkeyPatch,
     tmp_run_dir: Callable
 ) -> None:
     """Test the init_clean() function logic.
@@ -175,17 +173,20 @@ def test_init_clean(
     id_ = 'foo/bar/'
     rdir = tmp_run_dir(id_, installed=True)
     Path(rdir, WorkflowFiles.Service.DIRNAME, WorkflowFiles.Service.DB).touch()
-    mock_clean = monkeymock('cylc.flow.clean.clean')
-    mock_remote_clean = monkeymock('cylc.flow.clean.remote_clean')
-    monkeypatch.setattr('cylc.flow.clean.get_platforms_from_db',
-                        lambda x: set(db_platforms))
+    monkeypatch.setattr('cylc.flow.clean.clean', mock_clean := mock.Mock())
+    monkeypatch.setattr(
+        'cylc.flow.clean.remote_clean', mock_remote_clean := mock.AsyncMock()
+    )
+    monkeypatch.setattr(
+        'cylc.flow.clean.get_platforms_from_db', lambda x: set(db_platforms)
+    )
 
-    init_clean(id_, opts=CleanOptions(**opts))
+    await init_clean(id_, opts=CleanOptions(**opts))
     assert mock_clean.called is clean_called
     assert mock_remote_clean.called is remote_clean_called
 
 
-def test_init_clean__no_dir(
+async def test_init_clean__no_dir(
     monkeymock: 'MonkeyMock', tmp_run_dir: Callable,
     caplog: pytest.LogCaptureFixture
 ) -> None:
@@ -194,13 +195,13 @@ def test_init_clean__no_dir(
     mock_clean = monkeymock('cylc.flow.clean.clean')
     mock_remote_clean = monkeymock('cylc.flow.clean.remote_clean')
 
-    init_clean('foo/bar', opts=CleanOptions())
+    await init_clean('foo/bar', opts=CleanOptions())
     assert "No directory to clean" in caplog.text
     assert mock_clean.called is False
     assert mock_remote_clean.called is False
 
 
-def test_init_clean__no_db(
+async def test_init_clean__no_db(
     monkeymock: 'MonkeyMock', tmp_run_dir: Callable,
     caplog: pytest.LogCaptureFixture
 ) -> None:
@@ -210,7 +211,7 @@ def test_init_clean__no_db(
     mock_clean = monkeymock('cylc.flow.clean.clean')
     mock_remote_clean = monkeymock('cylc.flow.clean.remote_clean')
 
-    init_clean('bespin', opts=CleanOptions())
+    await init_clean('bespin', opts=CleanOptions())
     assert (
         "No workflow database for bespin - will only clean locally"
     ) in caplog.text
@@ -218,7 +219,7 @@ def test_init_clean__no_db(
     assert mock_remote_clean.called is False
 
 
-def test_init_clean__remote_only_no_db(
+async def test_init_clean__remote_only_no_db(
     monkeymock: 'MonkeyMock', tmp_run_dir: Callable
 ) -> None:
     """Test remote-only init_clean() when the workflow DB doesn't exist"""
@@ -227,7 +228,7 @@ def test_init_clean__remote_only_no_db(
     mock_remote_clean = monkeymock('cylc.flow.clean.remote_clean')
 
     with pytest.raises(ServiceFileError) as exc:
-        init_clean('hoth', opts=CleanOptions(remote_only=True))
+        await init_clean('hoth', opts=CleanOptions(remote_only=True))
     assert (
         "No workflow database for hoth - cannot perform remote clean"
     ) in str(exc.value)
@@ -235,7 +236,7 @@ def test_init_clean__remote_only_no_db(
     assert mock_remote_clean.called is False
 
 
-def test_init_clean__running_workflow(
+async def test_init_clean__running_workflow(
     monkeypatch: pytest.MonkeyPatch, tmp_run_dir: Callable
 ) -> None:
     """Test init_clean() fails when workflow is still running"""
@@ -246,7 +247,7 @@ def test_init_clean__running_workflow(
     tmp_run_dir('yavin')
 
     with pytest.raises(ServiceFileError) as exc:
-        init_clean('yavin', opts=CleanOptions())
+        await init_clean('yavin', opts=CleanOptions())
     assert "Cannot clean running workflow" in str(exc.value)
 
 
@@ -255,11 +256,11 @@ def test_init_clean__running_workflow(
     [(None, None, []),
      (["r2d2:c3po"], {"r2d2", "c3po"}, ["r2d2:c3po"])]
 )
-def test_init_clean__rm_dirs(
-    rm_dirs: Optional[List[str]],
-    expected_clean: Set[str],
-    expected_remote_clean: List[str],
-    monkeymock: 'MonkeyMock', monkeypatch: pytest.MonkeyPatch,
+async def test_init_clean__rm_dirs(
+    rm_dirs: list[str] | None,
+    expected_clean: set[str],
+    expected_remote_clean: list[str],
+    monkeypatch: pytest.MonkeyPatch,
     tmp_run_dir: Callable
 ) -> None:
     """Test init_clean() with the --rm option.
@@ -275,14 +276,16 @@ def test_init_clean__rm_dirs(
     Path(
         run_dir, WorkflowFiles.Service.DIRNAME, WorkflowFiles.Service.DB
     ).touch()
-    mock_clean = monkeymock('cylc.flow.clean.clean')
-    mock_remote_clean = monkeymock('cylc.flow.clean.remote_clean')
+    monkeypatch.setattr('cylc.flow.clean.clean', mock_clean := mock.Mock())
+    monkeypatch.setattr(
+        'cylc.flow.clean.remote_clean', mock_remote_clean := mock.AsyncMock()
+    )
     platforms = {'platform_one'}
     monkeypatch.setattr('cylc.flow.clean.get_platforms_from_db',
                         lambda x: platforms)
     opts = CleanOptions(rm_dirs=rm_dirs) if rm_dirs else CleanOptions()
 
-    init_clean(id_, opts=opts)
+    await init_clean(id_, opts=opts)
     mock_clean.assert_called_with(id_, run_dir, expected_clean)
     mock_remote_clean.assert_called_with(
         id_, platforms, opts.remote_timeout, expected_remote_clean
@@ -782,7 +785,7 @@ def test_clean__targeted(
         ["foo/../../meow"]
     ]
 )
-def test_init_clean__targeted_bad(
+async def test_init_clean__targeted_bad(
     rm_dirs: List[str],
     tmp_run_dir: Callable,
     monkeymock: 'MonkeyMock'
@@ -792,7 +795,7 @@ def test_init_clean__targeted_bad(
     mock_clean = monkeymock('cylc.flow.clean.clean')
     mock_remote_clean = monkeymock('cylc.flow.clean.remote_clean')
     with pytest.raises(InputError) as exc_info:
-        init_clean('chalmers', opts=CleanOptions(rm_dirs=rm_dirs))
+        await init_clean('chalmers', opts=CleanOptions(rm_dirs=rm_dirs))
     assert "cannot take paths that point to the run directory or above" in str(
         exc_info.value
     )
@@ -824,22 +827,26 @@ for k, v in PLATFORMS.items():
     v['selection'] = {'method': 'definition order'}
 
 
+def mock_platform_from_name(name: str) -> dict:
+    return deepcopy(PLATFORMS[name])
+
+
 @pytest.mark.parametrize(
-    ('platform_names', 'failed_hosts', 'expected_platforms',
+    ('platform_names', 'failed_hosts', 'expected_hosts',
      'exc_expected', 'expected_err_msgs'),
     [
         pytest.param(
-            ['exeter'], {}, None, False, [],
+            ['exeter'], {}, set(), False, [],
             id="Only localhost install target - no remote clean"
         ),
         pytest.param(
-            ['exeter', 'enterprise'], {}, ['enterprise'], False, [],
+            ['exeter', 'enterprise'], {}, {'kirk'}, False, [],
             id="Localhost and remote install target"
         ),
         pytest.param(
             ['enterprise', 'stargazer', 'voyager'],
             {},
-            ['enterprise', 'voyager'],
+            {'kirk', 'janeway'},
             False,
             [],
             id="Only remote install targets"
@@ -847,46 +854,43 @@ for k, v in PLATFORMS.items():
         pytest.param(
             ['enterprise', 'stargazer', 'voyager'],
             {'kirk': 255},
-            ['enterprise', 'voyager'],
+            {'kirk', 'picard', 'janeway'},
             False,
             [],
-            id="Install target with 1 failed, 1 successful platform"
+            id="Platform with 1 uncontactable, 1 successful host"
         ),
         pytest.param(
             ['enterprise', 'stargazer', 'voyager'],
             {'kirk': 255, 'picard': 255},
-            ['enterprise', 'voyager'],
+            {'kirk', 'picard', 'janeway'},
             True,
-            ["could not clean on these install target(s)", "[picard]"],
-            id="Install target with all failed hosts"
+            ["[picard]"],
+            id="Platform with no contactable hosts"
         ),
         pytest.param(
             ['enterprise', 'voyager'],
             {'kirk': 255, 'picard': 255, 'janeway': 255},
-            ['enterprise', 'voyager'],
+            {'kirk', 'picard', 'janeway'},
             True,
-            ["could not clean on these install target(s)",
-             "[picard]", "[janeway]"],
-            id="All install targets have all failed platforms"
+            ["[picard]", "[janeway]"],
+            id="No contactable hosts on any platform"
         ),
         pytest.param(
             ['enterprise', 'stargazer'],
             {'kirk': 1},
-            ['enterprise'],
+            {'kirk'},
             True,
-            ["could not clean on these install target(s)", "[picard]"],
-            id=("Remote clean cmd fails on a platform for non-SSH reason - "
-                "does not retry")
+            ["[picard]"],
+            id="Remote clean fails for non-SSH reason - no retry"
         ),
     ]
 )
-def test_remote_clean(
+async def test_remote_clean(
     platform_names: list[str],
     failed_hosts: dict[str, int],
-    expected_platforms: list[str] | None,
+    expected_hosts: set[str],
     exc_expected: bool,
     expected_err_msgs: list[str],
-    monkeymock: 'MonkeyMock',
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
     log_filter: Callable,
@@ -898,133 +902,91 @@ def test_remote_clean(
         failed_hosts: Any hosts that clean will
             artificially fail on in this test case. The key is the host and
             the value is the remote clean cmd return code.
-        expected_platforms: If specified, all the platforms that the
-            remote clean cmd is expected to run on.
+        expected_hosts: If specified, all the hosts that the
+            remote clean cmd is expected to be submitted to.
         exc_expected: If a CylcError is expected to be raised.
         expected_err_msgs: List of error messages expected to be in the log.
     """
     # ----- Setup -----
     caplog.set_level(logging.DEBUG, CYLC_LOG)
     monkeypatch.setattr(
-        'cylc.flow.clean.platform_from_name', lambda name: PLATFORMS[name]
+        'cylc.flow.clean.platform_from_name', mock_platform_from_name
     )
+    monkeypatch.setattr(
+        'cylc.flow.clean.construct_ssh_cmd',
+        lambda *a, host, **k: ['echo', host],
+    )
+    called_hosts = set()
 
-    def mocked_remote_clean_cmd_side_effect(id_, platform, timeout, rm_dirs):
-        host = get_host_from_platform(platform)
-        proc_ret_code = failed_hosts.get(host, 0)
-        return RemoteCleanTuple(
-            proc=mock.Mock(
-                poll=lambda: proc_ret_code,
-                communicate=lambda: ("Mocked stdout", "Mocked stderr"),
-                args=[]
+    async def mock_create_subprocess_exec(*cmd, **k):
+        host = cmd[-1]
+        called_hosts.add(host)
+        return mock.Mock(
+            spec=asyncio.subprocess.Process,
+            returncode=failed_hosts.get(host, 0),
+            communicate=mock.AsyncMock(
+                return_value=(b'Mocked stdout', b'Mocked stderr')
             ),
-            platform=platform,
-            host=host,
-            install_target=platform['install target'],
         )
 
-    mocked_remote_clean_cmd = monkeymock(
-        'cylc.flow.clean._remote_clean_cmd',
-        spec=_remote_clean_cmd,
-        side_effect=mocked_remote_clean_cmd_side_effect,
+    monkeypatch.setattr(
+        'cylc.flow.clean.asyncio.create_subprocess_exec',
+        mock_create_subprocess_exec,
     )
-    rm_dirs = ["whatever"]
     # ----- Test -----
     id_ = 'foo'
+    rm_dirs = ["whatever"]
     if exc_expected:
         with pytest.raises(CylcError) as exc:
-            cylc_clean.remote_clean(
+            await cylc_clean.remote_clean(
                 id_, platform_names, timeout='irrelevant', rm_dirs=rm_dirs
             )
-        assert "Remote clean failed" in (exc_msg := str(exc.value))
+        assert f"Remote clean for {id_} did not complete" in (
+            exc_msg := str(exc.value)
+        )
         for msg in expected_err_msgs:
             assert msg in exc_msg
     else:
-        cylc_clean.remote_clean(
+        await cylc_clean.remote_clean(
             id_, platform_names, timeout='irrelevant', rm_dirs=rm_dirs
         )
         for msg in expected_err_msgs:
             assert log_filter(logging.ERROR, msg)
-    if expected_platforms:
-        for p_name in expected_platforms:
-            mocked_remote_clean_cmd.assert_any_call(
-                id_, PLATFORMS[p_name], rm_dirs, 'irrelevant'
-            )
-    else:
-        mocked_remote_clean_cmd.assert_not_called()
+    assert called_hosts == expected_hosts
 
 
-def test_remote_clean__timeout(
-    monkeymock: 'MonkeyMock',
+async def test_remote_clean__timeout(
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
 ):
     """Test remote_clean() gives a sensible error message for return code 124.
     """
     caplog.set_level(logging.ERROR, CYLC_LOG)
-    monkeymock(
-        'cylc.flow.clean._remote_clean_cmd',
-        spec=_remote_clean_cmd,
-        return_value=RemoteCleanTuple(
-            proc=mock.Mock(
-                spec=Popen, poll=lambda: 124, communicate=lambda: ('', '')
-            ),
-            platform={},
-            host='whatever',
-            install_target='whatever',
-        )
+    monkeypatch.setattr(
+        'cylc.flow.clean.asyncio.create_subprocess_exec',
+        mock.AsyncMock(
+            return_value=mock.Mock(
+                spec=asyncio.subprocess.Process,
+                returncode=124,
+                communicate=mock.AsyncMock(return_value=(b'', b'')),
+            )
+        ),
     )
     monkeypatch.setattr(
-        'cylc.flow.clean.platform_from_name', lambda name: PLATFORMS[name]
+        'cylc.flow.clean.construct_ssh_cmd', lambda *a, **k: ['echo', 'mock']
+    )
+    monkeypatch.setattr(
+        'cylc.flow.clean.platform_from_name', mock_platform_from_name
     )
 
     with pytest.raises(CylcError) as e:
-        cylc_clean.remote_clean(
+        await cylc_clean.remote_clean(
             'blah', platform_names=['stargazer'], timeout='blah'
         )
     assert "cylc clean timed out" in str(e.value)
     # No need to log the remote clean cmd etc. for timeout
     assert "ssh" not in caplog.text.lower()
     assert "stderr" not in caplog.text.lower()
-
-
-@pytest.mark.parametrize(
-    'rm_dirs, expected_args',
-    [
-        (None, []),
-        (['holodeck', 'ten_forward'],
-         ['--rm', 'holodeck', '--rm', 'ten_forward'])
-    ]
-)
-def test_remote_clean_cmd(
-    rm_dirs: Optional[List[str]],
-    expected_args: List[str],
-    monkeymock: 'MonkeyMock'
-) -> None:
-    """Test _remote_clean_cmd()
-
-    Params:
-        rm_dirs: Argument passed to _remote_clean_cmd().
-        expected_args: Expected CLI arguments of the cylc clean command that
-            gets constructed.
-    """
-    id_ = 'jean/luc/picard'
-    platform = {
-        'name': 'enterprise',
-        'install target': 'mars',
-        'hosts': ['Trill'],
-        'selection': {'method': 'definition order'}
-    }
-    mock_construct_ssh_cmd = monkeymock(
-        'cylc.flow.clean.construct_ssh_cmd', return_value=['blah'])
-    monkeymock('cylc.flow.clean.Popen')
-
-    cylc_clean._remote_clean_cmd(id_, platform, rm_dirs, timeout='dunno')
-    args, _kwargs = mock_construct_ssh_cmd.call_args
-    constructed_cmd = args[0]
-    assert constructed_cmd == [
-        'clean', '--local-only', '--no-scan', id_, *expected_args
-    ]
 
 
 def test_clean_top_level(tmp_run_dir: Callable):
