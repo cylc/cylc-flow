@@ -20,9 +20,12 @@ import contextlib
 from functools import lru_cache
 import os
 import re
-from typing import TYPE_CHECKING, List, Optional, Tuple
+from typing import TYPE_CHECKING
 
-from metomi.isodatetime.data import CALENDAR, Calendar, Duration
+from metomi.isodatetime.data import (
+    CALENDAR,
+    Calendar,
+)
 from metomi.isodatetime.dumpers import TimePointDumper
 from metomi.isodatetime.exceptions import IsodatetimeError
 from metomi.isodatetime.parsers import ISO8601SyntaxError
@@ -84,13 +87,13 @@ _LARGE_LRU_CACHE_SIZE = int(_LRU_CACHE_SIZE / 100) if _LRU_CACHE_SIZE else 0
 class WorkflowSpecifics:
 
     """Store workflow-setup-specific constants and utilities here."""
-    ASSUMED_TIME_ZONE: Tuple[int, int]
+    ASSUMED_TIME_ZONE: tuple[int, int]
     DUMP_FORMAT: str
     abbrev_util: CylcTimeParser
     interval_parser: 'DurationParser'
     point_parser: 'TimePointParser'
     recurrence_parser: 'TimeRecurrenceParser'
-    iso8601_parsers: Tuple[
+    iso8601_parsers: tuple[
         'TimePointParser', 'DurationParser', 'TimeRecurrenceParser'
     ]
     NUM_EXPANDED_YEAR_DIGITS: int = 0
@@ -578,7 +581,7 @@ class ISO8601Sequence(SequenceBase):
 
     def get_next_point_on_sequence(
         self, point: ISO8601Point
-    ) -> Optional[ISO8601Point]:
+    ) -> ISO8601Point | None:
         """Return the on-sequence point > point assuming that point is
         on-sequence, or None if out of bounds."""
         result = None
@@ -598,7 +601,7 @@ class ISO8601Sequence(SequenceBase):
     def get_first_point(
         self,
         point: ISO8601Point
-    ) -> Optional[ISO8601Point]:
+    ) -> ISO8601Point | None:
         """Return the first point >= to point, or None if out of bounds."""
         with contextlib.suppress(KeyError):
             return ISO8601Point(self._cached_first_point_values[point.value])
@@ -678,7 +681,7 @@ def _get_old_anchor_step_recurrence(anchor, step, start_point):
     return str(anchor_point) + "/" + str(step)
 
 
-def ingest_time(value: str, now: Optional[str] = None) -> str:
+def ingest_time(value: str, now: str | None = None) -> str:
     """Handle relative, truncated and prev/next cycle points.
 
     Args:
@@ -725,14 +728,6 @@ def ingest_time(value: str, now: Optional[str] = None) -> str:
         now = get_current_time_string()
     now_point = parser.parse(now)
 
-    # correct for year in 'now' if year is the only date unit specified -
-    # https://github.com/cylc/cylc-flow/issues/4805#issuecomment-1103928604
-    if re.search(r"\(-\d{2}[);T]", value):
-        now_point += Duration(years=1)
-    # likewise correct for month if year and month are the only date units
-    elif re.search(r"\(-\d{4}[);T]", value):
-        now_point += Duration(months=1)
-
     # perform whatever transformation is required
     offset = None
     if is_prev_next:
@@ -754,7 +749,7 @@ def ingest_time(value: str, now: Optional[str] = None) -> str:
 
 def prev_next(
     value: str, now: 'TimePoint', parser: 'TimePointParser'
-) -> Tuple['TimePoint', Optional[str]]:
+) -> tuple['TimePoint', str | None]:
     """Handle previous() and next() syntax.
 
     Args:
@@ -774,13 +769,13 @@ def prev_next(
 
     # break down cycle point into constituent parts.
     direction, tmp = value.split("(")
-    offset: Optional[str]
+    offset: str | None
     tmp, offset = tmp.split(")")
 
     offset = offset.strip() or None
 
-    str_points: List[str] = tmp.split(";")
-    timepoints: List['TimePoint'] = []
+    str_points: list[str] = tmp.split(";")
+    timepoints: list['TimePoint'] = []
 
     # for use with 'previous' below.
     go_back = {
@@ -824,28 +819,6 @@ def prev_next(
     my_diff = [abs(my_time - now) for my_time in timepoints]
 
     cycle_point = timepoints[my_diff.index(min(my_diff))]
-
-    # ensure truncated dates do not have time from 'now' included' -
-    # https://github.com/metomi/isodatetime/issues/212
-    if 'T' not in value.split(')')[0]:
-        # NOTE: Strictly speaking we shouldn't forcefully mutate TimePoints
-        # in this way as they're meant to be immutable since
-        # https://github.com/metomi/isodatetime/pull/165, however it
-        # should be ok as long as the TimePoint is not used as a dict key and
-        # we don't call any of the TimePoint's cached methods until after we've
-        # finished mutating it.
-        cycle_point._hour_of_day = 0
-        cycle_point._minute_of_hour = 0
-        cycle_point._second_of_minute = 0
-    # likewise ensure month and day from 'now' are not included
-    # where they did not appear in the truncated datetime
-    if re.search(r"\(-\d{2}[);T]", value):
-        # case 1 - year only
-        cycle_point._month_of_year = 1
-        cycle_point._day_of_month = 1
-    elif re.search(r"\(-(-\d{2}|\d{4})[;T)]", value):
-        # case 2 - month only or year and month
-        cycle_point._day_of_month = 1
 
     return cycle_point, offset
 
