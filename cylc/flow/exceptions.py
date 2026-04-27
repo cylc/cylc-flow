@@ -466,7 +466,7 @@ class NoHostsError(CylcError):
         self.platform_name = platform['name']
 
     def __str__(self):
-        return f'Unable to find valid host for {self.platform_name}'
+        return f'Unable to find contactable host for {self.platform_name}'
 
 
 class NoPlatformsError(PlatformLookupError):

@@ -22,7 +22,7 @@ from functools import partial
 import glob
 import os
 from pathlib import Path
-from random import shuffle
+import shlex
 import sqlite3
 from subprocess import (
     DEVNULL,
@@ -34,8 +34,6 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Container,
-    Deque,
-    Dict,
     Iterable,
     List,
     NamedTuple,
@@ -50,6 +48,7 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import (
     CylcError,
     InputError,
+    NoHostsError,
     PlatformError,
     PlatformLookupError,
     SchedulerAlive,
@@ -85,10 +84,11 @@ if TYPE_CHECKING:
     from optparse import Values
 
 
-class RemoteCleanQueueTuple(NamedTuple):
+class RemoteCleanTuple(NamedTuple):
     proc: 'Popen[str]'
     install_target: str
-    platforms: List[Dict[str, Any]]
+    platform: dict[str, Any]
+    host: str
 
 
 class RemoteTimeoutErr(CylcError):
@@ -376,7 +376,7 @@ def remote_clean(
         timeout: Number of seconds to wait before cancelling.
         rm_dirs: Sub dirs to remove instead of the whole run dir.
     """
-    install_targets_map: dict[str, list[dict]] = {}
+    install_targets_map: dict[str, dict] = {}
     for platform_name in platform_names:
         try:
             platform = platform_from_name(platform_name)
@@ -385,27 +385,26 @@ def remote_clean(
             continue
         target = get_install_target_from_platform(platform)
         if target != get_localhost_install_target():
-            install_targets_map.setdefault(target, []).append(platform)
+            install_targets_map.setdefault(target, platform)
 
-    queue: Deque[RemoteCleanQueueTuple] = deque()
+    queue: deque[RemoteCleanTuple] = deque()
+    failed_targets: dict[str, Exception] = {}
     remote_clean_cmd = partial(
         _remote_clean_cmd, id_=id_, rm_dirs=rm_dirs, timeout=timeout
     )
-    for target, platforms in install_targets_map.items():
-        shuffle(platforms)
+    for target, platform in install_targets_map.items():
         LOG.info(f"Cleaning {id_} on install target: {target}")
-        # Issue ssh command:
-        queue.append(
-            RemoteCleanQueueTuple(
-                remote_clean_cmd(platform=platforms[0]), target, platforms
-            )
-        )
-    failed_targets: dict[str, PlatformError | RemoteTimeoutErr] = {}
+        try:
+            # Issue ssh command:
+            queue.append(remote_clean_cmd(platform=platform))
+        except NoHostsError as exc:
+            failed_targets[target] = exc
+
     # Handle subproc pool results almost concurrently:
     while queue:
+        sleep(0.2)
         item = queue.popleft()
-        ret_code = item.proc.poll()
-        if ret_code is None:  # proc still running
+        if (ret_code := item.proc.poll()) is None:  # proc still running
             queue.append(item)
             continue
         out, err = item.proc.communicate()
@@ -414,32 +413,30 @@ def remote_clean(
         if ret_code == RemoteTimeoutErr.ret_code:
             failed_targets[item.install_target] = RemoteTimeoutErr(timeout)
         elif ret_code:
-            this_platform = item.platforms.pop(0)
             excp = PlatformError(
                 PlatformError.MSG_TIDY,
-                this_platform['name'],
+                item.platform['name'],
                 cmd=cast('list[str]', item.proc.args),
                 ret_code=ret_code,
                 out=out,
                 err=err,
             )
-            if ret_code == 255 and item.platforms:
-                # SSH error; try again using the next platform for this
-                # install target
+            if ret_code == 255:
+                # SSH failed; try again using another host
                 LOG.debug(excp)
-                queue.append(
-                    item._replace(
-                        proc=remote_clean_cmd(platform=item.platforms[0])
-                    )
-                )
-            else:  # Exhausted list of platforms
+                item.platform['hosts'].remove(item.host)
+                try:
+                    queue.append(remote_clean_cmd(platform=item.platform))
+                except NoHostsError as exc:
+                    failed_targets[item.install_target] = exc
+                    continue
+            else:
                 failed_targets[item.install_target] = excp
         elif err:
             # Only show stderr from remote host in debug mode if ret code 0
             # because stderr often contains useless stuff like ssh login
             # messages
             LOG.debug(f"[{item.install_target}]\n{err}")
-        sleep(0.2)
 
     if failed_targets:
         msg = (
@@ -453,10 +450,10 @@ def remote_clean(
 
 def _remote_clean_cmd(
     id_: str,
-    platform: Dict[str, Any],
-    rm_dirs: Optional[List[str]],
-    timeout: str
-) -> 'Popen[str]':
+    platform: dict[str, Any],
+    rm_dirs: list[str] | None,
+    timeout: str,
+) -> RemoteCleanTuple:
     """Remove a stopped workflow on a remote host.
 
     Call "cylc clean --local-only" over ssh and return the subprocess.
@@ -468,11 +465,13 @@ def _remote_clean_cmd(
         timeout: Number of seconds to wait before cancelling the command.
 
     Raises:
-        NoHostsError: If the platform is not contactable.
+        NoHostsError: If none of the platform's hosts are contactable.
 
     """
+    host = get_host_from_platform(platform)
+    target = platform['install target']
     LOG.debug(
-        f"Cleaning {id_} on install target: {platform['install target']} "
+        f"Cleaning {id_} on install target: {target} "
         f"(using platform: {platform['name']})"
     )
     cmd = ['clean', '--local-only', '--no-scan', id_]
@@ -482,19 +481,23 @@ def _remote_clean_cmd(
     cmd = construct_ssh_cmd(
         cmd,
         platform,
-        get_host_from_platform(platform),
+        host,
         timeout=timeout,
         set_verbosity=True,
     )
-    LOG.debug(" ".join(cmd))
-    return Popen(  # nosec
-        cmd,
-        stdin=DEVNULL,
-        stdout=PIPE,
-        stderr=PIPE,
-        text=True,
+    LOG.debug(shlex.join(cmd))
+    return RemoteCleanTuple(
+        proc=Popen(  # nosec
+            cmd,
+            stdin=DEVNULL,
+            stdout=PIPE,
+            stderr=PIPE,
+            text=True,
+        ),  # * command constructed by internal interface
+        install_target=target,
+        platform=platform,
+        host=host,
     )
-    # * command constructed by internal interface
 
 
 def get_platforms_from_db(run_dir: Path) -> Set[str]:

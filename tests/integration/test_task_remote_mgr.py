@@ -17,7 +17,7 @@
 import cylc
 from cylc.flow.task_remote_mgr import (
     REMOTE_FILE_INSTALL_DONE,
-    REMOTE_FILE_INSTALL_FAILED
+    REMOTE_FILE_INSTALL_FAILED,
 )
 
 
@@ -157,7 +157,7 @@ async def test_remote_tidy(
 
     notthisone_msg = (
         'platform: notthisone - clean up did not complete'
-        '\nUnable to find valid host for notthisone'
+        '\nUnable to find contactable host for notthisone'
     )
     assert notthisone_msg in records
 

@@ -537,7 +537,7 @@ def generic_items_match(
 
 
 def get_host_from_platform(
-    platform: Dict[str, Any], bad_hosts: Optional[Set[str]] = None
+    platform: dict[str, Any], bad_hosts: set[str] | None = None
 ) -> str:
     """Placeholder for a more sophisticated function which returns a host
     given a platform dictionary.
@@ -558,19 +558,17 @@ def get_host_from_platform(
         goodhosts = [i for i in platform['hosts'] if i not in bad_hosts]
     else:
         goodhosts = platform['hosts']
+    if not goodhosts:
+        raise NoHostsError(platform)
 
     # Get the selection method
     method = platform['selection']['method']
-    if not goodhosts:
-        raise NoHostsError(platform)
-    else:
-        if method not in HOST_SELECTION_METHODS:
-            raise CylcError(
-                f'method \"{method}\" is not a supported host '
-                'selection method.'
-            )
-        else:
-            return HOST_SELECTION_METHODS[method](goodhosts)
+    if method not in HOST_SELECTION_METHODS:
+        raise CylcError(
+            f'method "{method}" is not a supported host selection method.'
+        )
+
+    return HOST_SELECTION_METHODS[method](goodhosts)
 
 
 def fail_if_platform_and_host_conflict(
@@ -645,7 +643,7 @@ def is_platform_definition_subshell(value: str) -> bool:
     return False
 
 
-def get_install_target_from_platform(platform: Dict[str, Any]) -> str:
+def get_install_target_from_platform(platform: dict[str, Any]) -> str:
     """Sets install target to configured or default platform name.
 
     Returns install target.

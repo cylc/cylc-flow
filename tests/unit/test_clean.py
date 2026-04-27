@@ -40,6 +40,7 @@ from cylc.flow import (
     clean as cylc_clean,
 )
 from cylc.flow.clean import (
+    RemoteCleanTuple,
     _clean_using_glob,
     _remote_clean_cmd,
     clean,
@@ -54,6 +55,7 @@ from cylc.flow.exceptions import (
     WorkflowFilesError,
 )
 from cylc.flow.pathutil import parse_rm_dirs
+from cylc.flow.platforms import get_host_from_platform
 from cylc.flow.scripts.clean import CleanOptions
 from cylc.flow.workflow_files import (
     WorkflowFiles,
@@ -802,41 +804,41 @@ PLATFORMS = {
     'enterprise': {
         'hosts': ['kirk', 'picard'],
         'install target': 'picard',
-        'name': 'enterprise'
     },
     'voyager': {
         'hosts': ['janeway'],
         'install target': 'janeway',
-        'name': 'voyager'
     },
     'stargazer': {
         'hosts': ['picard'],
         'install target': 'picard',
-        'name': 'stargazer'
     },
     'exeter': {
         'hosts': ['localhost'],
         'install target': 'localhost',
-        'name': 'exeter'
     }
 }
 
+for k, v in PLATFORMS.items():
+    v['name'] = k
+    v['selection'] = {'method': 'definition order'}
+
 
 @pytest.mark.parametrize(
-    ('platform_names', 'failed_platforms', 'expected_platforms',
+    ('platform_names', 'failed_hosts', 'expected_platforms',
      'exc_expected', 'expected_err_msgs'),
     [
         pytest.param(
-            ['exeter'], None, None, False, [],
+            ['exeter'], {}, None, False, [],
             id="Only localhost install target - no remote clean"
         ),
         pytest.param(
-            ['exeter', 'enterprise'], None, ['enterprise'], False, [],
+            ['exeter', 'enterprise'], {}, ['enterprise'], False, [],
             id="Localhost and remote install target"
         ),
         pytest.param(
             ['enterprise', 'stargazer', 'voyager'],
-            None,
+            {},
             ['enterprise', 'voyager'],
             False,
             [],
@@ -844,23 +846,23 @@ PLATFORMS = {
         ),
         pytest.param(
             ['enterprise', 'stargazer', 'voyager'],
-            {'enterprise': 255},
-            ['enterprise', 'stargazer', 'voyager'],
+            {'kirk': 255},
+            ['enterprise', 'voyager'],
             False,
             [],
             id="Install target with 1 failed, 1 successful platform"
         ),
         pytest.param(
             ['enterprise', 'stargazer', 'voyager'],
-            {'enterprise': 255, 'stargazer': 255},
-            ['enterprise', 'stargazer', 'voyager'],
+            {'kirk': 255, 'picard': 255},
+            ['enterprise', 'voyager'],
             True,
             ["could not clean on these install target(s)", "[picard]"],
-            id="Install target with all failed platforms"
+            id="Install target with all failed hosts"
         ),
         pytest.param(
             ['enterprise', 'voyager'],
-            {'enterprise': 255, 'voyager': 255},
+            {'kirk': 255, 'picard': 255, 'janeway': 255},
             ['enterprise', 'voyager'],
             True,
             ["could not clean on these install target(s)",
@@ -869,7 +871,7 @@ PLATFORMS = {
         ),
         pytest.param(
             ['enterprise', 'stargazer'],
-            {'enterprise': 1},
+            {'kirk': 1},
             ['enterprise'],
             True,
             ["could not clean on these install target(s)", "[picard]"],
@@ -880,20 +882,22 @@ PLATFORMS = {
 )
 def test_remote_clean(
     platform_names: list[str],
-    failed_platforms: dict[str, int] | None,
+    failed_hosts: dict[str, int],
     expected_platforms: list[str] | None,
     exc_expected: bool,
     expected_err_msgs: list[str],
-    monkeymock: 'MonkeyMock', monkeypatch: pytest.MonkeyPatch,
-    caplog: pytest.LogCaptureFixture, log_filter: Callable
+    monkeymock: 'MonkeyMock',
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+    log_filter: Callable,
 ) -> None:
     """Test remote_clean() logic.
 
     Params:
         platform_names: These platforms will be considered to exist.
-        failed_platforms: If specified, any platforms that clean will
-            artificially fail on in this test case. The key is the platform
-            name, the value is the remote clean cmd return code.
+        failed_hosts: Any hosts that clean will
+            artificially fail on in this test case. The key is the host and
+            the value is the remote clean cmd return code.
         expected_platforms: If specified, all the platforms that the
             remote clean cmd is expected to run on.
         exc_expected: If a CylcError is expected to be raised.
@@ -904,17 +908,19 @@ def test_remote_clean(
     monkeypatch.setattr(
         'cylc.flow.clean.platform_from_name', lambda name: PLATFORMS[name]
     )
-    # Remove randomness:
-    monkeymock('cylc.flow.clean.shuffle')
 
     def mocked_remote_clean_cmd_side_effect(id_, platform, timeout, rm_dirs):
-        proc_ret_code = 0
-        if failed_platforms and platform['name'] in failed_platforms:
-            proc_ret_code = failed_platforms[platform['name']]
-        return mock.Mock(
-            poll=lambda: proc_ret_code,
-            communicate=lambda: ("Mocked stdout", "Mocked stderr"),
-            args=[]
+        host = get_host_from_platform(platform)
+        proc_ret_code = failed_hosts.get(host, 0)
+        return RemoteCleanTuple(
+            proc=mock.Mock(
+                poll=lambda: proc_ret_code,
+                communicate=lambda: ("Mocked stdout", "Mocked stderr"),
+                args=[]
+            ),
+            platform=platform,
+            host=host,
+            install_target=platform['install target'],
         )
 
     mocked_remote_clean_cmd = monkeymock(
@@ -959,8 +965,13 @@ def test_remote_clean__timeout(
     monkeymock(
         'cylc.flow.clean._remote_clean_cmd',
         spec=_remote_clean_cmd,
-        return_value=mock.Mock(
-            spec=Popen, poll=lambda: 124, communicate=lambda: ('', '')
+        return_value=RemoteCleanTuple(
+            proc=mock.Mock(
+                spec=Popen, poll=lambda: 124, communicate=lambda: ('', '')
+            ),
+            platform={},
+            host='whatever',
+            install_target='whatever',
         )
     )
     monkeypatch.setattr(
