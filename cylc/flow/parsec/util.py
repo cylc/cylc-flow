@@ -423,7 +423,7 @@ def filter_keys(possible_keys: list[str], key: str) -> list[str]:
     the current possible key, totals the count, doubles it and divides
     by the total number of letters in both entered and possible key
     to get a ratio where 1 is an exact match. Sorts the keys by ratio,
-    accepts the highest match if more than 20% similar and accepts 
+    accepts the highest match if more than 20% similar and accepts
     the second highest if it's also high.
 
     Args:
