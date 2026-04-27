@@ -449,6 +449,7 @@ def filter_keys(possible_keys: list[str], key: str) -> list[str]:
 
     filtered_keys.sort(key=lambda x: x[1], reverse=True)
     if filtered_keys[0][1] < 0.2:
+        # no similar keys to suggest
         return []
 
     final_keys = [filtered_keys[0]]
