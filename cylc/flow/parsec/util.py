@@ -452,6 +452,8 @@ def filter_keys(possible_keys: list[str], key: str) -> list[str]:
         # no similar keys to suggest
         return []
 
+    # pick the most likely suggestion, and any others
+    # within a 90% of the similarity score of it
     final_keys = [filtered_keys[0]]
     if len(filtered_keys) > 1 and filtered_keys[1][1] > final_keys[0][1] * .9:
         final_keys.append(filtered_keys[1])
