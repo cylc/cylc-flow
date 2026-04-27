@@ -16,38 +16,31 @@
 """Run command on a remote, (i.e. a remote [user@]host)."""
 
 import asyncio
+from contextlib import suppress
 import os
 from pathlib import Path
 from posix import WIFSIGNALED
 import shlex
 from shlex import quote
 import signal
-
-# CODACY ISSUE:
-#   Consider possible security implications associated with Popen module.
-# REASON IGNORED:
-#   Subprocess is needed, but we use it with security in mind.
 from subprocess import (
     DEVNULL,
     PIPE,
     Popen,
 )
 import sys
-from time import (
-    sleep,
-    time,
-)
+from time import monotonic
 from typing import (
     TYPE_CHECKING,
     Any,
     Dict,
     List,
     Literal,
-    Optional,
     Tuple,
-    Union,
     overload,
 )
+
+import psutil
 
 from cylc.flow import (
     LOG,
@@ -65,30 +58,21 @@ if TYPE_CHECKING:
     import psutil
 
 
-def get_proc_ancestors():
-    """Return list of parent PIDs back to init."""
-    pid = os.getpid()
-    ancestors = []
-    while True:
-        p = Popen(  # nosec
-            ["ps", "-p", str(pid), "-oppid="],
-            stdout=PIPE,
-            stderr=PIPE,
-            text=True
-        )
-        # * there is no untrusted output
-        ppid = p.communicate()[0].strip()
-        if not ppid:
-            return ancestors
-        ancestors.append(ppid)
-        pid = ppid
+def get_proc_ancestors(proc: psutil.Process | None = None) -> list[int]:
+    """Return list of the parent PIDs for a given process
+    (this one by default)."""
+    if proc is None:
+        proc = psutil.Process()
+    return [p.pid for p in proc.parents()]
 
 
 async def watch_and_kill(
-    proc: 'psutil.Process',
-    interval: float | None = None,
-):
-    """Watch a process and kill it if any of its parent processes change.
+    proc: Popen | psutil.Process,
+    sig: signal.Signals = signal.SIGTERM,
+    interval: float = 10,
+) -> None:
+    """Watch a process and send a signal to it if any of its parent processes
+    change.
 
     Processes exist in a tree which inherits from the process with PID 1.
 
@@ -103,30 +87,36 @@ async def watch_and_kill(
 
     Args:
         proc:
-            The process to monitor and kill if needed.
+            The process to send the signal to if my process tree changes.
+        sig:
+            The signal to send.
         interval:
             The polling interval to check the parent process tree in seconds.
-            If not provided, this will default to the environment variable
-            "CYLC_PROC_POLL_INTERVAL" if set, else 60.
-
+            This is relatively high by default to avoid excessive system load
+            on servers that could run 100s of these processes.
     """
-    gpa = get_proc_ancestors()
-    ps_interval = 60  # secs
-    last_ps_time = time()
-    while True:
-        if proc.poll() is not None:
-            break
-        if time() - last_ps_time > ps_interval:
-            # Run ps command
-            if get_proc_ancestors() != gpa:
-                sleep(1)
-                os.kill(proc.pid, signal.SIGTERM)
+    if isinstance(proc, Popen):
+        def is_running() -> bool:
+            return proc.poll() is None
+        psutil_proc = psutil.Process(proc.pid)
+    else:
+        def is_running() -> bool:
+            return proc.is_running() and proc.status() != psutil.STATUS_ZOMBIE
+        psutil_proc = proc
+
+    gpa = get_proc_ancestors(psutil_proc)
+    last_ps_time = monotonic()
+    while is_running():
+        if monotonic() - last_ps_time > interval:
+            if get_proc_ancestors(psutil_proc) != gpa:
+                with suppress(psutil.NoSuchProcess):
+                    proc.send_signal(sig)
                 break
-            last_ps_time = time()
-        sleep(1)
+            last_ps_time = monotonic()
+        await asyncio.sleep(1)
 
 
-def run_cmd(
+async def run_cmd(
     command,
     stdin=None,
     stdin_str=None,
@@ -204,7 +194,8 @@ def run_cmd(
     if capture_process:
         return proc
     if manage:
-        watch_and_kill(proc)
+        with suppress(asyncio.CancelledError):
+            await watch_and_kill(proc)
     res = proc.wait()
     if WIFSIGNALED(res):
         sys.exit(
@@ -426,7 +417,7 @@ def construct_cylc_server_ssh_cmd(
     )
 
 
-def remote_cylc_cmd(
+async def remote_cylc_cmd(
     cmd,
     platform,
     bad_hosts=None,
@@ -456,7 +447,7 @@ def remote_cylc_cmd(
         # no host selected => perform host selection from platform config
         host = get_host_from_platform(platform, bad_hosts=bad_hosts)
 
-    return run_cmd(
+    return await run_cmd(
         construct_ssh_cmd(
             cmd,
             platform,
@@ -473,9 +464,9 @@ def remote_cylc_cmd(
 
 
 @overload
-def cylc_server_cmd(
+async def cylc_server_cmd(
     cmd,
-    host: Optional[str] = None,
+    host: str | None = None,
     *,
     capture_process: 'Literal[False]' = False,
     **kwargs,
@@ -484,9 +475,9 @@ def cylc_server_cmd(
 
 
 @overload
-def cylc_server_cmd(
+async def cylc_server_cmd(
     cmd,
-    host: Optional[str] = None,
+    host: str | None = None,
     *,
     capture_process: 'Literal[True]',
     **kwargs,
@@ -495,23 +486,23 @@ def cylc_server_cmd(
 
 
 @overload
-def cylc_server_cmd(
+async def cylc_server_cmd(
     cmd,
-    host: Optional[str] = None,
+    host: str | None = None,
     *,
     capture_process: bool,
     **kwargs,
-) -> Union[int, Popen]:
+) -> int | Popen:
     ...
 
 
-def cylc_server_cmd(
+async def cylc_server_cmd(
     cmd,
-    host: Optional[str] = None,
+    host: str | None = None,
     *,
     capture_process: bool = False,
     **kwargs,
-) -> Union[int, Popen]:
+) -> int | Popen:
     """Convenience function for running commands on remote Cylc servers.
 
     Executes a Cylc command on the specified host using localhost platform
@@ -534,7 +525,7 @@ def cylc_server_cmd(
     Exits with code 1 in the event of certain command errors.
 
     """
-    return remote_cylc_cmd(
+    return await remote_cylc_cmd(
         cmd,
         get_platform(),  # use localhost settings
         host=host,

@@ -81,7 +81,7 @@ async def test_bad_workflow(run_dir):
 
 
 async def test_bad_workflow2(run_dir, brokendir, capsys):
-    """Check a non-existent file in a valid workflow results in error.
+    """Check a non existent file in a valid workflow results in error.
     """
     parser = cat_log_gop()
     with pytest.raises(SystemExit, match='1'):

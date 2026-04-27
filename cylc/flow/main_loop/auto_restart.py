@@ -121,7 +121,7 @@ async def auto_restart(scheduler, _):
 
     if mode:
         LOG.info('The Cylc workflow host will soon become un-available.')
-        _set_auto_restart(
+        await _set_auto_restart(
             scheduler,
             restart_delay=current_glbl_cfg.get(
                 ['scheduler', 'auto restart delay']
@@ -155,12 +155,12 @@ def _should_auto_restart(scheduler, current_glbl_cfg):
     return False
 
 
-def _can_auto_restart():
+async def _can_auto_restart():
     """Determine whether this workflow can safely auto stop-restart."""
     # Check whether there is currently an available host to restart on.
     err_msg = 'Workflow cannot automatically restart'
     try:
-        select_workflow_host(cached=False)
+        await select_workflow_host(cached=False)
     except HostSelectException as exc:
         LOG.critical(
             f"{err_msg}: No alternative host to restart workflow on.\n{exc}"
@@ -177,7 +177,7 @@ def _can_auto_restart():
         return True
 
 
-def _set_auto_restart(
+async def _set_auto_restart(
         scheduler,
         restart_delay=None,
         mode=AutoRestartMode.RESTART_NORMAL
@@ -229,7 +229,7 @@ def _set_auto_restart(
         raise SchedulerError('Workflow host condemned in no detach mode')
 
     # Check workflow is able to be safely restarted.
-    if not _can_auto_restart():
+    if not await _can_auto_restart():
         return False
 
     LOG.info('Workflow will automatically restart on a new host.')

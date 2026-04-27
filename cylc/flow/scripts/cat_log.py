@@ -62,17 +62,20 @@ Examples:
 """
 
 import asyncio
-import os
 from contextlib import suppress
 from glob import glob
+import os
 from pathlib import Path
 import shlex
-from subprocess import Popen, PIPE, DEVNULL
+from subprocess import (
+    DEVNULL,
+    PIPE,
+    Popen,
+)
 import sys
 from typing import TYPE_CHECKING
 
-from psutil import Process
-
+from cylc.flow import LOG
 from cylc.flow.exceptions import InputError
 import cylc.flow.flags
 from cylc.flow.hostuserutil import is_remote_platform
@@ -85,17 +88,24 @@ from cylc.flow.option_parsers import (
 from cylc.flow.pathutil import (
     expand_path,
     get_remote_workflow_run_job_dir,
+    get_workflow_run_dir,
     get_workflow_run_job_dir,
     get_workflow_run_pub_db_path,
-    get_workflow_run_dir,
 )
-from cylc.flow.remote import remote_cylc_cmd, watch_and_kill
+from cylc.flow.platforms import get_platform
+from cylc.flow.remote import (
+    remote_cylc_cmd,
+    watch_and_kill,
+)
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.task_job_logs import (
-    JOB_LOG_OUT, JOB_LOG_ERR, JOB_LOG_OPTS, NN, JOB_LOG_ACTIVITY)
+    JOB_LOG_ACTIVITY,
+    JOB_LOG_ERR,
+    JOB_LOG_OPTS,
+    JOB_LOG_OUT,
+    NN,
+)
 from cylc.flow.terminal import cli_function
-from cylc.flow.platforms import get_platform
-from cylc.flow import LOG
 
 
 if TYPE_CHECKING:
@@ -310,12 +320,9 @@ async def view_log(
             cmd = tailer_tmpl % {"filename": shlex.quote(str(logpath))}
         proc = Popen(shlex.split(cmd), stdin=DEVNULL)  # nosec
         # * batchview command is user configurable
-        watcher = asyncio.create_task(watch_and_kill(Process(proc.pid)))
-        try:
-            ret = proc.wait()
-        finally:
-            watcher.cancel()
-        return ret
+        with suppress(asyncio.CancelledError):
+            await watch_and_kill(proc)
+        return proc.wait()
 
 
 def get_option_parser() -> COP:
@@ -639,7 +646,7 @@ async def _main(
                 # For testing purposes
                 if not job_log_present:
                     LOG.debug("job.out not present, getting job log remotely")
-                proc = remote_cylc_cmd(
+                proc = await remote_cylc_cmd(
                     cmd,
                     platform,
                     capture_process=(mode == LISTDIR),

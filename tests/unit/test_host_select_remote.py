@@ -62,38 +62,38 @@ except (KeyError, IndexError):
     remote_platform = None
 
 
-def test_remote_select():
+async def test_remote_select():
     """Test host selection works with remote host names."""
-    assert select_host([remote_platform]) == (
+    assert await select_host([remote_platform]) == (
         remote_platform, remote_platform_fqdn
     )
 
 
-def test_remote_blacklict():
+async def test_remote_blacklict():
     """Test that blacklisting works with remote host names."""
     # blacklist by fqdn
     with pytest.raises(HostSelectException):
-        select_host(
+        await select_host(
             [remote_platform],
             blacklist=[remote_platform]
         )
     # blacklist by short name
     with pytest.raises(HostSelectException):
-        select_host(
+        await select_host(
             [remote_platform],
             blacklist=[remote_platform_fqdn]
         )
     # make extra sure filters are really being applied
     for _ in range(10):
-        assert select_host(
+        assert await select_host(
             [remote_platform, local_host],
             blacklist=[remote_platform]
         ) == (local_host, local_host_fqdn)
 
 
-def test_remote_rankings():
+async def test_remote_rankings():
     """Test that ranking evaluation works on hosts (via SSH)."""
-    assert select_host(
+    assert await select_host(
         [remote_platform],
         ranking_string='''
             # if this test fails due to race conditions
@@ -106,19 +106,19 @@ def test_remote_rankings():
     ) == (remote_platform, remote_platform_fqdn)
 
 
-def test_remote_exclude(monkeypatch):
+async def test_remote_exclude(monkeypatch):
     """Ensure that hosts get excluded if they don't meet the rankings.
 
     Already tested elsewhere but this double-checks that it works if more
     than one host is provided to choose from."""
-    def mocked_get_metrics(hosts, metrics, _=None):
+    async def mocked_get_metrics(hosts, metrics, _=None):
         # pretend that ssh to remote_platform failed
         return {f'{local_host_fqdn}': {('cpu_count',): 123}}
     monkeypatch.setattr(
         'cylc.flow.host_select._get_metrics',
         mocked_get_metrics
     )
-    assert select_host(
+    assert await select_host(
         [local_host, remote_platform],
         ranking_string='''
             cpu_count()
@@ -126,7 +126,7 @@ def test_remote_exclude(monkeypatch):
     ) == (local_host, local_host_fqdn)
 
 
-def test_remote_workflow_host_select(mock_glbl_cfg):
+async def test_remote_workflow_host_select(mock_glbl_cfg):
     """test [scheduler][run hosts]available"""
     mock_glbl_cfg(
         'cylc.flow.host_select.glbl_cfg',
@@ -136,10 +136,13 @@ def test_remote_workflow_host_select(mock_glbl_cfg):
                     available = {remote_platform}
         '''
     )
-    assert select_workflow_host() == (remote_platform, remote_platform_fqdn)
+    assert await select_workflow_host() == (
+        remote_platform,
+        remote_platform_fqdn,
+    )
 
 
-def test_remote_workflow_host_condemned(mock_glbl_cfg):
+async def test_remote_workflow_host_condemned(mock_glbl_cfg):
     """test [scheduler][run hosts]condemned hosts"""
     mock_glbl_cfg(
         'cylc.flow.host_select.glbl_cfg',
@@ -151,10 +154,10 @@ def test_remote_workflow_host_condemned(mock_glbl_cfg):
         '''
     )
     for _ in range(10):
-        assert select_workflow_host() == (local_host, local_host_fqdn)
+        assert await select_workflow_host() == (local_host, local_host_fqdn)
 
 
-def test_remote_workflow_host_rankings(mock_glbl_cfg):
+async def test_remote_workflow_host_rankings(mock_glbl_cfg):
     """test [scheduler][run hosts]rankings"""
     mock_glbl_cfg(
         'cylc.flow.host_select.glbl_cfg',
@@ -172,7 +175,7 @@ def test_remote_workflow_host_rankings(mock_glbl_cfg):
         '''
     )
     with pytest.raises(HostSelectException) as excinfo:
-        select_workflow_host()
+        await select_workflow_host()
     # ensure that host selection actually evaluated rankings
     assert set(excinfo.value.data[remote_platform_fqdn]) - {'returncode'} == {
         'virtual_memory().available > 123456789123456789',

@@ -49,7 +49,7 @@ jobs:
           cat "$ENV_FILE"
 
       - name: build conda env
-        uses: conda-incubator/setup-miniconda@v3
+        uses: conda-incubator/setup-miniconda@v4
         with:
           environment-file: ${{ env.ENV_FILE }}
 
