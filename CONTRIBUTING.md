@@ -102,6 +102,8 @@ requests_).
  - Christopher Bennett
  - Ryan Boult
  - Mike Taves
+ - Samuel Denton
+ - Scott Owen James
 <!-- end-shortlog -->
 
 (All contributors are identifiable with email addresses in the git version

@@ -39,16 +39,16 @@ def brokendir(run_dir):
     shutil.rmtree(brokendir)
 
 
-def test_fail_no_file(flow):
+async def test_fail_no_file(flow):
     """It produces a helpful error if there is no workflow log file.
     """
     parser = cat_log_gop()
     id_ = flow({})
     with pytest.raises(InputError, match='Log file not found.'):
-        cat_log(parser, Options(parser)(), id_)
+        await cat_log(parser, Options(parser)(), id_)
 
 
-def test_fail_rotation_out_of_range(flow):
+async def test_fail_rotation_out_of_range(flow):
     """It produces a helpful error if rotation number > number of log files.
     """
     parser = cat_log_gop()
@@ -60,15 +60,15 @@ def test_fail_rotation_out_of_range(flow):
     (logpath / '01-start-01.log').touch()
 
     with pytest.raises(SystemExit):
-        cat_log(parser, Options(parser)(rotation_num=0), id_)
+        await cat_log(parser, Options(parser)(rotation_num=0), id_)
 
     msg = r'--rotation 1 invalid \(max value is 0\)'
 
     with pytest.raises(InputError, match=msg):
-        cat_log(parser, Options(parser)(rotation_num=1), id_)
+        await cat_log(parser, Options(parser)(rotation_num=1), id_)
 
 
-def test_bad_workflow(run_dir):
+async def test_bad_workflow(run_dir):
     """Test "cylc cat-log" with bad workflow name."""
     parser = cat_log_gop()
     msg = re.compile(
@@ -77,15 +77,15 @@ def test_bad_workflow(run_dir):
         re.MULTILINE
     )
     with pytest.raises(InputError, match=msg):
-        cat_log(parser, Options(parser)(filename='l'), BAD_NAME)
+        await cat_log(parser, Options(parser)(filename='l'), BAD_NAME)
 
 
-def test_bad_workflow2(run_dir, brokendir, capsys):
+async def test_bad_workflow2(run_dir, brokendir, capsys):
     """Check a non existent file in a valid workflow results in error.
     """
     parser = cat_log_gop()
     with pytest.raises(SystemExit, match='1'):
-        cat_log(
+        await cat_log(
             parser,
             Options(parser)(filename='j'),
             BAD_NAME
@@ -96,12 +96,12 @@ def test_bad_workflow2(run_dir, brokendir, capsys):
     assert capsys.readouterr().err == msg
 
 
-def test_bad_task_dir(run_dir, brokendir, capsys):
+async def test_bad_task_dir(run_dir, brokendir, capsys):
     """Check a non-existent job log dir in a valid workflow results in error.
     """
     parser = cat_log_gop()
     with pytest.raises(SystemExit, match='1'):
-        cat_log(
+        await cat_log(
             parser,
             Options(parser)(mode='list-dir'),
             BAD_NAME + "//1/foo"

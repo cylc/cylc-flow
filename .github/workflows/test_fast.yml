@@ -38,6 +38,7 @@ jobs:
     env:
       TZ: ${{ matrix.time-zone }}
       PYTEST_ADDOPTS: --cov --cov-append -n 5 --color=yes
+      CYLC_COVERAGE: 1
     steps:
       - name: Checkout
         uses: actions/checkout@v6

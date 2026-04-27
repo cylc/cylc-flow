@@ -450,7 +450,7 @@ async def _scheduler_cli_1(
     _print_startup_message(options)
 
     # re-execute on another host if required
-    _distribute(workflow_id_raw, workflow_id, options)
+    await _distribute(workflow_id_raw, workflow_id, options)
 
     # setup the scheduler
     # NOTE: asyncio.run opens an event loop, runs your coro,
@@ -651,7 +651,7 @@ def _print_startup_message(options):
         LOG.warning(SUITERC_DEPR_MSG)
 
 
-def _distribute(
+async def _distribute(
     workflow_id_raw: str, workflow_id: str, options: 'Values'
 ) -> None:
     """Re-invoke this command on a different host if requested.
@@ -667,7 +667,7 @@ def _distribute(
 
     """
     # Check whether a run host is explicitly specified, else select one.
-    host = options.host or select_workflow_host()[0]
+    host = options.host or (await select_workflow_host())[0]
     if is_remote_host(host):
         # Protect command args from second shell interpretation
         cmd = list(map(quote, sys.argv[1:]))
@@ -701,7 +701,7 @@ def _distribute(
         # NOTE: has the potential to raise NoHostsError, however, this will
         # most likely have been raised during host-selection
         sys.exit(
-            cylc_server_cmd(cmd, host=host)
+            await cylc_server_cmd(cmd, host=host)
         )
 
 
