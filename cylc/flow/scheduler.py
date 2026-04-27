@@ -710,7 +710,7 @@ class Scheduler:
             await self.shutdown(exc)
             try:
                 if self.auto_restart_mode == AutoRestartMode.RESTART_NORMAL:
-                    self.workflow_auto_restart()
+                    await self.workflow_auto_restart()
                 # run shutdown coros
                 await asyncio.gather(
                     *main_loop.get_runners(
@@ -1563,7 +1563,7 @@ class Scheduler:
             time() >= self.auto_restart_time
         )
 
-    def workflow_auto_restart(self, max_retries: int = 3) -> bool:
+    async def workflow_auto_restart(self, max_retries: int = 3) -> bool:
         """Attempt to restart the workflow assuming it has already stopped."""
         cmd = [
             'cylc', 'play', quote(self.workflow),
@@ -1575,7 +1575,7 @@ class Scheduler:
             error: Optional[str] = None
             proc = None
             try:
-                new_host = select_workflow_host(cached=False)[0]
+                new_host, _ = await select_workflow_host(cached=False)
             except HostSelectException as exc:
                 error = str(exc)
             else:

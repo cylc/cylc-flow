@@ -83,7 +83,7 @@ class WorkflowRuntimeClient(WorkflowRuntimeClientBase):
                 }
                 # NOTE: this can not raise NoHostsError
                 # because we have provided the host
-                proc = remote_cylc_cmd(
+                proc = await remote_cylc_cmd(
                     cmd,
                     platform,
                     host=self.host,

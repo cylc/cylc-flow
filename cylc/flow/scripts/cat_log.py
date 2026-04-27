@@ -61,19 +61,25 @@ Examples:
   $ cylc cat-log foo//2020/bar -m f
 """
 
-import os
+import asyncio
 from contextlib import suppress
 from glob import glob
+import os
 from pathlib import Path
 import shlex
-from subprocess import Popen, PIPE, DEVNULL
+from subprocess import (
+    DEVNULL,
+    PIPE,
+    Popen,
+)
 import sys
 from typing import TYPE_CHECKING
 
+from cylc.flow import LOG
 from cylc.flow.exceptions import InputError
 import cylc.flow.flags
 from cylc.flow.hostuserutil import is_remote_platform
-from cylc.flow.id_cli import parse_id
+from cylc.flow.id_cli import parse_id_async
 from cylc.flow.log_level import verbosity_to_opts
 from cylc.flow.option_parsers import (
     ID_MULTI_ARG_DOC,
@@ -82,17 +88,24 @@ from cylc.flow.option_parsers import (
 from cylc.flow.pathutil import (
     expand_path,
     get_remote_workflow_run_job_dir,
+    get_workflow_run_dir,
     get_workflow_run_job_dir,
     get_workflow_run_pub_db_path,
-    get_workflow_run_dir,
 )
-from cylc.flow.remote import remote_cylc_cmd, watch_and_kill
+from cylc.flow.platforms import get_platform
+from cylc.flow.remote import (
+    remote_cylc_cmd,
+    watch_and_kill,
+)
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.task_job_logs import (
-    JOB_LOG_OUT, JOB_LOG_ERR, JOB_LOG_OPTS, NN, JOB_LOG_ACTIVITY)
+    JOB_LOG_ACTIVITY,
+    JOB_LOG_ERR,
+    JOB_LOG_OPTS,
+    JOB_LOG_OUT,
+    NN,
+)
 from cylc.flow.terminal import cli_function
-from cylc.flow.platforms import get_platform
-from cylc.flow import LOG
 
 
 if TYPE_CHECKING:
@@ -244,7 +257,7 @@ def _check_fs_path(path):
         )
 
 
-def view_log(
+async def view_log(
     logpath,
     mode,
     tailer_tmpl,
@@ -307,8 +320,8 @@ def view_log(
             cmd = tailer_tmpl % {"filename": shlex.quote(str(logpath))}
         proc = Popen(shlex.split(cmd), stdin=DEVNULL)  # nosec
         # * batchview command is user configurable
-        with suppress(KeyboardInterrupt):
-            watch_and_kill(proc)
+        with suppress(asyncio.CancelledError):
+            await watch_and_kill(proc)
         return proc.wait()
 
 
@@ -414,10 +427,10 @@ def main(
 ):
     """Wrapper around the main script for simpler testing.
     """
-    _main(parser, options, *ids, color=color)
+    asyncio.run(_main(parser, options, *ids, color=color))
 
 
-def _main(
+async def _main(
     parser: COP,
     options: 'Values',
     *ids,
@@ -445,7 +458,7 @@ def _main(
             batchview_cmd = options.remote_args[3]
         except IndexError:
             batchview_cmd = None
-        res = view_log(
+        res = await view_log(
             logpath,
             mode,
             tail_tmpl,
@@ -458,7 +471,7 @@ def _main(
             sys.exit(res)
         return
 
-    workflow_id, tokens, _ = parse_id(*ids, constraint='mixed')
+    workflow_id, tokens, _ = await parse_id_async(*ids, constraint='mixed')
 
     # Get long-format mode.
     try:
@@ -522,7 +535,7 @@ def _main(
         tail_tmpl = os.path.expandvars(
             get_platform()["tail command template"]
         )
-        out = view_log(
+        out = await view_log(
             log_file_path,
             mode,
             tail_tmpl,
@@ -633,7 +646,7 @@ def _main(
                 # For testing purposes
                 if not job_log_present:
                     LOG.debug("job.out not present, getting job log remotely")
-                proc = remote_cylc_cmd(
+                proc = await remote_cylc_cmd(
                     cmd,
                     platform,
                     capture_process=(mode == LISTDIR),
@@ -679,7 +692,7 @@ def _main(
             # Local task job or local job log.
             logpath = os.path.join(local_log_dir, options.filename)
             tail_tmpl = os.path.expandvars(platform["tail command template"])
-            out = view_log(
+            out = await view_log(
                 logpath,
                 mode,
                 tail_tmpl,
