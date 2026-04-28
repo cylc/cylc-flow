@@ -48,6 +48,7 @@ from cylc.flow.exceptions import (
     SchedulerAlive,
     ServiceFileError,
 )
+import cylc.flow.flags
 from cylc.flow.pathutil import (
     get_workflow_run_dir,
     is_relative_to,
@@ -188,7 +189,7 @@ async def init_clean(id_: str, opts: 'Values') -> None:
                 )
                 raise ServiceFileError(f"Cannot clean {id_} - {exc}") from exc
 
-        if platform_names and platform_names != {'localhost'}:
+        if platform_names:
             await remote_clean(
                 id_, platform_names, opts.remote_timeout, opts.rm_dirs
             )
@@ -347,6 +348,22 @@ def _clean_using_glob(
         remove_dir_or_file(path)
 
 
+def get_install_targets_map(platform_names: Iterable[str]) -> dict[str, dict]:
+    """Map install target name to platform config for the given platform names.
+    """
+    ret: dict[str, dict] = {}
+    for platform_name in platform_names:
+        try:
+            platform = platform_from_name(platform_name)
+        except PlatformLookupError as exc:
+            LOG.warning(exc)
+            continue
+        target = get_install_target_from_platform(platform)
+        if target != get_localhost_install_target():
+            ret.setdefault(target, platform)
+    return ret
+
+
 async def remote_clean(
     id_: str,
     platform_names: Iterable[str],
@@ -363,16 +380,9 @@ async def remote_clean(
         timeout: Number of seconds to wait before cancelling.
         rm_dirs: Sub dirs to remove instead of the whole run dir.
     """
-    install_targets_map: dict[str, dict] = {}
-    for platform_name in platform_names:
-        try:
-            platform = platform_from_name(platform_name)
-        except PlatformLookupError as exc:
-            LOG.warning(exc)
-            continue
-        target = get_install_target_from_platform(platform)
-        if target != get_localhost_install_target():
-            install_targets_map.setdefault(target, platform)
+    if not (install_targets_map := get_install_targets_map(platform_names)):
+        LOG.debug(f"{id_}: no remote install targets found")
+        return
 
     LOG.info(
         f"Cleaning {id_} on install target(s): "
@@ -397,6 +407,8 @@ async def remote_clean(
             "install target(s):"
         )
         for target, excp in failed_targets.items():
+            if cylc.flow.flags.verbosity > 1:
+                LOG.exception(excp, exc_info=excp)
             msg += f"\n[{target}]\n{excp}"
         raise CylcError(msg)
 

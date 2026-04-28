@@ -175,15 +175,20 @@ async def test_init_clean(
     Path(rdir, WorkflowFiles.Service.DIRNAME, WorkflowFiles.Service.DB).touch()
     monkeypatch.setattr('cylc.flow.clean.clean', mock_clean := mock.Mock())
     monkeypatch.setattr(
-        'cylc.flow.clean.remote_clean', mock_remote_clean := mock.AsyncMock()
+        'cylc.flow.clean._remote_clean_cmd',
+        mock_remote_clean_cmd := mock.AsyncMock(),
     )
     monkeypatch.setattr(
         'cylc.flow.clean.get_platforms_from_db', lambda x: set(db_platforms)
     )
+    monkeypatch.setattr(
+        'cylc.flow.clean.get_install_targets_map',
+        lambda p_names: {p: {} for p in p_names if p != 'localhost'}
+    )
 
     await init_clean(id_, opts=CleanOptions(**opts))
     assert mock_clean.called is clean_called
-    assert mock_remote_clean.called is remote_clean_called
+    assert mock_remote_clean_cmd.called is remote_clean_called
 
 
 async def test_init_clean__no_dir(

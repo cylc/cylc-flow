@@ -257,8 +257,11 @@ async def run(*ids: str, opts: 'Values') -> None:
         if (exc := task.exception())
     }:
         raise CylcError(
-            *(
-                f"{workflow}: clean incomplete\n{indent(str(exc), ' ' * 4)}"
+            '\n'.join(
+                (
+                    f"{workflow}: clean incomplete\n"
+                    f"{indent(str(exc), ' ' * 4).rstrip()}"
+                )
                 for workflow, exc in failed.items()
             )
         )
@@ -284,4 +287,7 @@ def _main(opts: 'Values', *ids: str):
 
     parse_timeout(opts)
 
-    asyncio.run(run(*ids, opts=opts))
+    try:
+        asyncio.run(run(*ids, opts=opts))
+    except KeyboardInterrupt:
+        sys.exit(1)
