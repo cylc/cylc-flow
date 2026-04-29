@@ -1478,11 +1478,11 @@ with Conf('global.cylc', desc='''
                 .. versionadded:: 8.0.0
             ''')
 
-            with Conf('profile', desc='''
+            with Conf('profiler', desc='''
                 Configure the Cylc job profiler.
 
                 This tool can capture CPU and memory information from
-                job runners which use cGroups such as PBS and Slurm.
+                job runners which use cgroups such as PBS and Slurm.
 
                 .. versionadded:: 8.7.0
             '''):

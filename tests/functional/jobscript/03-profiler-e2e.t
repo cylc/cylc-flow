@@ -16,6 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 # Cylc profile test
+# # Cylc profile test. This test will run the Cylc profiler with real data
+# and test to see that the profiler data is received and processed correctly.
 # NOTE: This test will run the Cylc profiler on the given test platform.
 # The test platform may need to be configured for this to work (e.g.
 # "cgroups path" may need to be set).
@@ -26,11 +28,11 @@ set_test_number 8
 create_test_global_config "
 [platforms]
   [[${CYLC_TEST_PLATFORM}]]
-    [[[profile]]]
+    [[[profiler]]]
       activate = True
       polling interval = 10
   [[localhost]]
-    [[[profile]]]
+    [[[profiler]]]
       activate = True
       polling interval = 10
       cgroups path = the/thing/that/should/not/be

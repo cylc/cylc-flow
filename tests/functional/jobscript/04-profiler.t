@@ -15,7 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Cylc profile test
+# Cylc profile test. This test will run the Cylc profiler with mocked data
+# and test to see that the profiler data is received and processed correctly.
 
 . "$(dirname "$0")/test_header"
 
@@ -36,7 +37,7 @@ export profiler_test_env_var='/cgroups_test_data'
 create_test_global_config "
 [platforms]
   [[localhost]]
-    [[[profile]]]
+    [[[profiler]]]
       activate = True
       cgroups path = ${PWD}
 "

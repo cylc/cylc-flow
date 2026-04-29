@@ -226,14 +226,14 @@ class JobFileWriter:
             "\n    export CYLC_TASK_FLOW_NUMBERS="
             f"{','.join(str(f) for f in job_conf['flow_nums'])}")
         handle.write(
-            "\n    export CYLC_PROFILE="
-            f"{job_conf['platform']['profile']['activate']}")
+            "\n    export CYLC_PROFILER="
+            f"{job_conf['platform']['profiler']['activate']}")
         handle.write(
             "\n    export CYLC_CGROUP="
-            f"{job_conf['platform']['profile']['cgroups path']}")
+            f"{job_conf['platform']['profiler']['cgroups path']}")
         handle.write(
-            "\n    export CYLC_POLLING_INTERVAL="
-            f"{job_conf['platform']['profile']['polling interval']}")
+            "\n    export CYLC_PROFILER_POLL_INTERVAL="
+            f"{job_conf['platform']['profiler']['polling interval']}")
         # Standard parameter environment variables
         for var, val in job_conf['param_var'].items():
             handle.write('\n    export CYLC_TASK_PARAM_%s="%s"' % (var, val))

@@ -97,7 +97,7 @@ import asyncio
 from logging import getLevelName, INFO
 import os
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Sequence
 
 from cylc.flow.id_cli import parse_id_async
 from cylc.flow.option_parsers import (
@@ -146,7 +146,7 @@ def main(parser: COP, options: 'Values', *args: str) -> None:
     asyncio.run(_main(options, args))
 
 
-async def _main(options, args):
+async def _main(options: 'Values', args: Sequence[str]) -> None:
     if len(args) <= 2:
         # BACK COMPAT: args <= 2
         # from:

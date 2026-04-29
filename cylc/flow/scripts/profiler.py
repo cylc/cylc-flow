@@ -37,7 +37,7 @@ from cylc.flow.remote import watch_and_kill
 from cylc.flow.task_message import record_messages
 from cylc.flow.terminal import cli_function
 
-
+INTERNAL = True
 PID_REGEX = re.compile(r"([^:]*\d{6,}.*)")
 RE_INT = re.compile(r'\d+')
 
