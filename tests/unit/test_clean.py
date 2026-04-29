@@ -20,6 +20,7 @@ from glob import iglob
 import logging
 import os
 from pathlib import Path
+from secrets import token_hex
 import shutil
 from typing import (
     TYPE_CHECKING,
@@ -992,6 +993,25 @@ async def test_remote_clean__timeout(
     # No need to log the remote clean cmd etc. for timeout
     assert "ssh" not in caplog.text.lower()
     assert "stderr" not in caplog.text.lower()
+
+
+async def test_remote_clean__platform_no_longer_exists(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+):
+    """Test remote_clean() gives a sensible error message when a job ran on
+    a platform that no longer exists in the global config."""
+    caplog.set_level(logging.WARNING, CYLC_LOG)
+    monkeypatch.setattr(
+        'cylc.flow.clean.asyncio.create_subprocess_exec',
+        mock_create_subprocess_exec := mock.AsyncMock(),
+    )
+
+    await cylc_clean.remote_clean(
+        'blah', platform_names=[f'nonexist_{token_hex(4)}'], timeout='blah'
+    )
+    assert "No matching platform" in caplog.text
+    assert not mock_create_subprocess_exec.called
 
 
 def test_clean_top_level(tmp_run_dir: Callable):
