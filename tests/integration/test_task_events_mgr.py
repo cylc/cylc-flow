@@ -36,12 +36,17 @@ from cylc.flow.task_events_mgr import (
     TaskJobLogsRetrieveContext,
 )
 from cylc.flow.task_job_logs import get_task_job_log
+from cylc.flow.task_outputs import (
+    TASK_OUTPUT_SUBMIT_FAILED,
+    TASK_OUTPUT_SUBMITTED,
+)
 from cylc.flow.task_state import (
     TASK_STATUS_PREPARING,
     TASK_STATUS_SUBMIT_FAILED,
 )
 
 from .test_workflow_events import TEMPLATES
+
 
 # NOTE: we do not test custom event handlers here because these are tested
 # as a part of workflow validation (now also performed by cylc play)
@@ -217,12 +222,12 @@ async def test__submit_failed_job_id(flow, scheduler, start, db_select):
         itask.summary['submit_method_id'] = job_id
         schd.workflow_db_mgr.put_insert_task_jobs(itask, {})
         schd.task_events_mgr.process_message(
-            itask, 'INFO', schd.task_events_mgr.EVENT_SUBMITTED
+            itask, 'INFO', TASK_OUTPUT_SUBMITTED
         )
         assert await get_ds_job_id(schd) == job_id
 
         schd.task_events_mgr.process_message(
-            itask, 'CRITICAL', schd.task_events_mgr.EVENT_SUBMIT_FAILED
+            itask, 'CRITICAL', TASK_OUTPUT_SUBMIT_FAILED
         )
         assert itask.state(TASK_STATUS_SUBMIT_FAILED)
         assert await get_ds_job_id(schd) == job_id

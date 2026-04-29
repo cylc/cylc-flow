@@ -101,6 +101,7 @@ from cylc.flow.task_message import FAIL_MESSAGE_PREFIX
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_FAILED,
     TASK_OUTPUT_STARTED,
+    TASK_OUTPUT_SUBMIT_FAILED,
     TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUCCEEDED,
 )
@@ -143,7 +144,7 @@ def _submitted_msgs(jp_ctx: 'JobPollContext') -> dict[str, str | None]:
 
 def _submit_failed_msgs(jp_ctx: 'JobPollContext') -> dict[str, str | None]:
     return {
-        TaskEventsManager.EVENT_SUBMIT_FAILED: jp_ctx.time_submit_exit,
+        TASK_OUTPUT_SUBMIT_FAILED: jp_ctx.time_submit_exit,
     }
 
 
@@ -757,8 +758,8 @@ class TaskJobManager:
             itask.state.kill_failed = True
         elif itask.state(TASK_STATUS_SUBMITTED):
             self.task_events_mgr.process_message(
-                itask, CRITICAL, self.task_events_mgr.EVENT_SUBMIT_FAILED,
-                ctx.timestamp)
+                itask, CRITICAL, TASK_OUTPUT_SUBMIT_FAILED, ctx.timestamp
+            )
         elif itask.state(TASK_STATUS_RUNNING):
             self.task_events_mgr.process_message(
                 itask, CRITICAL, TASK_OUTPUT_FAILED)
@@ -1166,8 +1167,8 @@ class TaskJobManager:
                 itask, DEBUG, TASK_OUTPUT_SUBMITTED, ctx.timestamp)
         else:
             self.task_events_mgr.process_message(
-                itask, CRITICAL, self.task_events_mgr.EVENT_SUBMIT_FAILED,
-                ctx.timestamp)
+                itask, CRITICAL, TASK_OUTPUT_SUBMIT_FAILED, ctx.timestamp
+            )
 
     def _prep_submit_task_job(
         self,
@@ -1385,7 +1386,8 @@ class TaskJobManager:
             }
         )
         self.task_events_mgr.process_message(
-            itask, CRITICAL, self.task_events_mgr.EVENT_SUBMIT_FAILED)
+            itask, CRITICAL, TASK_OUTPUT_SUBMIT_FAILED
+        )
 
     def _prep_submit_task_job_impl(self, itask, rtconfig):
         """Helper for self._prep_submit_task_job."""
