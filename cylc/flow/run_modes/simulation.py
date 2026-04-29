@@ -94,7 +94,9 @@ def submit_task_job(
         task_job_mgr.get_simulation_job_conf(itask)
     )
     for output in (TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED):
-        task_job_mgr.task_events_mgr.process_message(itask, INFO, output)
+        task_job_mgr.task_events_mgr.process_message(
+            itask, INFO, output, event_time=now[1]
+        )
     task_job_mgr.workflow_db_mgr.put_insert_task_jobs(
         itask, {
             'time_submit': now[1],
