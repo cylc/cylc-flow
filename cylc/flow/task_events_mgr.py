@@ -705,7 +705,7 @@ class TaskEventsManager():
             severity:
                 Message severity, should be a recognised logging level.
             message:
-                Message content.
+                Message content (usually a task output).
             event_time:
                 Event time stamp. Expect ISO8601 date time string.
                 If not specified, use current time.
@@ -803,7 +803,7 @@ class TaskEventsManager():
             self.spawn_children(itask, TASK_OUTPUT_SUCCEEDED, forced)
 
         elif message == self.EVENT_EXPIRED:
-            self._process_message_expired(itask, event_time, forced)
+            self._process_message_expired(itask, forced)
             self.spawn_children(itask, TASK_OUTPUT_EXPIRED, forced)
 
         elif task_output == self.EVENT_FAILED:
@@ -1482,7 +1482,7 @@ class TaskEventsManager():
             "time_run": event_time,
         })
 
-    def _process_message_expired(self, itask, event_time, forced):
+    def _process_message_expired(self, itask: 'TaskProxy', forced: bool):
         """Helper for process_message, handle task expiry."""
         if not itask.state_reset(TASK_STATUS_EXPIRED, forced=forced):
             return

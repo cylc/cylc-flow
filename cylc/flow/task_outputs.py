@@ -422,7 +422,7 @@ class TaskOutputs:
         # output was already completed
         return False
 
-    def is_message_complete(self, message: str) -> Optional[bool]:
+    def is_message_complete(self, message: str) -> bool | None:
         """Return True if this message is complete.
 
         Returns:
@@ -430,11 +430,9 @@ class TaskOutputs:
             * False if the message is not complete.
             * None if the message does not apply to these outputs.
         """
-        if message in self._completed:
-            return self._completed[message]
-        return None
+        return self._completed.get(message)
 
-    def get_completed_outputs(self) -> Dict[str, str]:
+    def get_completed_outputs(self) -> dict[str, str]:
         """Return a dict {trigger: message} of completed outputs.
 
         Replace message with "forced" if the output was forced.

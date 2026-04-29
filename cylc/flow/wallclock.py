@@ -92,8 +92,11 @@ def now(override_use_utc: bool | None = None) -> tuple[datetime, bool]:
         return datetime.now().astimezone(), True
 
 
-def get_current_time_string(display_sub_seconds=False, override_use_utc=None,
-                            use_basic_format=False):
+def get_current_time_string(
+    display_sub_seconds: bool = False,
+    override_use_utc: bool | None = None,
+    use_basic_format: bool = False,
+) -> str:
     """Return a string representing the current system time.
 
     Keyword arguments:
