@@ -24,6 +24,11 @@ Please update this file as the interface changes.
 """
 
 from contextlib import suppress
+from dataclasses import (
+    dataclass,
+    field,
+    fields,
+)
 import json
 import os
 from pathlib import Path
@@ -34,9 +39,9 @@ import stat
 from subprocess import DEVNULL  # nosec
 import sys
 import traceback
+from typing import Literal
 
 from cylc.flow.cylc_subproc import procopen
-from cylc.flow.parsec.OrderedDict import OrderedDict
 from cylc.flow.task_job_logs import (
     JOB_LOG_ERR,
     JOB_LOG_JOB,
@@ -57,59 +62,45 @@ from cylc.flow.wallclock import get_current_time_string
 JOB_FILES_REMOVED_MESSAGE = 'ERR_JOB_FILES_REMOVED'
 
 
-class JobPollContext():
+@dataclass(slots=True)
+class JobPollContext:
     """Context object for a job poll."""
-    CONTEXT_ATTRIBUTES = (
-        'job_log_dir',  # cycle/task/submit_num
-        'job_runner_name',
-        'job_id',  # job id in job runner
-        'job_runner_exit_polled',  # 0 for false, 1 for true
-        'run_status',  # 0 for success, 1 for failure
-        'run_signal',  # signal received on run failure
-        'time_submit_exit',  # submit (exit) time
-        'time_run',  # run start time
-        'time_run_exit',  # run exit time
-        'job_runner_call_no_lines',  # line count in job runner call stdout
-    )
+    job_log_dir: str
+    job_runner_name: str | None = None
+    job_id: str | None = None
+    """Job ID in job runner."""
+    job_runner_exit_polled: Literal[0, 1, None] = None
+    """Has exited job runner? 0 for false, 1 for true."""
+    run_status: 'Literal[0, 1, None]' = None
+    """0 for success, 1 for failure."""
+    run_signal: str | None = None
+    """Signal received on run failure."""
+    time_submit_exit: str | None = None
+    """Time when the job runner finished submitting the job."""
+    time_run: str | None = None
+    """Time when the job started running."""
+    time_run_exit: str | None = None
+    """Time when the job finished running."""
 
-    __slots__ = CONTEXT_ATTRIBUTES + (
-        'pid',
-        'messages'
-    )
+    pid: str | None = field(default=None, init=False)
+    """Job process ID."""
+    messages: list[str] = field(default_factory=list, init=False)
+    """Messages sent by the job."""
 
-    def __init__(self, job_log_dir, **attrs):
-        self.job_log_dir = job_log_dir
-        self.job_runner_name: str | None = None
-        self.job_id = None
-        self.job_runner_exit_polled: int | None = None
-        self.pid = None
-        self.run_status: int | None = None
-        self.run_signal: str | None = None
-        self.time_submit_exit: str | None = None
-        self.time_run: str | None = None
-        self.time_run_exit: str | None = None
-        self.job_runner_call_no_lines = None
-        self.messages = []
-
-        if attrs:
-            for key, value in attrs.items():
-                if key not in self.CONTEXT_ATTRIBUTES:
-                    raise ValueError('Invalid kwarg "%s"' % key)
-                setattr(self, key, value)
-
-    def update(self, other):
+    def update(self, other: 'JobPollContext') -> None:
         """Update my data from given file context."""
         for i in self.__slots__:
             setattr(self, i, getattr(other, i))
 
-    def get_summary_str(self):
+    def get_summary_str(self) -> str:
         """Return the poll context as a summary string delimited by "|"."""
-        ret = OrderedDict()
-        for key in self.CONTEXT_ATTRIBUTES:
-            value = getattr(self, key)
-            if key == 'job_log_dir' or value is None:
-                continue
-            ret[key] = value
+        ret = {
+            field.name: value
+            for field in fields(self)
+            if field.init
+            and field.name != 'job_log_dir'
+            and (value := getattr(self, field.name)) is not None
+        }
         return '%s|%s' % (self.job_log_dir, json.dumps(ret))
 
 
@@ -237,7 +228,7 @@ class JobRunnerManager():
             job_log_root = os.path.expandvars(job_log_root)
         self.configure_workflow_run_dir(job_log_root.rsplit(os.sep, 2)[0])
 
-        ctx_list = []  # Contexts for all relevant jobs
+        ctx_list: list[JobPollContext] = []  # Contexts for all relevant jobs
         ctx_list_by_job_runner = {}  # {job_runner_name1: [ctx1, ...], ...}
 
         for job_log_dir in job_log_dirs:
@@ -257,8 +248,11 @@ class JobRunnerManager():
             # We can trust:
             # * Jobs previously polled to have exited the job runner.
             # * Jobs succeeded or failed with ERR/EXIT.
-            if (ctx.job_runner_exit_polled or ctx.run_status == 0 or
-                    ctx.run_signal in ["ERR", "EXIT"]):
+            if (
+                ctx.job_runner_exit_polled
+                or ctx.run_status == 0
+                or ctx.run_signal in {"ERR", "EXIT"}
+            ):
                 continue
 
             if ctx.job_runner_name not in ctx_list_by_job_runner:
