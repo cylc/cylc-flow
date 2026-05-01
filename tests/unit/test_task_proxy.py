@@ -29,6 +29,47 @@ from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.taskdef import TaskDef
 
 
+def test_get_point_as_seconds_cached():
+    """Already-computed value is returned immediately."""
+    mock_itask = Mock(point_as_seconds=42)
+    assert TaskProxy.get_point_as_seconds(mock_itask) == 42
+
+
+def test_get_point_as_seconds_known_tz(set_cycling_type):
+    """Cycle point with explicit UTC timezone."""
+    set_cycling_type(ISO8601Point.TYPE)
+    mock_itask = Mock(
+        point=ISO8601Point('19700101T00Z').standardise(),
+        point_as_seconds=None,
+    )
+    assert TaskProxy.get_point_as_seconds(mock_itask) == 0
+
+
+def test_get_point_as_seconds_unknown_tz(monkeypatch):
+    """Cycle point without timezone triggers local-tz offset adjustment."""
+    # Mock point_parse to return a timepoint with unknown timezone
+    mock_timepoint = Mock(
+        seconds_since_unix_epoch=3600,
+        time_zone=Mock(unknown=True),
+    )
+    monkeypatch.setattr(
+        'cylc.flow.task_proxy.point_parse',
+        lambda _: mock_timepoint,
+    )
+    # Pretend local timezone is UTC+5:30
+    monkeypatch.setattr(
+        'cylc.flow.task_proxy.get_local_time_zone',
+        lambda: (5, 30),
+    )
+    mock_itask = Mock(
+        point='19700101T01',
+        point_as_seconds=None,
+    )
+    result = TaskProxy.get_point_as_seconds(mock_itask)
+    # 3600 + (5*3600 + 30*60) = 3600 + 19800 = 23400
+    assert result == 23400
+
+
 @pytest.mark.parametrize(
     'itask_point, offset_str, expected',
     [
@@ -69,6 +110,49 @@ def test_get_clock_trigger_time(
     )
     assert TaskProxy.get_clock_trigger_time(
         mock_itask, mock_itask.point, offset_str) == expected
+
+
+def test_is_ready_to_run_held():
+    """A held task is not ready to run."""
+    mock_itask = Mock(state=Mock(is_held=True))
+    assert TaskProxy.is_ready_to_run(mock_itask) is False
+
+
+def test_is_ready_to_run_try_timer():
+    """A task with an active try timer delegates to is_delay_done()."""
+    mock_timer = Mock()
+    mock_timer.is_delay_done.return_value = True
+    mock_itask = Mock(
+        state=Mock(is_held=False, status='submission-failed'),
+        try_timers={'submission-failed': mock_timer},
+    )
+    assert TaskProxy.is_ready_to_run(mock_itask) is True
+    mock_timer.is_delay_done.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    'is_waiting, prereqs, ext_trigs, xtrigs, expected',
+    [
+        param(True, True, True, True, True, id="all-satisfied"),
+        param(False, True, True, True, False, id="not-waiting"),
+        param(True, False, True, True, False, id="prereqs-unsatisfied"),
+        param(True, True, False, True, False, id="ext-trigs-unsatisfied"),
+        param(True, True, True, False, False, id="xtrigs-unsatisfied"),
+    ]
+)
+def test_is_ready_to_run_conditions(
+    is_waiting, prereqs, ext_trigs, xtrigs, expected
+):
+    """Test the final return with various combinations of conditions."""
+    mock_itask = Mock(
+        state=Mock(is_held=False, status='waiting'),
+        try_timers={},
+    )
+    mock_itask.state.return_value = is_waiting
+    mock_itask.prereqs_are_satisfied = Mock(return_value=prereqs)
+    mock_itask.state.external_triggers_all_satisfied.return_value = ext_trigs
+    mock_itask.state.xtriggers_all_satisfied.return_value = xtrigs
+    assert TaskProxy.is_ready_to_run(mock_itask) is expected
 
 
 @pytest.mark.parametrize(
