@@ -1,3 +1,4 @@
+#!jinja2
 [scheduling]
     # Start the workflow 7 hours before now ignoring minutes and seconds
     # * previous(T-00) takes the current time ignoring minutes and seconds.
