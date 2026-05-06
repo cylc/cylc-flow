@@ -1047,7 +1047,6 @@ class DataStoreMgr:
                 locations = ['']
             # Explore/walk locations
             for location in locations:
-                walk_incomplete = True
                 if not location:
                     loc_nodes = {active_id}
                 else:
@@ -1183,6 +1182,8 @@ class DataStoreMgr:
                 p_ids.difference_update(active_walk['walk_ids'])
                 if p_ids:
                     active_locs.setdefault(p_loc, set()).update(p_ids)
+                if p_ids or c_ids:
+                    walk_incomplete = True
                 active_walk['walk_ids'].update(c_ids, p_ids)
                 active_walk['depths'][n_depth].update(c_ids, p_ids)
 
