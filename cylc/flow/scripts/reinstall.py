@@ -194,10 +194,10 @@ async def reinstall_cli(
     if not source:
         raise WorkflowFilesError(
             f'"{workflow_id}" was not installed with cylc install.')
-    source: Path = Path(source)
-    if not source.is_dir():
+    source_: Path = Path(source)
+    if not source_.is_dir():
         raise WorkflowFilesError(
-            f'Workflow source dir is not accessible: "{source}".\n'
+            f'Workflow source dir is not accessible: "{source_}".\n'
             f'Restore the source or modify the "{source_symlink}"'
             ' symlink to continue.'
         )
@@ -210,7 +210,7 @@ async def reinstall_cli(
             if not await reinstall(
                 opts,
                 workflow_id,
-                source,
+                source_,
                 run_dir,
                 dry_run=True,
             ):
@@ -218,12 +218,12 @@ async def reinstall_cli(
                 print(cparse(
                     '<magenta>'
                     'No changes made:'
-                    f' {workflow_id} is up to date with {source}'
+                    f' {workflow_id} is up to date with {source_}'
                     '</magenta>'
                 ))
                 return False
 
-            display_rose_warning(source)
+            display_rose_warning(source_)
             display_cylcignore_tip()
             # prompt for permission to continue
             while usr not in ['y', 'n']:
@@ -241,7 +241,7 @@ async def reinstall_cli(
 
     if usr == 'y':
         # reinstall for real
-        await reinstall(opts, workflow_id, source, run_dir, dry_run=False)
+        await reinstall(opts, workflow_id, source_, run_dir, dry_run=False)
         print(cparse('<green>Successfully reinstalled.</green>'))
         if print_reload_tip:
             display_cylc_reload_tip(workflow_id)
