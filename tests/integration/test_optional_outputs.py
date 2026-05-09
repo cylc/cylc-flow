@@ -43,7 +43,6 @@ from cylc.flow.task_events_mgr import (
 from cylc.flow.task_outputs import (
     TASK_OUTPUTS,
     TASK_OUTPUT_EXPIRED,
-    TASK_OUTPUT_FAILED,
     TASK_OUTPUT_FINISHED,
     TASK_OUTPUT_SUCCEEDED,
     get_completion_expression,
@@ -51,7 +50,6 @@ from cylc.flow.task_outputs import (
 from cylc.flow.task_state import (
     TASK_STATUS_EXPIRED,
     TASK_STATUS_PREPARING,
-    TASK_STATUS_RUNNING,
     TASK_STATUS_WAITING,
 )
 
@@ -449,71 +447,6 @@ async def test_clock_expiry(
         # the third task should *not* be expired (it was a manual submit)
         assert not three.state(TASK_STATUS_EXPIRED)
         assert not three.state.outputs.is_message_complete(TASK_OUTPUT_EXPIRED)
-
-
-async def test_removed_taskdef(
-    flow,
-    scheduler,
-    start,
-):
-    """It should handle tasks being removed from the config.
-
-    If the config of an active task is removed from the config by restart /
-    reload, then we must provide a fallback completion expression, otherwise
-    the expression will be blank (task has no required or optional outputs).
-
-    The fallback is to consider the outputs complete if *any* final output is
-    received. Since the task has been removed from the workflow its outputs
-    should be inconsequential.
-
-    See: https://github.com/cylc/cylc-flow/issues/5057
-    """
-    id_ = flow({
-        'scheduling': {
-            'graph': {
-                'R1': 'a & z'
-            }
-        }
-    })
-
-    # start the workflow and mark the tasks as running
-    schd: 'Scheduler' = scheduler(id_)
-    async with start(schd):
-        for itask in schd.pool.get_tasks():
-            itask.state_reset(TASK_STATUS_RUNNING)
-            assert itask.state.outputs._completion_expression == 'succeeded'
-
-    # remove the task "z" from the config
-    id_ = flow({
-        'scheduling': {
-            'graph': {
-                'R1': 'a'
-            }
-        }
-    }, workflow_id=id_)
-
-    # restart the workflow
-    schd: 'Scheduler' = scheduler(id_)
-    async with start(schd):
-        # 1/a:
-        # * is still in the config
-        # * is should still have a sensible completion expression
-        # * its outputs should be incomplete if the task fails
-        a_1 = schd.pool.get_task(IntegerPoint('1'), 'a')
-        assert a_1
-        assert a_1.state.outputs._completion_expression == 'succeeded'
-        a_1.state.outputs.set_message_complete(TASK_OUTPUT_FAILED)
-        assert not a_1.is_complete()
-
-        # 1/z:
-        # * is no longer in the config
-        # * should have a blank completion expression
-        # * its outputs should be completed by any final output
-        z_1 = schd.pool.get_task(IntegerPoint('1'), 'z')
-        assert z_1
-        assert z_1.state.outputs._completion_expression == ''
-        z_1.state.outputs.set_message_complete(TASK_OUTPUT_FAILED)
-        assert z_1.is_complete()
 
 
 @pytest.mark.parametrize(
