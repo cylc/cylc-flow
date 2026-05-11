@@ -183,7 +183,7 @@ class TaskTrigger:
         return hash(self) == hash(other)
 
     @staticmethod
-    def standardise_name(name):
+    def standardise_name(name: str) -> str:
         """Replace trigger name aliases with standard names.
 
         Arg name should be a valid standard name or alias, otherwise assumed

@@ -652,7 +652,7 @@ def main() -> None:  # pragma: no cover
     sys.exit(ret)
 
 
-def _main(opts, cmd_args) -> int:
+def _main(opts, cmd_args: list[str]) -> int:
     """Implemnent the Cylc CLI.
 
     Returns the exit code as an integer.
@@ -666,7 +666,7 @@ def _main(opts, cmd_args) -> int:
             return 0
     else:
         cmd_args = list(cmd_args)
-        command = cmd_args.pop(0)
+        command: str = cmd_args.pop(0)
 
         if command == "version":
             cli_version("--long" in cmd_args)
@@ -690,8 +690,7 @@ def _main(opts, cmd_args) -> int:
                 command = cmd_args.pop(0)
 
         # this is an alias to a command
-        if command in ALIASES:
-            command = ALIASES.get(command)
+        command = ALIASES.get(command, command)
 
         if command in DEAD_ENDS:
             # this command has been removed but not aliased
