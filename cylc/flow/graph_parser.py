@@ -20,6 +20,7 @@ import contextlib
 
 from typing import (
     Dict,
+    Iterable,
     List,
     Optional,
     Set,
@@ -628,7 +629,9 @@ class GraphParser:
         for left in lefts:
             # Extract information about all nodes on the left.
             if left:
-                info = self.__class__.REC_NODES.findall(left)
+                info: list[Iterable[str]] = self.__class__.REC_NODES.findall(
+                    left
+                )
                 expr = left
                 for _left in info:
                     _lefts.add(''.join(_left))
@@ -681,11 +684,9 @@ class GraphParser:
 
                 n_info.append((name, offset, n_trig, opt))
 
-            info = n_info
-
             # Determine semantics of all family triggers present.
             family_trig_map = {}
-            for name, _, trig, _ in info:
+            for name, _, trig, _ in n_info:
                 if name.startswith(self.__class__.XTRIG):
                     # Avoid @xtrigger nodes.
                     continue
@@ -708,7 +709,7 @@ class GraphParser:
 
             # remove '?' from expr (not needed in logical trigger evaluation)
             expr = re.sub(self.__class__._RE_OPT, '', expr)
-            self._families_all_to_all(expr, rights, info, family_trig_map)
+            self._families_all_to_all(expr, rights, n_info, family_trig_map)
 
     def _families_all_to_all(
         self,
