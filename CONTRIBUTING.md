@@ -25,12 +25,22 @@ first Pull Request (for each Cylc repository you contribute to).
 We use [semver](https://semver.org/) to separate riskier changes (e.g. new features
 & code refactors) from bugfixes to provide more stable releases for production environments.
 
-**Enhancements** are made on the `master` branch and released in the next minor version
-(e.g. 8.1, 8.2, 8.3)
+**Enhancements**:
+* Made on the `master` branch.
+* Released in the next minor version (e.g. 8.1, 8.2, 8.3).
 
-**Bugfixes** and minor usability enhancements are made on bugfix branches and
-released as the next maintenance version (e.g. 8.0.1, 8.0.2, 8.0.3). E.G. if the issue is on the `8.0.x` milestone, branch off of `8.0.x` to
-develop your bugfix, then raise the pull request against the `8.0.x` branch. We will later merge the `8.0.x` branch into `master`.
+**Bugfixes** (and minor usability enhancements):
+* Should have either the https://github.com/cylc/cylc-flow/labels/bug,
+  https://github.com/cylc/cylc-flow/labels/could%20be%20better
+  or https://github.com/cylc/cylc-flow/labels/doc label.
+* Made on bugfix branches (e.g, 8.1.x, 8.2.x, etc).
+* Released as the next maintenance version (e.g. 8.1.1, 8.1.2, 8.1.3).
+* E.G. if the issue is on the `8.0.x` milestone, branch off of `8.0.x` to
+  develop your bugfix, then raise the pull request against the `8.0.x` branch. We will later merge the `8.0.x` branch into `master`.
+* See the [list of bugfix branches currently being maintained](https://cylc.github.io/cylc-admin/status/status.html#branches).
+
+See the [developer docs](https://cylc.github.io/cylc-admin/howto/dev-setup#versions--branches)
+for more info on versions and branches.
 
 Feel free to ask questions on the issue or
 [developers chat](https://matrix.to/#/#cylc-general:matrix.org) if unsure about
