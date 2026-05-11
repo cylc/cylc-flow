@@ -497,9 +497,6 @@ def apply_delta(key, delta, data):
             # The suppression of key/value errors is to avoid
             # elements and their relationships missing on reload.
             if key == TASK_PROXIES:
-                # remove relationship from task
-                with suppress(KeyError, ValueError):
-                    data[TASKS][data[key][del_id].task].proxies.remove(del_id)
                 # remove relationship from parent/family
                 with suppress(KeyError, ValueError):
                     data[FAMILY_PROXIES][
@@ -509,10 +506,6 @@ def apply_delta(key, delta, data):
                 with suppress(KeyError, ValueError):
                     getattr(data[WORKFLOW], key).remove(del_id)
             elif key == FAMILY_PROXIES:
-                with suppress(KeyError, ValueError):
-                    data[FAMILIES][
-                        data[key][del_id].family
-                    ].proxies.remove(del_id)
                 with suppress(KeyError, ValueError):
                     data[FAMILY_PROXIES][
                         data[key][del_id].first_parent
@@ -1423,13 +1416,6 @@ class DataStoreMgr:
 
         self.added[TASK_PROXIES][tp_id] = tproxy
         getattr(self.updated[WORKFLOW], TASK_PROXIES).append(tp_id)
-        self.updated[TASKS].setdefault(
-            t_id,
-            PbTask(
-                stamp=f'{t_id}@{update_time}',
-                id=t_id,
-            )
-        ).proxies.append(tp_id)
         self.generate_ghost_family(tproxy.first_parent, child_task=tp_id)
         self.state_update_families.add(tproxy.first_parent)
 
@@ -1554,11 +1540,6 @@ class DataStoreMgr:
 
             self.added[FAMILY_PROXIES][fp_id] = fp_delta
             fp_parent = fp_delta
-            # Add ref ID to family element
-            f_delta = PbFamily(id=fam.id, stamp=f'{fam.id}@{update_time}')
-            f_delta.proxies.append(fp_id)
-            self.updated[FAMILIES].setdefault(
-                fam.id, PbFamily(id=fam.id)).MergeFrom(f_delta)
             # Add ref ID to workflow element
             getattr(self.updated[WORKFLOW], FAMILY_PROXIES).append(fp_id)
             # Generate this families parent if it not root.

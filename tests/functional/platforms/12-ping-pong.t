@@ -30,11 +30,13 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play "${WORKFLOW_NAME}" --debug --no-detach
 
-named_grep_ok "1/remote_task submits to ${CYLC_TEST_PLATFORM}" \
+named_grep_ok \
+    "${TEST_NAME_BASE}-remote_task-submits-to-${CYLC_TEST_PLATFORM}" \
     "\[1/remote_task/01:preparing\] submitted to ${CYLC_TEST_PLATFORM}" \
     "${WORKFLOW_RUN_DIR}/log/scheduler/log"
 
-named_grep_ok "2/remote_task submits to localhost" \
+named_grep_ok \
+    "${TEST_NAME_BASE}-remote_task-submits-to-localhost" \
     "\[2/remote_task/01:preparing\] submitted to localhost" \
     "${WORKFLOW_RUN_DIR}/log/scheduler/log"
 

@@ -38,12 +38,13 @@ jobs:
     env:
       TZ: ${{ matrix.time-zone }}
       PYTEST_ADDOPTS: --cov --cov-append -n 5 --color=yes
+      CYLC_COVERAGE: 1
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Install System Dependencies
-        uses: mamba-org/setup-micromamba@v2
+        uses: mamba-org/setup-micromamba@v3
         with:
           cache-environment: true
           post-cleanup: 'all'
@@ -88,7 +89,7 @@ jobs:
 
       - name: Upload failed tests artifact
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: cylc-run (${{ matrix.os }} py-${{ matrix.python-version }})
           path: ~/cylc-run/
@@ -100,7 +101,7 @@ jobs:
           coverage report
 
       - name: Upload coverage artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage_${{ matrix.os }}_py-${{ matrix.python-version }}
           path: coverage.xml
@@ -116,10 +117,10 @@ jobs:
       FORCE_COLOR: 2
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Install System Dependencies
-        uses: mamba-org/setup-micromamba@v2
+        uses: mamba-org/setup-micromamba@v3
         with:
           cache-environment: true
           post-cleanup: 'all'
@@ -161,13 +162,13 @@ jobs:
     timeout-minutes: 2
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Download coverage artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
 
       - name: Codecov upload
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           name: ${{ github.workflow }}
           flags: fast-tests
