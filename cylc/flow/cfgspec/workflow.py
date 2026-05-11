@@ -1414,13 +1414,13 @@ with Conf(
                 Set the execution (:term:`wallclock <wallclock time>`) time
                 limit of a job.
 
-                For ``background`` and ``at`` job runners Cylc runs the
-                job's script using the timeout command. For other job runners
+                For the ``background`` and ``at`` job runners, Cylc runs the
+                job's script using the timeout command. For other job runners,
                 Cylc will convert execution time limit to a :term:`directive`.
 
-                If a job exceeds its execution time limit Cylc can
-                poll the job multiple times. You can set polling
-                intervals using :cylc:conf:`global.cylc[platforms]
+                If a job exceeds its execution time limit, Cylc will
+                poll the job multiple times at the
+                intervals configured in :cylc:conf:`global.cylc[platforms]
                 [<platform name>]execution time limit polling intervals`
 
                 .. versionchanged:: 8.0.0
