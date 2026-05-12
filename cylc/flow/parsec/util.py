@@ -456,15 +456,16 @@ def filter_keys(possible_keys: list[str], key: str) -> list[str]:
         filtered_keys.append((possible_key, ratio))
 
     filtered_keys.sort(key=lambda x: x[1], reverse=True)
-    # no similar keys to suggest
-    if filtered_keys[0][1] < 0.2:
+    # no keys similar enough to suggest
+    if filtered_keys[0][1] < min(len(filtered_keys[0][0]) / 10, 0.5):
         return []
 
     # pick the most likely suggestion, and any others
     # within a 90% of the similarity score of it
     final_keys = [filtered_keys[0]]
-    if len(filtered_keys) > 1 and filtered_keys[1][1] > final_keys[0][1] * .9:
-        final_keys.append(filtered_keys[1])
+    for i in range(1, min(4, len(filtered_keys))):
+        if filtered_keys[i][1] > final_keys[0][1] * .9:
+            final_keys.append(filtered_keys[i])
 
     return [
         final_keys[i][0]
