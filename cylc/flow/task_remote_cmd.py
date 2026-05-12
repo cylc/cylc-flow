@@ -19,21 +19,27 @@ import os
 import re
 import sys
 import tarfile
+from typing import TYPE_CHECKING
+
 import zmq
 
 import cylc.flow.flags
-from cylc.flow.workflow_files import (
-    KeyInfo,
-    KeyOwner,
-    KeyType,
-    WorkflowFiles
-)
 from cylc.flow.pathutil import make_symlink_dir
 from cylc.flow.resources import get_resources
 from cylc.flow.task_remote_mgr import (
     REMOTE_INIT_DONE,
-    REMOTE_INIT_FAILED
+    REMOTE_INIT_FAILED,
 )
+from cylc.flow.workflow_files import (
+    KeyInfo,
+    KeyOwner,
+    KeyType,
+    WorkflowFiles,
+)
+
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def remove_keys_on_client(srvd, install_target, full_clean=False):
@@ -83,7 +89,9 @@ def create_client_keys(srvd, install_target):
     os.umask(old_umask)
 
 
-def remote_init(install_target: str, rund: str, *dirs_to_symlink: str) -> None:
+def remote_init(
+    install_target: str, rund: 'Path | str', *dirs_to_symlink: str
+) -> int:
     """cylc remote-init
 
     Arguments:
@@ -104,7 +112,7 @@ def remote_init(install_target: str, rund: str, *dirs_to_symlink: str) -> None:
             print(REMOTE_INIT_FAILED)
             print(f'Error occurred when symlinking.'
                   f' {target} contains an invalid environment variable.')
-            return
+            return 1
         make_symlink_dir(path, target)
     srvd = os.path.join(rund, WorkflowFiles.Service.DIRNAME)
     os.makedirs(srvd, exist_ok=True)
@@ -126,16 +134,16 @@ def remote_init(install_target: str, rund: str, *dirs_to_symlink: str) -> None:
         print(f"Unexpected key directory exists: {client_key_dir}"
               " Check global.cylc install target is configured correctly "
               "for this platform.")
-        return
+        return 2
     pattern = re.compile(r"^client_\S*key$")
     for filepath in os.listdir(srvd):
         if pattern.match(filepath) and f"{install_target}" not in filepath:
             # client key for a different install target exists
             print(REMOTE_INIT_FAILED)
-            print(f"Unexpected authentication key \"{filepath}\" exists. "
+            print(f"Unexpected authentication key '{filepath}' exists. "
                   "Check global.cylc install target is configured correctly "
                   "for this platform.")
-            return
+            return 2
     try:
         remove_keys_on_client(srvd, install_target)
         create_client_keys(srvd, install_target)
@@ -143,7 +151,7 @@ def remote_init(install_target: str, rund: str, *dirs_to_symlink: str) -> None:
         # Catching all exceptions as need to fail remote init if any problems
         # with key generation.
         print(REMOTE_INIT_FAILED)
-        return
+        return 3
     oldcwd = os.getcwd()
     os.chdir(rund)
     # Extract job.sh from library, for use in job scripts.
@@ -162,7 +170,7 @@ def remote_init(install_target: str, rund: str, *dirs_to_symlink: str) -> None:
     with open(client_pub_keyinfo.full_key_path) as keyfile:
         print(keyfile.read(), end='KEYEND')
     print(REMOTE_INIT_DONE)
-    return
+    return 0
 
 
 def remote_tidy(install_target, rund):
