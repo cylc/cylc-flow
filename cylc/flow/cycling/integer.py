@@ -421,36 +421,6 @@ class IntegerSequence(SequenceBase):
         # interval may be None (a one-off sequence)
         return self.i_step
 
-    def get_offset(self):
-        """Deprecated: return the offset used for this sequence."""
-        return self.i_offset
-
-    def set_offset(self, i_offset):
-        """Deprecated: alter state to offset the entire sequence."""
-        if not i_offset.value:
-            # no offset
-            return
-        if not self.i_step:
-            # this is a one-off sequence
-            self.p_start += i_offset
-            self.p_stop += i_offset
-            if self.p_start < self.p_context_start:
-                self.p_start = self.p_stop = None
-            return
-        if not int(i_offset) % int(self.i_step):
-            # offset is a multiple of step
-            return
-        # shift to 0 < offset < interval
-        i_offset = IntegerInterval.from_integer(
-            int(i_offset) % int(self.i_step))
-        self.i_offset = i_offset
-        self.p_start += i_offset  # can be negative
-        if self.p_start < self.p_context_start:
-            self.p_start += self.i_step
-        self.p_stop += i_offset
-        if self.p_stop > self.p_context_stop:
-            self.p_stop -= self.i_step
-
     def is_on_sequence(self, point):
         """Is point on-sequence, disregarding bounds?"""
         if self.exclusions and point in self.exclusions:

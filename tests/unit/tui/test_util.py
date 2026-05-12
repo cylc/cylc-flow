@@ -17,7 +17,8 @@
 
 from datetime import (
     datetime,
-    timedelta
+    timedelta,
+    timezone
 )
 from unittest.mock import Mock
 
@@ -171,7 +172,7 @@ def test_get_task_icon(
     start_time = None
     if start_offset is not None:
         start_time = get_time_string(
-            datetime.utcnow() - timedelta(seconds=start_offset)
+            datetime.now(timezone.utc) - timedelta(seconds=start_offset)
         )
     assert (
         (

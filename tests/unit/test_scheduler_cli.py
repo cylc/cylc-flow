@@ -17,17 +17,19 @@
 from contextlib import contextmanager
 from secrets import token_hex
 import sqlite3
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from cylc.flow.exceptions import HostSelectException, ServiceFileError
+from cylc.flow.exceptions import (
+    HostSelectException,
+    ServiceFileError,
+)
 from cylc.flow.scheduler_cli import (
     RunOptions,
     _distribute,
     _version_check,
 )
-
-from .conftest import MonkeyMock
 
 
 @pytest.fixture
@@ -262,8 +264,8 @@ def test_version_check_no_db(tmp_path):
         ('always', False, '--color=never'),
     ]
 )
-def test_distribute_colour(
-    monkeymock,
+async def test_distribute_colour(
+    monkeypatch: pytest.MonkeyPatch,
     cli_colour,
     is_terminal,
     distribute_colour,
@@ -279,19 +281,21 @@ def test_distribute_colour(
 
     See https://github.com/cylc/cylc-flow/issues/5159
     """
-    _is_terminal = monkeymock('cylc.flow.scheduler_cli.is_terminal')
-    _is_terminal.return_value = is_terminal
-    _cylc_server_cmd = monkeymock('cylc.flow.scheduler_cli.cylc_server_cmd')
-    _cylc_server_cmd.return_value = 0
+    _is_terminal = Mock(return_value=is_terminal)
+    monkeypatch.setattr('cylc.flow.scheduler_cli.is_terminal', _is_terminal)
+    _cylc_server_cmd = AsyncMock(return_value=0)
+    monkeypatch.setattr(
+        'cylc.flow.scheduler_cli.cylc_server_cmd', _cylc_server_cmd
+    )
     opts = RunOptions(host='myhost', color=cli_colour)
     with pytest.raises(SystemExit) as excinfo:
-        _distribute('foo', 'foo/run1', opts)
+        await _distribute('foo', 'foo/run1', opts)
     assert excinfo.value.code == 0
     assert distribute_colour in _cylc_server_cmd.call_args[0][0]
 
 
-def test_distribute_upgrade(
-    monkeymock: MonkeyMock, monkeypatch: pytest.MonkeyPatch
+async def test_distribute_upgrade(
+    monkeypatch: pytest.MonkeyPatch
 ):
     """It should start detached workflows with the --upgrade option if the user
     has interactively chosen to upgrade (typed 'y' at prompt).
@@ -299,19 +303,21 @@ def test_distribute_upgrade(
     monkeypatch.setattr(
         'sys.argv', ['cylc', 'play', 'foo']  # no upgrade option here
     )
-    _cylc_server_cmd = monkeymock('cylc.flow.scheduler_cli.cylc_server_cmd')
-    _cylc_server_cmd.return_value = 0
+    _cylc_server_cmd = AsyncMock(return_value=0)
+    monkeypatch.setattr(
+        'cylc.flow.scheduler_cli.cylc_server_cmd', _cylc_server_cmd
+    )
     opts = RunOptions(
         host='myhost',
         upgrade=True,  # added by interactive upgrade
     )
     with pytest.raises(SystemExit) as excinfo:
-        _distribute('foo', 'foo/run1', opts)
+        await _distribute('foo', 'foo/run1', opts)
     assert excinfo.value.code == 0
     assert '--upgrade' in _cylc_server_cmd.call_args[0][0]
 
 
-def test_distribute_invalid_host(
+async def test_distribute_invalid_host(
     mock_glbl_cfg, caplog: pytest.LogCaptureFixture
 ):
     """It handles a socket error when the host is invalid."""
@@ -324,4 +330,4 @@ def test_distribute_invalid_host(
         '''
     )
     with pytest.raises(HostSelectException):
-        _distribute('foo', 'foo/run1', RunOptions())
+        await _distribute('foo', 'foo/run1', RunOptions())

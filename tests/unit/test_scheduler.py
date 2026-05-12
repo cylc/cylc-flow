@@ -119,7 +119,7 @@ def test_release_tasks_to_run__auto_restart():
     mock_schd.submit_task_jobs.assert_called()
 
 
-def test_auto_restart_DNS_error(mock_glbl_cfg, caplog, log_filter):
+async def test_auto_restart_DNS_error(mock_glbl_cfg, caplog, log_filter):
     """Ensure that DNS errors in host selection are caught."""
     # fake a "get address info" error
     # this error can occur due to an unknown host resulting from broken
@@ -139,13 +139,13 @@ def test_auto_restart_DNS_error(mock_glbl_cfg, caplog, log_filter):
         INTERVAL_AUTO_RESTART_ERROR=0,
     )
     caplog.set_level(logging.ERROR, CYLC_LOG)
-    assert not Scheduler.workflow_auto_restart(schd, max_retries=2)
+    assert not await Scheduler.workflow_auto_restart(schd, max_retries=2)
     assert log_filter(contains=hostname)
 
 
-def test_auto_restart_popen_error(monkeypatch, caplog, log_filter):
+async def test_auto_restart_popen_error(monkeypatch, caplog, log_filter):
     """Ensure that subprocess errors are handled."""
-    def _select_workflow_host(cached=False):
+    async def _select_workflow_host(cached=False):
         # mock a host-select return value
         return ('foo', 'foo')
 
@@ -172,5 +172,5 @@ def test_auto_restart_popen_error(monkeypatch, caplog, log_filter):
         INTERVAL_AUTO_RESTART_ERROR=0,
     )
     caplog.set_level(logging.ERROR, CYLC_LOG)
-    assert not Scheduler.workflow_auto_restart(schd, max_retries=2)
+    assert not await Scheduler.workflow_auto_restart(schd, max_retries=2)
     assert log_filter(contains='mystderr')

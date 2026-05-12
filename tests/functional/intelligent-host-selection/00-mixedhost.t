@@ -56,7 +56,7 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
 # Run a bunch of tests on the workflow logs to ensure that warning messages
 # produced by Intelligent Host Selection Logic have happened.
 
-named_grep_ok "unreachable host warning" \
+named_grep_ok "${TEST_NAME_BASE}-unreachable-host-warning" \
     'unreachable_host has been added to the list of unreachable hosts' \
     "${WORKFLOW_RUN_DIR}/log/scheduler/log"
 
