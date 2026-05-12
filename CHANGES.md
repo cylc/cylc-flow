@@ -11,6 +11,16 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 <!-- towncrier release notes start -->
 
+## __cylc-8.6.4 (Released 2026-05-12)__
+
+### 🔧 Fixes
+
+[#7056](https://github.com/cylc/cylc-flow/pull/7056) - Fixes the interaction between retrying tasks and the expired state.
+
+[#7218](https://github.com/cylc/cylc-flow/pull/7218) - Fix issue which could break the ability to list log files in the GUI.
+
+[#7233](https://github.com/cylc/cylc-flow/pull/7233) - Fixed a `cylc cat-log` bug introduced in 8.6.3 where `ps` commands would be run very frequently.
+
 ## __cylc-8.6.3 (Released 2026-02-24)__
 
 ### 🔧 Fixes
