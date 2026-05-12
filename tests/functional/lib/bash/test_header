@@ -1121,15 +1121,16 @@ _add_platform_to_test_global_conf () {
     # NOTE: Uses global.cylc NOT global-tests.cylc
     #       Do not configure test platforms in the global-tests.cylc file
     PLATFORM="$1"
+    platform_cfg=$(CYLC_CONF_PATH='' cylc config -i "[platforms][$PLATFORM]")
     cat >> "${CYLC_CONF_PATH}/global.cylc" <<__HERE__
 [platforms]
     [[$PLATFORM]]
-$(
-    CYLC_CONF_PATH='' cylc config \
-        -i "[platforms][$PLATFORM]" \
-        | sed 's/^/        /'
-)
+$platform_cfg
 __HERE__
+    if [[ -n "$platform_cfg" ]]; then
+        # Ensure install target explicitly defined:
+        cylc config -i "[platforms][${PLATFORM}]install target" || exit 1
+    fi
 }
 
 delete_db() {
