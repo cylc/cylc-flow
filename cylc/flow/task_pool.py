@@ -21,6 +21,7 @@ from contextlib import suppress
 import json
 import logging
 from textwrap import indent
+from time import time
 from typing import (
     TYPE_CHECKING,
     Dict,
@@ -163,6 +164,7 @@ class TaskPool:
     ERR_PREFIX_TASK_NOT_ON_SEQUENCE = "Invalid cycle point for task: {0}, {1}"
     SUICIDE_MSG = "suicide trigger"
     REMOVED_BY_PREREQ = "prerequisite task(s) removed"
+    VALIDATED_ID_RESET_DELAY = 600
 
     def __init__(
         self,
@@ -215,6 +217,11 @@ class TaskPool:
         self.tasks_to_trigger_now: set['TaskProxy'] = set()
         self.pre_start_tasks_to_trigger: set[tuple[str, 'PointBase']] = set()
 
+        # Helps speed up id_match by excluding already cycle validated
+        # IDs from being validated again.
+        self.validated_ids: Set[TaskTokens] = set()
+        self.validated_reset_time = 0.0
+
     def set_stop_task(self, task_id):
         """Set stop after a task."""
         tokens = Tokens(task_id, relative=True)
@@ -256,6 +263,9 @@ class TaskPool:
             tdef = self.config.get_taskdef(name)
             point = tdef.first_point(self.config.start_point)
             self.spawn_to_rh_limit(tdef, point, {flow_num})
+
+        # re-gather cycle already validated ids
+        self.reset_validated_ids()
 
     def db_add_new_flow_rows(self, itask: TaskProxy) -> None:
         """Add new rows to DB task tables that record flow_nums.
@@ -1003,10 +1013,11 @@ class TaskPool:
             A list of an active tasks matching these IDs.
 
         """
+        ids_ = {id_.relative_id for id_ in ids}
         return [
             itasks[id_]
             for itasks in self.active_tasks.values()
-            for id_ in itasks.keys() & {id_.relative_id for id_ in ids}
+            for id_ in ids_ & itasks.keys()
         ]
 
     def queue_task(self, itask: TaskProxy) -> None:
@@ -1118,6 +1129,9 @@ class TaskPool:
         self.xtrigger_mgr.add_xtriggers(
             self.config.xtrigger_collator, reload=True)
         self._reload_taskdefs()
+
+        # re-gather cycle already validated ids
+        self.reset_validated_ids()
 
     def _reload_taskdefs(self) -> None:
         """Reload the definitions of task proxies in the pool.
@@ -1442,7 +1456,9 @@ class TaskPool:
             items,
             # only match tasks within the held task list
             only_match_pool=True,
+            validated=self.validated_ids,
         )
+        self.validated_ids.update(matched)
         for id_ in matched:
             itask = self._get_task_by_id(id_.relative_id)
             if itask:
@@ -2536,12 +2552,38 @@ class TaskPool:
             for itask in itasks.values()
         }
 
-        return id_match(
+        matched, unmatched = id_match(
             self.config,
             active_task_ids,
             ids,
             only_match_pool=only_match_pool,
+            validated=self.validated_ids,
         )
+        self.validated_ids.update(matched)
+        return (matched, unmatched)
+
+    def reset_validated_ids(self, check_timer: Optional[bool] = False) -> None:
+        """Reset validated IDs by aligning with the pool.
+
+        This is used to speed up `id_match` by skipping those matches that
+        have already been cycle validated. However, on reload and to prune,
+        this needs to be reset.
+
+        """
+        now_time = time()
+        if not check_timer or self.validated_reset_time < now_time:
+            self.validated_ids = {
+                TaskTokens(
+                    cycle=itask.tokens['cycle'],
+                    task=itask.tokens['task'],
+                    task_sel=None,
+                )
+                for itasks in self.active_tasks.values()
+                for itask in itasks.values()
+            }
+            self.validated_reset_time = (
+                now_time + self.VALIDATED_ID_RESET_DELAY
+            )
 
     def merge_flows(self, itask: TaskProxy, flow_nums: 'FlowNums') -> None:
         """Merge flow_nums into itask.flow_nums, for existing itask.

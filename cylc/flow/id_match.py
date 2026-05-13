@@ -23,6 +23,7 @@ from typing import (
     Any,
     Dict,
     Iterable,
+    Optional,
     Set,
     Tuple,
 )
@@ -42,6 +43,7 @@ def id_match(
     pool: Set[TaskTokens],
     ids: Set[TaskTokens],
     only_match_pool: bool = False,
+    validated: Optional[Set[TaskTokens]] = None,
 ) -> Tuple[Set[TaskTokens], Set[TaskTokens]]:
     """New Cylc 8.6.0 task matching interface.
 
@@ -56,6 +58,8 @@ def id_match(
             The provided IDs to match.
         only_match_pool:
             If True, tasks outside of the provided pool will not be matched.
+        validated:
+            A set of IDs that have already been cycle validated.
 
     Returns:
         (matched, unmatched)
@@ -92,6 +96,7 @@ def id_match(
         all_namespaces,
         only_match_pool=True,
         match_selectors=True,
+        validated=validated,
     )
     unmatched.update(_unmatched)
 
@@ -104,6 +109,7 @@ def id_match(
         all_cycles,
         all_namespaces,
         only_match_pool=only_match_pool,
+        validated=validated,
     )
     unmatched.update(_unmatched)
 
@@ -119,7 +125,12 @@ def _match(
     all_namespaces: Dict[str, Any],
     only_match_pool: bool = False,
     match_selectors: bool = False,
+    validated: Optional[Set[TaskTokens]] = None,
 ) -> Tuple[Set[TaskTokens], Set[TaskTokens]]:
+
+    # already cycle validated ids
+    validated = validated or set()
+
     # results
     unmatched: Set[TaskTokens] = set()
     matched: Set[TaskTokens] = set()
@@ -176,7 +187,7 @@ def _match(
             })
         else:
             # filter for on-sequence task instances
-            for id__ in list(_matched):
+            for id__ in list(_matched.difference(validated)):
                 try:
                     taskdef = config.taskdefs[id__['task']]
                     if not taskdef.is_valid_point(get_point(id__['cycle'])):

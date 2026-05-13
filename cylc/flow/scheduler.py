@@ -887,6 +887,7 @@ class Scheduler:
         # runahead limit was changed for the restart.
         self.pool.compute_runahead()
         self.pool.release_runahead_tasks()
+        self.pool.reset_validated_ids()
 
         self.pool.load_db_tasks_to_hold()
         self.pool.update_flow_mgr()
@@ -1717,11 +1718,10 @@ class Scheduler:
             await self.update_data_structure()
 
         if has_updated:
-            if not self.is_reloaded:
-                # (A reload cannot un-stall workflow by itself)
-                if self.is_stalled:
-                    self.is_stalled = False
-                    self.update_data_store()
+            # (A reload cannot un-stall workflow by itself)
+            if not self.is_reloaded and self.is_stalled:
+                self.is_stalled = False
+                self.update_data_store()
             self.is_reloaded = False
 
             # Reset workflow and task updated flags.
@@ -1761,6 +1761,9 @@ class Scheduler:
         if not has_updated and not self.stop_mode:
             # Has the workflow stalled?
             self.check_workflow_stalled()
+
+            # reset pool validated ids
+            self.pool.reset_validated_ids(check_timer=True)
 
         # Sleep a bit for things to catch up.
         # Quick sleep if there are items pending in process pool.
