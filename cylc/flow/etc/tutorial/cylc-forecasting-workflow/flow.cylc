@@ -87,8 +87,7 @@
             MAP_TEMPLATE = "$CYLC_WORKFLOW_RUN_DIR/lib/template/map.html"
 
     [[post_process<site>]]
-        # Generate a forecast for the location <site>
-        # {{ FORECAST_LENGTH * FORECAST_COUNT }} minutes in the future
+        #  Generate a forecast {{ FORECAST_LENGTH * FORECAST_COUNT }} minutes in the future for <site>
         script = post-process $CYLC_TASK_PARAM_site {{ FORECAST_LENGTH * FORECAST_COUNT }}
 
 {% include 'etc/python-job.settings' %}
