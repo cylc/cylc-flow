@@ -646,18 +646,19 @@ STYLE_CHECKS = {
             'Use ``[runtime][TASK]execution time limit``'
             ' rather than job runner directive: ``{directive}``.'
         ),
+        'url': (
+            'https://cylc.github.io/cylc-doc/stable/html/workflow-design-'
+            'guide/general-principles.html#task-execution-time-limits'
+        ),
         'rst': (
             "Use :cylc:conf:`flow.cylc[runtime][<namespace>]execution "
             "time limit` rather than directly specifying a timeout "
             "directive, otherwise Cylc has no way of knowing when the job "
             "should have finished. Cylc automatically translates the "
             "execution time limit to the correct timeout directive for the "
-            "particular job runner:\n"
-        )
-        + ''.join((
-            f'\n * ``{directive}`` ({job_runner})'
-            for job_runner, directive in WALLCLOCK_DIRECTIVES.items()
-        )),
+            "particular job runner.\n\n"
+            "See :ref:`design-guide.execution-time-limit`."
+        ),
         FUNCTION: check_wallclock_directives,
     },
     'S015': {
