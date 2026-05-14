@@ -62,6 +62,7 @@ Examples:
 import asyncio
 from optparse import SUPPRESS_HELP
 import sys
+from textwrap import indent
 from typing import (
     TYPE_CHECKING,
     Iterable,
@@ -244,17 +245,26 @@ async def run(*ids: str, opts: 'Values') -> None:
         if multi_mode and not opts.skip_interactive:
             prompt(workflows)  # prompt for approval or exit
 
-    failed = False
-    for workflow in workflows:
-        try:
-            init_clean(workflow, opts)
-        except Exception as exc:
-            failed = True
-            LOG.error(f"Failed to clean {workflow}\nError: {exc}")
-            if cylc.flow.flags.verbosity > 0:
-                LOG.exception(exc)
-    if failed:
-        raise CylcError("Clean failed")
+    tasks_map = {
+        workflow: asyncio.create_task(init_clean(workflow, opts))
+        for workflow in workflows
+    }
+    await asyncio.gather(*tasks_map.values(), return_exceptions=True)
+
+    if failed := {
+        workflow: exc
+        for workflow, task in tasks_map.items()
+        if (exc := task.exception())
+    }:
+        raise CylcError(
+            '\n'.join(
+                (
+                    f"{workflow}: clean incomplete\n"
+                    f"{indent(str(exc), ' ' * 4).rstrip()}"
+                )
+                for workflow, exc in failed.items()
+            )
+        )
 
 
 @cli_function(get_option_parser)
@@ -277,4 +287,7 @@ def _main(opts: 'Values', *ids: str):
 
     parse_timeout(opts)
 
-    asyncio.run(run(*ids, opts=opts))
+    try:
+        asyncio.run(run(*ids, opts=opts))
+    except KeyboardInterrupt:
+        sys.exit(1)

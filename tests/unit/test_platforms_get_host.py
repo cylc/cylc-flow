@@ -52,7 +52,7 @@ def test_get_host_from_platform_fails_no_goodhosts():
         get_host_from_platform(platform, {'nellie', 'dumbo', 'jumbo'})
     assert err.exconly() == (
         'cylc.flow.exceptions.NoHostsError: '
-        'Unable to find valid host for Elephant'
+        'Unable to find contactable host for platform: Elephant'
     )
 
 
