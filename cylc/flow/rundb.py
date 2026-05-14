@@ -219,7 +219,7 @@ class CylcWorkflowDAO:
     # xtriggers (and the `cylc workflow-state` command) to
     # work with Cylc 7 workflows.
     # url: https://github.com/cylc/cylc-flow/issues/5236
-    # remove at: 8.x
+    # remove at: 8.7
     TABLE_SUITE_PARAMS = "suite_params"
     TABLE_WORKFLOW_FLOWS = "workflow_flows"
     TABLE_WORKFLOW_TEMPLATE_VARS = "workflow_template_vars"

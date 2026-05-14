@@ -168,7 +168,7 @@ def validate(args: Dict[str, Any]):
 # BACK COMPAT: workflow_state_backcompat
 # from: 8.0.0
 # to: 8.3.0
-# remove at: 8.x
+# remove at: 8.7
 def _workflow_state_backcompat(
     workflow: str,
     task: str,
@@ -233,7 +233,7 @@ def _workflow_state_backcompat(
 # BACK COMPAT: workflow_state_backcompat
 # from: 8.0.0
 # to: 8.3.0
-# remove at: 8.x
+# remove at: 8.7
 def _upgrade_workflow_state_sig(args: Dict[str, Any]) -> Dict[str, Any]:
     """Return upgraded args for workflow_state, given the deprecated args."""
     is_message = False
@@ -256,7 +256,7 @@ def _upgrade_workflow_state_sig(args: Dict[str, Any]) -> Dict[str, Any]:
 # BACK COMPAT: workflow_state_backcompat
 # from: 8.0.0
 # to: 8.3.0
-# remove at: 8.x
+# remove at: 8.7
 def _validate_backcompat(args: Dict[str, Any]):
     """Validate old workflow_state xtrigger function args.
     """
