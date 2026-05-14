@@ -418,6 +418,52 @@ def get_task_job_attrs(workflow_id, point, task, submit_num):
     )
 
 
+async def _get_remote_log(
+    workflow_id,
+    platform,
+    point,
+    task,
+    submit_num,
+    filename,
+    mode,
+    batchview_cmd=None,
+    prepend_path=False,
+):
+    """Fetch a log file from the remote job host.
+
+    Re-invokes cylc cat-log on the remote platform to access the file there.
+
+    Returns:
+        The return code (int) or Popen process from remote_cylc_cmd.
+    """
+    logpath = os.path.normpath(get_remote_workflow_run_job_dir(
+        workflow_id, point, task, submit_num, filename))
+    tail_tmpl = platform["tail command template"]
+    cmd = ['cat-log', *verbosity_to_opts(cylc.flow.flags.verbosity)]
+    for item in [logpath, mode, tail_tmpl]:
+        cmd.append('--remote-arg=%s' % shlex.quote(item))
+    if batchview_cmd:
+        cmd.append('--remote-arg=%s' % shlex.quote(batchview_cmd))
+    if prepend_path:
+        cmd.append('--prepend-path')
+    cmd.append(workflow_id)
+    # TODO: Add Intelligent Host selection to this
+    proc = None
+    with suppress(KeyboardInterrupt):
+        # (Ctrl-C while tailing)
+        # NOTE: This will raise NoHostsError if the platform is not
+        # contactable
+        # For testing purposes
+        proc = await remote_cylc_cmd(
+            cmd,
+            platform,
+            capture_process=(mode == LISTDIR),
+            manage=(mode == TAIL),
+            text=(mode == LISTDIR),
+        )
+    return proc
+
+
 @cli_function(get_option_parser)
 def main(
     parser: COP,
@@ -624,35 +670,13 @@ async def _main(
             # --force-remote is specified)
             and (not log_is_retrieved or options.force_remote)
         ):
-            logpath = os.path.normpath(get_remote_workflow_run_job_dir(
-                workflow_id, point, task, submit_num,
-                options.filename))
-            tail_tmpl = platform["tail command template"]
-            # Reinvoke the cat-log command on the remote account.
-            cmd = ['cat-log', *verbosity_to_opts(cylc.flow.flags.verbosity)]
-            for item in [logpath, mode, tail_tmpl]:
-                cmd.append('--remote-arg=%s' % shlex.quote(item))
-            if batchview_cmd:
-                cmd.append('--remote-arg=%s' % shlex.quote(batchview_cmd))
-            if options.prepend_path:
-                cmd.append('--prepend-path')
-            cmd.append(workflow_id)
-            # TODO: Add Intelligent Host selection to this
-            proc = None
-            with suppress(KeyboardInterrupt):
-                # (Ctrl-C while tailing)
-                # NOTE: This will raise NoHostsError if the platform is not
-                # contactable
-                # For testing purposes
-                if not job_log_present:
-                    LOG.debug("job.out not present, getting job log remotely")
-                proc = await remote_cylc_cmd(
-                    cmd,
-                    platform,
-                    capture_process=(mode == LISTDIR),
-                    manage=(mode == TAIL),
-                    text=(mode == LISTDIR),
-                )
+            if not job_log_present:
+                LOG.debug("job.out not present, getting job log remotely")
+            proc = await _get_remote_log(
+                workflow_id, platform, point, task, submit_num,
+                options.filename, mode, batchview_cmd,
+                prepend_path=options.prepend_path,
+            )
 
             # add and missing items to file listing results
             if isinstance(proc, Popen):
@@ -691,13 +715,32 @@ async def _main(
         else:
             # Local task job or local job log.
             logpath = os.path.join(local_log_dir, options.filename)
-            tail_tmpl = os.path.expandvars(platform["tail command template"])
-            out = await view_log(
-                logpath,
-                mode,
-                tail_tmpl,
-                batchview_cmd,
-                color=color,
-                prepend_path=options.prepend_path,
-            )
-            sys.exit(out)
+
+            # If the requested file is not present locally and the platform
+            # is remote, fallback to fetching from the remote filesystem.
+            if (
+                not os.path.exists(logpath)
+                and log_is_remote
+            ):
+                LOG.debug(
+                    "File not found locally, falling back to remote: %s",
+                    options.filename,
+                )
+                proc = await _get_remote_log(
+                    workflow_id, platform, point, task, submit_num,
+                    options.filename, mode, batchview_cmd,
+                    prepend_path=options.prepend_path,
+                )
+                sys.exit(proc)
+            else:
+                tail_tmpl = os.path.expandvars(
+                    platform["tail command template"])
+                out = await view_log(
+                    logpath,
+                    mode,
+                    tail_tmpl,
+                    batchview_cmd,
+                    color=color,
+                    prepend_path=options.prepend_path,
+                )
+                sys.exit(out)
