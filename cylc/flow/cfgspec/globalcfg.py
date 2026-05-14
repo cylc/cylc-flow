@@ -1494,7 +1494,7 @@ with Conf('global.cylc', desc='''
                      desc='''
                      Configure the path to the cgroups filesystem.
 
-                     The default value (``/sys/fs/cgroup``) is the standard
+                     The default value is the standard
                      location for cgroups on linux and should work in
                      most circumstances
                      ''')
