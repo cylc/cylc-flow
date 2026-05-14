@@ -23,34 +23,31 @@ set_test_number 3
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
+TEST_PLATFORM_CFG=$(cylc config -i "[platforms][$CYLC_TEST_PLATFORM]")
+
 create_test_global_config '' "
 [platforms]
-    [[_retrieve]]
-        $(cylc config -i "[platforms][$CYLC_TEST_PLATFORM]")
+    [[_retrieve, _no_retrieve]]
+        $TEST_PLATFORM_CFG
     [[_retrieve]]
         retrieve job logs = True
-    [[_no_retrieve]]
-        $(cylc config -i "[platforms][$CYLC_TEST_PLATFORM]")
     [[_no_retrieve]]
         retrieve job logs = False
 "
 
-run_ok "${TEST_NAME_BASE}-validate" \
-    cylc validate -s "HOST='${CYLC_TEST_HOST}'" "${WORKFLOW_NAME}"
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 
 # There are 2 remote tasks. One with "retrieve job logs = True", one without.
-# Only t1 should have job.err and job.out retrieved.
+# Only y should have job.err and job.out retrieved.
 
 sed "/'job-logs-retrieve'/!d" \
-    "${WORKFLOW_RUN_DIR}/log/job/20200202T0202Z/t"{1,2}'/'{01,02,03}'/job-activity.log' \
+    "${WORKFLOW_RUN_DIR}/log/job/1/"{y,n}'/'{01,02}'/job-activity.log' \
     >'edited-activities.log'
 cmp_ok 'edited-activities.log' <<__LOG__
 [(('job-logs-retrieve', 'retry'), 1) ret_code] 0
-[(('job-logs-retrieve', 'retry'), 2) ret_code] 0
-[(('job-logs-retrieve', 'succeeded'), 3) ret_code] 0
+[(('job-logs-retrieve', 'succeeded'), 2) ret_code] 0
 __LOG__
 
 purge
-exit
