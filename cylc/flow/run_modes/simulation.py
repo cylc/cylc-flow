@@ -38,14 +38,12 @@ from cylc.flow.exceptions import PointParsingError
 from cylc.flow.platforms import FORBIDDEN_WITH_PLATFORM
 from cylc.flow.run_modes import RunMode
 from cylc.flow.task_outputs import (
+    TASK_OUTPUT_FAILED,
     TASK_OUTPUT_STARTED,
     TASK_OUTPUT_SUBMITTED,
+    TASK_OUTPUT_SUCCEEDED,
 )
-from cylc.flow.task_state import (
-    TASK_STATUS_FAILED,
-    TASK_STATUS_RUNNING,
-    TASK_STATUS_SUCCEEDED,
-)
+from cylc.flow.task_state import TASK_STATUS_RUNNING
 from cylc.flow.util import serialise_set
 from cylc.flow.wallclock import get_unix_time_from_time_string
 
@@ -96,7 +94,9 @@ def submit_task_job(
         task_job_mgr.get_simulation_job_conf(itask)
     )
     for output in (TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_STARTED):
-        task_job_mgr.task_events_mgr.process_message(itask, INFO, output)
+        task_job_mgr.task_events_mgr.process_message(
+            itask, INFO, output, event_time=now[1]
+        )
     task_job_mgr.workflow_db_mgr.put_insert_task_jobs(
         itask, {
             'time_submit': now[1],
@@ -373,12 +373,12 @@ def sim_time_check(
             # simulate job outcome
             if itask.mode_settings.sim_task_fails:
                 task_events_manager.process_message(
-                    itask, 'CRITICAL', TASK_STATUS_FAILED,
+                    itask, 'CRITICAL', TASK_OUTPUT_FAILED,
                     flag=task_events_manager.FLAG_RECEIVED
                 )
             else:
                 task_events_manager.process_message(
-                    itask, 'DEBUG', TASK_STATUS_SUCCEEDED,
+                    itask, 'DEBUG', TASK_OUTPUT_SUCCEEDED,
                     flag=task_events_manager.FLAG_RECEIVED
                 )
 
