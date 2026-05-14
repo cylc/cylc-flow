@@ -1,0 +1,30 @@
+#!Jinja2
+[scheduler]
+   [[events]]
+       abort on stall timeout = True
+       stall timeout = PT1M
+[scheduling]
+    [[graph]]
+        R1 = a-task => b-task
+[runtime]
+    [[a-task]]
+        script = """
+            echo "the quick brown fox"
+            echo "the lazy dog" >&2
+        """
+        platform = {{CYLC_TEST_PLATFORM | default("localhost")}}
+    [[b-task]]
+        script = """
+            # Wait for job logs to be retrieved
+            cylc__job__poll_grep_workflow_log 'TaskJobLogsRetrieveContext.*ret_code.*0'
+            # Remove job.err locally to simulate a file that was not retrieved
+            # (e.g. due to size limits or retrieval error)
+            rm -f ${CYLC_WORKFLOW_RUN_DIR}/log/job/1/a-task/01/job.err
+        """
+
+
+
+
+
+
+
