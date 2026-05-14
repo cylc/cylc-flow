@@ -29,11 +29,14 @@ from cylc.flow.run_modes import RunMode
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_events_mgr import (
     EventKey,
+    TaskEventsManager,
     TaskJobLogsRetrieveContext,
 )
+from cylc.flow.task_outputs import TASK_OUTPUT_STARTED
 from cylc.flow.task_state import (
     TASK_STATUS_PREPARING,
     TASK_STATUS_SUBMIT_FAILED,
+    TASK_STATUS_SUCCEEDED,
 )
 
 from cylc.flow.network.resolvers import TaskMsg
@@ -368,3 +371,42 @@ async def test_event_email_body(
     assert f'host: {mod_one.host}' in email_body
     assert f'port: {mod_one.server.port}' in email_body
     assert f'owner: {mod_one.owner}' in email_body
+
+
+@pytest.mark.parametrize(
+    'message_flag',
+    (
+        TaskEventsManager.FLAG_POLLED,
+        TaskEventsManager.FLAG_INTERNAL,
+        TaskEventsManager.FLAG_RECEIVED,
+    ),
+)
+async def test_delayed_event_notification(
+    message_flag,
+    one_conf,
+    flow,
+    scheduler,
+    run,
+    complete,
+):
+    """Delated event notification should not cause task state to rewind.
+
+    One a task reaches a state, it should not be possible for that state to
+    re-wind as the result of a subsequent event.
+
+    In this test, a task succeeds naturally, a "started" event is then sent
+    using one of the configured flags. The task state should not re-wind as a
+    result.
+
+    See https://github.com/cylc/cylc-flow/issues/7269
+    """
+    id_ = flow(one_conf)
+    schd = scheduler(id_, paused_start=False)
+    async with run(schd):
+        itask = schd.pool.get_tasks()[0]
+        await complete(schd, itask.tokens.relative_id)
+        assert itask.state.status == TASK_STATUS_SUCCEEDED
+        schd.task_events_mgr.process_message(
+            itask, 'INFO', TASK_OUTPUT_STARTED, flag=message_flag
+        )
+        assert itask.state.status == TASK_STATUS_SUCCEEDED
