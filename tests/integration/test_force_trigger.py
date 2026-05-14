@@ -621,6 +621,7 @@ async def test_replay_outputs(flow, scheduler, start, complete, log_filter):
         await run_cmd(
             set_prereqs_and_outputs(schd, ['1/k'], ['1'], ['kustom'], None)
         )
+        await schd._main_loop()
         # It should spawn b, l, and offg.
         for task in ['b', 'l', 'offg']:
             assert log_filter(contains=msg_spawned.format(task))

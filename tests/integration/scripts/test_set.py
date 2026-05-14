@@ -96,6 +96,7 @@ async def test_set_parentless_spawning(
             ['1'],
         )
 
+        schd.pool.spawn_to_runahead_limit()
         # the parentless task "a" should be spawned out to the runahead limit
         assert schd.pool.get_task_ids() == {'2/a', '3/a'}
 

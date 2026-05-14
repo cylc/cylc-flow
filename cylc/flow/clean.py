@@ -446,8 +446,8 @@ def remote_clean(
             f"Remote clean failed for {id_} - could not clean on these "
             "install target(s):"
         )
-        for target, exc in failed_targets.items():
-            msg += f"\n[{target}]\n{exc}"
+        for target, excep in failed_targets.items():
+            msg += f"\n[{target}]\n{excep}"
         raise CylcError(msg)
 
 
