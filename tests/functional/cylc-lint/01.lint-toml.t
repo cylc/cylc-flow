@@ -48,12 +48,12 @@ __HERE__
 
 
 # Control tests
-TEST_NAME="it lints without toml file"
+TEST_NAME='it-lints-without-toml-file'
 run_fail "${TEST_NAME}" cylc lint
 TESTOUT="${TEST_NAME}.stdout"
-named_grep_ok "it returns error code" "S004" "${TESTOUT}"
-named_grep_ok "it returns error from subdirectory" "niwa.cylc" "${TESTOUT}"
-named_grep_ok "it returns a 728 upgrade code" "^\[U" "${TESTOUT}"
+named_grep_ok "${TEST_NAME_BASE}-returns-error-code" "S004" "${TESTOUT}"
+named_grep_ok "${TEST_NAME_BASE}-returns-error-from-subdirectory" "niwa.cylc" "${TESTOUT}"
+named_grep_ok "${TEST_NAME_BASE}-returns-728-upgrade-code" "^\[U" "${TESTOUT}"
 
 
 # Add a pyproject.toml file
@@ -75,7 +75,7 @@ exclude = [
 __HERE__
 
 # Test that results are different:
-TEST_NAME="it_lints_with_toml_file"
+TEST_NAME='it-lints-with-toml-file'
 run_fail "${TEST_NAME}" cylc lint
 TESTOUT="${TEST_NAME}.stdout"
 grep_fail "S004" "${TESTOUT}"
@@ -93,13 +93,13 @@ cat > flow.cylc <<__HERE__
         """
 __HERE__
 
-TEST_NAME="it_fails_if_max-line-length_set"
+TEST_NAME="${TEST_NAME_BASE}-it-fails-if-max-line-length-set"
 run_fail "${TEST_NAME}" cylc lint
 named_grep_ok "${TEST_NAME}-line-too-long-message" \
     "\[${LINE_LEN_NO}\] flow.cylc:2: line > 4 characters." \
     "${TEST_NAME}.stdout"
 
-TEST_NAME="it_does_not_fail_if_max-line-length_set_but_ignored"
+TEST_NAME='it-does-not-fail-if-max-line-length-set-but-ignored'
 cat > pyproject.toml <<__HERE__
 [tool.cylc.lint]
 # Check against these rules

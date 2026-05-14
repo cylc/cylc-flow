@@ -119,7 +119,7 @@ RankingExpressionEvaluator = restricted_evaluator(
 GLBL_CFG_STR = 'global.cylc[scheduler][run hosts]ranking'
 
 
-def select_workflow_host(cached=True):
+async def select_workflow_host(cached=True):
     """Return a host as specified in `[workflow hosts]`.
 
     * Condemned hosts are filtered out.
@@ -150,7 +150,7 @@ def select_workflow_host(cached=True):
             host = host[:-1]
         blacklist.append(host)
 
-    return select_host(
+    return await select_host(
         # list of workflow hosts
         global_config.get([
             'scheduler', 'run hosts', 'available'
@@ -165,7 +165,7 @@ def select_workflow_host(cached=True):
     )
 
 
-def select_host(
+async def select_host(
     hosts: List[str],
     ranking_string: Optional[str] = None,
     blacklist: Optional[Iterable[str]] = None,
@@ -264,7 +264,7 @@ def select_host(
         for host in hosts:
             if (not is_remote_host(host)) or (
                 # check host is contactable
-                _get_metrics([host], [], data)
+                await _get_metrics([host], [], data)
             ):
                 return hostname_map[host], host
         raise HostSelectException(data)
@@ -272,7 +272,7 @@ def select_host(
     # filter and sort by rankings
     metrics = list({x for x, _ in rankings})  # required metrics
     # get data from each host
-    results = _get_metrics(hosts, metrics, data)
+    results = await _get_metrics(hosts, metrics, data)
     hosts = list(results)  # some hosts might not be contactable
 
     # stop here if we don't need to proceed
@@ -547,7 +547,7 @@ def _deserialise(metrics, data):
     return data
 
 
-def _get_metrics(hosts, metrics, data):
+async def _get_metrics(hosts, metrics, data):
     """Retrieve host metrics using SSH if necessary.
 
     Note hosts will not appear in the returned results if:
@@ -563,9 +563,11 @@ def _get_metrics(hosts, metrics, data):
             Used for logging success/fail outcomes of the form {host: {}}
 
     Examples:
-        Command failure (no such attribute of psutil):
+        >>> import asyncio
+
+        # Command failure (no such attribute of psutil):
         >>> data = {}
-        >>> _get_metrics(['localhost'], [['elephant']], data)
+        >>> asyncio.run(_get_metrics(['localhost'], [['elephant']], data))
         {}
         >>> data
         {'localhost': {'returncode': 2}}
@@ -586,12 +588,14 @@ def _get_metrics(hosts, metrics, data):
     for host in hosts:
         if is_remote_host(host):
             try:
-                proc_map[host] = cylc_server_cmd(cmd, host=host, **kwargs)
+                proc_map[host] = await cylc_server_cmd(
+                    cmd, host=host, **kwargs
+                )
             except NoHostsError:
                 LOG.warning(f'Could not contact {host}')
                 continue
         else:
-            proc_map[host] = run_cmd(['cylc'] + cmd, **kwargs)
+            proc_map[host] = await run_cmd(['cylc'] + cmd, **kwargs)
 
     # Collect results from commands
     while proc_map:
