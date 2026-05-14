@@ -647,8 +647,8 @@ STYLE_CHECKS = {
             ' rather than job runner directive: ``{directive}``.'
         ),
         'url': (
-            'https://cylc.github.io/cylc-doc/stable/html/workflow-design-guide/'
-            'general-principles.html#task-execution-time-limits'
+            'https://cylc.github.io/cylc-doc/stable/html/workflow-design-'
+            'guide/general-principles.html#task-execution-time-limits'
         ),
         'rst': (
             "Use :cylc:conf:`flow.cylc[runtime][<namespace>]execution "
