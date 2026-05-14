@@ -1040,14 +1040,23 @@ def test_rsync_includes_will_not_accept_sub_directories(tmp_flow_config):
         [[dependencies]]
             graph = "blah => deeblah"
     [scheduler]
-        install = dir/, dir2/subdir2/, file1, file2
+        install = /, /foo, /foo/, foo/bar, foo/bar/
     """)
 
     with pytest.raises(WorkflowConfigError) as exc:
         WorkflowConfig(
             workflow=id_, fpath=flow_file, options=Values()
         )
-    assert "Directories can only be from the top level" in str(exc.value)
+    assert '"/" - Paths cannot be absolute.' in str(exc.value)
+    assert '"/foo" - Paths cannot be absolute.' in str(exc.value)
+    assert (
+        '"foo/bar" - Only top-level files/directories can be configured.'
+        in str(exc.value)
+    )
+    assert (
+        '"foo/bar/" - Only top-level files/directories can be configured.'
+        in str(exc.value)
+    )
 
 
 @pytest.mark.parametrize(
