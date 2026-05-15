@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) NIWA & British Crown (Met Office) & Contributors.
 #
@@ -31,10 +30,8 @@ from metomi.isodatetime.exceptions import (
 )
 
 
-"""Test validating simple multi-inheritance workflows."""
-
-
 def test_multi(flow, validate):
+    """Test validating simple multi-inheritance workflows."""
     id_ = flow({
         'scheduling': {
             'graph': {
@@ -54,10 +51,8 @@ def test_multi(flow, validate):
     validate(id_)
 
 
-"""Test validating Daily, Monthly and Yearly type tasks."""
-
-
 def test_periodical(flow, validate):
+    """Test validating Daily, Monthly and Yearly type tasks."""
     id_ = flow({
         'scheduler': {
             'allow implicit tasks': 'True',
@@ -80,11 +75,8 @@ def test_periodical(flow, validate):
     validate(id_)
 
 
-"""Test that validating: script = "foo"bar"baz" fails"""
-
-
 def test_scripting_quotes(flow, validate):
-
+    """Test that validating: script = "foo"bar"baz" fails"""
     id_ = flow({
         'scheduling': {
             'graph': {
@@ -103,11 +95,8 @@ def test_scripting_quotes(flow, validate):
         validate(id_)
 
 
-"""Test validation for a bad recurrences"""
-
-
 def test_bad_recurrence(flow, validate):
-
+    """Test validation for a bad recurrences"""
     id_ = flow({
         'scheduler': {
             'cycle point time zone': '+01',
@@ -131,11 +120,8 @@ def test_bad_recurrence(flow, validate):
         validate(id_)
 
 
-"""Test validation with a new-style cycle point and a prev-style offset."""
-
-
 def test_fail_old_syntax_2(flow, validate):
-
+    """Test validation with a new-style cycle point and a prev-style offset."""
     id_ = flow({
         'scheduler': {
             'allow implicit tasks': 'True',
@@ -153,11 +139,8 @@ def test_fail_old_syntax_2(flow, validate):
         validate(id_)
 
 
-"""Test validation with a new-style cycle point and a prev-style limit."""
-
-
 def test_fail_old_syntax_3(flow, validate):
-
+    """Test validation with a new-style cycle point and a prev-style limit."""
     id_ = flow({
         'scheduler': {
             'allow implicit tasks': 'True',
@@ -182,12 +165,9 @@ def test_fail_old_syntax_3(flow, validate):
         validate(id_)
 
 
-"""Test validation with a prev-style cycle
-point and a new-style cycling section"""
-
-
 def test_fail_old_syntax_4(flow, validate):
-
+    """Test validation with a prev-style cycle
+    point and a new-style cycling section"""
     id_ = flow({
         'scheduler': {
             'allow implicit tasks': 'True',
@@ -205,11 +185,8 @@ def test_fail_old_syntax_4(flow, validate):
         validate(id_)
 
 
-"""Test validation with a new-style cycle point and start-up tasks."""
-
-
 def test_fail_old_syntax_5(flow, validate):
-
+    """Test validation with a new-style cycle point and start-up tasks."""
     id_ = flow({
         'scheduler': {
             'allow implicit tasks': 'True',
@@ -230,11 +207,8 @@ def test_fail_old_syntax_5(flow, validate):
         validate(id_)
 
 
-"""Test validation with a new-style cycle point and an async graph."""
-
-
 def test_fail_old_syntax_6(flow, validate):
-
+    """Test validation with a new-style cycle point and an async graph."""
     id_ = flow({
         'scheduling': {
             'initial cycle point': '20100101T00',
@@ -250,11 +224,8 @@ def test_fail_old_syntax_6(flow, validate):
         validate(id_)
 
 
-"""Test validation with a new-style cycle point and an async graph."""
-
-
 def test_fail_no_scheduling(flow, validate):
-
+    """Test validation with a new-style cycle point and an async graph."""
     id_ = flow({
     })
     with pytest.raises(WorkflowConfigError, match=(
@@ -263,11 +234,8 @@ def test_fail_no_scheduling(flow, validate):
         validate(id_)
 
 
-"""Test validation of an empty graph."""
-
-
 def test_fail_empty_graph(flow, validate):
-
+    """Test validation of an empty graph."""
     id_ = flow({
         'scheduling': {
             'graph': {
@@ -280,11 +248,8 @@ def test_fail_empty_graph(flow, validate):
         validate(id_)
 
 
-"""Test validation of an empty graph."""
-
-
 def test_fail_empty_graph_2(flow, validate):
-
+    """Test validation of an empty graph."""
     id_ = flow({
         'scheduling': {
             'graph': {
@@ -298,11 +263,8 @@ def test_fail_empty_graph_2(flow, validate):
         validate(id_)
 
 
-"""Test validation fails if no graph is defined."""
-
-
 def test_fail_no_graph(flow, validate):
-
+    """Test validation fails if no graph is defined."""
     id_ = flow({
         'scheduling': {
             'initial cycle point': '2015',
@@ -316,11 +278,8 @@ def test_fail_no_graph(flow, validate):
         validate(id_)
 
 
-"""Test validation with a new-style cycle point and an async graph."""
-
-
 def test_fail_year_bounds(flow, validate):
-
+    """Test validation with a new-style cycle point and an async graph."""
     id_ = flow({
         'scheduler': {
             'allow implicit tasks': 'True',
@@ -338,11 +297,8 @@ def test_fail_year_bounds(flow, validate):
         validate(id_)
 
 
-"""Test validation fails for initial cycle point greater than the final."""
-
-
 def test_fail_initial_greater_final(flow, validate):
-
+    """Test validation fails for initial cycle point greater than the final."""
     id_ = flow({
         'scheduler': {
             'UTC mode': 'True',
@@ -367,11 +323,8 @@ def test_fail_initial_greater_final(flow, validate):
         validate(id_)
 
 
-"""Test validating simple multi-inheritance workflows."""
-
-
 def test_fail_constrained_intial(flow, validate):
-
+    """Test validating simple multi-inheritance workflows."""
     id_ = flow({
         'scheduler': {
         },
@@ -398,11 +351,8 @@ def test_fail_constrained_intial(flow, validate):
         validate(id_)
 
 
-"""Test validating simple multi-inheritance workflows."""
-
-
 def test_fail_constrained_final(flow, validate):
-
+    """Test validating simple multi-inheritance workflows."""
     id_ = flow({
         'scheduler': {
         },
@@ -430,11 +380,8 @@ def test_fail_constrained_final(flow, validate):
         validate(id_)
 
 
-"""Test intercycle dependencies."""
-
-
 def test_9999_rollover(flow, validate):
-
+    """Test intercycle dependencies."""
     id_ = flow({
         'scheduler': {
             'UTC mode': 'True',
@@ -457,11 +404,8 @@ def test_9999_rollover(flow, validate):
         validate(id_)
 
 
-"""Test validating simple multi-inheritance workflows."""
-
-
 def test_pass_constrained_initial(flow, validate):
-
+    """Test validating simple multi-inheritance workflows."""
     id_ = flow({
         'scheduler': {
         },
@@ -485,11 +429,8 @@ def test_pass_constrained_initial(flow, validate):
     validate(id_)
 
 
-"""Test validating simple multi-inheritance workflows."""
-
-
 def test_pass_constrained_final(flow, validate):
-
+    """Test validating simple multi-inheritance workflows."""
     id_ = flow({
         'scheduler': {
         },
@@ -514,12 +455,9 @@ def test_pass_constrained_final(flow, validate):
     validate(id_)
 
 
-"""Test validation with initial and final
-cycle points in scheduling but no R1."""
-
-
 def test_fail_not_integer(flow, validate):
-
+    """Test validation with initial and final
+    cycle points in scheduling but no R1."""
     id_ = flow({
         'scheduling': {
             'initial cycle point': '2015-01-01',
@@ -540,12 +478,9 @@ def test_fail_not_integer(flow, validate):
         validate(id_)
 
 
-"""Test validation fails when the cycle point format is less precise than a
-graph recurrence interval"""
-
-
 def test_no_clock_int_cycle(flow, validate):
-
+    """Test validation fails when the cycle point format is
+    less precise than a graph recurrence interval"""
     id_ = flow({
         'scheduler': {
             'cycle point format': '%Y-%m',
@@ -564,11 +499,8 @@ def test_no_clock_int_cycle(flow, validate):
         validate(id_)
 
 
-"""Test validation of task name with a XXX-FAM pattern."""
-
-
 def test_hyphen_fam_1(flow, validate):
-
+    """Test validation of task name with a XXX-FAM pattern."""
     id_ = flow({
         'scheduling': {
             'graph': {
@@ -587,7 +519,7 @@ def test_hyphen_fam_1(flow, validate):
 
 
 def test_hyphen_fam_2(flow, validate):
-
+    """Test validation of task name with a XXX-FAM pattern."""
     id_ = flow({
         'scheduling': {
             'graph': {
@@ -605,11 +537,8 @@ def test_hyphen_fam_2(flow, validate):
     validate(id_)
 
 
-"""Test explicit unset timeout intervals validate (GitHub #1865)."""
-
-
 def test_null_timeout(flow, validate):
-
+    """Test explicit unset timeout intervals validate (GitHub #1865)."""
     id_ = flow({
         'scheduling': {
             'graph': {
@@ -627,11 +556,8 @@ def test_null_timeout(flow, validate):
     validate(id_)
 
 
-"""Test hyphen in task name + ":finish". See cylc/cylc-flow#1949."""
-
-
 def test_hyphen_finish(flow, validate):
-
+    """Test hyphen in task name + ":finish". See cylc/cylc-flow#1949."""
     id_ = flow({
         'scheduling': {
             'graph': {
@@ -647,12 +573,10 @@ def test_hyphen_finish(flow, validate):
     validate(id_)
 
 
-"""In graph lines where we have multiple triggers of the same task, ensure
-:succeed does not get substituted to symbols that already have a trigger."""
-
-
 def test_succeed_sub(flow, validate):
-
+    """In graph lines where we have multiple triggers
+    of the same task, ensure:succeed does not get
+    substituted to symbols that already have a trigger."""
     id_ = flow({
         'scheduler': {
             'allow implicit tasks': 'True',
@@ -671,13 +595,11 @@ def test_succeed_sub(flow, validate):
     validate(id_)
 
 
-"""GitHub PR #2002 - validation of "foo | foo[-P1D] => bar" was failing because
-the explicit ':succeed' trigger was being substituted before the offset
-instead of after, creating an invalid trigger expression."""
-
-
 def test_offset_no_offset(flow, validate):
-
+    """GitHub PR #2002 - validation of "foo | foo[-P1D] => bar"
+    was failing becausethe explicit ':succeed' trigger was being
+    substituted before the offset instead of after, creating an
+    invalid trigger expression."""
     id_ = flow({
         'scheduling': {
             'initial cycle point': '2010',
@@ -694,11 +616,8 @@ def test_offset_no_offset(flow, validate):
     validate(id_)
 
 
-"""Quoted "now" for initial cycle point was failing."""
-
-
 def test_icp_quoted_now(flow, validate):
-
+    """Quoted "now" for initial cycle point was failing."""
     id_ = flow({
         'scheduler': {
             'cycle point format': '%Y%m%d',
@@ -718,10 +637,8 @@ def test_icp_quoted_now(flow, validate):
     validate(id_)
 
 
-"""Test validation fails on bad task event handler templates."""
-
-
 def test_bad_task_event_handler_tmpl(flow, validate):
+    """Test validation fails on bad task event handler templates."""
     id_ = flow({
         'scheduling': {
             'graph': {
@@ -744,6 +661,7 @@ def test_bad_task_event_handler_tmpl(flow, validate):
 
 
 def test_no_clock_int_cycle_bad_value(flow, validate):
+    """Test validation fails on bad task event handler templates."""
     id_ = flow({
         'scheduling': {
             'graph': {
@@ -765,11 +683,8 @@ def test_no_clock_int_cycle_bad_value(flow, validate):
         validate(id_)
 
 
-"""Test that clock xtriggers are not allowed with integer cycling."""
-
-
 def test_no_clock_int_cycle_xtrigger(flow, validate):
-
+    """Test that clock xtriggers are not allowed with integer cycling."""
     id_ = flow({
         'scheduling': {
             'cycling mode': 'integer',
@@ -789,10 +704,8 @@ def test_no_clock_int_cycle_xtrigger(flow, validate):
         validate(id_)
 
 
-"""Test validating xtrigger names in workflow."""
-
-
 def test_Valid_xtrigger_name(flow, validate):
+    """Test validating xtrigger names in workflow."""
     id_ = flow({
         'scheduling': {
             'initial cycle point': '2000',
@@ -812,7 +725,7 @@ def test_Valid_xtrigger_name(flow, validate):
 
 
 def test_Invalid_xtrigger_name(flow, validate):
-
+    """Test validating xtrigger names in workflow."""
     id_ = flow({
         'scheduling': {
             'initial cycle point': '2000',
@@ -834,11 +747,9 @@ def test_Invalid_xtrigger_name(flow, validate):
         validate(id_)
 
 
-"""Test handling of mixed up sections vs settings"""
-
-
-# 1. section as setting (normal)
 def test_section_as_setting_normal(flow, validate):
+    """Test handling of mixed up sections vs settings
+    1. section as setting (normal)"""
     id_ = flow({
         'runtime': {
             'foo': {
@@ -852,8 +763,9 @@ def test_section_as_setting_normal(flow, validate):
         validate(id_)
 
 
-# 2. section as setting (via upgrader)
 def test_section_as_setting_upgrader(flow, validate):
+    """Test handling of mixed up sections vs settings
+    2. section as setting (via upgrader)"""
     id_ = flow({
         'scheduling': '22',
     })
@@ -863,8 +775,9 @@ def test_section_as_setting_upgrader(flow, validate):
         validate(id_)
 
 
-# 3. setting as section
 def test_setting_as_section(flow, validate):
+    """Test handling of mixed up sections vs settings
+    3. setting as section"""
     id_ = flow({
         'scheduling': {
             'initial cycle point': {
