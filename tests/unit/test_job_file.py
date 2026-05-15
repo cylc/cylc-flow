@@ -406,7 +406,7 @@ def test_write_task_environment():
                 'CYLC_TASK_TRY_NUMBER=1\n    export '
                 'CYLC_TASK_FLOW_NUMBERS=1\n    export '
                 'CYLC_PROFILER=true\n    export '
-                'CYLC_PROFILER_CGROUPs=exit_light\n    export '
+                'CYLC_PROFILER_CGROUPS=exit_light\n    export '
                 'CYLC_PROFILER_POLL_INTERVAL=1\n    export '
                 'CYLC_TASK_PARAM_duck="quack"\n    export '
                 'CYLC_TASK_PARAM_mouse="squeak"\n    '
