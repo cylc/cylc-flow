@@ -16,10 +16,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import pytest
 from cylc.flow.parsec.exceptions import (
-    IllegalValueError, IllegalItemError, UpgradeError,
+    IllegalValueError,
+    IllegalItemError,
+    UpgradeError,
 )
 from cylc.flow.exceptions import (
-    GraphParseError, WorkflowConfigError, PointParsingError,
+    GraphParseError,
+    WorkflowConfigError,
+    PointParsingError,
     SequenceDegenerateError,
 )
 from metomi.isodatetime.exceptions import (
