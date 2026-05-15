@@ -19,12 +19,40 @@ The copy and override functions below assume values are either dicts
 (nesting) or shallow collections of simple types.
 """
 
-from copy import copy
+from copy import copy, deepcopy
 from collections import deque
 import re
 import sys
 
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
+
+
+class ParsecDictConfig(dict):
+    """A parsec configuration value that is a dictionary.
+
+    Parsec uses dictionaries for sections which means that configuration values
+    cannot be dictionaries themselves. This dict subclass is excluded from
+    such logic allowing it to be used as a configuration value.
+    """
+
+
+def is_section(config):
+    """Return True if the config is a section.
+
+    Examples:
+        >>> is_section(True)
+        False
+        >>> is_section([])
+        False
+        >>> is_section({'a': []})
+        True
+        >>> is_section(ParsecDictConfig(a=[]))
+        False
+
+    """
+    return isinstance(config, dict) and not isinstance(
+        config, ParsecDictConfig
+    )
 
 
 def intlistjoin(lst):
@@ -147,7 +175,7 @@ def printcfg(cfg, level=0, indent=0, prefix='', none_str='',
     while stack:
         key_i, cfg_i, level_i, indent_i = stack.pop()
         spacer = " " * 4 * (indent_i - 1)
-        if isinstance(cfg_i, dict):
+        if is_section(cfg_i):
             if not cfg_i and none_str is None:
                 # Don't print empty sections if none_str is None. This does not
                 # handle sections with no items printed because the values of
@@ -165,7 +193,7 @@ def printcfg(cfg, level=0, indent=0, prefix='', none_str='',
             subsections = []
             values = []
             for key, item in cfg_i.items():
-                if isinstance(item, dict):
+                if is_section(item):
                     subsections.append((key, item, level_i + 1, indent_i + 1))
                 else:
                     values.append((key, item, level_i + 1, indent_i + 1))
@@ -205,7 +233,9 @@ def replicate(target, source):
     if hasattr(source, "defaults_"):
         target.defaults_ = pdeepcopy(source.defaults_)
     for key, val in source.items():
-        if isinstance(val, dict):
+        if isinstance(val, ParsecDictConfig):  # value is a dictionary
+            target[key] = deepcopy(val)
+        elif isinstance(val, dict):  # value is a parsec section
             if key not in target:
                 target[key] = OrderedDictWithDefaults()
             if hasattr(val, 'defaults_'):
@@ -237,7 +267,7 @@ def poverride(target, sparse, prepend=False):
     if not sparse:
         return
     for key, val in sparse.items():
-        if isinstance(val, dict):
+        if is_section(val):
             poverride(target[key], val, prepend)
         else:
             if prepend and (key not in target):
@@ -267,7 +297,7 @@ def m_override(target, sparse):
         if many_defaults:
             defaults_list.append((dest, many_defaults))
         for key, val in source.items():
-            if isinstance(val, dict):
+            if is_section(val):
                 child_many_defaults = many_defaults.get(
                     key, OrderedDictWithDefaults())
                 if key not in dest:
@@ -331,7 +361,7 @@ def un_many(cfig):
                     raise
                 del cfig.defaults_[key]
 
-        elif isinstance(val, dict):
+        elif is_section(val):
             un_many(cfig[key])
 
 

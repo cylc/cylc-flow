@@ -621,7 +621,7 @@ def test_unclosed_multiline():
                 'templating_detected': None,
                 'template_variables': {'FOO': 122}
             },
-            [],
+            ['Overriding FOO: 122 -> 123'],
             id='no templating engine set'
         ),
         pytest.param(
