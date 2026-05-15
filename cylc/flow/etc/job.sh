@@ -141,7 +141,7 @@ cylc__job__main() {
     cd "${CYLC_TASK_WORK_DIR}"
 
     if [[ "${CYLC_PROFILER}" == "True" ]] ; then
-       cylc profile -m "${CYLC_CGROUP}" -i "${CYLC_PROFILER_POLL_INTERVAL}" &
+       cylc profile -m "${CYLC_PROFILER_CGROUPS}" -i "${CYLC_PROFILER_POLL_INTERVAL}" &
        export profiler_pid="$!"
     fi
 

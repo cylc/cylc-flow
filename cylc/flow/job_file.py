@@ -229,7 +229,7 @@ class JobFileWriter:
             "\n    export CYLC_PROFILER="
             f"{job_conf['platform']['profiler']['activate']}")
         handle.write(
-            "\n    export CYLC_CGROUP="
+            "\n    export CYLC_PROFILER_CGROUPS="
             f"{job_conf['platform']['profiler']['cgroups path']}")
         handle.write(
             "\n    export CYLC_PROFILER_POLL_INTERVAL="
