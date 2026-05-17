@@ -121,7 +121,7 @@ Examples
 ^^^^^^^^
 
 For examples see the built-in plugins in the :py:mod:`cylc.flow.main_loop`
-module which are registered in the Cylc Flow ``setup.cfg`` file.
+module which are registered in the Cylc Flow ``pyproject.toml`` file.
 
 Coroutines
 ^^^^^^^^^^

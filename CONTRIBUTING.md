@@ -111,6 +111,7 @@ requests_).
  - Paul Earnshaw
  - Christopher Bennett
  - Ryan Boult
+ - Mike Taves
  - Samuel Denton
  - Scott Owen James
 <!-- end-shortlog -->
