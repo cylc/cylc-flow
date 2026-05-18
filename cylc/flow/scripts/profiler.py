@@ -176,8 +176,7 @@ def get_cgroup_name():
         # Get the cgroup information for the current process
         with open('/proc/' + str(pid) + '/cgroup', 'r') as f:
             result = f.read()
-        result = PID_REGEX.search(result).group()
-        return result
+        return PID_REGEX.search(result).group()
 
     except Exception as err:
         raise CylcProfilerError(
