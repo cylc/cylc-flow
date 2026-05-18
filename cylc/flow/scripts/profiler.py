@@ -39,7 +39,7 @@ from cylc.flow.terminal import cli_function
 
 INTERNAL = True
 PID_REGEX = re.compile(r"([^:]*\d{6,}.*)")
-RE_INT = re.compile(r'\d+')
+RE_CPU_USAGE = re.compile(r'usage_usec=(\d+)')
 
 
 @dataclass
@@ -133,8 +133,8 @@ def parse_cpu_file(process: Process) -> int:
         if process.cgroup_version == 2:
             with open(process.cgroup_cpu_path, 'r') as f:
                 for line in f:
-                    if "usage_usec" in line:
-                        return round(int(RE_INT.findall(line)[0]) / 1000)
+                    if match := RE_CPU_USAGE.search(line):
+                        return round(int(match.group(1)) / 1000)
             raise FileNotFoundError(process.cgroup_cpu_path)
 
         elif process.cgroup_version == 1:
