@@ -215,15 +215,15 @@ def get_cgroup_paths(location) -> Process:
             err, "Unable to determine cgroup version") from err
 
 
-async def profile(_process: Process, delay, keep_looping=lambda: True):
+async def profile(process: Process, delay, keep_looping=lambda: True):
     # The infinite loop that will constantly poll the cgroup
     # The lambda function is used to allow the loop to be stopped in unit tests
 
     while keep_looping():
         # Polling the cgroup for memory and keeping track of the max rss value
-        max_rss = parse_memory_file(_process)
-        if max_rss is not None and max_rss > _process.max_rss:
-            _process.max_rss = max_rss
+        max_rss = parse_memory_file(process)
+        if max_rss is not None and max_rss > process.max_rss:
+            process.max_rss = max_rss
         await asyncio.sleep(delay)
 
 
