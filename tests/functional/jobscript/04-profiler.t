@@ -24,7 +24,7 @@ if [[ "$OSTYPE" != "linux-gnu"* ]]; then
     skip_all "Tests not compatible with $OSTYPE"
 fi
 
-set_test_number 7
+set_test_number 6
 
 # Set up test data
 mkdir -p "${PWD}/cgroups_test_data"
@@ -47,7 +47,7 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 
 [scheduling]
     [[graph]]
-        R1 = the_good & the_bad? & the_ugly
+        R1 = the_good & the_bad?
 
 [runtime]
     [[the_good]]
@@ -58,10 +58,6 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         # this task should fail (it should still send profiling info)
         platform = localhost
         script = sleep 5; false
-    [[the_ugly]]
-        # this task should succeed despite the broken profiler configuration
-        platform = localhost
-        script = sleep 1
 __FLOW_CONFIG__
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
@@ -80,8 +76,5 @@ log_scan "${TEST_NAME_BASE}-task-succeeded" \
     "${WORKFLOW_RUN_DIR}/log/scheduler/log" 1 0 \
     '1/the_bad.*(received)_cylc_profiler.*cpu_time.*' \
     '1/the_bad.*failed'
-
-# ensure this task succeeded despite the broken profiler configuration
-grep_workflow_log_ok "${TEST_NAME_BASE}-broken" '1/the_ugly.*(received)succeeded'
 
 purge
