@@ -30,7 +30,7 @@ from metomi.isodatetime.exceptions import (
 )
 
 
-def test_multi(flow, validate):
+def test_multi_inheritance(flow, validate):
     """Test validating simple multi-inheritance workflows."""
     id_ = flow({
         'scheduling': {
@@ -54,9 +54,6 @@ def test_multi(flow, validate):
 def test_periodical(flow, validate):
     """Test validating Daily, Monthly and Yearly type tasks."""
     id_ = flow({
-        'scheduler': {
-            'allow implicit tasks': 'True',
-        },
         'scheduling': {
             'initial cycle point': '20100101T00',
             'final cycle point': '20100102T00',
@@ -98,9 +95,6 @@ def test_scripting_quotes(flow, validate):
 def test_bad_recurrence(flow, validate):
     """Test validation for a bad recurrences"""
     id_ = flow({
-        'scheduler': {
-            'cycle point time zone': '+01',
-        },
         'scheduling': {
             'initial cycle point': '20140101T00',
             'final cycle point': '20140201T00',
@@ -123,9 +117,6 @@ def test_bad_recurrence(flow, validate):
 def test_fail_old_syntax_2(flow, validate):
     """Test validation with a new-style cycle point and a prev-style offset."""
     id_ = flow({
-        'scheduler': {
-            'allow implicit tasks': 'True',
-        },
         'scheduling': {
             'initial cycle point': '20100101T00',
             'graph': {
@@ -142,9 +133,6 @@ def test_fail_old_syntax_2(flow, validate):
 def test_fail_old_syntax_3(flow, validate):
     """Test validation with a new-style cycle point and a prev-style limit."""
     id_ = flow({
-        'scheduler': {
-            'allow implicit tasks': 'True',
-        },
         'scheduling': {
             'initial cycle point': '20100101T00',
             'graph': {
@@ -169,9 +157,6 @@ def test_fail_old_syntax_4(flow, validate):
     """Test validation with a prev-style cycle
     point and a new-style cycling section"""
     id_ = flow({
-        'scheduler': {
-            'allow implicit tasks': 'True',
-        },
         'scheduling': {
             'initial cycle point': '2010010100',
             'graph': {
@@ -188,9 +173,6 @@ def test_fail_old_syntax_4(flow, validate):
 def test_fail_old_syntax_5(flow, validate):
     """Test validation with a new-style cycle point and start-up tasks."""
     id_ = flow({
-        'scheduler': {
-            'allow implicit tasks': 'True',
-        },
         'scheduling': {
             'initial cycle point': '20100101T00',
             'special tasks': {
@@ -281,9 +263,6 @@ def test_fail_no_graph(flow, validate):
 def test_fail_year_bounds(flow, validate):
     """Test validation with a new-style cycle point and an async graph."""
     id_ = flow({
-        'scheduler': {
-            'allow implicit tasks': 'True',
-        },
         'scheduling': {
             'initial cycle point': '+10000-01-01T00',
             'graph': {
@@ -484,7 +463,6 @@ def test_no_clock_int_cycle(flow, validate):
     id_ = flow({
         'scheduler': {
             'cycle point format': '%Y-%m',
-            'allow implicit tasks': 'True',
         },
         'scheduling': {
             'initial cycle point': '2015-08',
@@ -578,9 +556,6 @@ def test_succeed_sub(flow, validate):
     of the same task, ensure:succeed does not get
     substituted to symbols that already have a trigger."""
     id_ = flow({
-        'scheduler': {
-            'allow implicit tasks': 'True',
-        },
         'scheduling': {
             'graph': {
                 'R1': 'foo:fail? | (foo? & bar:fail) => something',
@@ -607,11 +582,6 @@ def test_offset_no_offset(flow, validate):
                 'P1D': 'foo | foo[-P1D] => bar',
             },
         },
-        'runtime': {
-            'foo, bar': {
-                'script': 'true',
-            },
-        },
     })
     validate(id_)
 
@@ -626,11 +596,6 @@ def test_icp_quoted_now(flow, validate):
             'initial cycle point': '"now"',
             'graph': {
                 'P1D': 't1',
-            },
-        },
-        'runtime': {
-            't1': {
-                'script': 'true',
             },
         },
     })
@@ -670,7 +635,6 @@ def test_no_clock_int_cycle_bad_value(flow, validate):
         },
         'runtime': {
             't1': {
-                'script': 'true',
                 'events': {
                     'failed handlers': 'echo %(ids',
                 },
@@ -716,10 +680,6 @@ def test_Valid_xtrigger_name(flow, validate):
                 'R1': '@foo => bar',
             },
         },
-        'runtime': {
-            'bar': {
-            },
-        },
     })
     validate(id_)
 
@@ -734,10 +694,6 @@ def test_Invalid_xtrigger_name(flow, validate):
             },
             'graph': {
                 'R1': '@foo-1 => bar',
-            },
-        },
-        'runtime': {
-            'bar': {
             },
         },
     })
