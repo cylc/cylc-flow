@@ -358,11 +358,24 @@ async def test_profile_data(mocker):
     mock_file = mocker.mock_open(read_data="")
     mocker.patch("builtins.open", mock_file)
     mocker.patch("cylc.flow.scripts.profiler.parse_memory_file",
-                 return_value=0)
+                 side_effect=[100, 200, 150])
     mocker.patch("cylc.flow.scripts.profiler.parse_cpu_file",
                  return_value=2048)
-    run_once = mock.Mock(side_effect=[True, False])
-    await profile(process, 1, run_once)
+
+    # The profile function runs until the callable returns False.
+    run_count = 0
+
+    def run_four_times():
+        nonlocal run_count
+        run_count += 1
+        return run_count < 4
+
+    await profile(process, 0.1, run_four_times)
+
+    # It should have been called 4 times before run_once returned False
+    assert run_count == 4
+    # The max_rss should be the highest value from parse_memory_file
+    assert process.max_rss == 200
 
 
 @pytest.fixture
