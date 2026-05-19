@@ -31,7 +31,9 @@ create_test_global_config "
     [[[profiler]]]
       activate = True
       polling interval = 10
-  [[localhost]]
+  [[ugly_platform]]
+    $(cylc config -i "[platforms][$CYLC_TEST_PLATFORM]")
+  [[ugly_platform]]
     [[[profiler]]]
       activate = True
       polling interval = 10
@@ -56,7 +58,7 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
         script = sleep 5; false
     [[the_ugly]]
         # this task should succeed despite the broken profiler configuration
-        platform = localhost
+        platform = ugly_platform
         script = sleep 5
 __FLOW_CONFIG__
 
