@@ -208,3 +208,109 @@ def test_interval(parsers):
     for expression in tests:
         test_data = str(parsers[0].parse_interval(expression))
         assert test_data == expression
+
+
+def test_parse_timepoint_invalid(parsers):
+    """It should raise CylcTimeSyntaxError for invalid expressions."""
+    from cylc.flow.exceptions import CylcTimeSyntaxError
+    with pytest.raises(CylcTimeSyntaxError, match="not a valid"):
+        parsers[0].parse_timepoint("not_a_date")
+
+
+def test_parse_timepoint_none(parsers):
+    """It should raise CylcTimeSyntaxError when expr is None."""
+    from cylc.flow.exceptions import CylcTimeSyntaxError
+    with pytest.raises(CylcTimeSyntaxError, match="not a valid"):
+        parsers[0].parse_timepoint(None)
+
+
+def test_parse_recurrence_invalid(parsers):
+    """It should raise CylcTimeSyntaxError for unparsable expressions."""
+    from cylc.flow.exceptions import CylcTimeSyntaxError
+    with pytest.raises(CylcTimeSyntaxError, match="Could not parse"):
+        parsers[0].parse_recurrence("///")
+
+
+def test_parse_recurrence_with_context(parsers):
+    """It should use explicit context points when provided."""
+    parser = parsers[0]
+    start = parser.parse_timepoint("20000101T00Z")
+    end = parser.parse_timepoint("20010101T00Z")
+    recurrence = parser.parse_recurrence(
+        "R2/P1Y/",
+        context_start_point=start,
+        context_end_point=end,
+    )[0]
+    assert str(recurrence) == "R2/P1Y/20010101T0000Z"
+
+
+def test_get_interval_from_expression(parsers):
+    """It should infer interval from truncated context point."""
+    from unittest.mock import Mock
+    from metomi.isodatetime.data import Duration
+
+    parser = parsers[0]
+
+    # when expr is provided, it should just parse it
+    assert str(parser._get_interval_from_expression("P1D")) == "P1D"
+
+    # when expr is None and context is None, return None
+    assert parser._get_interval_from_expression(None, None) is None
+
+    # when expr is None and context is not truncated, return None
+    context = Mock(truncated=False)
+    assert parser._get_interval_from_expression(None, context) is None
+
+    # test each truncated property name
+    cases = [
+        ("year_of_century", Duration(years=100)),
+        ("year_of_decade", Duration(years=10)),
+        ("month_of_year", Duration(years=1)),
+        ("week_of_year", Duration(years=1)),
+        ("day_of_year", Duration(years=1)),
+        ("day_of_month", Duration(months=1)),
+        ("day_of_week", Duration(days=7)),
+        ("hour_of_day", Duration(days=1)),
+        ("minute_of_hour", Duration(hours=1)),
+        ("second_of_minute", Duration(minutes=1)),
+    ]
+    for prop_name, expected in cases:
+        context = Mock(truncated=True)
+        context.get_largest_truncated_property_name.return_value = prop_name
+        result = parser._get_interval_from_expression(None, context)
+        assert result == expected, f"Failed for {prop_name}"
+
+    # when prop_name doesn't match anything, return None
+    context = Mock(truncated=True)
+    context.get_largest_truncated_property_name.return_value = "unknown_prop"
+    assert parser._get_interval_from_expression(None, context) is None
+
+
+def test_get_min_from_expression_unresolvable(parsers):
+    """It should skip points that cannot be resolved (cpoint is None)."""
+    parser = parsers[0]
+
+    # "+P1M" with context=None results in cpoint=None (pure offset, no
+    # context to resolve against), so it should be skipped.
+    # "20000101T0000Z" resolves fine and should be selected as the min.
+    result = parser._get_min_from_expression(
+        "min(+P1M, 20000101T0000Z)", context=None
+    )
+    assert result == "20000101T0000Z"
+
+
+def test_get_point_from_expression_truncated_isodatetime_error(parsers):
+    """It should continue past truncated expressions that raise
+    IsodatetimeError."""
+    from cylc.flow.exceptions import CylcTimeSyntaxError
+
+    parser = parsers[0]
+
+    # "99T25" matches the TRUNCATED_REC_MAP regex ^\d\dT (for "---" prefix),
+    # but "---99T25" is not a valid truncated ISO point (no day 99, hour 25),
+    # so it raises IsodatetimeError and the loop continues.
+    # Nothing else matches, so CylcTimeSyntaxError is ultimately raised.
+    with pytest.raises(CylcTimeSyntaxError):
+        parser._get_point_from_expression(
+            "99T25", context=None, allow_truncated=True
+        )
