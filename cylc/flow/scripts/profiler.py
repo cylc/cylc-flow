@@ -39,7 +39,7 @@ from cylc.flow.terminal import cli_function
 
 INTERNAL = True
 PID_REGEX = re.compile(r"([^:]*\d{6,}.*)")
-RE_CPU_USAGE = re.compile(r'usage_usec=(\d+)')
+RE_CPU_USAGE = re.compile(r'usage_usec\s*(\d+)')
 
 
 @dataclass

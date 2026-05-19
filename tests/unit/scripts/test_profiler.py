@@ -148,7 +148,7 @@ def test_parse_cpu_file(tmpdir):
     cpu_file_v1_bad = tmpdir.join("cpu_file_v1_bad.txt")
     cpu_file_v1_bad.write("I'm your dream, mind ashtray")
     cpu_file_v2_good = tmpdir.join("cpu_file_v2_good.txt")
-    cpu_file_v2_good.write('usage_usec=1234567890')
+    cpu_file_v2_good.write('usage_usec 1234567890')
     cpu_file_v2_bad = tmpdir.join("cpu_file_v2_bad.txt")
     cpu_file_v2_bad.write('Give me fuel, give me fire, '
                           'give me that which I desire')
