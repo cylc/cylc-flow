@@ -22,6 +22,7 @@ Coerce more value type from string (to time point, duration, xtriggers, etc.).
 Also provides default values from the spec as a nested dict.
 """
 
+from functools import lru_cache
 import re
 import shlex
 from collections import deque
@@ -655,11 +656,17 @@ def parsec_validate(cfg_root, spec_root):
     return ParsecValidator().validate(cfg_root, spec_root)
 
 
-class DurationFloat(float):
-    """Duration in floating point seconds, but stringify as ISO8601 format."""
-
-    def __str__(self):
+class _DurationFloat(float):
+    def _str(self):
         return str(Duration(seconds=self, standardize=True))
+
+    # NOTE: This object is immutable so we cache the value of __str__.
+    __str__ = lru_cache(1)(_str)
+
+
+# NOTE: Prevent duplicate DurationFloat objects being created for the same
+# duration value. This allows __str__ caching to be effective.
+DurationFloat = lru_cache(None)(_DurationFloat.__call__)
 
 
 class Range(tuple):
