@@ -70,6 +70,7 @@ class TestTaskId(unittest.TestCase):
 
 
 def test_get_standardised_point_string(set_cycling_type):
+    """Test that invalid point string raises ValueError."""
     set_cycling_type(ISO8601Point.TYPE)
     with pytest.raises(ValueError, match="Invalid cycle point:"):
         TaskID.get_standardised_point_string("aaa")
