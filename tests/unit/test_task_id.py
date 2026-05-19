@@ -15,8 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
+import pytest
 
 from cylc.flow.task_id import TaskID
+from cylc.flow.cycling.iso8601 import ISO8601Point
 
 
 class TestTaskId(unittest.TestCase):
@@ -65,3 +67,9 @@ class TestTaskId(unittest.TestCase):
             "abc", "123", "____", "_", "a_b", "a_1", "1_b", "ABC"
         ]:
             self.assertFalse(TaskID.is_valid_id_2(id2))
+
+
+def test_get_standardised_point_string(set_cycling_type):
+    set_cycling_type(ISO8601Point.TYPE)
+    with pytest.raises(ValueError, match="Invalid cycle point:"):
+        TaskID.get_standardised_point_string("aaa")
