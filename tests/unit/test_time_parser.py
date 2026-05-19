@@ -18,6 +18,9 @@
 
 import pytest
 
+from unittest.mock import Mock
+from metomi.isodatetime.data import Duration
+from cylc.flow.exceptions import CylcTimeSyntaxError
 from cylc.flow.time_parser import (
     CylcTimeParser,
     UTC_UTC_OFFSET_HOURS_MINUTES,
@@ -212,21 +215,18 @@ def test_interval(parsers):
 
 def test_parse_timepoint_invalid(parsers):
     """It should raise CylcTimeSyntaxError for invalid expressions."""
-    from cylc.flow.exceptions import CylcTimeSyntaxError
     with pytest.raises(CylcTimeSyntaxError, match="not a valid"):
         parsers[0].parse_timepoint("not_a_date")
 
 
 def test_parse_timepoint_none(parsers):
     """It should raise CylcTimeSyntaxError when expr is None."""
-    from cylc.flow.exceptions import CylcTimeSyntaxError
     with pytest.raises(CylcTimeSyntaxError, match="not a valid"):
         parsers[0].parse_timepoint(None)
 
 
 def test_parse_recurrence_invalid(parsers):
     """It should raise CylcTimeSyntaxError for unparsable expressions."""
-    from cylc.flow.exceptions import CylcTimeSyntaxError
     with pytest.raises(CylcTimeSyntaxError, match="Could not parse"):
         parsers[0].parse_recurrence("///")
 
@@ -246,9 +246,6 @@ def test_parse_recurrence_with_context(parsers):
 
 def test_get_interval_from_expression(parsers):
     """It should infer interval from truncated context point."""
-    from unittest.mock import Mock
-    from metomi.isodatetime.data import Duration
-
     parser = parsers[0]
 
     # when expr is provided, it should just parse it
@@ -302,8 +299,6 @@ def test_get_min_from_expression_unresolvable(parsers):
 def test_get_point_from_expression_truncated_isodatetime_error(parsers):
     """It should continue past truncated expressions that raise
     IsodatetimeError."""
-    from cylc.flow.exceptions import CylcTimeSyntaxError
-
     parser = parsers[0]
 
     # "99T25" matches the TRUNCATED_REC_MAP regex ^\d\dT (for "---" prefix),
