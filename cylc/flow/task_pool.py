@@ -1547,8 +1547,14 @@ class TaskPool:
             if c_task is not None:
                 # Have child task, update its prerequisites.
                 if is_abs:
+                    # NOTE: Absolute triggers can have an infinite number of
+                    # graph children, so only the first match is listed. We
+                    # satisfy the prerequisite for all other tasks of the same
+                    # name in the pool, future task instances have their
+                    # prereqs satisfied from the DB at spawn-time.
                     matched, _unmatched = self.id_match(
-                        {TaskTokens(cycle='*', task=c_name)}
+                        {TaskTokens(cycle='*', task=c_name)},
+                        only_match_pool=True,
                     )
                     tasks = self.get_itasks(matched)
                     if c_task not in tasks:
