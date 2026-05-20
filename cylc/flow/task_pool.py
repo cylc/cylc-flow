@@ -1003,10 +1003,11 @@ class TaskPool:
             A list of an active tasks matching these IDs.
 
         """
+        ids_ = {id_.relative_id for id_ in ids}
         return [
             itasks[id_]
             for itasks in self.active_tasks.values()
-            for id_ in itasks.keys() & {id_.relative_id for id_ in ids}
+            for id_ in ids_ & itasks.keys()
         ]
 
     def queue_task(self, itask: TaskProxy) -> None:
