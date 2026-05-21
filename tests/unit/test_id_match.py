@@ -14,12 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 from textwrap import dedent
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Set, Tuple, cast
 
 import pytest
 
+from cylc.flow import CYLC_LOG
 from cylc.flow.id import Tokens
 from cylc.flow.id_match import id_match
 from cylc.flow.config import WorkflowConfig
@@ -40,9 +42,9 @@ def to_string_ids_with_selectors(*ids):
     return {id_.relative_id_with_selectors for id_ in ids}
 
 
-@pytest.fixture
-def test_config(tmp_path):
-    path = tmp_path / 'flow.cylc'
+@pytest.fixture(scope='module')
+def mod_test_config(mod_tmp_path):
+    path = mod_tmp_path / 'flow.cylc'
     with open(path, 'w+') as flow_cylc:
         flow_cylc.write(dedent('''
             [scheduler]
@@ -56,6 +58,32 @@ def test_config(tmp_path):
                     P3 = z
         '''))
 
+    return WorkflowConfig('test', str(path), SimpleNamespace())
+
+
+@pytest.fixture(scope='module')
+def mod_test_family_config(mod_tmp_path):
+    """It should match family IDs."""
+    path = mod_tmp_path / 'flow.cylc'
+    with open(path, 'w+') as flow_cylc:
+        flow_cylc.write(dedent('''
+            [scheduling]
+                cycling mode = integer
+                initial cycle point = 1
+                [[graph]]
+                    P1 = a & b1 & b2
+                    P2 = z1 & z2
+                    3/P3 = z3
+            [runtime]
+                [[a]]
+                    inherit = A
+                [[b1, b2]]
+                    inherit = B
+                [[A, B]]
+                [[Z]]
+                [[z1, z2, z3]]
+                    inherit = Z
+        '''))
     return WorkflowConfig('test', str(path), SimpleNamespace())
 
 
@@ -133,11 +161,11 @@ def _id_match(
         ),
     ]
 )
-def test_match_task(test_config, ids, matched, unmatched):
+def test_match_task(mod_test_config, ids, matched, unmatched):
     """It should match task IDs."""
     pool = to_tokens('1/a:x', '1/b:x', '1/c:x')
     _matched, _unmatched = _id_match(
-        test_config,
+        mod_test_config,
         pool,
         ids,
         only_match_pool=True,
@@ -191,11 +219,11 @@ def test_match_task(test_config, ids, matched, unmatched):
         ),
     ]
 )
-def test_match_cycle(test_config, ids, matched, unmatched):
+def test_match_cycle(mod_test_config, ids, matched, unmatched):
     """It should match cycle IDs."""
     pool = to_tokens('1/a:x', '1/b:x', '2/a:x')
     assert _id_match(
-        test_config,
+        mod_test_config,
         pool,
         ids,
         only_match_pool=True,
@@ -233,10 +261,10 @@ def test_match_cycle(test_config, ids, matched, unmatched):
         ),
     ]
 )
-def test_match_inactive(test_config, ids, matched, unmatched):
+def test_match_inactive(mod_test_config, ids, matched, unmatched):
     """It should match non-pool tasks"""
     assert _id_match(
-        test_config,
+        mod_test_config,
         to_tokens('1/a:running', '2/a:waiting'),  # active cycles are 1 and 2
         ids,
     ) == (matched, unmatched)
@@ -248,28 +276,50 @@ def test_match_inactive(test_config, ids, matched, unmatched):
         ({'1/A'}, {'1/a'}, set()),
         ({'1/B'}, {'1/b1', '1/b2'}, set()),
         ({'1/C'}, set(), {'1/C'}),
-        ({'1/root'}, {'1/a', '1/b1', '1/b2'}, set()),
+        ({'1/root'}, {'1/a', '1/b1', '1/b2', '1/z1', '1/z2'}, set()),
     ]
 )
-def test_match_family(tmp_path, ids, matched, unmatched):
+def test_match_family(mod_test_family_config, ids, matched, unmatched):
     """It should match family IDs."""
     pool = to_tokens('1/a:x', '1/b1:x', '1/b2:x')
+    assert _id_match(mod_test_family_config, pool, ids) == (matched, unmatched)
 
-    path = tmp_path / 'flow.cylc'
-    with open(path, 'w+') as flow_cylc:
-        flow_cylc.write(dedent('''
-            [scheduling]
-                cycling mode = integer
-                initial cycle point = 1
-                [[graph]]
-                    P1 = a & b1 & b2
-            [runtime]
-                [[a]]
-                    inherit = A
-                [[b1, b2]]
-                    inherit = B
-                [[A, B]]
-        '''))
-    config = WorkflowConfig('test', str(path), SimpleNamespace())
 
-    assert _id_match(config, pool, ids) == (matched, unmatched)
+@pytest.mark.parametrize(
+    'ids,matched,unmatched,warnings',
+    [
+        # These IDs all reference 2/z<x>, but, z<x> are not valid for cycle 2:
+
+        # explicit reference -> warning
+        ({'2/z1'}, set(), {'2/z1'}, ('2/z1',)),
+        ({'2/Z'}, set(), {'2/Z'}, ('2/z1', '2/z2', '2/z3')),
+
+        # implicit reference -> no warning
+        ({'*/Z'}, {'1/z1', '1/z2'}, set(), set()),
+        ({'2/*'}, {'2/a', '2/b1', '2/b2'}, set(), set()),
+        ({'2/root'}, {'2/a', '2/b1', '2/b2'}, set(), set()),
+        ({'*/[XYZ]'}, {'1/z1', '1/z2'}, set(), set()),
+    ]
+)
+def test_match_warnings(
+    mod_test_family_config,
+    ids,
+    matched,
+    unmatched,
+    warnings,
+    caplog,
+):
+    """It should warn about invalid cycle points, only when relevant.
+
+    See https://github.com/cylc/cylc-flow/issues/7184
+    """
+    pool = to_tokens('1/a:x', '1/b1:x', '1/b2:x', '2/a:x')
+    caplog.clear()
+    caplog.set_level(logging.WARNING, CYLC_LOG)
+    assert _id_match(mod_test_family_config, pool, ids) == (matched, unmatched)
+    assert caplog.messages == [
+        f'Invalid cycle point for task:'
+        f' {Tokens(id_, relative=True)["task"]}'
+        f', {Tokens(id_, relative=True)["cycle"]}'
+        for id_ in warnings
+    ]
