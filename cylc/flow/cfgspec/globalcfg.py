@@ -1368,11 +1368,15 @@ with Conf('global.cylc', desc='''
             .. versionadded:: 8.0.0
         """):
             with Conf('<install target>', desc=dedent("""
-                :ref:`Host <Install targets>` on which to create the symlinks.
+                :ref:`Label of the filesystem <Install targets>` on which to make
+                the symlinks.
+
+                Workflow setup, including symlinking, only needs to be done once
+                for all platforms that share the same install target.
 
                 .. versionadded:: 8.0.0
-
             """) + comma_sep_section_note(version_changed='8.4.0')):
+
                 Conf('run', VDR.V_STRING, None, desc="""
                     Alternative location for the run dir.
 
@@ -1878,8 +1882,13 @@ with Conf('global.cylc', desc='''
                    [<system>]job name length maximum``.
             ''')
             Conf('install target', VDR.V_STRING, desc='''
-                This defaults to the platform name. This will be used as the
-                target for remote file installation.
+                :ref:`Label representng a filesystem <Install targets>`.
+
+                Workflow setup and file installation only needs to be done once
+                for all platforms that share the same install target.
+
+                This defaults to the platform name.
+
                 For example, if Platform_A shares a file system with localhost:
 
                 .. code-block:: cylc
