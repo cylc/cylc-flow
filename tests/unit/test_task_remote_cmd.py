@@ -17,10 +17,11 @@
 
 from pathlib import Path
 from unittest.mock import patch
+
 from pytest import CaptureFixture
 
-from cylc.flow.workflow_files import WorkflowFiles
 from cylc.flow.task_remote_cmd import remote_init
+from cylc.flow.workflow_files import WorkflowFiles
 
 
 def test_existing_key_raises_error(tmp_path: Path, capsys: CaptureFixture):
@@ -31,10 +32,10 @@ def test_existing_key_raises_error(tmp_path: Path, capsys: CaptureFixture):
     srvdir.mkdir(parents=True)
     (srvdir / 'client_wrong.key').touch()
 
-    remote_init('test_install_target', str(rundir))
+    assert remote_init('test_install_target', str(rundir))
     assert capsys.readouterr().out == (
         "REMOTE INIT FAILED\nUnexpected authentication key"
-        " \"client_wrong.key\" exists. Check global.cylc install target is"
+        " 'client_wrong.key' exists. Check global.cylc install target is"
         " configured correctly for this platform.\n")
 
 
@@ -44,7 +45,7 @@ def test_unexpandable_symlink_env_var_returns_failed(
     """Test unexpandable symlinks return REMOTE INIT FAILED"""
     mocked_expandvars.side_effect = ['some/rund/path', '$blah']
 
-    remote_init('test_install_target', 'some_rund', 'run=$blah')
+    assert remote_init('test_install_target', 'some_rund', 'run=$blah')
     assert capsys.readouterr().out == (
         "REMOTE INIT FAILED\nError occurred when symlinking."
         " $blah contains an invalid environment variable.\n")
@@ -59,7 +60,7 @@ def test_existing_client_key_dir_raises_error(
     keydir = rundir / WorkflowFiles.Service.DIRNAME / "client_public_keys"
     keydir.mkdir(parents=True)
 
-    remote_init('test_install_target', rundir)
+    assert remote_init('test_install_target', rundir)
     assert capsys.readouterr().out == (
         f"REMOTE INIT FAILED\nUnexpected key directory exists: {keydir}"
         " Check global.cylc install target is configured correctly for this"

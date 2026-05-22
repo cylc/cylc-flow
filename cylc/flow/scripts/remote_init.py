@@ -29,15 +29,21 @@ configured in the global.flow.
 
 Return:
     0:
-        On success or if initialisation not required:
-        - Print task_remote_cmd.REMOTE_INIT_DONE
+        On success or if initialisation not required (REMOTE_INIT_DONE)
     1:
-        On failure.
+        Error occurred when symlinking.
+    2:
+        Unexpected authentication keys exist.
+    3:
+        Any other unexpected error occurred.
 """
+
+import sys
 
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.task_remote_cmd import remote_init
 from cylc.flow.terminal import cli_function
+
 
 INTERNAL = True
 
@@ -60,9 +66,10 @@ def get_option_parser() -> COP:
 
 @cli_function(get_option_parser)
 def main(parser, options, install_target, rund, *dirs_to_be_symlinked):
-
-    remote_init(
-        install_target,
-        rund,
-        *dirs_to_be_symlinked
+    sys.exit(
+        remote_init(
+            install_target,
+            rund,
+            *dirs_to_be_symlinked,
+        )
     )
