@@ -61,19 +61,25 @@ Examples:
   $ cylc cat-log foo//2020/bar -m f
 """
 
-import os
+import asyncio
 from contextlib import suppress
 from glob import glob
+import os
 from pathlib import Path
 import shlex
-from subprocess import Popen, PIPE, DEVNULL
+from subprocess import (
+    DEVNULL,
+    PIPE,
+    Popen,
+)
 import sys
 from typing import TYPE_CHECKING
 
+from cylc.flow import LOG
 from cylc.flow.exceptions import InputError
 import cylc.flow.flags
 from cylc.flow.hostuserutil import is_remote_platform
-from cylc.flow.id_cli import parse_id
+from cylc.flow.id_cli import parse_id_async
 from cylc.flow.log_level import verbosity_to_opts
 from cylc.flow.option_parsers import (
     ID_MULTI_ARG_DOC,
@@ -82,16 +88,24 @@ from cylc.flow.option_parsers import (
 from cylc.flow.pathutil import (
     expand_path,
     get_remote_workflow_run_job_dir,
+    get_workflow_run_dir,
     get_workflow_run_job_dir,
     get_workflow_run_pub_db_path,
-    get_workflow_run_dir,
 )
-from cylc.flow.remote import remote_cylc_cmd, watch_and_kill
+from cylc.flow.platforms import get_platform
+from cylc.flow.remote import (
+    remote_cylc_cmd,
+    watch_and_kill,
+)
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.task_job_logs import (
-    JOB_LOG_OUT, JOB_LOG_ERR, JOB_LOG_OPTS, NN, JOB_LOG_ACTIVITY)
+    JOB_LOG_ACTIVITY,
+    JOB_LOG_ERR,
+    JOB_LOG_OPTS,
+    JOB_LOG_OUT,
+    NN,
+)
 from cylc.flow.terminal import cli_function
-from cylc.flow.platforms import get_platform
 
 
 if TYPE_CHECKING:
@@ -153,12 +167,20 @@ Log Files:
 #                  and kills its tail subprocess, then exits as finished
 
 
+PRINT = 'print'
+LISTDIR = 'list-dir'
+PRINTDIR = 'print-dir'
+CAT = 'cat'
+TAIL = 'tail'
+AUTO = 'auto'
+
 MODES = {
-    'p': 'print',
-    'l': 'list-dir',
-    'd': 'print-dir',
-    'c': 'cat',
-    't': 'tail',
+    'p': PRINT,
+    'l': LISTDIR,
+    'd': PRINTDIR,
+    'c': CAT,
+    't': TAIL,
+    'a': AUTO,
 }
 
 
@@ -235,7 +257,7 @@ def _check_fs_path(path):
         )
 
 
-def view_log(
+async def view_log(
     logpath,
     mode,
     tailer_tmpl,
@@ -254,14 +276,14 @@ def view_log(
 
     """
     # The log file path may contain '$USER' to be evaluated on the job host.
-    if mode == 'print':
+    if mode == PRINT:
         # Print location even if the workflow does not exist yet.
         print(logpath)
         return 0
-    if mode == 'print-dir':
+    if mode == PRINTDIR:
         print(os.path.dirname(logpath))
         return 0
-    if mode == 'list-dir':
+    if mode == LISTDIR:
         dirname = os.path.dirname(logpath)
         if not os.path.exists(dirname):
             sys.stderr.write(f"Directory not found: {dirname}\n")
@@ -277,12 +299,12 @@ def view_log(
     if prepend_path:
         from cylc.flow.hostuserutil import get_host
         print(f'# {get_host()}:{logpath}')
-    if mode == 'cat':
+    if mode == CAT:
         # print file contents to stdout.
         if batchview_cmd is not None:
             cmd = shlex.split(batchview_cmd)
         else:
-            cmd = ['cat', logpath]
+            cmd = [CAT, logpath]
         proc1 = Popen(  # nosec
             cmd,
             stdin=DEVNULL,
@@ -291,15 +313,15 @@ def view_log(
         # * batchview command is user configurable
         colorise_cat_log(proc1, color=color)
         return 0
-    if mode == 'tail':
+    if mode == TAIL:
         if batchview_cmd is not None:
             cmd = batchview_cmd
         else:
             cmd = tailer_tmpl % {"filename": shlex.quote(str(logpath))}
         proc = Popen(shlex.split(cmd), stdin=DEVNULL)  # nosec
         # * batchview command is user configurable
-        with suppress(KeyboardInterrupt):
-            watch_and_kill(proc)
+        with suppress(asyncio.CancelledError):
+            await watch_and_kill(proc)
         return proc.wait()
 
 
@@ -368,7 +390,7 @@ def get_task_job_attrs(workflow_id, point, task, submit_num):
     """Retrieve job info from the database.
 
     * live_job_id is the job ID if job is running, else None.
-    * submit_failed is True if the the submission failed.
+    * submit_failed is True if the submission failed.
 
     Returns:
         tuple - (platform, job_runner_name, live_job_id, submit_failed)
@@ -405,10 +427,10 @@ def main(
 ):
     """Wrapper around the main script for simpler testing.
     """
-    _main(parser, options, *ids, color=color)
+    asyncio.run(_main(parser, options, *ids, color=color))
 
 
-def _main(
+async def _main(
     parser: COP,
     options: 'Values',
     *ids,
@@ -436,7 +458,7 @@ def _main(
             batchview_cmd = options.remote_args[3]
         except IndexError:
             batchview_cmd = None
-        res = view_log(
+        res = await view_log(
             logpath,
             mode,
             tail_tmpl,
@@ -449,7 +471,7 @@ def _main(
             sys.exit(res)
         return
 
-    workflow_id, tokens, _ = parse_id(*ids, constraint='mixed')
+    workflow_id, tokens, _ = await parse_id_async(*ids, constraint='mixed')
 
     # Get long-format mode.
     try:
@@ -467,7 +489,11 @@ def _main(
         file_name: str = options.filename or 's'
         log_file_path: Path
 
-        if mode == 'list-dir':
+        # auto mode only applies to task logs. Default to cat mode.
+        if mode == AUTO:
+            mode = CAT
+
+        if mode == LISTDIR:
             # list workflow logs
             print('\n'.join(sorted(
                 str(path.relative_to(log_dir))
@@ -509,7 +535,7 @@ def _main(
         tail_tmpl = os.path.expandvars(
             get_platform()["tail command template"]
         )
-        out = view_log(
+        out = await view_log(
             log_file_path,
             mode,
             tail_tmpl,
@@ -541,6 +567,10 @@ def _main(
                 # KeyError: Is already long form (standard log, or custom).
         platform_name, _, live_job_id, submit_failed = get_task_job_attrs(
             workflow_id, point, task, submit_num)
+        if mode == AUTO and live_job_id is None:
+            mode = CAT
+        elif mode == AUTO and live_job_id:
+            mode = TAIL
         platform = get_platform(platform_name)
         batchview_cmd = None
         if live_job_id is not None:
@@ -548,14 +578,14 @@ def _main(
             # command (e.g. qcat) if one exists, and the log is out or err.
             conf_key = None
             if options.filename == JOB_LOG_OUT:
-                if mode == 'cat':
+                if mode == CAT:
                     conf_key = "out viewer"
-                elif mode == 'tail':
+                elif mode == TAIL:
                     conf_key = "out tailer"
             elif options.filename == JOB_LOG_ERR:
-                if mode == 'cat':
+                if mode == CAT:
                     conf_key = "err viewer"
-                elif mode == 'tail':
+                elif mode == TAIL:
                     conf_key = "err tailer"
             if conf_key is not None:
                 batchview_cmd_tmpl = None
@@ -569,16 +599,27 @@ def _main(
             workflow_id, point, task, submit_num
         )
 
+        job_log_present = all(
+            (Path(local_log_dir) / file).exists()
+            for file in [
+                # the files which are used to indicate that job log retrieval
+                # has completed
+                'job.out',
+                *platform['retrieve job log expected files'],
+            ]
+        )
+
         log_is_remote = (is_remote_platform(platform)
                          and (options.filename != JOB_LOG_ACTIVITY))
         log_is_retrieved = (platform['retrieve job logs']
                             and live_job_id is None)
         if (
-            # only go remote for log files we can't get locally
-            log_is_remote
-            # don't look for remote log files for submit-failed tasks
-            # (there might not be any at all)
-            and not submit_failed
+            # if the log file is not present locally
+            # (e.g. job is running, or job logs not retrieved)
+            (not job_log_present and log_is_remote)
+            # Don't try to get remote logs if submission failed on
+            # remote platform - they may not exist.
+            or (log_is_remote and not submit_failed)
             # don't go remote if the log should be retrieved (unless
             # --force-remote is specified)
             and (not log_is_retrieved or options.force_remote)
@@ -602,17 +643,20 @@ def _main(
                 # (Ctrl-C while tailing)
                 # NOTE: This will raise NoHostsError if the platform is not
                 # contactable
-                proc = remote_cylc_cmd(
+                # For testing purposes
+                if not job_log_present:
+                    LOG.debug("job.out not present, getting job log remotely")
+                proc = await remote_cylc_cmd(
                     cmd,
                     platform,
-                    capture_process=(mode == 'list-dir'),
-                    manage=(mode == 'tail'),
-                    text=(mode == 'list-dir'),
+                    capture_process=(mode == LISTDIR),
+                    manage=(mode == TAIL),
+                    text=(mode == LISTDIR),
                 )
 
             # add and missing items to file listing results
             if isinstance(proc, Popen):
-                # i.e: if mode=='list-dir' and ctrl+c not pressed
+                # i.e: if mode == LISTDIR and ctrl+c not pressed
                 out, err = proc.communicate()
                 files = out.splitlines()
 
@@ -648,7 +692,7 @@ def _main(
             # Local task job or local job log.
             logpath = os.path.join(local_log_dir, options.filename)
             tail_tmpl = os.path.expandvars(platform["tail command template"])
-            out = view_log(
+            out = await view_log(
                 logpath,
                 mode,
                 tail_tmpl,

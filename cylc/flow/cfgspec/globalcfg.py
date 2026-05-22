@@ -160,6 +160,12 @@ LOG_RETR_SETTINGS = {
         logs appearing in their final location (due to the job runner)
         you can configure time intervals here to delay the first and
         subsequent retrieval attempts.
+
+        Job log retrieval will be retried until the expected job files have
+        been retried, see
+        :cylc:conf:`
+        global.cylc[platforms][<platform name>]retrieve job log expected files`
+        for details
     ''')
 }
 
@@ -542,8 +548,8 @@ Cylc can automatically resubmit jobs after submission failures.
 Submission retry delays is a list of ISO 8601 durations which tell Cylc
 how long to wait before the next try.
 
-The job environment variable ``$CYLC_TASK_SUBMIT_NUMBER`` increments with each
-job submission attempt.
+The job environment variable :envvar:`CYLC_TASK_SUBMIT_NUMBER` increments
+with each job submission attempt.
 
 Tasks only go to the ``submit-failed`` state if job submission fails with no
 retries left.
@@ -1092,8 +1098,8 @@ with Conf('global.cylc', desc='''
             How Cylc determines and shares the identity of the workflow host.
 
             The workflow host's identity must be determined locally by cylc and
-            passed to running tasks (via ``$CYLC_WORKFLOW_HOST``) so that task
-            messages can target the right workflow on the right host.
+            passed to running tasks (via :envvar:`CYLC_WORKFLOW_HOST`) so that
+            task messages can target the right workflow on the right host.
 
             .. versionchanged:: 8.0.0
 
@@ -1751,6 +1757,33 @@ with Conf('global.cylc', desc='''
                    retry delays``.
                    {replaces}
             ''')
+            Conf(
+                'retrieve job log expected files',
+                VDR.V_STRING_LIST,
+                '',
+                desc='''
+                Configure the log files that job log retrieval is expected to
+                return.
+
+                By default, job log retrieval is considered successful once
+                it has retrieved the "job.out" file, and additionally the
+                "job.err" file if the job failed.
+
+                Cylc will repeat job log retrieval according to the configured
+                :cylc:conf:`[..]retrieve job logs retry delays` until the
+                expected file(s) have been retrieved.
+
+                This configuration allows you to configure additional files
+                to add to this success condition.
+
+                The purpose of this configuration is to facilitate working with
+                files written asynchronously by job runners which may not be
+                created until after the job has succeeded. E.g, job report
+                or accounting files.
+
+                .. versionadded:: 8.7.0
+            ''',
+            )
             Conf('tail command template',
                  VDR.V_STRING, 'tail -n +1 --follow=name %(filename)s',
                  desc=f'''

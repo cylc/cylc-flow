@@ -88,4 +88,7 @@ def pipe_poller(
     _read(timeout=0.01)
 
     selector.close()
+    for file in files:
+        file.close()
+
     return tuple(file_to_output.values())

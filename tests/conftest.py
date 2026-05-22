@@ -279,7 +279,7 @@ def set_timezone(monkeypatch):
 
     Will use a very implausible timezone if none is provided.
     """
-    def patch(time_zone: str = 'XXX-19:17'):
+    def patch(time_zone: str):
         monkeypatch.setenv('TZ', time_zone)
         time.tzset()
 
