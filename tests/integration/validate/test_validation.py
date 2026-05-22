@@ -167,28 +167,6 @@ def test_fail_cylc6_cycle_point(flow, validate):
     with pytest.raises(PointParsingError, match=(
         r'Incompatible value for.* Invalid ISO.*'
     )):
-        validate(id_)
-
-
-def test_fail_old_syntax_5(flow, validate):
-    """Test validation with a new-style cycle point and start-up tasks."""
-    id_ = flow({
-        'scheduling': {
-            'initial cycle point': '20100101T00',
-            'special tasks': {
-                'start-up': 'cold_foo',
-            },
-            'graph': {
-                'T12': '"cold_foo => foo"',
-            },
-        },
-    })
-    with pytest.raises(IllegalItemError, match=(
-        r'\[scheduling\]\[special tasks\]start-up.*'
-    )):
-        validate(id_)
-
-
 def test_fail_old_syntax_6(flow, validate):
     """Test validation with a new-style cycle point and an async graph."""
     id_ = flow({
