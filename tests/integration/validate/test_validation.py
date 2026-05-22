@@ -153,7 +153,7 @@ def test_fail_cylc6_timeout_syntax(flow, validate):
         validate(id_)
 
 
-def test_fail_old_syntax_4(flow, validate):
+def test_fail_cylc6_cycle_point(flow, validate):
     """Test validation with a prev-style cycle
     point and a new-style cycling section"""
     id_ = flow({
