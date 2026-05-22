@@ -114,7 +114,7 @@ def test_bad_recurrence(flow, validate):
         validate(id_)
 
 
-def test_fail_old_syntax_2(flow, validate):
+def test_fail_cylc6_inter_cycle_syntax(flow, validate):
     """Test validation with a new-style cycle point and a prev-style offset."""
     id_ = flow({
         'scheduling': {
