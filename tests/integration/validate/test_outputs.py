@@ -21,8 +21,20 @@ from random import random
 
 import pytest
 
-from cylc.flow.exceptions import WorkflowConfigError
-from cylc.flow.unicode_rules import TaskOutputValidator, TaskMessageValidator
+from cylc.flow.exceptions import (
+    GraphParseError,
+    WorkflowConfigError,
+    WorkflowFilesError,
+)
+from cylc.flow.scripts.validate import (
+    ValidateOptions,
+    run as validate,
+)
+from cylc.flow.unicode_rules import (
+    TaskMessageValidator,
+    TaskOutputValidator,
+)
+from cylc.flow.workflow_files import WorkflowFiles
 
 
 @pytest.mark.parametrize(
@@ -317,32 +329,6 @@ def test_completion_expression_valid(
     validate(id_)
 
 
-def test_completion_expression_cylc7_compat(
-    flow,
-    validate,
-    monkeypatch
-):
-    id_ = flow({
-        'scheduling': {
-            'graph': {'R1': 'foo'},
-        },
-        'runtime': {
-            'foo': {
-                'completion': 'succeeded and x',
-                'outputs': {
-                    'x': 'xxx',
-                },
-            },
-        },
-    })
-    monkeypatch.setattr('cylc.flow.flags.cylc7_back_compat', True)
-    with pytest.raises(
-        WorkflowConfigError,
-        match="completion cannot be used in Cylc 7 compatibility mode."
-    ):
-        validate(id_)
-
-
 def test_unique_messages(
     flow,
     validate
@@ -372,6 +358,49 @@ def test_unique_messages(
         match=(
             r'"\[runtime\]\[foo\]\[outputs\]d = foo"'
             ' - messages must be unique'
+        ),
+    ):
+        validate(id_)
+
+
+async def test_suite_rc(tmp_path):
+    """It should reject workflows with suite.rc files."""
+    # suite.rc present
+    (tmp_path / WorkflowFiles.SUITE_RC).touch()
+    with pytest.raises(WorkflowFilesError, match=f'No flow.cylc.*{tmp_path}'):
+        await validate(ValidateOptions(), str(tmp_path))
+
+    # suite.rc and flow.cylc present
+    (tmp_path / WorkflowFiles.FLOW_FILE).touch()
+    with pytest.raises(
+        WorkflowFilesError, match=f'Both flow.cylc and suite.rc.*{tmp_path}'
+    ):
+        await validate(ValidateOptions(), str(tmp_path))
+
+    # flow.cylc present
+    (tmp_path / WorkflowFiles.SUITE_RC).unlink()
+    with pytest.raises(WorkflowConfigError):
+        await validate(ValidateOptions(), str(tmp_path))
+
+
+async def test_opposite_outputs(flow, validate):
+    """Test logically opposite outputs are reported if misused."""
+    id_ = flow({
+        'scheduling': {
+            'graph': {
+                'R1': '''
+                    foo => bar
+                    foo:fail => baz
+                    foo => !baz
+                '''
+            },
+        },
+    })
+    with pytest.raises(
+        GraphParseError,
+        match=(
+            'Opposite outputs foo:failed and foo:succeeded must both be'
+            ' optional if both are used'
         ),
     ):
         validate(id_)

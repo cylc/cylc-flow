@@ -21,7 +21,7 @@
 
 
 . "$(dirname "$0")/test_header"
-set_test_number 45
+set_test_number 43
 
 create_test_global_config '' '
 [install]
@@ -51,7 +51,7 @@ purge
 popd || exit
 
 # -----------------------------------------------------------------------------
-# Test fail no flow.cylc or suite.rc file
+# Test fail no flow.cylc file
 
 make_rnd_workflow
 
@@ -59,30 +59,17 @@ TEST_NAME="${TEST_NAME_BASE}-no-flow-file"
 rm -f "${RND_WORKFLOW_SOURCE}/flow.cylc"
 run_fail "${TEST_NAME}" cylc install --workflow-name="${RND_WORKFLOW_NAME}" "${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: No flow.cylc or suite.rc in ${RND_WORKFLOW_SOURCE}
+WorkflowFilesError: No flow.cylc in ${RND_WORKFLOW_SOURCE}
 __ERR__
 
 # -----------------------------------------------------------------------------
-# Test fail both flow.cylc and suite.rc file
-
-make_rnd_workflow
-
-TEST_NAME="${TEST_NAME_BASE}-both-suite-and-flow-file"
-touch "${RND_WORKFLOW_SOURCE}/suite.rc"
-run_fail "${TEST_NAME}" cylc install --workflow-name="${RND_WORKFLOW_NAME}" "${RND_WORKFLOW_SOURCE}"
-contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: Both flow.cylc and suite.rc files are present in ${RND_WORKFLOW_SOURCE}. \
-Please remove one and try again. For more information visit: \
-https://cylc.github.io/cylc-doc/stable/html/7-to-8/summary.html#backward-compatibility
-__ERR__
-
 # Test fail no workflow source dir
 
 TEST_NAME="${TEST_NAME_BASE}-nodir"
 rm -rf "${RND_WORKFLOW_SOURCE}"
 run_fail "${TEST_NAME}" cylc install --workflow-name="${RND_WORKFLOW_NAME}" --no-run-name "${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: No flow.cylc or suite.rc in ${RND_WORKFLOW_SOURCE}
+WorkflowFilesError: No flow.cylc in ${RND_WORKFLOW_SOURCE}
 __ERR__
 
 purge_rnd_workflow

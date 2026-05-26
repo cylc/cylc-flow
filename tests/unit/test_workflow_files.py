@@ -322,8 +322,10 @@ def test_get_symlink_dirs(
      (False, True, WorkflowFiles.SUITE_RC)]
 )
 def test_check_flow_file(
-    flow_file_exists: bool, suiterc_exists: bool, expected_file: str,
-    tmp_path: Path
+    flow_file_exists: bool,
+    suiterc_exists: bool,
+    expected_file: str | None,
+    tmp_path: Path,
 ) -> None:
     """Test check_flow_file() returns the expected path.
 
