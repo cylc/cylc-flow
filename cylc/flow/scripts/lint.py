@@ -646,18 +646,18 @@ STYLE_CHECKS = {
             'Use ``[runtime][TASK]execution time limit``'
             ' rather than job runner directive: ``{directive}``.'
         ),
+        'url': '''
+            https://cylc.github.io/cylc-doc/stable/html/workflow-design-guide/general-principles.html#task-execution-time-limits
+        ''',
         'rst': (
             "Use :cylc:conf:`flow.cylc[runtime][<namespace>]execution "
             "time limit` rather than directly specifying a timeout "
             "directive, otherwise Cylc has no way of knowing when the job "
             "should have finished. Cylc automatically translates the "
             "execution time limit to the correct timeout directive for the "
-            "particular job runner:\n"
-        )
-        + ''.join((
-            f'\n * ``{directive}`` ({job_runner})'
-            for job_runner, directive in WALLCLOCK_DIRECTIVES.items()
-        )),
+            "particular job runner.\n\n"
+            "See :ref:`design-guide.execution-time-limit`."
+        ),
         FUNCTION: check_wallclock_directives,
     },
     'S015': {
@@ -726,16 +726,16 @@ MANUAL_DEPRECATIONS = {
     'U007': {
         'short': (
             'Use built in platform selection instead of rose host-select.'),
-        'url': (
-            'https://cylc.github.io/cylc-doc/stable/html/7-to-8/'
-            'major-changes/platforms.html'),
+        'url': '''
+            https://cylc.github.io/cylc-doc/stable/html/7-to-8/major-changes/platforms.html
+        ''',
         FUNCTION: re.compile(r'platform\s*=\s*\$\(\s*rose host-select').findall
     },
     'U008': {
         'short': 'Suicide triggers are not required at Cylc 8.',
-        'url': (
-            'https://cylc.github.io/cylc-doc/stable/html/7-to-8'
-            '/major-changes/suicide-triggers.html'),
+        'url': '''
+            https://cylc.github.io/cylc-doc/stable/html/7-to-8/major-changes/suicide-triggers.html
+        ''',
         'kwargs': True,
         FUNCTION: functools.partial(
             check_for_suicide_triggers,
@@ -754,9 +754,9 @@ MANUAL_DEPRECATIONS = {
     },
     'U011': {
         'short': 'Leading zeros are no longer valid for Jinja2 integers.',
-        'url': (
-            'https://cylc.github.io/cylc-doc/stable/html/7-to-8/major-changes'
-            '/python-2-3.html#jinja2-integers-with-leading-zeros'),
+        'url': '''
+            https://cylc.github.io/cylc-doc/stable/html/7-to-8/major-changes/python-2-3.html#jinja2-integers-with-leading-zeros
+        ''',
         'kwargs': True,
         FUNCTION: functools.partial(
             check_if_jinja2,
@@ -778,10 +778,9 @@ MANUAL_DEPRECATIONS = {
                 for old, new in DEPRECATED_ENV_VARS.items()
             ]
         ),
-        'url': (
-            'https://cylc.github.io/cylc-doc/stable/html/reference/'
-            'job-script-vars/index.html'
-        ),
+        'url': '''
+            https://cylc.github.io/cylc-doc/stable/html/reference/job-script-vars/index.html
+        ''',
         FUNCTION: check_for_deprecated_environment_variables,
     },
     'U013': {
@@ -791,10 +790,9 @@ MANUAL_DEPRECATIONS = {
             'The following environment variables are obsolete:\n\n'
             + ''.join([f'\n * ``{old}``' for old in OBSOLETE_ENV_VARS])
         ),
-        'url': (
-            'https://cylc.github.io/cylc-doc/stable/html/reference/'
-            'job-script-vars/index.html'
-        ),
+        'url': '''
+            https://cylc.github.io/cylc-doc/stable/html/reference/job-script-vars/index.html
+        ''',
         FUNCTION: check_for_obsolete_environment_variables,
     },
     'U014': {
@@ -805,10 +803,9 @@ MANUAL_DEPRECATIONS = {
             ' * Use ``isodatetime ref`` instead of ``rose date -c`` for '
             'the current cycle point\n'
         ),
-        'url': (
-            'https://cylc.github.io/cylc-doc/stable/html/7-to-8/'
-            'cheat-sheet.html#datetime-operations'
-        ),
+        'url': '''
+            https://cylc.github.io/cylc-doc/stable/html/7-to-8/cheat-sheet.html#datetime-operations
+        ''',
         FUNCTION: re.compile(r'rose +date').findall,
     },
     'U015': {
@@ -822,10 +819,9 @@ MANUAL_DEPRECATIONS = {
                 for old, (new, *extra) in DEPRECATED_STRING_TEMPLATES.items()
             )
         ),
-        'url': (
-            'https://cylc.github.io/cylc-doc/stable/html/user-guide/'
-            'writing-workflows/runtime.html#task-event-template-variables'
-        ),
+        'url': '''
+            https://cylc.github.io/cylc-doc/stable/html/user-guide/writing-workflows/runtime.html#task-event-template-variables
+        ''',
         FUNCTION: check_for_deprecated_task_event_template_vars,
     },
     'U016': {
@@ -834,10 +830,9 @@ MANUAL_DEPRECATIONS = {
             'It is no longer necessary to configure the environment variables '
             '``CYLC_VERSION``, ``ROSE_VERSION`` or ``FCM_VERSION``.'
         ),
-        'url': (
-            'https://cylc.github.io/cylc-doc/stable/html/plugins/'
-            'cylc-rose.html#special-variables'
-        ),
+        'url': '''
+            https://cylc.github.io/cylc-doc/stable/html/plugins/cylc-rose.html#special-variables
+        ''',
         FUNCTION: functools.partial(
             list_wrapper, check=CHECK_FOR_OLD_VARS.findall),
     },
@@ -892,7 +887,7 @@ def get_url(check_meta: Dict) -> str:
         >>> get_url({'url': 'cheat-sheet.html'})
         'https://cylc.github.io/cylc-doc/stable/html/7-to-8/cheat-sheet.html'
     """
-    url = check_meta.get('url', '')
+    url = check_meta.get('url', '').strip()
     if url and not url.startswith('http'):
         url = (
             "https://cylc.github.io/cylc-doc/stable/html/7-to-8/"
