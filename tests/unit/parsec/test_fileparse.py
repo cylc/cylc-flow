@@ -475,9 +475,10 @@ def test_read_and_proc_jinja2_warnings(
     assert len(caplog.records) == 1
     rec = caplog.records[0]
     assert rec.levelname == 'WARNING'
+
     assert re.match(
         (
-            r"The following warnings .* during Jinja2 preprocessing.*\s+"
+            rf"The following warnings .* during Jinja2 preprocessing.*\s+"
             rf"{__file__}:\d+: DeprecationWarning: {msg}"
         ),
         rec.message,

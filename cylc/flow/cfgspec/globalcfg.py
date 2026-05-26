@@ -1419,10 +1419,6 @@ with Conf('global.cylc', desc='''
             desc=dedent('''
             Configuration defining a platform.
 
-            Many of these settings have replaced those of the same name from
-            the old Cylc 7 ``suite.rc[runtime][<namespace>][job]/[remote]``
-            and ``global.rc[hosts][<host>]`` sections.
-
             Platform names can be regular expressions: If you have a set of
             compute resources such as ``bigmachine1, bigmachine2`` or
             ``desktop0000, .., desktop9999`` one would define platforms with
@@ -1453,6 +1449,13 @@ with Conf('global.cylc', desc='''
                   [platforms]
                       [[localhost|cylc-server-..]]  # error
                       [[localhost, cylc-server-..]]  # ok
+
+            .. versionchanged:: 8.0.0
+
+               Many of these settings have replaced those of the same name
+               from the old Cylc 7
+               ``suite.rc[runtime][<namespace>][job]/[remote]``
+               and ``global.rc[hosts][<host>]`` sections.
 
             .. seealso::
 

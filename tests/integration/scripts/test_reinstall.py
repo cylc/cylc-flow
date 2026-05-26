@@ -426,3 +426,24 @@ async def test_async_block(
     await reinstall_cli(opts=ReInstallOptions(), workflow_id=one_run.id)
     # the absence of "end" means that the task was not awaited
     assert my_install_plugin == ['start', 'return']
+
+
+async def test_suite_rc(tmp_path, install):
+    """It should reject workflows with suite.rc files."""
+    (tmp_path / WorkflowFiles.FLOW_FILE).touch()
+    workflow_id = await install(tmp_path)
+
+    # flow.cylc present
+    await reinstall_cli(opts=ReInstallOptions(), workflow_id=workflow_id)
+
+    # flow.cylc and suite.rc present
+    (tmp_path / WorkflowFiles.SUITE_RC).touch()
+    with pytest.raises(
+        WorkflowFilesError, match=f'Both flow.cylc and suite.rc.*{tmp_path}'
+    ):
+        await reinstall_cli(opts=ReInstallOptions(), workflow_id=workflow_id)
+
+    # suite.rc
+    (tmp_path / WorkflowFiles.FLOW_FILE).unlink()
+    with pytest.raises(WorkflowFilesError, match=f'No flow.cylc.*{tmp_path}'):
+        await reinstall_cli(opts=ReInstallOptions(), workflow_id=workflow_id)

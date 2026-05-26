@@ -76,10 +76,7 @@ from cylc.flow.terminal import (
     prompt,
 )
 from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
-from cylc.flow.workflow_files import (
-    SUITERC_DEPR_MSG,
-    get_workflow_srv_dir,
-)
+from cylc.flow.workflow_files import get_workflow_srv_dir
 
 
 if TYPE_CHECKING:
@@ -423,9 +420,6 @@ async def _scheduler_cli_1(
             relative=True,
         )
 
-    # Parse workflow name but delay Cylc 7 suite.rc deprecation warning
-    # until after the start-up splash is printed.
-    # TODO: singleton
     if parse_workflow_id:
         (workflow_id,), _ = await parse_ids_async(
             workflow_id_raw,
@@ -647,9 +641,6 @@ def _print_startup_message(options):
                 cylc_header()
             )
         )
-
-    if cylc.flow.flags.cylc7_back_compat:
-        LOG.warning(SUITERC_DEPR_MSG)
 
 
 async def _distribute(
