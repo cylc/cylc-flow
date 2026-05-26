@@ -44,7 +44,6 @@ from cylc.flow.exceptions import (
     PointParsingError,
     WorkflowConfigError,
 )
-import cylc.flow.flags
 from cylc.flow.flow_mgr import (
     FLOW_NONE,
     repr_flow_nums,
@@ -73,7 +72,6 @@ from cylc.flow.task_id import TaskID
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_EXPIRED,
     TASK_OUTPUT_FAILED,
-    TASK_OUTPUT_SUBMIT_FAILED,
     TASK_OUTPUT_SUCCEEDED,
 )
 from cylc.flow.task_proxy import TaskProxy
@@ -381,17 +379,7 @@ class TaskPool:
             )
         else:
             # Find the earliest point with incomplete tasks.
-            for point, itasks in sorted(self.get_tasks_by_point().items()):
-                # All n=0 tasks are incomplete by definition, but Cylc 7
-                # ignores failed ones (it does not ignore submit-failed!).
-                if (
-                    cylc.flow.flags.cylc7_back_compat and
-                    all(
-                        itask.state(TASK_STATUS_FAILED)
-                        for itask in itasks
-                    )
-                ):
-                    continue
+            for point in sorted(self.get_tasks_by_point()):
                 base_point = point
                 break
 
@@ -1077,14 +1065,6 @@ class TaskPool:
             self.data_store_mgr.delta_task_state(itask)
             itask.waiting_on_job_prep = True
 
-            if cylc.flow.flags.cylc7_back_compat:
-                # Cylc 7 Back Compat: spawn downstream to cause Cylc 7 style
-                # stalls - with unsatisfied waiting tasks - even with single
-                # prerequisites (which result in incomplete tasks in Cylc 8).
-                # We do it here (rather than at runhead release) to avoid
-                # pre-spawning out to the runahead limit.
-                self.spawn_on_all_outputs(itask)
-
         # Note: released and pre_prep_tasks can overlap
         return set(released + pre_prep_tasks)
 
@@ -1620,16 +1600,6 @@ class TaskPool:
 
         if itask.identity == self.stop_task_id:
             self.stop_task_finished = True
-
-        if cylc.flow.flags.cylc7_back_compat:
-            ret = False
-            if not itask.state(TASK_STATUS_FAILED, TASK_OUTPUT_SUBMIT_FAILED):
-                self.remove(itask)
-                ret = True
-            # Recompute runahead either way; failed tasks don't count in C7.
-            if self.compute_runahead():
-                self.release_runahead_tasks()
-            return ret
 
         if not itask.state.outputs.is_complete():
             # Keep incomplete tasks in the pool.

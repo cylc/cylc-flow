@@ -36,7 +36,6 @@ from cylc.flow.parsec.validate import cylc_config_validate
 def before_each():
     """Reset global state before every test."""
     flags.verbosity = 0
-    flags.cylc7_back_compat = False
     LOG.setLevel(logging.NOTSET)
     # Reset graph node parser singleton:
     GraphNodeParser.get_inst().clear()

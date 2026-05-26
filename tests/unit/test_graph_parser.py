@@ -15,21 +15,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Unit tests for the GraphParser."""
 
-import logging
-from typing import Dict, List
-import pytest
 from itertools import product
-from pytest import param
 from types import SimpleNamespace
+from typing import Dict, List
 
-from cylc.flow import CYLC_LOG
+import pytest
+from pytest import param
+
 from cylc.flow.exceptions import GraphParseError, ParamExpandError
 from cylc.flow.graph_parser import GraphParser
 from cylc.flow.task_outputs import (
-    TASK_OUTPUT_SUBMITTED,
+    TASK_OUTPUT_FAILED,
     TASK_OUTPUT_STARTED,
+    TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUCCEEDED,
-    TASK_OUTPUT_FAILED
 )
 
 
@@ -907,20 +906,6 @@ def test_task_optional_output_errors_order(
     with pytest.raises(GraphParseError) as cm:
         gp.parse_graph(graph)
     assert c8error in str(cm.value)
-
-    # In Cylc 7 back compat mode these graphs should all pass with no warnings.
-    monkeypatch.setattr('cylc.flow.flags.cylc7_back_compat', True)
-    caplog.set_level(logging.WARNING, CYLC_LOG)
-    gp = GraphParser()
-    gp.parse_graph(graph)
-
-    # No warnings logged:
-    assert not caplog.messages
-
-    # After graph parsing all Cylc 7 back compat outputs should be optional.
-    # (Success outputs are set to required later, in taskdef processing.)
-    for (optional, _, _) in gp.task_output_opt.values():
-        assert optional
 
 
 @pytest.mark.parametrize(

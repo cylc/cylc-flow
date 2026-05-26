@@ -23,9 +23,10 @@ from signal import SIGHUP, SIGINT, SIGTERM
 from typing import Any, Callable
 
 from cylc.flow import commands
-from cylc.flow.exceptions import CylcError
+from cylc.flow.exceptions import CylcError, WorkflowFilesError
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.scheduler import Scheduler, SchedulerStop
+from cylc.flow.scheduler_cli import RunOptions
 from cylc.flow.task_state import (
     TASK_STATUS_SUCCEEDED,
     TASK_STATUS_WAITING,
@@ -35,6 +36,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_FAILED
 )
 
+from cylc.flow.workflow_files import WorkflowFiles
 from cylc.flow.workflow_status import AutoRestartMode, StopMode
 
 
@@ -454,3 +456,26 @@ async def test_set_stall_interaction(flow, scheduler, start):
             schd.data_store_mgr.data[schd.tokens.id]['workflow'].status_msg
             != 'stalled'
         )
+
+
+async def test_suite_rc(test_dir, run_dir, start):
+    """It should reject workflows with suite.rc files."""
+    (test_dir / WorkflowFiles.SUITE_RC).touch()
+    workflow_id = str(test_dir.relative_to(run_dir))
+    schd = Scheduler(workflow_id, RunOptions())
+
+    # suite.rc present
+    with pytest.raises(
+        WorkflowFilesError, match=f'No flow.cylc.*{test_dir.name}'
+    ):
+        async with start(schd):
+            pass
+
+    # suite.rc and flow.cylc present
+    (test_dir / WorkflowFiles.FLOW_FILE).touch()
+    with pytest.raises(
+        WorkflowFilesError,
+        match=f'Both flow.cylc and suite.rc.*{test_dir.name}',
+    ):
+        async with start(schd):
+            pass

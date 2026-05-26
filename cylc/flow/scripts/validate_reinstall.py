@@ -198,7 +198,7 @@ async def vr_cli(
 
     # Run "cylc validate"
     log_subcommand('validate --against-source', workflow_id)
-    await cylc_validate(parser, options, workflow_id)
+    await cylc_validate(options, workflow_id)
 
     # Unset options that do not apply after validation:
     del options.against_source
