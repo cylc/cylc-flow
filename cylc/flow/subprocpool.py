@@ -603,10 +603,8 @@ class SubProcPool:
             log_platform_event(
                 # NOTE: the failure of the command should be logged elsewhere
                 (
-                    f'Could not connect to {ctx.host}.'
-                    f'\n* {ctx.host} has been added to the list of'
-                    ' unreachable hosts'
-                    f'\n* {cmd_key} will retry if another host is available.'
+                    f'Could not connect to {ctx.host}. '
+                    f'{cmd_key} will retry if another host is available.'
                 ),
                 platform or {'name': platform_name},
                 level='warning',

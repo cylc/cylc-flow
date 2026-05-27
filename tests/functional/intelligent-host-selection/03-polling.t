@@ -76,7 +76,7 @@ LOGFILE="${WORKFLOW_RUN_DIR}/log/scheduler/log"
 # are removed from the badhosts set.
 named_grep_ok \
     "job poll fails" \
-    "unreachable_host has been added to the list of unreachable hosts" \
+    "Could not connect to unreachable_host" \
     "${LOGFILE}"
 
 named_grep_ok "job poll retries & succeeds" \
