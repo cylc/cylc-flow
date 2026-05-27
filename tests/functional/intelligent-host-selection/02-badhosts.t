@@ -23,7 +23,7 @@ export REQUIRE_PLATFORM='loc:remote fs:indep comms:tcp'
 . "$(dirname "$0")/test_header"
 
 #-------------------------------------------------------------------------------
-set_test_number 6
+set_test_number 7
 
 # Uses a fake background job runner to get around the single host restriction.
 
@@ -64,21 +64,20 @@ run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play --debug --no-detach "${WORKFLOW_NAME}"
 
-LOGFILE="${WORKFLOW_RUN_DIR}/log/scheduler/log"
+workflow_log="${WORKFLOW_RUN_DIR}/log/scheduler/log"
 
 # Check that badhosttask has submit failed, but not good or mixed
 named_grep_ok "badhost task submit failed" \
-    "1/badhosttask.* submit-failed" "${LOGFILE}"
+    "1/badhosttask.* submit-failed" "${workflow_log}"
 named_grep_ok "goodhost suceeded" \
-    "1/mixedhosttask.* succeeded" "${LOGFILE}"
+    "1/mixedhosttask.* succeeded" "${workflow_log}"
 named_grep_ok "mixedhost task suceeded" \
-    "1/goodhosttask.* succeeded" "${LOGFILE}"
+    "1/goodhosttask.* succeeded" "${workflow_log}"
 
-# Check that when a task fail badhosts associated with that task's platform
-# are removed from the badhosts set.
-named_grep_ok "remove task platform bad hosts after submit-fail" \
-    "initialisation did not complete (no hosts were reachable)" \
-    "${LOGFILE}"
+# Check for remote-init fail reason given in scheduler and job activity logs
+job_activity_log="${WORKFLOW_RUN_DIR}/log/job/1/badhosttask/01/job-activity.log"
+msg="initialisation did not complete (no hosts were reachable)"
+named_grep_ok "${msg:0:30}... (workflow log)" "$msg" "$workflow_log"
+named_grep_ok "${msg:0:30}... (job activity log)" "$msg" "$job_activity_log"
 
 purge
-exit 0
