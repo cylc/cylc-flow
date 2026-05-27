@@ -226,6 +226,42 @@ def test_fail_empty_graph_2(flow, validate):
         validate(id_)
 
 
+def test_num_expanded_year_digits(flow, validate):
+    """Test validation for "cycle point num expanded year digits"."""
+    # it should fail a cycle point that uses expanded digits if Cylc has not
+    # been configured to use them
+    conf = {
+        'scheduling': {
+            'initial cycle point': '+10000-01-01T00',
+            'graph': {
+                'T00': 'foo',
+            },
+        },
+    }
+    id_ = flow(conf)
+    with pytest.raises(PointParsingError, match=(
+        r'Incompatible value for.*: \+10000-01-01T00:.* '
+        r'\(incompatible with \[cylc\]cycle point '
+        r'num expanded year digits = 0 \?\)'
+    )):
+        validate(id_)
+    # it should fail validation if the number of expanded digits is configured
+    # but does not match
+    for number in (0, 2, 10):
+        conf['scheduler']['cycle point num expanded year digits'] = str(number)
+        id_ = flow(conf)
+        with pytest.raises(PointParsingError, match=(
+            r'Incompatible value for.*: \+10000-01-01T00:.* '
+            r'\(incompatible with \[cylc\]cycle point '
+            rf'num expanded year digits = {number}'
+        )):
+            validate(id_)
+    # it should pass otherwise
+    conf['scheduler']['cycle point num expanded year digits'] = '1'
+    id_ = flow(conf)
+    validate(id_)
+
+
 def test_fail_initial_greater_final(flow, validate):
     """Test validation fails for initial cycle point greater than the final."""
     id_ = flow({
@@ -252,59 +288,6 @@ def test_fail_initial_greater_final(flow, validate):
         validate(id_)
 
 
-def test_fail_constrained_intial(flow, validate):
-    """Test validation of initial cycle point against constraints."""
-    id_ = flow({
-        'scheduling': {
-            'initial cycle point': '20100101T03',
-            'initial cycle point constraints': 'T00, T06, T12, T18',
-            'graph': {
-                'T00, T06, T12, T18': 'foo',
-            },
-        },
-        'runtime': {
-            'FOO': {
-            },
-            'BAR': {
-            },
-            'foo': {
-                'inherit': 'FOO, BAR',
-            },
-        },
-    })
-    with pytest.raises(WorkflowConfigError, match=(
-        r'Initial cycle point .* does not meet the constraints.*'
-    )):
-        validate(id_)
-
-
-def test_fail_constrained_final(flow, validate):
-    """Test validation of final cycle point against constraints."""
-    id_ = flow({
-        'scheduling': {
-            'initial cycle point': '20100101T03',
-            'final cycle point': '20100102T17',
-            'final cycle point constraints': 'T00, T06, T12, T18',
-            'graph': {
-                'T00, T06, T12, T18': '"""foo"""',
-            },
-        },
-        'runtime': {
-            'FOO': {
-            },
-            'BAR': {
-            },
-            'foo': {
-                'inherit': 'FOO, BAR',
-            },
-        },
-    })
-    with pytest.raises(WorkflowConfigError, match=(
-        r'Final cycle point .* does not meet the constraints.*'
-    )):
-        validate(id_)
-
-
 def test_9999_rollover(flow, validate):
     """Test intercycle dependencies."""
     id_ = flow({
@@ -321,16 +304,16 @@ def test_9999_rollover(flow, validate):
         validate(id_)
 
 
-def test_pass_constrained_initial(flow, validate):
+def test_constrained_initial(flow, validate):
     """Test validating simple multi-inheritance workflows."""
-    id_ = flow({
+    conf = {
         'scheduler': {
         },
         'scheduling': {
             'initial cycle point': '20100101T06',
             'initial cycle point constraints': 'T00, T06, T12, T18',
             'graph': {
-                'T00, T06, T12, T18': '"""foo"""',
+                'T00, T06, T12, T18': 'foo',
             },
         },
         'runtime': {
@@ -342,13 +325,21 @@ def test_pass_constrained_initial(flow, validate):
                 'inherit': 'FOO, BAR',
             },
         },
-    })
+    }
+    id_ = flow(conf)
     validate(id_)
 
+    conf['scheduling']['initial cycle point'] = '20100101T03'
+    id_ = flow(conf)
+    with pytest.raises(WorkflowConfigError, match=(
+        r'Initial cycle point .* does not meet the constraints.*'
+    )):
+        validate(id_)
 
-def test_pass_constrained_final(flow, validate):
+
+def test_constrained_final(flow, validate):
     """Test validating simple multi-inheritance workflows."""
-    id_ = flow({
+    conf = {
         'scheduler': {
         },
         'scheduling': {
@@ -356,7 +347,7 @@ def test_pass_constrained_final(flow, validate):
             'final cycle point': '20100101T18',
             'final cycle point constraints': 'T00, T06, T12, T18',
             'graph': {
-                'T00, T06, T12, T18': '"""foo"""',
+                'T00, T06, T12, T18': 'foo',
             },
         },
         'runtime': {
@@ -368,8 +359,17 @@ def test_pass_constrained_final(flow, validate):
                 'inherit': 'FOO, BAR',
             },
         },
-    })
+    }
+    id_ = flow(conf)
     validate(id_)
+
+    conf['scheduling']['initial cycle point'] = '20100101T03'
+    conf['scheduling']['final cycle point'] = '20100102T17'
+    id_ = flow(conf)
+    with pytest.raises(WorkflowConfigError, match=(
+        r'Final cycle point .* does not meet the constraints.*'
+    )):
+        validate(id_)
 
 
 def test_fail_not_integer(flow, validate):
