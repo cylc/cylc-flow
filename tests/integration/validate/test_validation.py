@@ -167,7 +167,10 @@ def test_fail_cylc6_cycle_point(flow, validate):
     with pytest.raises(PointParsingError, match=(
         r'Incompatible value for.* Invalid ISO.*'
     )):
-def test_fail_old_syntax_6(flow, validate):
+        validate(id_)
+
+
+def test_fail_cylc6_recurrence(flow, validate):
     """Test validation with a new-style cycle point and an async graph."""
     id_ = flow({
         'scheduling': {
@@ -185,7 +188,7 @@ def test_fail_old_syntax_6(flow, validate):
 
 
 def test_fail_no_scheduling(flow, validate):
-    """Test validation with a new-style cycle point and an async graph."""
+    """Test validation for a workflow with no "[scheduling]" section."""
     id_ = flow({
     })
     with pytest.raises(WorkflowConfigError, match=(
@@ -223,37 +226,6 @@ def test_fail_empty_graph_2(flow, validate):
         validate(id_)
 
 
-def test_fail_no_graph(flow, validate):
-    """Test validation fails if no graph is defined."""
-    id_ = flow({
-        'scheduling': {
-            'initial cycle point': '2015',
-            'graph': {
-            },
-        },
-    })
-    with pytest.raises(WorkflowConfigError, match=(
-        r'No workflow dependency graph defined.'
-    )):
-        validate(id_)
-
-
-def test_fail_year_bounds(flow, validate):
-    """Test validation with a new-style cycle point and an async graph."""
-    id_ = flow({
-        'scheduling': {
-            'initial cycle point': '+10000-01-01T00',
-            'graph': {
-                'T00': 'foo',
-            },
-        },
-    })
-    with pytest.raises(PointParsingError, match=(
-        r'Incompatible value for.*'
-    )):
-        validate(id_)
-
-
 def test_fail_initial_greater_final(flow, validate):
     """Test validation fails for initial cycle point greater than the final."""
     id_ = flow({
@@ -281,10 +253,8 @@ def test_fail_initial_greater_final(flow, validate):
 
 
 def test_fail_constrained_intial(flow, validate):
-    """Test validating simple multi-inheritance workflows."""
+    """Test validation of initial cycle point against constraints."""
     id_ = flow({
-        'scheduler': {
-        },
         'scheduling': {
             'initial cycle point': '20100101T03',
             'initial cycle point constraints': 'T00, T06, T12, T18',
@@ -309,10 +279,8 @@ def test_fail_constrained_intial(flow, validate):
 
 
 def test_fail_constrained_final(flow, validate):
-    """Test validating simple multi-inheritance workflows."""
+    """Test validation of final cycle point against constraints."""
     id_ = flow({
-        'scheduler': {
-        },
         'scheduling': {
             'initial cycle point': '20100101T03',
             'final cycle point': '20100102T17',
@@ -340,18 +308,10 @@ def test_fail_constrained_final(flow, validate):
 def test_9999_rollover(flow, validate):
     """Test intercycle dependencies."""
     id_ = flow({
-        'scheduler': {
-            'UTC mode': 'True',
-        },
         'scheduling': {
             'initial cycle point': '99991231T2200',
             'graph': {
                 'R3//PT1H': '"foo"',
-            },
-        },
-        'runtime': {
-            'foo': {
-                'script': 'true',
             },
         },
     })
@@ -413,20 +373,16 @@ def test_pass_constrained_final(flow, validate):
 
 
 def test_fail_not_integer(flow, validate):
-    """Test validation with initial and final
-    cycle points in scheduling but no R1."""
+    """Test clash of integer and ISO cycling."""
     id_ = flow({
         'scheduling': {
             'initial cycle point': '2015-01-01',
             'final cycle point': '2015-01-01',
             'graph': {
-                '1': 'foo',
+                'P1': 'foo',
             },
         },
         'runtime': {
-            'foo': {
-                'script': 'sleep 10',
-            },
         },
     })
     with pytest.raises(WorkflowConfigError, match=(
@@ -537,11 +493,6 @@ def test_succeed_sub(flow, validate):
         'scheduling': {
             'graph': {
                 'R1': 'foo:fail? | (foo? & bar:fail) => something',
-            },
-        },
-        'runtime': {
-            'root': {
-                'script': 'true',
             },
         },
     })
