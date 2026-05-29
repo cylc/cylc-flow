@@ -14,17 +14,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from pathlib import Path
+import sys
+from textwrap import dedent
+
 import jinja2
 import pytest
-import sys
 
 from cylc.flow.parsec.jinja2support import (
     Jinja2AssertionError,
     Jinja2Error,
     PyModuleLoader,
+    assert_helper,
     jinja2environment,
     jinja2process,
-    assert_helper,
     raise_helper,
 )
 
@@ -44,31 +47,56 @@ def test_assert_helper():
         assert_helper(logical=False, message="Doesn't matter")
 
 
-def test_jinja2environment(tmp_path):
-    # create a temp directory, in the temp directory, to prevent
-    # issues running multiple test workflows in parallel
-    filters_dir = tmp_path / 'Jinja2Filters'
-    filters_dir.mkdir()
-    with open(filters_dir / "min.py", "w") as tf:
-        tf.write("def min():\n    raise ArithmeticError('UP!')")
-        tf.seek(0)
-        env = jinja2environment(tmp_path)
-        # our jinja env contains the following keys in the global namespace
-        assert 'environ' in env.globals
-        assert 'raise' in env.globals
-        assert 'assert' in env.globals
+@pytest.fixture
+def custom_filter_global_and_test(tmp_path: Path):
+    """Provide custom Jinja2 filter, global and test."""
+    (filters_dir := tmp_path / 'Jinja2Filters').mkdir()
+    with open(filters_dir / "exclaim.py", "w") as tf:
+        tf.write(dedent(r"""
+            def exclaim(val):
+                return f"{val}!!!"
+        """))
 
-        with pytest.raises(ArithmeticError) as cm:
-            # jinja2environment must have loaded the function from the .py
-            env.filters['min']()
-        assert str(cm.value) == 'UP!'
+    (globals_dir := tmp_path / 'Jinja2Globals').mkdir()
+    with open(globals_dir / "assassins.py", "w") as tf:
+        tf.write(r"assassins = 'creed'")
+
+    (tests_dir := tmp_path / 'Jinja2Tests').mkdir()
+    with open(tests_dir / "big.py", "w") as tf:
+        tf.write(dedent(r"""
+            def big(n: int) -> bool:
+                return n > 9000
+        """))
 
 
-def test_jinja2process(tmp_path):
-    lines = ["skipped", "My name is {{ name }}", ""]
+def test_jinja2environment(tmp_path: Path, custom_filter_global_and_test):
+    env = jinja2environment(tmp_path)
+    # our jinja env contains the following keys in the global namespace
+    assert 'environ' in env.globals
+    assert 'raise' in env.globals
+    assert 'assert' in env.globals
+
+    assert env.filters['exclaim']('UP') == 'UP!!!'
+    assert env.globals['assassins'] == 'creed'
+    assert env.tests['big'](5) is False
+
+
+def test_jinja2process(tmp_path, custom_filter_global_and_test):
+    lines = [
+        r"skipped",
+        r"My name is {{ name }}",
+        r"",
+        r"Custom global: {{ assassins }}",
+        r"Custom filter: {{ 'UP' | exclaim }}",
+        r"Custom test: {% if 5 is big %}big{% else %}small{% endif %}",
+    ]
     variables = {'name': 'Cylc'}
-    r = jinja2process(None, lines, tmp_path, variables)
-    assert ['My name is Cylc'] == r
+    assert jinja2process(None, lines, tmp_path, variables) == [
+        "My name is Cylc",
+        "Custom global: creed",
+        "Custom filter: UP!!!",
+        "Custom test: small",
+    ]
 
 
 def test_jinja2process_missing_variables(tmp_path):
