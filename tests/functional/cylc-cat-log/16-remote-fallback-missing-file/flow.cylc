@@ -21,10 +21,3 @@
             # (e.g. due to size limits or retrieval error)
             rm -f ${CYLC_WORKFLOW_RUN_DIR}/log/job/1/a-task/01/job.err
         """
-
-
-
-
-
-
-
