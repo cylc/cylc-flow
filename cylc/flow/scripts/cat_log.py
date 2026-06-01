@@ -671,7 +671,7 @@ async def _main(
             and (not log_is_retrieved or options.force_remote)
         ):
             if not job_log_present:
-                LOG.debug("job.out not present, getting job log remotely")
+                LOG.debug("Not all logs present, getting job log remotely")
             proc = await _get_remote_log(
                 workflow_id, platform, point, task, submit_num,
                 options.filename, mode, batchview_cmd,
