@@ -47,4 +47,3 @@ grep_ok "File not found locally, falling back to remote" "${TEST_NAME}.stderr"
 
 #-------------------------------------------------------------------------------
 purge
-
