@@ -37,12 +37,12 @@ workflow_run_ok "${TEST_NAME}" \
 # remote
 TEST_NAME=${TEST_NAME_BASE}-no_log_remote
 run_ok "$TEST_NAME" cylc cat-log --debug -f j "${WORKFLOW_NAME}//1/a-task"
-grep_ok "job.out not present, getting job log remotely" "${TEST_NAME}.stderr"
+grep_ok "Not all logs present, getting job log remotely" "${TEST_NAME}.stderr"
 
 # remote
 TEST_NAME=${TEST_NAME_BASE}-no_log_remote_list_dir
 run_ok "$TEST_NAME" cylc cat-log --debug --mode=list-dir "${WORKFLOW_NAME}//1/a-task"
-grep_ok "job.out not present, getting job log remotely" "${TEST_NAME}.stderr"
+grep_ok "Not all logs present, getting job log remotely" "${TEST_NAME}.stderr"
 
 # Clean up the task host.
 purge
