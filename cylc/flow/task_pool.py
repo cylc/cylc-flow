@@ -1005,9 +1005,10 @@ class TaskPool:
         """
         ids_ = {id_.relative_id for id_ in ids}
         return [
-            itasks[id_]
+            itask
             for itasks in self.active_tasks.values()
-            for id_ in ids_ & itasks.keys()
+            for id_, itask in itasks.items()
+            if id_ in ids_
         ]
 
     def queue_task(self, itask: TaskProxy) -> None:
