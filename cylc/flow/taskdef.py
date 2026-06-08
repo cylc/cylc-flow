@@ -421,13 +421,13 @@ class TaskDef:
         adjusted = []
         for seq in self.sequences:
             # (Tasks are parentless or not per sequence).
-            pt = None
-            if point is None:
-                pt = seq.get_first_point(cutoff)
-            else:
-                pt = seq.get_next_point(point)
-            if pt and self.is_parentless(pt, cutoff):
-                adjusted.append(pt)
+            next_point = (
+                seq.get_first_point(cutoff)
+                if point is None
+                else seq.get_next_point(point)
+            )
+            if next_point and self.is_parentless(next_point, cutoff):
+                adjusted.append(next_point)
         if adjusted:
             p_next = min(adjusted)
         return p_next
