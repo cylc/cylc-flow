@@ -429,8 +429,8 @@ class TaskDef:
             if next_point and self.is_parentless(next_point, cutoff):
                 adjusted.append(next_point)
         if adjusted:
-            p_next = min(adjusted)
-        return p_next
+            return min(adjusted)
+        return None
 
     def is_parentless(self, point: 'PointBase', cutoff: 'PointBase') -> bool:
         """Return True if task has no parents at the given point.
