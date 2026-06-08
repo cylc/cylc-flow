@@ -262,8 +262,7 @@ class TaskPool:
 
         """
         if (
-            itask.state(TASK_STATUS_WAITING)
-            and not itask.state.is_queued
+            not itask.state.is_queued
             and not itask.state.is_runahead
             and not itask.is_manual_submit
             and itask.is_ready_to_run()
@@ -867,10 +866,6 @@ class TaskPool:
                 self.get_or_spawn_task(point, itask.tdef, itask.flow_nums)
             )
             if ntask is not None and not is_in_pool:
-                LOG.debug(
-                    f"Next parentless instance of {itask.identity}"
-                    f" is {ntask.identity}"
-                )
                 self.add_to_pool(ntask)
 
     def remove(self, itask: 'TaskProxy', reason: Optional[str] = None) -> None:
