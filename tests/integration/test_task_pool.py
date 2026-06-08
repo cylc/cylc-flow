@@ -2565,6 +2565,11 @@ async def test_start_tasks(
         submitted_tasks = capture_submission(schd)
         assert submitted_tasks == set()
 
+        # This test expects tasks to be spawned to the runahead limit for
+        # historical reasons - pre GitHub #7237. We can remove this call
+        # if we change test expectations below.
+        schd.pool.spawn_to_runahead_limit()
+
         # It should start up with:
         # - 2050/foo and 2051/foo (spawned to runahead limit)
         # - 2050/bar waiting on its (unsatisfied) clock-trigger

@@ -411,16 +411,16 @@ class TaskDef:
     ):
         """Return next cycle point for which I'm parentless.
 
+        For a given recurrence, a task is either parented or parentless.
+
         If point is None, return the first parentless cycle; otherwise
         the first parentless cycle > point.
 
         Cutoff is the start cycle point, prior to which we ignore parents.
 
         """
-        p_next = None
         adjusted = []
         for seq in self.sequences:
-            # (Tasks are parentless or not per sequence).
             next_point = (
                 seq.get_first_point(cutoff)
                 if point is None

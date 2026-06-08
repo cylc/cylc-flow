@@ -844,12 +844,6 @@ class Scheduler:
             flow=[FLOW_NEW],
             flow_descr=f"original flow from {self.options.starttask}"
         )
-        # Spawning to the runahead limit immediately is not strictly necessary
-        # as it would occur over several scheduler main loop iterations; we do
-        # it mainly for compatibility with integration tests pre PR #7237.
-        self.pool.spawn_to_runahead_limit()
-        for itask in self.pool.get_tasks():
-            self.pool.queue_if_ready(itask)
 
     def _load_pool_from_point(self):
         """Load task pool for a cycle point, for a new run.
@@ -1704,8 +1698,6 @@ class Scheduler:
 
         # Update state summary, database, and uifeed
         self.workflow_db_mgr.put_task_event_timers(self.task_events_mgr)
-
-        self.pool.release_runahead_tasks()
 
         # List of task whose states have changed.
         updated_task_list = [
