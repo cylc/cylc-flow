@@ -168,7 +168,7 @@ jobs:
         uses: actions/download-artifact@v8
 
       - name: Codecov upload
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           name: ${{ github.workflow }}
           flags: fast-tests
