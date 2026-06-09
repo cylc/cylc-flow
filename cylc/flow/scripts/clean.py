@@ -202,7 +202,7 @@ def prompt(workflows: Iterable[str]) -> None:
 async def scan(
     workflows: Iterable[str], multi_mode: bool
 ) -> Tuple[List[str], bool]:
-    """Expand tuncated workflow IDs
+    """Expand truncated workflow IDs
 
     For example "one" might expand to "one/run1" & "one/run2"
     or "one/two/run1".
