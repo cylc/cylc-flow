@@ -176,8 +176,12 @@ def _match(
             })
         else:
             # filter for on-sequence task instances
+            # exclude pool IDs from filtering (they're already validated)
             _invalid = set()
-            for id__ in list(_matched):
+            for id__ in _matched.difference({
+                pool_task_id.duplicate(task_sel=None)
+                for pool_task_id in pool
+            }):
                 try:
                     taskdef = config.taskdefs[id__['task']]
                     if not taskdef.is_valid_point(get_point(id__['cycle'])):
