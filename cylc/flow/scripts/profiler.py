@@ -22,20 +22,23 @@ the resource usage of jobs running on the node.
 
 import asyncio
 from contextlib import suppress
+from dataclasses import dataclass
 import json
 import os
+from pathlib import Path
 import re
 import signal
+
 import psutil
 
-from pathlib import Path
-from dataclasses import dataclass
-
+from cylc.flow import LOG
 from cylc.flow.exceptions import CylcProfilerError
+import cylc.flow.flags
 from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.remote import watch_and_kill
 from cylc.flow.task_message import record_messages
 from cylc.flow.terminal import cli_function
+
 
 INTERNAL = True
 PID_REGEX = re.compile(r"([^:]*\d{6,}.*)")
@@ -52,15 +55,8 @@ class Process:
     cgroup_version: int
 
 
-async def stop_profiler(process, comms_timeout, tasks, *_args):
-    """Stop the profiler and return its data to the scheduler.
-
-    This function will be executed when the profiler receives a stop signal.
-    """
-    # stop the profiler
-    for task in tasks:
-        task.cancel()
-
+async def report_to_scheduler(process: Process, comms_timeout: int):
+    """Return the profiler's data to the scheduler."""
     # extract the stats
     profiler_data = get_profiler_data(process)
 
@@ -247,8 +243,13 @@ def get_option_parser() -> COP:
 @cli_function(get_option_parser)
 def main(_parser: COP, options) -> None:
     """CLI main."""
-    with suppress(SystemExit, asyncio.exceptions.CancelledError, Exception):
+    try:
         asyncio.run(_main(options))
+    except asyncio.CancelledError:
+        pass
+    except Exception as exc:
+        # Only log at info level as not very important (show traceback if -vv)
+        LOG.info(exc, exc_info=(cylc.flow.flags.verbosity > 1))
 
 
 async def _main(options) -> None:
@@ -263,20 +264,25 @@ async def _main(options) -> None:
     # loop's add_signal_handler function instead
     loop = asyncio.get_running_loop()
     for sig in (signal.SIGINT, signal.SIGHUP, signal.SIGTERM):
-        loop.add_signal_handler(
-            sig,
-            lambda: asyncio.create_task(
-                stop_profiler(process, options.comms_timeout, tasks)
-            ),
-        )
+        loop.add_signal_handler(sig, lambda: {t.cancel() for t in tasks})
 
     # the profiler will run until one of these coroutines calls `sys.exit`:
     tasks.extend([
         # run the profiler itself
-        asyncio.create_task(profile(process, options.delay)),
+        asyncio.create_task(
+            profile(process, options.delay),
+            name="profiler",
+        ),
 
         # kill the profiler if its PPID changes
         # (i.e, if the job exits before the profiler does)
-        asyncio.create_task(watch_and_kill(psutil.Process(os.getpid()))),
+        asyncio.create_task(
+            watch_and_kill(psutil.Process(os.getpid())),
+            name="profiler_watchdog",
+        ),
     ])
-    await asyncio.gather(*tasks)
+
+    with suppress(asyncio.CancelledError):
+        await asyncio.gather(*tasks)
+
+    await report_to_scheduler(process, options.comms_timeout)

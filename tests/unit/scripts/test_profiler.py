@@ -32,12 +32,12 @@ from cylc.flow.scripts.profiler import (
     parse_memory_allocated,
     parse_memory_file,
     profile,
-    stop_profiler,
+    report_to_scheduler,
 )
 
 
-async def test_stop_profiler(monkeypatch, tmpdir):
-    """It should capture and record data profiler is stopped."""
+async def test_report_to_scheduler(monkeypatch, tmpdir):
+    """It should capture and record profiler data."""
     monkeypatch.setenv('CYLC_WORKFLOW_ID', "test_value")
     monkeypatch.setenv('CYLC_TASK_JOB', "test_task_job")
 
@@ -64,8 +64,7 @@ async def test_stop_profiler(monkeypatch, tmpdir):
         max_rss=42,
     )
 
-    # tell the profiler to stop
-    await stop_profiler(process_object, 1, [])
+    await report_to_scheduler(process_object, 1)
 
     # the profiler should record a "cylc message" with the profiler data
     assert record_messages.call_args_list == [
