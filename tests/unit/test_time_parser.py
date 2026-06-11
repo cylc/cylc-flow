@@ -245,7 +245,13 @@ def test_parse_recurrence_with_context(parsers):
 
 
 def test_get_interval_from_expression(parsers):
-    """It should infer interval from truncated context point."""
+    """
+    Method should get a duration from an expression.
+    Currently contains a bug, referenced here:
+    https://github.com/cylc/cylc-flow/issues/2382#issuecomment-1651837780
+    Which results in unexpected behaviour around 31 day periods and
+    month boundaries.
+    """
     parser = parsers[0]
 
     # when expr is provided, it should just parse it

@@ -347,6 +347,13 @@ class CylcTimeParser:
     def _get_interval_from_expression(
         self, expr: Optional[str], context: Optional['TimePoint'] = None
     ) -> Optional[Duration]:
+        """
+        Gets a duration from an expression.
+        Currently contains a bug, referenced here:
+        https://github.com/cylc/cylc-flow/issues/2382#issuecomment-1651837780
+        Which results in unexpected behaviour around 31 day periods and
+        month boundaries.
+        """
         if expr is None:
             if context is None or not context.truncated:
                 return None
