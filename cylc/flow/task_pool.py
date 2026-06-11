@@ -1807,7 +1807,8 @@ class TaskPool:
                     #   messages were stored in the DB as a list.
                     # from: 8.0.0
                     # to: 8.3.0
-                    # remove after: https://github.com/cylc/cylc-flow/issues/7339
+                    # remove after:
+                    #     https://github.com/cylc/cylc-flow/issues/7339
                     outputs: Union[
                         Dict[str, str], List[str]
                     ] = json.loads(outputs_str)
