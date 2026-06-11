@@ -303,17 +303,11 @@ def test_get_min_from_expression_unresolvable(parsers):
 
 
 def test_get_point_from_expression_truncated_isodatetime_error(parsers):
-    """
-    If allow_truncated is True, it should continue past truncated expressions
-    that raise IsodatetimeError, raising CylcTimeSyntaxError only if no valid
-    point is found.
-    """
+    """Method should raise CylcTimeSyntaxError for invalid truncated expressions."""
     parser = parsers[0]
 
     # "99T25" matches the TRUNCATED_REC_MAP regex,
-    # but "---99T25" is not a valid truncated ISO point (no day 99, hour 25),
-    # so it raises an IsodatetimeError, excepts it, and the loop continues.
-    # Nothing else matches, so CylcTimeSyntaxError is raised.
+    # but "---99T25" is not a valid truncated ISO point (no day 99, hour 25)
     with pytest.raises(CylcTimeSyntaxError):
         parser._get_point_from_expression(
             "99T25", context=None, allow_truncated=True
