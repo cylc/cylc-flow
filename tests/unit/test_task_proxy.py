@@ -66,8 +66,7 @@ def test_get_point_as_seconds_unknown_tz(monkeypatch):
         point_as_seconds=None,
     )
     result = TaskProxy.get_point_as_seconds(mock_itask)
-    # 3600 + (5*3600 + 30*60) = 3600 + 19800 = 23400
-    assert result == 23400
+    assert result == 3600 + (5*3600 + 30*60)
 
 
 @pytest.mark.parametrize(
