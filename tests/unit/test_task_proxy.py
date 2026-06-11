@@ -126,7 +126,7 @@ def test_is_ready_to_run_try_timer():
         try_timers={'submission-failed': mock_timer},
     )
     assert TaskProxy.is_ready_to_run(mock_itask) is True
-    mock_timer.is_delay_done.assert_called_once()
+    assert mock_timer.is_delay_done.call_count == 1
 
 
 @pytest.mark.parametrize(
