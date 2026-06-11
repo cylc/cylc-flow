@@ -70,7 +70,7 @@ __EOF__
 cmp_ok "${FOO_WORK_DIR}/raw2.stdout" "${FOO_WORK_DIR}/raw1.stdout"
 
 cmp_ok "${FOO_WORK_DIR}/raw2.stderr" << __EOF__
-DEPRECATED: the --raw option will be removed at Cylc 8.7; use --format=raw instead.
+DEPRECATED: the --raw option will be removed at Cylc 8.9; use --format=raw instead.
 __EOF__
 
 purge

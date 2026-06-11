@@ -680,7 +680,7 @@ class Resolvers(BaseResolvers):
         # url: https://github.com/cylc/cylc-flow/pull/6478
         # from: <8.5.0
         # to: >=8.5.0
-        # remove at: 8.x
+        # remove at: 8.9
         # For back compat, with gql-v3 None will not use default_value.
         if 'flow' in kwargs:
             kwargs['flow'] = (
