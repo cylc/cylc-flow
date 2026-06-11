@@ -187,6 +187,11 @@ class WorkflowFiles:
     """The workflow configuration file after processing."""
 
     # BACK COMPAT: SUITE_RC
+    #   Remaining uses are for workflow detection which enables the
+    #   GUI / Tui / CLI to list and operate on legacy workflows.
+    # FROM: 1.0(?)
+    # TO: 8.6.x
+    # REMOVE AT: 8.11
     SUITE_RC = 'suite.rc'
     """Deprecated workflow configuration file."""
 
