@@ -184,7 +184,8 @@ def _remove_matched_tasks(
                 continue
             removed[itask.tokens.task] = fnums_to_remove
             if fnums_to_remove == itask.flow_nums:
-                schd.pool.remove(itask, 'request')
+                # Need to remove the task from the pool.
+                schd.pool.remove(itask, 'request', spawn=False)
                 to_kill.append(itask)
                 itask.removed = True
             itask.flow_nums.difference_update(fnums_to_remove)
