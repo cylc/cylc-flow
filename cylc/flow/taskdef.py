@@ -140,7 +140,7 @@ def generate_graph_parents(
                 prevs.append(prev)
         if prevs:
             graph_parents.setdefault(seq, []).append(
-                TaskTuple(tdef.name, min(prevs), False)
+                TaskTuple(tdef.name, max(prevs), False)
             )
 
     return graph_parents
