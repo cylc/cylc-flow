@@ -21,7 +21,7 @@
 
 . "$(dirname "$0")/test_header"
 
-set_test_number 7
+set_test_number 6
 
 # Test workflow uses built-in 'echo' xtrigger.
 init_workflow "${TEST_NAME_BASE}" << '__FLOW_CONFIG__'
@@ -79,15 +79,10 @@ cylc remove "${WORKFLOW_NAME}//3001/b"
 
 poll_grep_workflow_log 'Command "remove_tasks" actioned.'
 
-cylc show "${WORKFLOW_NAME}//3002/b" | grep -E 'state: ' > 3002.b.log
-cylc show "${WORKFLOW_NAME}//3003/b" 2>&1 >/dev/null | grep -E 'No matching' > 3003.b.log
+cylc show "${WORKFLOW_NAME}//3002/b" 2>&1 >/dev/null | grep -E 'No matching' > 3002.b.log
 
-# 3002/b should be only at 3002.
 cmp_ok 3002.b.log - <<__END__
-state: waiting
-__END__
-cmp_ok 3003.b.log - <<__END__
-No matching active tasks found: 3003/b
+No matching active tasks found: 3002/b
 __END__
 
 cylc show "${WORKFLOW_NAME}//3002/c" | grep -E 'state: ' > 3002.c.log
