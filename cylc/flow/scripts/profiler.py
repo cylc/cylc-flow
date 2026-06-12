@@ -45,10 +45,10 @@ RE_CPU_USAGE = re.compile(r'usage_usec\s*(\d+)')
 @dataclass
 class Process:
     """Class for representing CPU and Memory usage of a process"""
-    cgroup_memory_path: str
+    cgroup_memory_path: Path
     max_rss: int
-    cgroup_cpu_path: str
-    memory_allocated_path: str
+    cgroup_cpu_path: Path
+    memory_allocated_path: Path
     cgroup_version: int
 
 
@@ -115,12 +115,12 @@ def parse_memory_file(process: Process):
 def parse_memory_allocated(process: Process) -> int:
     """Open the memory stat file and copy the appropriate data"""
     if process.cgroup_version == 2:
-        cgroup_memory_path = Path(process.memory_allocated_path)
+        cgroup_memory_path = process.memory_allocated_path
         for _ in range(5):
-            with open(cgroup_memory_path / "memory.max", 'r') as f:
-                line = f.readline()
-                if "max" not in line:
-                    return int(line)
+            memory_max_file = cgroup_memory_path / "memory.max"
+            line = memory_max_file.read_text().splitlines()[0]
+            if "max" not in line:
+                return int(line)
             cgroup_memory_path = cgroup_memory_path.parent
         return 0
     else:  # Memory limit not tracked for cgroups v1
@@ -150,17 +150,17 @@ def parse_cpu_file(process: Process) -> int:
     return 0
 
 
-def get_cgroup_version(cgroup_location: str, cgroup_name: str) -> int:
+def get_cgroup_version(cgroup_location: Path, cgroup_name: str) -> int:
     try:
-        if Path.exists(Path(cgroup_location + cgroup_name)):
+        if (cgroup_location / cgroup_name).exists():
             return 2
-        elif Path.exists(Path(cgroup_location + "/memory" + cgroup_name)):
+        elif (cgroup_location / "memory" / cgroup_name).exists():
             return 1
-        raise FileNotFoundError(cgroup_location + cgroup_name)
+        raise FileNotFoundError(cgroup_location / cgroup_name)
     except Exception as err:
         raise CylcProfilerError(
-            err, "Cgroup not found at " + cgroup_location +
-                 cgroup_name) from err
+            err, f"Cgroup not found at {cgroup_location / cgroup_name}"
+        ) from err
 
 
 def get_cgroup_name():
@@ -172,40 +172,40 @@ def get_cgroup_name():
 
     # Get the PID of the current process
     pid = os.getpid()
+    cgroup_path = Path('/proc') / str(pid) / 'cgroup'
     try:
         # Get the cgroup information for the current process
-        with open('/proc/' + str(pid) + '/cgroup', 'r') as f:
-            result = f.read()
+        result = cgroup_path.read_text()
         return PID_REGEX.search(result).group()
 
     except Exception as err:
         raise CylcProfilerError(
-            err, '/proc/' + str(pid) + '/cgroup not found') from err
+            err, f'{cgroup_path} not found') from err
 
 
-def get_cgroup_paths(location) -> Process:
+def get_cgroup_paths(location: Path) -> Process:
 
     try:
         cgroup_name = get_cgroup_name()
         cgroup_version = get_cgroup_version(location, cgroup_name)
         if cgroup_version == 2:
             return Process(
-                cgroup_memory_path=location +
-                cgroup_name + "/" + "memory.stat",
-                cgroup_cpu_path=location +
-                cgroup_name + "/" + "cpu.stat",
-                memory_allocated_path=location + cgroup_name,
+                cgroup_memory_path=location / cgroup_name / "memory.stat",
+                cgroup_cpu_path=location / cgroup_name / "cpu.stat",
+                memory_allocated_path=location / cgroup_name,
                 cgroup_version=cgroup_version,
                 max_rss=0,
             )
 
         elif cgroup_version == 1:
             return Process(
-                cgroup_memory_path=location + "memory/" +
-                cgroup_name + "/memory.stat",
-                cgroup_cpu_path=location + "cpu/" +
-                cgroup_name + "/cpuacct.usage",
-                memory_allocated_path="",
+                cgroup_memory_path=(
+                    location / "memory" / cgroup_name / "memory.stat"
+                ),
+                cgroup_cpu_path=(
+                    location / "cpu" / cgroup_name / "cpuacct.usage"
+                ),
+                memory_allocated_path=Path(),
                 cgroup_version=cgroup_version,
                 max_rss=0,
             )
@@ -253,7 +253,7 @@ def main(_parser: COP, options) -> None:
 
 async def _main(options) -> None:
     # get cgroup information
-    process = get_cgroup_paths(options.cgroup_location)
+    process = get_cgroup_paths(Path(options.cgroup_location))
 
     # list of asyncio tasks
     tasks: list[asyncio.Task] = []

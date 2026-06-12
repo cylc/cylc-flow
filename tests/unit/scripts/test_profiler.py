@@ -16,6 +16,7 @@
 #
 # Tests for functions contained in cylc.flow.scripts.profiler
 import os
+from pathlib import Path
 from unittest import mock
 
 import pytest
@@ -202,13 +203,15 @@ def test_parse_cpu_file(tmpdir):
 
 def test_get_cgroup_name(mocker):
     """It should return the cgroup name of the process."""
-    mock_file = mocker.mock_open(read_data="0::bad/test/cgroup/place")
-    mocker.patch("builtins.open", mock_file)
+    mocker.patch.object(
+        Path, 'read_text', return_value="0::bad/test/cgroup/place"
+    )
     with pytest.raises(CylcProfilerError):
         get_cgroup_name()
 
-    mock_file = mocker.mock_open(read_data="0::good/cgroup/place/2222222")
-    mocker.patch("builtins.open", mock_file)
+    mocker.patch.object(
+        Path, 'read_text', return_value="0::good/cgroup/place/2222222"
+    )
     assert get_cgroup_name() == "good/cgroup/place/2222222"
 
 
@@ -222,21 +225,21 @@ def test_parse_memory_allocated(tmp_path_factory):
     good_process_object_v1 = Process(
         cgroup_memory_path='',
         cgroup_cpu_path='',
-        memory_allocated_path=str(good_mem_dir),
+        memory_allocated_path=good_mem_dir,
         cgroup_version=1,
         max_rss=0)
 
     good_process_object_v2 = Process(
         cgroup_memory_path='',
         cgroup_cpu_path='',
-        memory_allocated_path=str(good_mem_dir),
+        memory_allocated_path=good_mem_dir,
         cgroup_version=2,
         max_rss=0)
 
     bad_process_object_v2_1 = Process(
         cgroup_memory_path='',
         cgroup_cpu_path='',
-        memory_allocated_path='/',
+        memory_allocated_path=Path('/'),
         cgroup_version=2,
         max_rss=0)
 
@@ -276,7 +279,7 @@ def test_parse_memory_allocated(tmp_path_factory):
     bad_process_object_v2_2 = Process(
         cgroup_memory_path='',
         cgroup_cpu_path='',
-        memory_allocated_path=str(dir_5),
+        memory_allocated_path=dir_5,
         cgroup_version=2,
         max_rss=0)
 
@@ -305,17 +308,17 @@ def test_get_cgroup_version(mocker):
     """It should return the cgroup version of the process."""
     # Mock the Path.exists function call to return True
     mocker.patch("pathlib.Path.exists", return_value=True)
-    assert get_cgroup_version('stuff/in/place',
+    assert get_cgroup_version(Path('stuff/in/place'),
                               'more_stuff') == 2
 
     with mock.patch('pathlib.Path.exists', side_effect=[False, True]):
-        assert get_cgroup_version('stuff/in/place',
+        assert get_cgroup_version(Path('stuff/in/place'),
                                   'more_stuff') == 1
 
     # Mock the Path.exists function call to return False
     mocker.patch("pathlib.Path.exists", return_value=False)
     with pytest.raises(CylcProfilerError) as excinfo:
-        get_cgroup_version('stuff/in/other/place',
+        get_cgroup_version(Path('stuff/in/other/place'),
                            'things')
     assert "Cgroup not found" in str(excinfo.value)
 
@@ -326,23 +329,23 @@ def test_get_cgroup_paths(mocker):
                  return_value='test_name')
     mocker.patch("cylc.flow.scripts.profiler.get_cgroup_version",
                  return_value=2)
-    process = get_cgroup_paths("test_location/")
-    assert process.cgroup_memory_path == "test_location/test_name/memory.stat"
-    assert process.cgroup_cpu_path == "test_location/test_name/cpu.stat"
+    process = get_cgroup_paths(Path("test_location/"))
+    assert process.cgroup_memory_path == Path("test_location/test_name/memory.stat")
+    assert process.cgroup_cpu_path == Path("test_location/test_name/cpu.stat")
 
     mocker.patch("cylc.flow.scripts.profiler.get_cgroup_version",
                  return_value=1)
 
-    process = get_cgroup_paths("test_location/")
+    process = get_cgroup_paths(Path("test_location/"))
     assert (process.cgroup_memory_path ==
-            "test_location/memory/test_name/memory.stat")
+            Path("test_location/memory/test_name/memory.stat"))
     assert (process.cgroup_cpu_path ==
-            "test_location/cpu/test_name/cpuacct.usage")
+            Path("test_location/cpu/test_name/cpuacct.usage"))
 
     mocker.patch("cylc.flow.scripts.profiler.get_cgroup_version",
                  return_value=3)
     with pytest.raises(CylcProfilerError) as excinfo:
-        get_cgroup_paths("test_location/")
+        get_cgroup_paths(Path("test_location/"))
     assert "Unable to determine cgroup version" in str(excinfo.value)
 
 
@@ -353,7 +356,7 @@ async def test_profile_data(mocker):
                  return_value='test_name')
     mocker.patch("cylc.flow.scripts.profiler.get_cgroup_version",
                  return_value=2)
-    process = get_cgroup_paths("test_location/")
+    process = get_cgroup_paths(Path("test_location/"))
 
     mock_file = mocker.mock_open(read_data="")
     mocker.patch("builtins.open", mock_file)
@@ -398,9 +401,9 @@ async def test_main(mocker, options):
     # without needing actual files
     mocker.patch("cylc.flow.scripts.profiler.get_cgroup_paths",
                  return_value=Process(
-                     cgroup_memory_path="/some/place/memory.stat",
-                     cgroup_cpu_path="/some/place/cpu.stat",
-                     memory_allocated_path="/some/place",
+                     cgroup_memory_path=Path("/some/place/memory.stat"),
+                     cgroup_cpu_path=Path("/some/place/cpu.stat"),
+                     memory_allocated_path=Path("/some/place"),
                      cgroup_version=2,
                      max_rss=0,))
     mocker.patch("cylc.flow.scripts.profiler.parse_memory_file",
