@@ -545,3 +545,44 @@ async def test_remove_triggered(flow, scheduler, start):
         )
         assert not schd.pool.get_tasks()
         assert not schd.pool.tasks_to_trigger_now
+
+
+async def test_remove_spawn(flow, scheduler, start):
+    """Test the no-spawn removal of parentless tasks."""
+    schd: Scheduler = scheduler(
+        flow({
+            'scheduler': {
+                'cycle point format': 'CCYY',
+            },
+            'scheduling': {
+                'initial cycle point': '2000',
+                'runahead limit': 'P0',
+                'graph': {
+                    'R3//P1Y': '''
+                        @wall_clock => a
+                        b
+                        c
+                    ''',
+                },
+            },
+        })
+    )
+    async with start(schd):
+        assert schd.pool.get_task_ids() == {
+            '2000/a',
+            '2000/b',
+            '2000/c',
+            '2001/b',
+            '2001/c',
+        }
+
+        # Removal of parentless runahead and sequential xtrigger (PSX) spawned.
+        await run_cmd(remove_tasks(schd, ['2000/a', '2001/c', '2001/b'], []))
+        assert schd.pool.get_task_ids() == {
+            '2000/b',
+            '2000/c',
+        }
+
+        # empty the workflow
+        await run_cmd(remove_tasks(schd, ['2000/b', '2000/c'], []))
+        assert schd.pool.get_task_ids() == set()
