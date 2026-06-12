@@ -129,3 +129,7 @@ def test_pre_configure_exception(monkeypatch):
     assert exc_ctx.value.entry_point == 'cylc.pre_configure'
     assert exc_ctx.value.plugin_name == 'pre_configure_error'
     assert str(exc_ctx.value.exc) == 'foo'
+    assert str(exc_ctx.value) == (
+        "Error in plugin cylc.pre_configure.pre_configure_error\n"
+        "Exception: foo"
+    )

@@ -140,6 +140,21 @@ def test_completion_explicit():
     assert outputs.is_complete() is True
 
 
+def test_is_message_complete():
+    """It should report the completion status of individual messages."""
+    outputs = TaskOutputs(tdef([TASK_OUTPUT_SUCCEEDED], []))
+
+    # message exists but hasn't been completed yet
+    assert outputs.is_message_complete(TASK_OUTPUT_SUCCEEDED) is False
+
+    # message doesn't exist in this task's outputs
+    assert outputs.is_message_complete('no-such-output') is None
+
+    # message has been completed
+    outputs.set_message_complete(TASK_OUTPUT_SUCCEEDED)
+    assert outputs.is_message_complete(TASK_OUTPUT_SUCCEEDED) is True
+
+
 @pytest.mark.parametrize(
     'required, optional, expression', [
         pytest.param(
@@ -217,6 +232,7 @@ def test_get_completion_expression_explicit():
 
 
 def test_format_completion_status():
+    """It should format the completion status of the outputs."""
     outputs = TaskOutputs(
         tdef(
             {TASK_OUTPUT_SUCCEEDED, 'x', 'y'},
@@ -249,6 +265,48 @@ def test_format_completion_status():
         ⨯ ┆  or expired
         '''
     )
+
+
+def test_format_completion_status_nested():
+    """
+    It should format nested completion expressions with operators.
+    Catches the case where the opening paren is preceded by an operator.
+    """
+    outputs = TaskOutputs(
+        tdef(
+            [],
+            [TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED, 'x', 'y'],
+            completion='succeeded or (failed and x)',
+        )
+    )
+    result = outputs.format_completion_status(indent=2, gutter=2)
+    # the opening paren should be preceded by the 'or' operator
+    assert 'or (' in result
+
+
+def test_format_completion_status_ansimarkup():
+    """It should colour-code output status when ansimarkup is enabled."""
+    outputs = TaskOutputs(
+        tdef({TASK_OUTPUT_SUCCEEDED}, {TASK_OUTPUT_EXPIRED})
+    )
+    outputs.set_message_complete(TASK_OUTPUT_SUCCEEDED)
+
+    # ansimarkup=1: only completed outputs get colour
+    result = outputs.format_completion_status(indent=2, gutter=2, ansimarkup=1)
+    assert '<green>succeeded</green>' in result
+    assert '<red>' not in result  # incomplete outputs are NOT coloured
+
+    # ansimarkup=2: both complete and incomplete get colour
+    result = outputs.format_completion_status(indent=2, gutter=2, ansimarkup=2)
+    assert '<green>succeeded</green>' in result
+    assert '<red>expired</red>' in result
+
+
+def test_is_compvar_complete_invalid():
+    """It should raise KeyError for an unknown completion variable."""
+    outputs = TaskOutputs(tdef([TASK_OUTPUT_SUCCEEDED], []))
+    with pytest.raises(KeyError):
+        outputs._is_compvar_complete('no_such_var')
 
 
 @pytest.mark.parametrize(
