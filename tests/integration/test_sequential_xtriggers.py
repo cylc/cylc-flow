@@ -58,17 +58,68 @@ def sequential(flow, scheduler):
 
 
 async def test_remove(sequential: Scheduler, start):
-    """It should spawn the next instance when a task is removed.
+    """It should not spawn the next instance when a task is removed.
 
-    Ensure that removing a task with a sequential xtrigger does not break the
-    chain causing future instances to be removed from the workflow.
+    Ensure that manually removing a task with a sequential xtrigger does not
+    spawn the next, while internal removal does.
     """
     async with start(sequential):
         # starts with the first task in the first cycle
         assert list_cycles(sequential) == ['2000']
+
         # removing it should spawn the next sequential instance
-        await run_cmd(remove_tasks(sequential, ['2000'], ["1"]))
+        # internal remove should spawn the next cycle
+        sequential.pool.remove(
+            sequential.pool.get_task(ISO8601Point('2000'), 'foo'),
+            reason='because'
+        )
         assert list_cycles(sequential) == ['2001']
+
+        # this sequentially spawns out to the runahead limit
+        for year in range(2001, 2010):
+            foo = sequential.pool.get_task(ISO8601Point(f'{year}'), 'foo')
+            if foo.state(is_runahead=True):
+                break
+            sequential.xtrigger_mgr.call_xtriggers_async(foo)
+
+        # for some reason this doesn't work in the loop
+        await sequential._main_loop()
+        await sequential._main_loop()
+        await sequential._main_loop()
+
+        assert list_cycles(sequential) == [
+            '2001',
+            '2002',
+            '2003',
+            '2004',
+        ]
+
+        # internal remove of RH PSX should spawn the next cycle
+        foo = sequential.pool.get_task(ISO8601Point('2004'), 'foo')
+        sequential.pool.remove(foo)
+        assert '2005' in list_cycles(sequential)
+
+        # remove command should not spawn next RH task
+        await run_cmd(remove_tasks(sequential, ['2005'], ["1"]))
+        assert list_cycles(sequential) == [
+            '2001',
+            '2002',
+            '2003',
+        ]
+
+        # and internal remove of already xtrigger spawned task should
+        # not spawn the next either.
+        foo = sequential.pool.get_task(ISO8601Point('2003'), 'foo')
+        sequential.pool.remove(foo)
+        assert list_cycles(sequential) == [
+            '2001',
+            '2002',
+        ]
+
+        # Now, let's just command/manual remove all tasks in the pool
+        await run_cmd(remove_tasks(sequential, ['*'], ["1"]))
+        # the workflow should be empty
+        assert not list_cycles(sequential)
 
 
 async def test_trigger(sequential, start):
