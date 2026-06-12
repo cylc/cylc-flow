@@ -329,7 +329,8 @@ def test_get_cgroup_paths(mocker):
     mocker.patch("cylc.flow.scripts.profiler.get_cgroup_version",
                  return_value=2)
     process = get_cgroup_paths(Path("test_location/"))
-    assert process.cgroup_memory_path == Path("test_location/test_name/memory.stat")
+    assert (process.cgroup_memory_path ==
+            Path("test_location/test_name/memory.stat"))
     assert process.cgroup_cpu_path == Path("test_location/test_name/cpu.stat")
 
     mocker.patch("cylc.flow.scripts.profiler.get_cgroup_version",
