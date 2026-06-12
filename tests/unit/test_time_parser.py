@@ -303,7 +303,9 @@ def test_get_min_from_expression_unresolvable(parsers):
 
 
 def test_get_point_from_expression_truncated_isodatetime_error(parsers):
-    """Method should raise CylcTimeSyntaxError for invalid truncated expressions."""
+    """
+    Method should raise CylcTimeSyntaxError for invalid truncated expressions.
+    """
     parser = parsers[0]
 
     # "99T25" matches the TRUNCATED_REC_MAP regex,
