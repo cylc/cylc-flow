@@ -1130,28 +1130,29 @@ class DataStoreMgr:
                     # Parents/upstream nodes
                     np_ids = set()
                     if not p_done:
-                        for items in generate_graph_parents(
-                            tdef,
-                            get_point(node_tokens['cycle']),
-                            taskdefs
-                        ).values():
-                            for parent_name, parent_point, _ in items:
-                                if final_point and parent_point > final_point:
-                                    continue
-                                parent_tokens = self.id_.duplicate(
-                                    cycle=str(parent_point),
-                                    task=parent_name,
-                                )
-                                self.generate_ghost_task(
-                                    parent_tokens,
-                                    parent_point,
-                                    True,
-                                    None,
-                                    n_depth
-                                )
-                                # reverse for parent
-                                self.generate_edge(parent_tokens, node_tokens)
-                                np_ids.add(parent_tokens.id)
+                        for (
+                            parent_name,
+                            parent_point,
+                            _,
+                        ) in generate_graph_parents(
+                            tdef, get_point(node_tokens['cycle']), taskdefs
+                        ):
+                            if final_point and parent_point > final_point:
+                                continue
+                            parent_tokens = self.id_.duplicate(
+                                cycle=str(parent_point),
+                                task=parent_name,
+                            )
+                            self.generate_ghost_task(
+                                parent_tokens,
+                                parent_point,
+                                True,
+                                None,
+                                n_depth
+                            )
+                            # reverse for parent
+                            self.generate_edge(parent_tokens, node_tokens)
+                            np_ids.add(parent_tokens.id)
 
                     # Register new walk
                     if node_id not in all_walks:

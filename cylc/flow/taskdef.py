@@ -94,13 +94,13 @@ def generate_graph_children(
 
 
 def generate_graph_parents(
-    tdef: 'TaskDef', point: 'PointBase', taskdefs: Dict[str, 'TaskDef']
-) -> Dict['SequenceBase', List[TaskTuple]]:
+    tdef: 'TaskDef', point: 'PointBase', taskdefs: dict[str, 'TaskDef']
+) -> list[TaskTuple]:
     """Determine concrete graph parents of task tdef at point.
 
     Infer parents by reversing upstream triggers that lead to point/task.
     """
-    graph_parents: Dict['SequenceBase', List[TaskTuple]] = {}
+    graph_parents: list[TaskTuple] = []
 
     for seq, triggers in tdef.graph_parents.items():
         if not seq.is_valid(point):
@@ -109,7 +109,6 @@ def generate_graph_parents(
             #   T06 = "waz[-PT6H] => foo"
             # here waz[-PT6H] is a parent of T06/foo but not of T12/foo.
             continue
-        graph_parents[seq] = []
         for parent_name, trigger in triggers:
             parent_point = trigger.get_parent_point(point)
             if (
@@ -126,20 +125,19 @@ def generate_graph_parents(
                 # TODO ideally validation would flag this as an error.
                 continue
             is_abs = trigger.offset_is_absolute or trigger.offset_is_from_icp
-            graph_parents[seq].append(
+            graph_parents.append(
                 TaskTuple(parent_name, parent_point, is_abs)
             )
 
     if tdef.sequential:
         # Add implicit previous-instance parent.
-        prevs = []
-        for seq in tdef.sequences:
-            prev = seq.get_prev_point(point)
-            if prev is not None:
-                # Within sequence bounds.
-                prevs.append(prev)
+        prevs = {
+            prev
+            for seq in tdef.sequences
+            if (prev := seq.get_prev_point(point)) is not None
+        }
         if prevs:
-            graph_parents.setdefault(seq, []).append(
+            graph_parents.append(
                 TaskTuple(tdef.name, max(prevs), False)
             )
 

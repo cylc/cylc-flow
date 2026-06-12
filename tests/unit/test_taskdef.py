@@ -50,17 +50,10 @@ def test_generate_graph_parents_1(tmp_flow_config):   # noqa: F811
         ISO8601Point('20230101T03'),
         ISO8601Point('20230101T06')
     ]:
-        parents = generate_graph_parents(
+        assert generate_graph_parents(
             cfg.taskdefs['every_cycle'], point, cfg.taskdefs
-        )
-        assert list(parents.values()) == [
-            [
-                (
-                    "run_once_at_midnight",
-                    ISO8601Point('20230101T0000Z'),
-                    False
-                )
-            ]
+        ) == [
+            ("run_once_at_midnight", ISO8601Point('20230101T0000Z'), False),
         ]
 
 
@@ -81,23 +74,14 @@ def test_generate_graph_parents_2(tmp_flow_config):   # noqa: F811
     cfg = WorkflowConfig(workflow=id_, fpath=flow_file, options=None)
 
     # Each instance of every_cycle should have a parent only at T00.
-    parents = generate_graph_parents(
+    assert generate_graph_parents(
         cfg.taskdefs['foo'], IntegerPoint("1"), cfg.taskdefs
-    )
-    assert list(parents.values()) == [[]]  # No parents at first point.
+    ) == []  # No parents at first point.
 
-    parents = generate_graph_parents(
+    assert generate_graph_parents(
         cfg.taskdefs['foo'], IntegerPoint("2"), cfg.taskdefs
-    )
-
-    assert list(parents.values()) == [
-        [
-            (
-                "foo",
-                IntegerPoint('1'),
-                False
-            )
-        ]
+    ) == [
+        ("foo", IntegerPoint('1'), False),
     ]
 
 
@@ -122,10 +106,8 @@ def test_generate_graph_parents__sequential(tmp_flow_config):
     parents = generate_graph_parents(
         cfg.taskdefs['foo'], ISO8601Point('2010-02-01'), cfg.taskdefs
     )
-    assert list(parents.values()) == [
-        [
-            TaskTuple('foo', ISO8601Point('2010-01-31'), False),
-        ]
+    assert list(parents) == [
+        TaskTuple('foo', ISO8601Point('2010-01-31'), False),
     ]
 
 
