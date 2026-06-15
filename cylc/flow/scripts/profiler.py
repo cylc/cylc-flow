@@ -21,6 +21,7 @@ the resource usage of jobs running on the node.
 """
 
 import asyncio
+import sys
 from contextlib import suppress
 from dataclasses import dataclass
 import json
@@ -173,7 +174,7 @@ def get_cgroup_name():
     try:
         # Get the cgroup information for the current process
         result = cgroup_path.read_text()
-        return PID_REGEX.search(result).group()
+        return PID_REGEX.search(result).group().lstrip('/')
 
     except Exception as err:
         raise CylcProfilerError(
@@ -185,6 +186,11 @@ def get_cgroup_paths(location: Path) -> Process:
     try:
         cgroup_name = get_cgroup_name()
         cgroup_version = get_cgroup_version(location, cgroup_name)
+        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", file=sys.stderr)
+        print(f"location:{location}", file=sys.stderr)
+        print(f"cgroup_name:{cgroup_name}", file=sys.stderr)
+        print(f"cgroup_version:{cgroup_version}", file=sys.stderr)
+        print(location / cgroup_name / "memory.stat", file=sys.stderr)
         if cgroup_version == 2:
             return Process(
                 cgroup_memory_path=location / cgroup_name / "memory.stat",
