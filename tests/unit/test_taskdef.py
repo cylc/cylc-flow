@@ -20,7 +20,7 @@ from pytest import param
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.cycling.iso8601 import ISO8601Point
-from cylc.flow.taskdef import generate_graph_parents
+from cylc.flow.taskdef import TaskTuple, generate_graph_parents
 
 
 def test_generate_graph_parents_1(tmp_flow_config):   # noqa: F811
@@ -97,6 +97,34 @@ def test_generate_graph_parents_2(tmp_flow_config):   # noqa: F811
                 IntegerPoint('1'),
                 False
             )
+        ]
+    ]
+
+
+def test_generate_graph_parents__sequential(tmp_flow_config):
+    """It chooses the latest previous point when using old-style sequential."""
+    flow_file = tmp_flow_config(
+        id_ := 'gargle-blaster',
+        """
+            [scheduler]
+                allow implicit tasks = True
+            [scheduling]
+                initial cycle point = 2010-01-01
+                [[special tasks]]
+                    sequential = foo
+                [[graph]]
+                    P1D = foo
+                    P1M = foo
+        """
+    )
+    cfg = WorkflowConfig(workflow=id_, fpath=flow_file, options=None)
+
+    parents = generate_graph_parents(
+        cfg.taskdefs['foo'], ISO8601Point('2010-02-01'), cfg.taskdefs
+    )
+    assert list(parents.values()) == [
+        [
+            TaskTuple('foo', ISO8601Point('2010-01-31'), False),
         ]
     ]
 
