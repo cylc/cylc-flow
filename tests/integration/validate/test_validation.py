@@ -265,9 +265,6 @@ def test_num_expanded_year_digits(flow, validate):
 def test_fail_initial_greater_final(flow, validate):
     """Test validation fails for initial cycle point greater than the final."""
     id_ = flow({
-        'scheduler': {
-            'UTC mode': 'True',
-        },
         'scheduling': {
             'initial cycle point': '20141208T0000Z',
             'final cycle point': '20141207T0000Z',
@@ -307,8 +304,6 @@ def test_9999_rollover(flow, validate):
 def test_constrained_initial(flow, validate):
     """Test validating simple multi-inheritance workflows."""
     conf = {
-        'scheduler': {
-        },
         'scheduling': {
             'initial cycle point': '20100101T06',
             'initial cycle point constraints': 'T00, T06, T12, T18',
@@ -340,8 +335,6 @@ def test_constrained_initial(flow, validate):
 def test_constrained_final(flow, validate):
     """Test validating simple multi-inheritance workflows."""
     conf = {
-        'scheduler': {
-        },
         'scheduling': {
             'initial cycle point': '20100101T06',
             'final cycle point': '20100101T18',
@@ -381,8 +374,6 @@ def test_fail_not_integer(flow, validate):
             'graph': {
                 'P1': 'foo',
             },
-        },
-        'runtime': {
         },
     })
     with pytest.raises(WorkflowConfigError, match=(
