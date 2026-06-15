@@ -14,7 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from datetime import datetime
+from datetime import (
+    datetime,
+    timezone,
+)
 
 import pytest
 from pytest import param
@@ -638,7 +641,6 @@ def test_simple(set_cycling_type):
         str(p_start),
         str(p_stop),
     )
-    sequence.set_offset(-ISO8601Interval("PT10M"))
     point = sequence.get_next_point(ISO8601Point("20100808T0000"))
     assert point == ISO8601Point("20100808T0010")
     output = []
@@ -892,10 +894,10 @@ def test_next_simple_no_now(set_cycling_type):
     point = "next(T00Z)+P1D"
     output = ingest_time(point, my_now)
 
-    current_time = datetime.utcnow()
+    current_time = datetime.now(timezone.utc)
     # my_now is None, but ingest_time will have used a similar time, and
     # the returned value must be after current_time
-    output_time = datetime.strptime(output, "%Y%m%dT%H%MZ")
+    output_time = datetime.strptime(output, "%Y%m%dT%H%M%z")
     assert current_time < output_time
 
 

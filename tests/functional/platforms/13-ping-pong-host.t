@@ -19,7 +19,7 @@
 # If a task has [remote]host=$(subshell) this should be evaluated
 # every time the task is run.
 # https://github.com/cylc/cylc-flow/issues/6808
-export REQUIRE_PLATFORM='loc:remote'
+export REQUIRE_PLATFORM='loc:remote runner:background'
 
 . "$(dirname "$0")/test_header"
 
@@ -30,11 +30,11 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 workflow_run_ok "${TEST_NAME_BASE}-run" \
     cylc play "${WORKFLOW_NAME}" --debug --no-detach
 
-named_grep_ok "1/remote_task submits to ${CYLC_TEST_PLATFORM}" \
-    "\[1/remote_task/01:preparing\] submitted to ${CYLC_TEST_HOST}" \
+named_grep_ok "${TEST_NAME_BASE}-remote" \
+    "\[1/remote_task/01:preparing\] submitted to ${CYLC_TEST_PLATFORM}" \
     "${WORKFLOW_RUN_DIR}/log/scheduler/log"
 
-named_grep_ok "2/remote_task submits to localhost" \
+named_grep_ok "${TEST_NAME_BASE}-local" \
     "\[2/remote_task/01:preparing\] submitted to localhost" \
     "${WORKFLOW_RUN_DIR}/log/scheduler/log"
 

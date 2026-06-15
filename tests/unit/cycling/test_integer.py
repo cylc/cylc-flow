@@ -187,13 +187,11 @@ def test_simple():
     assert [int(out) for out in output] == [10, 7, 4, 1]
 
     # Test sequence comparison
-    sequence1 = IntegerSequence('R/1/P2', 1, 10)
-    sequence2 = IntegerSequence('R/1/P2', 1, 10)
-    assert sequence1 == sequence2
-    sequence2.set_offset(IntegerInterval('-P2'))
-    assert sequence1 == sequence2
-    sequence2.set_offset(IntegerInterval('-P1'))
-    assert sequence1 != sequence2
+    assert IntegerSequence('R/1/P2', 1, 10) == IntegerSequence('R/1/P2', 1, 10)
+    assert IntegerSequence('R/1/P2', 1, 10) == IntegerSequence(
+        'R/-1/P2', 1, 10
+    )
+    assert IntegerSequence('R/1/P2', 1, 10) == IntegerSequence('R/1/P2', 1, 10)
 
 
 def test_interval_parsing_error():

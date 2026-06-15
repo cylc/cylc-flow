@@ -19,15 +19,18 @@ import os
 
 import pytest
 
-from cylc.flow.remote import (
-    run_cmd, construct_rsync_over_ssh_cmd, construct_ssh_cmd
-)
 import cylc.flow
+from cylc.flow.remote import (
+    construct_rsync_over_ssh_cmd,
+    construct_ssh_cmd,
+    get_proc_ancestors,
+    run_cmd,
+)
 
 
-def test_run_cmd_stdin_str():
+async def test_run_cmd_stdin_str():
     """Test passing stdin as a string."""
-    proc = run_cmd(
+    proc = await run_cmd(
         ['sed', 's/foo/bar/'],
         stdin_str='1foo2',
         capture_process=True
@@ -38,13 +41,13 @@ def test_run_cmd_stdin_str():
     ]
 
 
-def test_run_cmd_stdin_file(tmp_path):
+async def test_run_cmd_stdin_file(tmp_path):
     """Test passing stdin as a file."""
     tmp_path = tmp_path / 'stdin'
     with tmp_path.open('w+') as tmp_file:
         tmp_file.write('1foo2')
     tmp_file = tmp_path.open('rb')
-    proc = run_cmd(
+    proc = await run_cmd(
         ['sed', 's/foo/bar/'],
         stdin=tmp_file,
         capture_process=True
@@ -136,3 +139,10 @@ def test_construct_ssh_cmd_forward_env(monkeypatch: pytest.MonkeyPatch):
     ]
     cmd = construct_ssh_cmd(['play'], config, host)
     assert cmd == expect
+
+
+def test_get_proc_ancestors__basic():
+    """It should return a list of ancestor PIDs, starting with the parent."""
+    gpa = get_proc_ancestors()
+    assert len(gpa) > 1
+    assert gpa[0] == os.getppid()

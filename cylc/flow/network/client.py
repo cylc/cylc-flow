@@ -401,3 +401,6 @@ class WorkflowRuntimeClient(  # type: ignore[misc]
                     )
             }
         }
+
+    def __del__(self):
+        self.stop(stop_loop=False)

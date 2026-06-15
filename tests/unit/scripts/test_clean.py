@@ -40,9 +40,11 @@ async def test_scan(tmp_run_dir):
     assert workflows == ['bar/run1']
     assert multi_mode is True  # because an expansion has happened
 
+    # multiple results are returned sorted.
     tmp_run_dir('bar/run2')
+    tmp_run_dir('bar/run10')
     workflows, multi_mode = await scan(['bar'], False)
-    assert workflows == ['bar/run1', 'bar/run2']
+    assert workflows == ['bar/run1', 'bar/run2', 'bar/run10']
     assert multi_mode is True
 
 
