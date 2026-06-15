@@ -21,7 +21,7 @@
 # NOTE: This test will run the Cylc profiler on the given test platform.
 # The test platform may need to be configured for this to work (e.g.
 # "cgroups path" may need to be set).
-export REQUIRE_PLATFORM='runner:?(pbs|slurm) comms:tcp'
+export REQUIRE_PLATFORM='loc:* runner:?(pbs|slurm) comms:tcp'
 . "$(dirname "$0")/test_header"
 set_test_number 8
 

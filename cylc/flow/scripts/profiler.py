@@ -114,10 +114,11 @@ def parse_memory_allocated(process: Process) -> int:
         cgroup_memory_path = process.memory_allocated_path
         for _ in range(5):
             memory_max_file = cgroup_memory_path / "memory.max"
-            line = memory_max_file.read_text().splitlines()[0]
-            if "max" not in line:
-                return int(line)
-            cgroup_memory_path = cgroup_memory_path.parent
+            with open(memory_max_file, 'r') as f:
+                line = f.readline()
+                if "max" not in line:
+                    return int(line)
+                cgroup_memory_path = cgroup_memory_path.parent
         return 0
     else:  # Memory limit not tracked for cgroups v1
         return 0
