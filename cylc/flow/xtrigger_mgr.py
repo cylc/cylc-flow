@@ -14,10 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from collections import (
-    Counter,
-    defaultdict
-)
 from contextlib import suppress
 from enum import Enum
 from inspect import signature
@@ -53,12 +49,6 @@ if TYPE_CHECKING:
     from cylc.flow.scheduler import Scheduler
     from cylc.flow.subprocctx import SubFuncContext
     from cylc.flow.task_proxy import TaskProxy
-
-
-XTRIG_DUP_WARNING = (
-    "Duplicate xtrigger prerequisites get satisfied naturally at"
-    " once, but they can be satisfied separately with `cylc set`."
-)
 
 
 class TemplateVariables(Enum):
@@ -244,22 +234,6 @@ class XtriggerCollator:
 
         if fctx.func_name == "wall_clock":
             self.wall_clock_labels.add(label)
-
-    def report_duplicates(self):
-        """Report labels that point to the same xtrigger signature."""
-
-        counts = Counter([v.get_signature() for v in self.functx_map.values()])
-        dups = defaultdict(list)
-        for label, fctx in self.functx_map.items():
-            sig = fctx.get_signature()
-            if counts[sig] < 2:
-                continue
-            dups[sig].append(label)
-
-        for sig, labels in dups.items():
-            LOG.info(f"Duplicate xtriggers: {', '.join(labels)} = {sig}")
-        if dups:
-            LOG.warning(XTRIG_DUP_WARNING)
 
     @classmethod
     def _validate(
