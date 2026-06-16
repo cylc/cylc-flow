@@ -459,11 +459,12 @@ async def test_set_stall_interaction(flow, scheduler, start):
         )
 
 
+"""
 async def test_invalid_cylc_message(one, start, log_filter):
     async with start(one):
 
         tasky = TaskMsg(
-            Tokens("Invalid task!", relative=True),
+            Tokens("1/Invalid task!", relative=True),
             "6pm",  # event_time
             "INFO",  # severity
             'b')
@@ -484,3 +485,35 @@ async def test_valid_cylc_message(one, start, log_filter):
         one.message_queue.put(tasky)
         one.process_queued_task_messages()
         assert not log_filter(contains="Illegal task name: None")
+"""
+
+
+async def test_invalid_cylc_message(one, start, log_filter, caplog):
+    message = (
+        "20000101T0000Z",  # event_time
+        "INFO",  # severity
+        'some-message',  # message
+    )
+
+    async with start(one):
+        # send a message for an invalid task (task names cannot contain spaces)
+        one.message_queue.put(
+            TaskMsg(
+                Tokens("1/Invalid task", relative=True),
+                *message,
+            )
+        )
+        one.process_queued_task_messages()
+        assert log_filter(contains="Illegal task name: Invalid task")
+
+        # send a message for a valid task
+        caplog.clear()
+        one.message_queue.put(
+            TaskMsg(
+                Tokens("1/one", relative=True),
+                *message,
+            )
+        )
+        one.process_queued_task_messages()
+        assert not log_filter(contains="Illegal task name")
+        assert log_filter(contains='(received)some-message')
