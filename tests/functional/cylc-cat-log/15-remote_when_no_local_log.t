@@ -19,14 +19,16 @@
 # not work properly. This tests simulates small window of time where a
 # job has finished but the logs have not yet been retrieved. In this
 # situation cat-log should remote log retrieval
-export REQUIRE_PLATFORM='loc:remote'
+export REQUIRE_PLATFORM='loc:remote fs:indep'
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 5
 create_test_global_config "" "
 [platforms]
    [[${CYLC_TEST_PLATFORM}]]
-       retrieve job logs = True"
+       retrieve job logs = True
+       retrieve job log expected files = job
+"
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
