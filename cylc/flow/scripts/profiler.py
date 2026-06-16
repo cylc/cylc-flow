@@ -21,7 +21,6 @@ the resource usage of jobs running on the node.
 """
 
 import asyncio
-import sys
 from contextlib import suppress
 from dataclasses import dataclass
 import json
@@ -149,6 +148,8 @@ def parse_cpu_file(process: Process) -> int:
 
 
 def get_cgroup_version(cgroup_location: Path, cgroup_name: str) -> int:
+    # Strip leading '/' so the name is treated as relative when joined
+    cgroup_name = cgroup_name.lstrip('/')
     try:
         if (cgroup_location / cgroup_name).exists():
             return 2
@@ -184,13 +185,8 @@ def get_cgroup_name():
 def get_cgroup_paths(location: Path) -> Process:
 
     try:
-        cgroup_name = get_cgroup_name()
+        cgroup_name = get_cgroup_name().lstrip('/')
         cgroup_version = get_cgroup_version(location, cgroup_name)
-        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", file=sys.stderr)
-        print(f"location:{location}", file=sys.stderr)
-        print(f"cgroup_name:{cgroup_name}", file=sys.stderr)
-        print(f"cgroup_version:{cgroup_version}", file=sys.stderr)
-        print(location / cgroup_name / "memory.stat", file=sys.stderr)
         if cgroup_version == 2:
             return Process(
                 cgroup_memory_path=location / cgroup_name / "memory.stat",

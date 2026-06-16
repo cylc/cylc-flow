@@ -202,6 +202,7 @@ cylc__set_return() {
 cylc__kill_profiler() {
     if [[ -n "${profiler_pid:-}" ]] && ps -p "$profiler_pid" > /dev/null; then
       kill -s SIGINT "${profiler_pid}" || true
+      wait "${profiler_pid}" 2>'/dev/null' || true
     fi
 }
 

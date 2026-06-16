@@ -74,7 +74,7 @@ log_scan "${TEST_NAME_BASE}-task-succeeded" \
 # were received before the failed message
 log_scan "${TEST_NAME_BASE}-task-succeeded" \
     "${WORKFLOW_RUN_DIR}/log/scheduler/log" 1 0 \
-    '1/the_bad.*(received)_cylc_profiler.*cpu_time.*' \
+    '1/the_bad.*(received)_cylc_profiler.*cpu_time' \
     '1/the_bad.*failed'
 
 purge
