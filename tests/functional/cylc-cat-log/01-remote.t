@@ -102,7 +102,7 @@ __END__
 # remote
 TEST_NAME=${TEST_NAME_BASE}-task-log-dir-NN
 cylc cat-log -f j -m d "${WORKFLOW_NAME}//1/a-task" >"${TEST_NAME}.out"
-grep_ok "${WORKFLOW_NAME}/log/job/1/a-task/NN$" "${TEST_NAME}.out"
+grep_ok "${WORKFLOW_NAME}/log/job/1/a-task/01$" "${TEST_NAME}.out"
 #-------------------------------------------------------------------------------
 # remote
 TEST_NAME=${TEST_NAME_BASE}-task-log-dir-01
@@ -112,7 +112,7 @@ grep_ok "${WORKFLOW_NAME}/log/job/1/a-task/01$" "${TEST_NAME}.out"
 # remote
 TEST_NAME=${TEST_NAME_BASE}-task-job-path
 cylc cat-log -m p -f j "${WORKFLOW_NAME}//1/a-task" >"${TEST_NAME}.out"
-grep_ok "${WORKFLOW_NAME}/log/job/1/a-task/NN/job$" "${TEST_NAME}.out"
+grep_ok "${WORKFLOW_NAME}/log/job/1/a-task/01/job$" "${TEST_NAME}.out"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-un-norm-path
 run_fail "${TEST_NAME}" cylc cat-log "${WORKFLOW_NAME}//1/a-task" \

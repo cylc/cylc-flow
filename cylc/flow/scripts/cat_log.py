@@ -73,7 +73,10 @@ from subprocess import (
     Popen,
 )
 import sys
-from typing import TYPE_CHECKING
+from typing import (
+    TYPE_CHECKING,
+    cast,
+)
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import InputError
@@ -275,6 +278,8 @@ async def view_log(
     If remote is True, we are executing on a remote host for a log file there.
 
     """
+    # Resolve NN symlinks etc.
+    logpath = os.path.realpath(logpath)
     # The log file path may contain '$USER' to be evaluated on the job host.
     if mode == PRINT:
         # Print location even if the workflow does not exist yet.
@@ -419,16 +424,16 @@ def get_task_job_attrs(workflow_id, point, task, submit_num):
 
 
 async def _get_remote_log(
-    workflow_id,
-    platform,
-    point,
-    task,
-    submit_num,
-    filename,
-    mode,
-    batchview_cmd=None,
-    prepend_path=False,
-):
+    workflow_id: str,
+    platform: dict,
+    point: str,
+    task: str,
+    submit_num: str,
+    filename: str,
+    mode: str,
+    batchview_cmd: str | None = None,
+    prepend_path: bool = False,
+) -> Popen[str] | int:
     """Fetch a log file from the remote job host.
 
     Re-invokes cylc cat-log on the remote platform to access the file there.
@@ -448,20 +453,19 @@ async def _get_remote_log(
         cmd.append('--prepend-path')
     cmd.append(workflow_id)
     # TODO: Add Intelligent Host selection to this
-    proc = None
     with suppress(KeyboardInterrupt):
         # (Ctrl-C while tailing)
         # NOTE: This will raise NoHostsError if the platform is not
         # contactable
         # For testing purposes
-        proc = await remote_cylc_cmd(
+        return await remote_cylc_cmd(
             cmd,
             platform,
             capture_process=(mode == LISTDIR),
             manage=(mode == TAIL),
             text=(mode == LISTDIR),
         )
-    return proc
+    return 1
 
 
 @cli_function(get_option_parser)
@@ -520,10 +524,7 @@ async def _main(
     workflow_id, tokens, _ = await parse_id_async(*ids, constraint='mixed')
 
     # Get long-format mode.
-    try:
-        mode = MODES[options.mode]
-    except KeyError:
-        mode = options.mode
+    mode = MODES.get(options.mode, options.mode)
 
     if tokens and tokens.get('cycle') and not tokens.get('task'):
         print('Please provide a workflow, task or job ID', file=sys.stderr)
@@ -595,8 +596,8 @@ async def _main(
         if options.rotation_num is not None:
             raise InputError(
                 "only workflow (not job) logs get rotated")
-        task = tokens['task']
-        point = tokens['cycle']
+        task = cast('str', tokens['task'])
+        point = cast('str', tokens['cycle'])
 
         submit_num = options.submit_num or tokens.get('job') or NN
         if submit_num != NN:
@@ -613,10 +614,8 @@ async def _main(
                 # KeyError: Is already long form (standard log, or custom).
         platform_name, _, live_job_id, submit_failed = get_task_job_attrs(
             workflow_id, point, task, submit_num)
-        if mode == AUTO and live_job_id is None:
-            mode = CAT
-        elif mode == AUTO and live_job_id:
-            mode = TAIL
+        if mode == AUTO:
+            mode = CAT if live_job_id is None else TAIL
         platform = get_platform(platform_name)
         batchview_cmd = None
         if live_job_id is not None:
@@ -641,36 +640,41 @@ async def _main(
                     batchview_cmd = batchview_cmd_tmpl % {
                         "job_id": str(live_job_id)}
 
-        local_log_dir = get_workflow_run_job_dir(
-            workflow_id, point, task, submit_num
+        local_log_dir = Path(
+            get_workflow_run_job_dir(workflow_id, point, task, submit_num)
         )
 
-        job_log_present = all(
-            (Path(local_log_dir) / file).exists()
-            for file in [
+        local_log_file = local_log_dir / options.filename
+
+        all_log_files_present = local_log_file.exists() and all(
+            (local_log_dir / file).exists()
+            for file in {
                 # the files which are used to indicate that job log retrieval
                 # has completed
-                'job.out',
+                JOB_LOG_OUT,
                 *platform['retrieve job log expected files'],
-            ]
+            }
         )
 
-        log_is_remote = (is_remote_platform(platform)
-                         and (options.filename != JOB_LOG_ACTIVITY))
-        log_is_retrieved = (platform['retrieve job logs']
-                            and live_job_id is None)
-        if (
-            # if the log file is not present locally
-            # (e.g. job is running, or job logs not retrieved)
-            (not job_log_present and log_is_remote)
+        log_is_remote = (
+            is_remote_platform(platform)
+            # Job activity log is always local
+            and (options.filename != JOB_LOG_ACTIVITY)
             # Don't try to get remote logs if submission failed on
             # remote platform - they may not exist.
-            or (log_is_remote and not submit_failed)
-            # don't go remote if the log should be retrieved (unless
-            # --force-remote is specified)
-            and (not log_is_retrieved or options.force_remote)
+            and not submit_failed
+        )
+
+        if log_is_remote and (
+            options.force_remote
+            or (
+                # if the log file is not present locally
+                # (e.g. job is running, or job logs not retrieved)
+                (mode == LISTDIR and not all_log_files_present)
+                or not local_log_file.exists()
+            )
         ):
-            if not job_log_present:
+            if not options.force_remote:
                 LOG.debug("Not all logs present, getting job log remotely")
             proc = await _get_remote_log(
                 workflow_id, platform, point, task, submit_num,
@@ -700,9 +704,7 @@ async def _main(
                         files.append('job.err')
 
                 # add the job-activity.log file which is always local
-                if os.path.exists(
-                    os.path.join(local_log_dir, 'job-activity.log')
-                ):
+                if (local_log_dir / 'job-activity.log').exists():
                     files.append('job-activity.log')
 
                 files.sort()
@@ -713,34 +715,15 @@ async def _main(
                 sys.exit(proc)
 
         else:
-            # Local task job or local job log.
-            logpath = os.path.join(local_log_dir, options.filename)
-
-            # If the requested file is not present locally and the platform
-            # is remote, fallback to fetching from the remote filesystem.
-            if (
-                not os.path.exists(logpath)
-                and log_is_remote
-            ):
-                LOG.debug(
-                    "File not found locally, falling back to remote: %s",
-                    options.filename,
-                )
-                proc = await _get_remote_log(
-                    workflow_id, platform, point, task, submit_num,
-                    options.filename, mode, batchview_cmd,
-                    prepend_path=options.prepend_path,
-                )
-                sys.exit(proc)
-            else:
-                tail_tmpl = os.path.expandvars(
-                    platform["tail command template"])
-                out = await view_log(
-                    logpath,
-                    mode,
-                    tail_tmpl,
-                    batchview_cmd,
-                    color=color,
-                    prepend_path=options.prepend_path,
-                )
-                sys.exit(out)
+            # Log available locally.
+            tail_tmpl = os.path.expandvars(
+                platform["tail command template"])
+            out = await view_log(
+                str(local_log_dir / options.filename),
+                mode,
+                tail_tmpl,
+                batchview_cmd,
+                color=color,
+                prepend_path=options.prepend_path,
+            )
+            sys.exit(out)
