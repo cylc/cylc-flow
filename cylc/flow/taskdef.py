@@ -131,14 +131,17 @@ def generate_graph_parents(
 
     if tdef.sequential:
         # Add implicit previous-instance parent.
-        prevs = {
-            prev
-            for seq in tdef.sequences
-            if (prev := seq.get_prev_point(point)) is not None
-        }
-        if prevs:
+        closest_prev_point: PointBase | None = max(
+            (
+                prev
+                for seq in tdef.sequences
+                if (prev := seq.get_prev_point(point)) is not None
+            ),
+            default=None,
+        )
+        if closest_prev_point is not None:
             graph_parents.append(
-                TaskTuple(tdef.name, max(prevs), False)
+                TaskTuple(tdef.name, closest_prev_point, False)
             )
 
     return graph_parents
