@@ -601,6 +601,20 @@ def test_multiple_exclusions_extensive(set_cycling_type):
     assert sequence.get_prev_point(point_4) == point_1
 
 
+def test_get_nearest_prev_point_exclusions(set_cycling_type):
+    """Another test for get_nearest_prev_point() for sequences with exclusions.
+
+    https://github.com/cylc/cylc-flow/issues/7268
+    """
+    set_cycling_type(ISO8601_CYCLING_TYPE)
+    P = ISO8601Point
+    seq = ISO8601Sequence('T00 ! 2025-01-01T00Z', '2025-01-01T00Z')
+    assert seq.get_nearest_prev_point(P('2025-01-01T09Z')) is None
+    assert seq.get_nearest_prev_point(P('2025-01-02T09Z')) == P(
+        '2025-01-02T00Z'
+    )
+
+
 def test_exclusion_zero_duration_warning(set_cycling_type, caplog, log_filter):
     """It should not log zero-duration warnings for exclusion points.
 
