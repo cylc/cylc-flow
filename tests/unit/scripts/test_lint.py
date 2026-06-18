@@ -31,6 +31,7 @@ from cylc.flow.scripts.lint import (
     LINT_SECTION,
     MANUAL_DEPRECATIONS,
     check_lowercase_family_names,
+    check_cylc_file,
     get_cylc_files,
     get_pyproject_toml,
     get_reference,
@@ -278,6 +279,15 @@ def test_check_cylc_file_line_no():
     assert ':2:' in lint.messages[0]
 
 
+def test_check_cylc_file_empty():
+    """It does not raise a traceback for an empty file."""
+    lint = lint_text('', ['style'])
+
+    assert lint.counter == Counter()
+    assert lint.messages == []
+    assert lint.outlines == []
+
+
 @pytest.mark.parametrize(
     'line',
     [
@@ -409,6 +419,18 @@ def test_get_cylc_files_get_all_rcs(tmp_path):
     # Run the test
     result = [(i.parent.name, i.name) for i in get_cylc_files(tmp_path)]
     assert sorted(result) == sorted(expect)
+
+
+def test_check_cylc_file_reports_directory(tmp_path, caplog):
+    """It reports .cylc directories instead of raising a traceback."""
+    path = tmp_path / 'another.cylc'
+    path.mkdir()
+    counter = Counter()
+
+    check_cylc_file(path, Path('another.cylc'), {}, counter)
+
+    assert counter == Counter({'E': 1})
+    assert 'another.cylc is not a file.' in caplog.messages
 
 
 def mock_parse_checks(*args, **kwargs):
