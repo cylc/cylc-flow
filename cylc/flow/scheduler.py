@@ -1620,6 +1620,7 @@ class Scheduler:
 
         self.pool.compute_runahead()
         self.pool.release_runahead_tasks()
+        # If applicable, set stop mode or shutdown on task failure:
         await self.workflow_shutdown()
 
         # Useful for debugging core scheduler issues:
