@@ -530,10 +530,6 @@ class XtriggerManager:
         # Signatures of active functions (waiting on callback).
         self.active: list = []
 
-        # A record of parentless sequential xtriggered tasks
-        # that have had their next occurrance spawned.
-        self.sequential_has_spawned_next: Set[str] = set()
-
         self.workflow_run_dir = workflow_run_dir
 
         # For function arg templating.

@@ -810,22 +810,18 @@ class TaskPool:
         """Return new or existing task point/name with merged flow_nums.
 
         Returns:
-            tuple - (itask, is_in_pool, is_xtrig_sequential)
+            tuple - (itask, is_in_pool
 
             itask:
                 The requested task proxy, or None if task does not
                 exist or cannot spawn.
             is_in_pool:
                 Was the task found in a pool.
-            is_xtrig_sequential:
-                Is the next task occurrence spawned on xtrigger satisfaction,
-                or do all occurrence spawn out to the runahead limit.
 
         It does not add a spawned task proxy to the pool.
         """
         ntask = self.get_task(point, tdef.name)
         is_in_pool = False
-        is_xtrig_sequential = False
         if ntask is None:
             # ntask does not exist: spawn it in the flow.
             ntask = self.spawn_task(
@@ -834,23 +830,13 @@ class TaskPool:
             # if the task was found set xtrigger checking type.
             # otherwise find the xtrigger type if it can't spawn
             # for whatever reason.
-            if ntask is not None:
-                is_xtrig_sequential = ntask.is_xtrigger_sequential
-            elif any(
-                xtrig_label in (
-                    self.xtrigger_mgr.xtriggers.sequential_xtrigger_labels)
-                for sequence, xtrig_labels in tdef.xtrig_labels.items()
-                for xtrig_label in xtrig_labels
-                if sequence.is_valid(point)
-            ):
-                is_xtrig_sequential = True
         else:
             # ntask already exists (n=0): merge flows.
             is_in_pool = True
             self.merge_flows(ntask, flow_nums)
-            is_xtrig_sequential = ntask.is_xtrigger_sequential
+
         # ntask may still be None
-        return ntask, is_in_pool, is_xtrig_sequential
+        return ntask, is_in_pool
 
     def spawn_next_parentless(self, itask: 'TaskProxy') -> None:
         """Spawn next parentless instance of this task."""
