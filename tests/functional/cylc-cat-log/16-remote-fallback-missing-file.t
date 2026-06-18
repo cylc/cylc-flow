@@ -42,7 +42,7 @@ exists_fail "${LOCAL_JOB_DIR}/job.err"
 
 # Cat the missing file - should fall back to the remote host and succeed.
 TEST_NAME=${TEST_NAME_BASE}-fallback-remote
-run_ok "$TEST_NAME" cylc cat-log --debug -f e "${WORKFLOW_NAME}//1/a-task"
+run_ok "$TEST_NAME" cylc cat-log --debug --prepend_path -f e "${WORKFLOW_NAME}//1/a-task"
 grep_ok "Not all logs present, getting job log remotely" "${TEST_NAME}.stderr"
 
 #-------------------------------------------------------------------------------
