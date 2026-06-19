@@ -41,7 +41,7 @@ jobs:
       CYLC_COVERAGE: 1
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Install System Dependencies
         uses: mamba-org/setup-micromamba@v3
@@ -117,7 +117,7 @@ jobs:
       FORCE_COLOR: 2
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Install System Dependencies
         uses: mamba-org/setup-micromamba@v3
@@ -162,7 +162,7 @@ jobs:
     timeout-minutes: 2
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Download coverage artifacts
         uses: actions/download-artifact@v8
