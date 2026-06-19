@@ -49,6 +49,8 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
 
 WORKFLOW_LOG_D="${RUN_DIR}/${WORKFLOW_NAME}/log"
 sed 's/^.* -v //' "${WORKFLOW_LOG_D}/scheduler/my-rsync.log" >'my-rsync.log.edited'
+sed -i -E 's/--max-size=[^ ]* //' 'my-rsync.log.edited'  # strip "retrieve job logs max size" arg
+sort -u 'my-rsync.log.edited'  # strip out duplicates (can result from PBS log file spooling)
 
 OPT_HEAD='--include=/1 --include=/1/t1'
 OPT_TAIL='--exclude=/**'

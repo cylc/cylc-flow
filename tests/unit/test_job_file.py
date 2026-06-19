@@ -254,33 +254,35 @@ def test_traps_for_each_job_runner(job_runner: str):
         assert "CYLC_FAIL_SIGNALS='EXIT ERR TERM XCPU" in output
 
 
-@pytest.mark.parametrize(
-    'set_CYLC_ENV_NAME',
-    [
-        pytest.param(True, id='CYLC_ENV_NAME=True'),
-        pytest.param(False, id='CYLC_ENV_NAME=False'),
-    ]
-)
-def test_write_prelude(monkeypatch, fixture_get_platform, set_CYLC_ENV_NAME):
+@pytest.mark.parametrize('CYLC_ENV_NAME', ['myenv', None])
+def test_write_prelude(
+    monkeypatch: pytest.MonkeyPatch, fixture_get_platform, CYLC_ENV_NAME
+):
     """Test the prelude section of job script file is correctly
     written.
     """
-    if set_CYLC_ENV_NAME:
-        monkeypatch.setenv('CYLC_ENV_NAME', 'myenv')
+    if CYLC_ENV_NAME:
+        monkeypatch.setenv('CYLC_ENV_NAME', CYLC_ENV_NAME)
     else:
         with suppress(KeyError):
             monkeypatch.delenv('CYLC_ENV_NAME')
 
     monkeypatch.setattr('cylc.flow.flags.verbosity', 2)
-    expected = ('\nCYLC_FAIL_SIGNALS=\'EXIT ERR TERM XCPU\'\n'
-                'CYLC_VACATION_SIGNALS=\'USR1\'\nexport PATH=moo/baa:$PATH'
-                '\nexport CYLC_VERBOSE=true'
-                '\nexport CYLC_DEBUG=true'
-                f'\nexport CYLC_VERSION=\'{__version__}\'')
-    if set_CYLC_ENV_NAME:
-        expected += '\nexport CYLC_ENV_NAME=\'myenv\''
-    expected += '\nexport CYLC_WORKFLOW_ID="test_write_prelude"'
-    expected += '\nexport CYLC_WORKFLOW_INITIAL_CYCLE_POINT=\'20200101T0000Z\''
+    expected = [
+        "CYLC_FAIL_SIGNALS='EXIT ERR TERM XCPU'",
+        "CYLC_VACATION_SIGNALS='USR1'",
+        "export PATH=moo/baa:$PATH",
+        "export CYLC_VERBOSE=true",
+        "export CYLC_DEBUG=true",
+        f"export CYLC_VERSION='{__version__}'",
+    ]
+    if CYLC_ENV_NAME:
+        expected.append(f"export CYLC_ENV_NAME='{CYLC_ENV_NAME}'")
+    expected.extend([
+        'export CYLC_WORKFLOW_ID="test_write_prelude"',
+        "export CYLC_WORKFLOW_INITIAL_CYCLE_POINT='20200101T0000Z'",
+        "export CYLC_COVERAGE='1'",
+    ])
     job_conf = {
         "workflow_name": "test_write_prelude",
         "platform": fixture_get_platform({
@@ -294,14 +296,18 @@ def test_write_prelude(monkeypatch, fixture_get_platform, set_CYLC_ENV_NAME):
         }),
         "directives": {"restart": "yes"},
     }
-    monkeypatch.setenv("CYLC_WORKFLOW_INITIAL_CYCLE_POINT", "20200101T0000Z")
-    monkeypatch.setenv("CYLC_WORKFLOW_NAME", "test_write_prelude")
-    monkeypatch.setenv("CYLC_WORKFLOW_NAME_BASE", "test_write_prelude")
+    for k, v in {
+        "CYLC_WORKFLOW_INITIAL_CYCLE_POINT": "20200101T0000Z",
+        "CYLC_WORKFLOW_NAME": "test_write_prelude",
+        "CYLC_WORKFLOW_NAME_BASE": "test_write_prelude",
+        'CYLC_COVERAGE': '1'
+    }.items():
+        monkeypatch.setenv(k, v)
 
     with io.StringIO() as fake_file:
         # copyable environment variables
         JobFileWriter()._write_prelude(fake_file, job_conf)
-        assert fake_file.getvalue() == expected
+        assert fake_file.getvalue().strip().splitlines() == expected
 
 
 def test_write_workflow_environment(fixture_get_platform, monkeypatch):

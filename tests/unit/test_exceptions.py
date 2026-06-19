@@ -21,6 +21,9 @@ import pytest
 from cylc.flow.exceptions import (
     CylcError,
     HostSelectException,
+    CommandFailedError,
+    FileRemovalError,
+    CylcVersionError,
 )
 
 
@@ -76,3 +79,37 @@ def test_host_select_exception_returncodes(ret_code, expect):
             ranking='virtual_memory().available > 1',
         )
     )
+
+
+def test_command_failed_exception():
+    """Test exception used for command failures."""
+    # when the value is a string, it should return it directly
+    exc = CommandFailedError("something broke")
+    assert str(exc) == "something broke"
+
+    # when the value is an exception, it should format the type and message
+    exc = CommandFailedError(ValueError("bad value"))
+    assert str(exc) == "ValueError: bad value"
+
+
+def test_file_removal_error():
+    """Test exception used for file removal failures."""
+    exc = FileRemovalError(OSError("error removing file"))
+    assert str(exc) == (
+        "error removing file. This is probably a temporary "
+        "issue with the filesystem, "
+        "not a problem with Cylc."
+    )
+
+
+def test_cylc_version_error():
+    """Test exception used for incompatible Cylc versions."""
+    # when version is provided
+    exc = CylcVersionError(version='7.0.0')
+    assert str(exc) == (
+        'Installed Cylc 7.0.0 workflow is not compatible with Cylc 8.'
+    )
+
+    # when version is None
+    exc = CylcVersionError()
+    assert str(exc) == "Installed workflow is not compatible with Cylc 8."

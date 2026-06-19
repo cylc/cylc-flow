@@ -23,23 +23,25 @@ set_test_number 6
 # Install and run the workflow in live mode (default).
 # Check that tasks with run mode unset and run mode = live
 # leave log files, and that skip mode tasks don't.
-TEST_NAME="${TEST_NAME_BASE}:live-workflow"
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
-run_ok "${TEST_NAME}:validate" cylc validate "${WORKFLOW_NAME}"
-workflow_run_ok "${TEST_NAME}:play" \
+run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-play" \
     cylc play "${WORKFLOW_NAME}" \
         --no-detach
 
 JOB_LOGS="${WORKFLOW_RUN_DIR}/log/job/1000"
-run_fail "${TEST_NAME}:config run mode=skip" ls "${JOB_LOGS}/skip_"
+run_fail "${TEST_NAME_BASE}-config run mode=skip" ls "${JOB_LOGS}/skip_"
 for MODE in default live; do
-    named_grep_ok "${TEST_NAME}:config run mode=${MODE}" "===.*===" "${JOB_LOGS}/${MODE}_/NN/job.out"
+    named_grep_ok \
+        "${TEST_NAME_BASE}-mode=${MODE}" \
+        "===.*===" \
+        "${JOB_LOGS}/${MODE}_/NN/job.out"
 done
 
 # After broadcasting a change in run_mode to task default_ it now runs
 # in skip mode and fails to produce a log file:
 JOB_LOGS="${WORKFLOW_RUN_DIR}/log/job/1001"
-run_fail "${TEST_NAME}:broadcast run mode=skip" ls "${JOB_LOGS}/default_/"
+run_fail "${TEST_NAME_BASE}-broadcast-run-mode=skip" ls "${JOB_LOGS}/default_/"
 
 purge
 exit 0

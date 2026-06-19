@@ -347,6 +347,7 @@ class CylcTimeParser:
     def _get_interval_from_expression(
         self, expr: Optional[str], context: Optional['TimePoint'] = None
     ) -> Optional[Duration]:
+        """Gets a duration from an expression."""
         if expr is None:
             if context is None or not context.truncated:
                 return None

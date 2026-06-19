@@ -164,13 +164,13 @@ message PbJob {
 }
 
 message PbTask {
+    reserved 7;
     optional string stamp = 1;
     optional string id = 2;
     optional string name = 3;
     optional PbMeta meta = 4;
     optional float mean_elapsed_time = 5;
     optional int32 depth = 6;
-    repeated string proxies = 7;
     repeated string namespace = 8;
     repeated string parents = 9;
     optional string first_parent = 10;
@@ -246,12 +246,12 @@ message PbTaskProxy {
 }
 
 message PbFamily {
+    reserved 6;
     optional string stamp = 1;
     optional string id = 2;
     optional string name = 3;
     optional PbMeta meta = 4;
     optional int32 depth = 5;
-    repeated string proxies = 6;
     repeated string parents = 7;
     repeated string child_tasks = 8;
     repeated string child_families = 9;

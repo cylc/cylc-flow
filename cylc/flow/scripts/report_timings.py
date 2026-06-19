@@ -54,7 +54,6 @@ import sys
 from collections import Counter
 from typing import TYPE_CHECKING
 
-from cylc.flow import LOG
 from cylc.flow.exceptions import CylcError
 from cylc.flow.id_cli import parse_id
 from cylc.flow.option_parsers import (
@@ -90,25 +89,45 @@ def smart_open(filename=None):
             fh.close()
 
 
+def format_raw(row_buf, output):
+    """Implement --format=raw"""
+    output.write(row_buf.getvalue())
+
+
+def format_summary(row_buf, output):
+    """Implement --format=summary"""
+    summary = TextTimingSummary(row_buf)
+    summary.write_summary(output)
+
+
+def format_html(row_buf, output):
+    """Implement --format=html"""
+    summary = HTMLTimingSummary(row_buf)
+    summary.write_summary(output)
+
+
+# suported output formats
+FORMATS = {
+    'raw': format_raw,
+    'summary': format_summary,
+    'html': format_html,
+}
+
+
 def get_option_parser() -> COP:
     parser = COP(
         __doc__,
         argdoc=[WORKFLOW_ID_ARG_DOC]
     )
     parser.add_option(
-        "-r", "--raw",
-        help="Show raw timing output suitable for custom diagnostics.",
-        action="store_true", default=False, dest="show_raw"
-    )
-    parser.add_option(
-        "-s", "--summary",
-        help="Show textual summary timing output for tasks.",
-        action="store_true", default=False, dest="show_summary"
-    )
-    parser.add_option(
-        "-w", "--web-summary",
-        help="Show HTML summary timing output for tasks.",
-        action="store_true", default=False, dest="html_summary"
+        '--format', '-t',
+        help=(
+            f"Select output format. Choose from: {', '.join(FORMATS)}. "
+            r"Default: %default."
+        ),
+        action='store',
+        default='summary',
+        choices=list(FORMATS)
     )
     parser.add_option(
         "-O", "--output-file",
@@ -120,39 +139,19 @@ def get_option_parser() -> COP:
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', workflow_id: str) -> None:
+    _main(options, workflow_id)
+
+
+def _main(options: 'Values', workflow_id: str) -> None:
     workflow_id, *_ = parse_id(
         workflow_id,
         constraint='workflows',
     )
-
-    LOG.warning(
-        "cylc report-timings is deprecated."
-        " The analysis view in the GUI provides"
-        " similar functionality."
-    )
-
-    output_options = [
-        options.show_raw, options.show_summary, options.html_summary
-    ]
-    if output_options.count(True) > 1:
-        parser.error('Cannot combine output formats (choose one)')
-    if not any(output_options):
-        # No output specified - choose summary by default
-        options.show_summary = True
-
     db_file = get_workflow_run_pub_db_path(workflow_id)
     with CylcWorkflowDAO(db_file, is_public=True) as dao:
         row_buf = format_rows(*dao.select_task_times())
     with smart_open(options.output_filename) as output:
-        if options.show_raw:
-            output.write(row_buf.getvalue())
-        else:
-            summary: TimingSummary
-            if options.show_summary:
-                summary = TextTimingSummary(row_buf)
-            elif options.html_summary:
-                summary = HTMLTimingSummary(row_buf)
-            summary.write_summary(output)
+        FORMATS[options.format](row_buf, output)
 
 
 def format_rows(header, rows):
@@ -172,7 +171,7 @@ def format_rows(header, rows):
     ]
     formatter = ' '.join('%%-%ds' % line for line in max_lengths) + '\n'
     sio.write(formatter % header)
-    for r in rows:
+    for r in sorted(rows):
         sio.write(formatter % r)
     sio.seek(0)
     return sio
@@ -181,15 +180,10 @@ def format_rows(header, rows):
 class TimingSummary:
     """Base class for summarizing timing output from cylc.flow run database."""
 
-    def __init__(self, filepath_or_buffer=None):
+    def __init__(self, filepath_or_buffer):
         """Set up internal dataframe storage for time durations."""
-
         self._check_imports()
-        if filepath_or_buffer is not None:
-            self.read_timings(filepath_or_buffer)
-        else:
-            self.df = None
-            self.by_host_and_job_runner = None
+        self.read_timings(filepath_or_buffer)
 
     def read_timings(self, filepath_or_buffer):
         """
@@ -203,7 +197,7 @@ class TimingSummary:
         pd.set_option('display.max_colwidth', 10000)
 
         df = pd.read_csv(
-            filepath_or_buffer, delim_whitespace=True, index_col=[0, 1, 2, 3],
+            filepath_or_buffer, sep=r'\s+', index_col=[0, 1, 2, 3],
             parse_dates=[4, 5, 6]
         )
         self.df = pd.DataFrame({
@@ -219,18 +213,13 @@ class TimingSummary:
             level=['host', 'job_runner']
         )
 
-    def write_summary(self, buf=None):
+    def write_summary(self, buf=sys.stdout):
         """Using the stored timings dataframe, output the data summary."""
-
-        if buf is None:
-            buf = sys.stdout
         self.write_summary_header(buf)
         for group, df in self.by_host_and_job_runner:
             self.write_group_header(buf, group)
             df_reshape = self._reshape_timings(df)
             df_describe = df.groupby(level='name').describe()
-            if df_describe.index.nlevels > 1:
-                df_describe = df_describe.unstack()  # for pandas < 0.20.0
             df_describe.index.rename(None, inplace=True)
             for timing_category in self.df.columns:
                 self.write_category(
@@ -286,17 +275,11 @@ class TimingSummary:
             timings = timings.assign(retry=retry)
             timings = timings.set_index('retry', append=True)
 
-        return timings.unstack('name').stack(level=0)
+        return timings.unstack('name').stack(level=0, future_stack=True)
 
     @staticmethod
     def _dt_to_s(dt):
-        import pandas as pd
-        try:
-            return dt.total_seconds()
-        except AttributeError:
-            # Older versions of pandas have the timedelta as a numpy
-            # timedelta64 type, which didn't support total_seconds
-            return pd.Timedelta(dt).total_seconds()
+        return dt.total_seconds()
 
 
 class TextTimingSummary(TimingSummary):
@@ -374,23 +357,15 @@ class HTMLTimingSummary(TimingSummary):
         ax = (
             df_reshape
             .xs(category, level='timing_category')
-            .plot(kind='box', vert=False)
+            .plot(kind='box', orientation='vertical')
         )
         ax.invert_yaxis()
         ax.set_xlabel('Seconds')
         plt.tight_layout()
         plt.gcf().savefig(buf, format='svg')
-        try:
-            table = df_describe[category].to_html(
-                classes="summary", index_names=False, border=0
-            )
-        except TypeError:
-            # older pandas don't support the "border" argument
-            # so explicitly remove it
-            table = df_describe[category].to_html(
-                classes="summary", index_names=False
-            )
-            table = table.replace('border="1"', '')
+        table = df_describe[category].to_html(
+            classes="summary", index_names=False, border=0
+        )
         buf.write(table)
         buf.write('</div>')
         pass
