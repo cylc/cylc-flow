@@ -786,6 +786,10 @@ class XtriggerManager:
         Ignores xtriggers not valid for itask.
         (However, these are now weeded out by the caller).
 
+        xtriggers without an entry in itask.state.xtriggers.functx_map
+        are force satisfied directly, without context lookup. This covers
+        the case where an xtrigger's definition was removed during reload.
+
         Args:
             itask: task proxy
             xtriggers: xtrigger prerequisites to un/satisfy
