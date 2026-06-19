@@ -431,7 +431,11 @@ class WorkflowRuntimeServer:
         return pb_msg.SerializeToString()
 
     @expose
-    def pb_data_elements(self, elements: Iterable, **_kwargs) -> bytes:
+    def pb_data_elements(
+        self,
+        elements: Optional[Iterable] = None,
+        **_kwargs
+    ) -> bytes:
         """Send only the selected data elements.
 
         Args:
@@ -439,7 +443,16 @@ class WorkflowRuntimeServer:
 
         Returns serialised Protobuf message
         """
-        pb_msg = self.schd.data_store_mgr.get_data_elements(elements)
+        if elements is None:
+            elements = {}
+
+        # BACK COMPAT: CYLC_VERSION < 8.7
+        # elements is Optional for this reason.
+        if not elements and _kwargs.get('element_type'):
+            pb_msg = self.schd.data_store_mgr.get_delta_elements(
+                _kwargs.get('element_type'))
+        else:
+            pb_msg = self.schd.data_store_mgr.get_data_elements(elements)
         return pb_msg.SerializeToString()
 
     @expose
