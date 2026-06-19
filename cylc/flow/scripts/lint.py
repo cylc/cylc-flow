@@ -1168,7 +1168,7 @@ def check_cylc_file(
     modify: bool = False,
 ):
     """Check A Cylc File for Cylc 7 Config"""
-    if not file.is_file():
+    if file.is_dir():
         LOG.error(f'{file_rel} is not a file.')
         counter['E'] += 1
         return
