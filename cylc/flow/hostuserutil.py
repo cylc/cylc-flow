@@ -45,6 +45,7 @@ returning the IP address associated with this socket.
 """
 
 from contextlib import suppress
+import getpass
 import os
 import pwd
 import socket
@@ -91,8 +92,7 @@ class HostUtil:
         self._host = None  # preferred name of localhost
         self._host_exs = {}  # host: socket.gethostbyname_ex(host), ...
         self._remote_hosts = {}  # host: is_remote, ...
-        self.user_pwent = None
-        self.remote_users = {}
+        self._user_pwent = None
 
     @staticmethod
     def get_local_ip_address(target):
@@ -181,7 +181,9 @@ class HostUtil:
 
     def get_user(self):
         """Return name of current user."""
-        return self._get_user_pwent().pw_name
+        # NOTE: don't use pwnam
+        # see https://github.com/cylc/cylc-flow/issues/7240
+        return getpass.getuser()
 
     def get_user_home(self):
         """Return home directory of current user."""
@@ -189,14 +191,13 @@ class HostUtil:
 
     def _get_user_pwent(self):
         """Ensure self.user_pwent is set to current user's password entry."""
-        if self.user_pwent is None:
+        if self._user_pwent is None:
             my_user_name = os.environ.get('USER')
             if my_user_name:
-                self.user_pwent = pwd.getpwnam(my_user_name)
+                self._user_pwent = pwd.getpwnam(my_user_name)
             else:
-                self.user_pwent = pwd.getpwuid(os.getuid())
-            self.remote_users.update(((self.user_pwent.pw_name, False),))
-        return self.user_pwent
+                self._user_pwent = pwd.getpwuid(os.getuid())
+        return self._user_pwent
 
     def is_remote_host(self, name):
         """Return True if name has different IP address than the current host.
@@ -221,22 +222,6 @@ class HostUtil:
                     self._remote_hosts[name] = (
                         host_info != self._get_host_info())
         return self._remote_hosts[name]
-
-    def is_remote_user(self, name):
-        """Return True if name is not a name of the current user.
-
-        Return False if name is None.
-        Return True if name is not in the password database.
-        """
-        if not name:
-            return False
-        if name not in self.remote_users:
-            try:
-                self.remote_users[name] = (
-                    pwd.getpwnam(name) != self._get_user_pwent())
-            except KeyError:
-                self.remote_users[name] = True
-        return self.remote_users[name]
 
     def _is_remote_platform(self, platform):
         """Return True if any job host in platform have different IP address
@@ -295,8 +280,3 @@ def is_remote_platform(platform):
 def is_remote_host(name):
     """Shorthand for HostUtil.get_inst().is_remote_host(name)."""
     return HostUtil.get_inst().is_remote_host(name)
-
-
-def is_remote_user(name):
-    """Return True if name is not a name of the current user."""
-    return HostUtil.get_inst().is_remote_user(name)

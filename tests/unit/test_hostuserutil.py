@@ -25,17 +25,10 @@ from cylc.flow.hostuserutil import (
     get_user,
     get_user_home,
     is_remote_host,
-    is_remote_user
 )
 
 
-def test_is_remote_user_on_current_user():
-    """is_remote_user with current user."""
-    assert not is_remote_user(None)
-    assert not is_remote_user(os.getenv('USER'))
-
-
-def test_is_remote_host_on_localhost(monkeypatch):
+def test_is_remote_host_on_localhost():
     """is_remote_host with localhost."""
     assert not is_remote_host(None)
     assert not is_remote_host('localhost')
