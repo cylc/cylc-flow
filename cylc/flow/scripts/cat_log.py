@@ -644,13 +644,15 @@ async def _main(
             get_workflow_run_job_dir(workflow_id, point, task, submit_num)
         )
 
-        local_log_file = local_log_dir / options.filename
+        # local_log_file = local_log_dir / options.filename
+        # all_log_files_present = local_log_file.exists() and all(
 
-        all_log_files_present = local_log_file.exists() and all(
+        all_log_files_present = all(
             (local_log_dir / file).exists()
             for file in {
                 # the files which are used to indicate that job log retrieval
                 # has completed
+                options.filename,
                 JOB_LOG_OUT,
                 *platform['retrieve job log expected files'],
             }
@@ -666,14 +668,19 @@ async def _main(
         )
 
         if log_is_remote and (
-            options.force_remote
-            or (
-                # if the log file is not present locally
-                # (e.g. job is running, or job logs not retrieved)
-                (mode == LISTDIR and not all_log_files_present)
-                or not local_log_file.exists()
-            )
+            # options.force_remote
+            # or (
+            #     # if the log file is not present locally
+            #     # (e.g. job is running, or job logs not retrieved)
+            #     (mode == LISTDIR and not all_log_files_present)
+            #     or not local_log_file.exists()
+            # )
+            options.force_remote or not all_log_files_present
         ):
+            # NOTE: even if we are tailing/catting a single log file, we need
+            # go remote if not all expected log files are present, as
+            # ongoing retrieval attempts may update the given log file
+            # (e.g. appending the PBS epilogue)
             if not options.force_remote:
                 LOG.debug("Not all logs present, getting job log remotely")
             proc = await _get_remote_log(
