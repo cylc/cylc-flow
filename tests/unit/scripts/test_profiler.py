@@ -387,7 +387,7 @@ def options(mocker):
     opts.cgroup_location = "/fake/path"
     opts.cgroup_memory_path = "/another/fake/path"
     opts.comms_timeout = 10
-    opts.delay = 1
+    opts.delay = "PT1S"
     return opts
 
 
