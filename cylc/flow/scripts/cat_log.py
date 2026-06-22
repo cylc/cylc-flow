@@ -453,6 +453,7 @@ async def _get_remote_log(
         cmd.append('--prepend-path')
     cmd.append(workflow_id)
     # TODO: Add Intelligent Host selection to this
+    # https://github.com/cylc/cylc-flow/issues/4263
     with suppress(KeyboardInterrupt):
         # (Ctrl-C while tailing)
         # NOTE: This will raise NoHostsError if the platform is not
