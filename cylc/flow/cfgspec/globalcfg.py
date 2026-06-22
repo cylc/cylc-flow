@@ -1498,8 +1498,8 @@ with Conf('global.cylc', desc='''
                      location for cgroups on linux and should work in
                      most circumstances
                      ''')
-                Conf('polling interval', VDR.V_INTEGER,
-                     default=10,
+                Conf('polling interval', VDR.V_INTERVAL,
+                     default="PT10S",
                      desc='''
                      Configure the profiler polling interval.
 

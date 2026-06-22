@@ -38,6 +38,9 @@ from cylc.flow.option_parsers import CylcOptionParser as COP
 from cylc.flow.remote import watch_and_kill
 from cylc.flow.task_message import record_messages
 from cylc.flow.terminal import cli_function
+from metomi.isodatetime.parsers import DurationParser
+
+dp = DurationParser()
 
 
 INTERNAL = True
@@ -234,7 +237,7 @@ def get_option_parser() -> COP:
         ],
     )
     parser.add_option(
-        "-i", type=int,
+        "-i", type=str,
         help="interval between query cycles in seconds", dest="delay")
     parser.add_option(
         "-m", type=str, help="Location of cgroups directory",
@@ -256,6 +259,9 @@ def main(_parser: COP, options) -> None:
 
 
 async def _main(options) -> None:
+    # convert from ISO8601 duration to integer seconds
+    delay = int(dp.parse(options.delay).get_seconds())
+
     # get cgroup information
     process = get_cgroup_paths(Path(options.cgroup_location))
 
@@ -273,7 +279,7 @@ async def _main(options) -> None:
     tasks.extend([
         # run the profiler itself
         asyncio.create_task(
-            profile(process, options.delay),
+            profile(process, delay),
             name="profiler",
         ),
 

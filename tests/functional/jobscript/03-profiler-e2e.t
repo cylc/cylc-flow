@@ -30,13 +30,13 @@ create_test_global_config "
   [[${CYLC_TEST_PLATFORM}]]
     [[[profiler]]]
       activate = True
-      polling interval = 10
+      polling interval = PT10S
   [[ugly_platform]]
     $(cylc config -i "[platforms][$CYLC_TEST_PLATFORM]")
   [[ugly_platform]]
     [[[profiler]]]
       activate = True
-      polling interval = 10
+      polling interval = PT10S
       cgroups path = the/thing/that/should/not/be
 "
 
