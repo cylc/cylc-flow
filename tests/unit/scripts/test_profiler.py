@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Tests for functions contained in cylc.flow.scripts.profiler
-import os
 from pathlib import Path
 from unittest import mock
 
