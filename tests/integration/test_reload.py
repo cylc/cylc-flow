@@ -372,6 +372,78 @@ async def test_orphan_reload(
         )
 
 
+async def test_reload_waits_for_preparing_tasks_in_remote_init(
+    flow,
+    scheduler,
+    start,
+    monkeypatch,
+):
+    """Reload should wait for preparing tasks stuck in remote-init.
+
+    When tasks have entered the preparing state but are waiting for
+    asynchronous operations (e.g. remote-init or file-install) to complete,
+    submit_task_jobs returns an empty list because no submissions can be made
+    yet. The reload flush loop must continue to iterate (calling
+    proc_pool.process() to advance these operations) rather than exiting
+    prematurely.
+
+    https://github.com/cylc/cylc-flow/issues/7296
+    """
+    # speed up the test
+    monkeypatch.setattr('cylc.flow.scheduler.sleep', lambda *_: None)
+
+    id_ = flow('foo')
+    schd: Scheduler = scheduler(id_, paused_start=False)
+
+    async with start(schd):
+        foo = schd.pool.get_tasks()[0]
+
+        # Track how many times submit_task_jobs is called to simulate
+        # a task going through remote-init (returns empty list) before
+        # eventually submitting.
+        call_count = 0
+
+        def submit_task_jobs(itasks, *a, **k):
+            nonlocal call_count
+            call_count += 1
+            if call_count <= 3:
+                # Simulate tasks stuck in remote-init: submit_task_jobs
+                # returns an empty list because remote-init hasn't completed
+                # yet, but the task is still waiting_on_job_prep.
+                # On the first call, set state to PREPARING (as the real
+                # prep_submit_task_jobs would do).
+                if not foo.state(TASK_STATUS_PREPARING):
+                    foo.submit_num += 1
+                    foo.state_reset(TASK_STATUS_PREPARING)
+                return []
+            else:
+                # Remote-init done, task actually submits now.
+                foo.waiting_on_job_prep = False
+                foo.state_reset(TASK_STATUS_SUBMITTED)
+                return [foo]
+
+        monkeypatch.setattr(
+            schd.task_job_mgr, 'submit_task_jobs', submit_task_jobs
+        )
+
+        # Put the task into the preparing state
+        schd.release_tasks_to_run()
+        assert foo.state(TASK_STATUS_PREPARING)
+        assert foo.waiting_on_job_prep
+
+        # Reload the workflow - this should wait for the task to submit
+        await commands.run_cmd(commands.reload_workflow(schd))
+
+        # The task should have been flushed through to submitted
+        assert foo.state(TASK_STATUS_SUBMITTED), (
+            "Reload proceeded before preparing task finished submitting"
+        )
+        assert not foo.waiting_on_job_prep
+        # submit_task_jobs should have been called multiple times
+        # (not just once before the loop exited)
+        assert call_count == 4
+
+
 async def test_data_store_tproxy(flow, scheduler, start):
     """Check N>0 task proxy in data store has correct info on reload.
 

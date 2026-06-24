@@ -528,7 +528,10 @@ async def reload_workflow(schd: 'Scheduler', reload_global: bool = False):
 
     # flush out preparing tasks before attempting reload
     schd.reload_pending = 'waiting for pending tasks to submit'
-    while schd.release_tasks_to_run():
+    while schd.release_tasks_to_run() or any(
+        itask.waiting_on_job_prep
+        for itask in schd.pool.get_tasks()
+    ):
         # Run the subset of main-loop functionality required to push
         # preparing through the submission pipeline and keep the workflow
         # responsive (e.g. to the `cylc stop` command).
