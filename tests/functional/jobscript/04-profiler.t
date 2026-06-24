@@ -24,7 +24,7 @@ if [[ "$OSTYPE" != "linux-gnu"* ]]; then
     skip_all "Tests not compatible with $OSTYPE"
 fi
 
-set_test_number 6
+set_test_number 8
 
 # Set up test data
 mkdir -p "${PWD}/cgroups_test_data"
@@ -72,9 +72,16 @@ log_scan "${TEST_NAME_BASE}-task-succeeded" \
 
 # ensure the cpu and memory messages were received and that these messages
 # were received before the failed message
-log_scan "${TEST_NAME_BASE}-task-succeeded" \
+log_scan "${TEST_NAME_BASE}-task-failed" \
     "${WORKFLOW_RUN_DIR}/log/scheduler/log" 1 0 \
     '1/the_bad.*(received)_cylc_profiler.*cpu_time' \
     '1/the_bad.*failed'
+
+# Verify the profiler data matches the mocked cgroup values:
+
+grep_workflow_log_ok "${TEST_NAME_BASE}-the_good-data" \
+    '1/the_good.*(received)_cylc_profiler.*"max_rss": 12345678.*"cpu_time": 56781.*"memory_allocated": 123456789'
+grep_workflow_log_ok "${TEST_NAME_BASE}-the_bad-data" \
+    '1/the_bad.*(received)_cylc_profiler.*"max_rss": 12345678.*"cpu_time": 56781.*"memory_allocated": 123456789'
 
 purge
