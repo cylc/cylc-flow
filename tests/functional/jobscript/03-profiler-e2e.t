@@ -30,13 +30,13 @@ create_test_global_config "
   [[${CYLC_TEST_PLATFORM}]]
     [[[profiler]]]
       activate = True
-      polling interval = PT10S
+      polling interval = PT1S
   [[ugly_platform]]
     $(cylc config -i "[platforms][$CYLC_TEST_PLATFORM]")
   [[ugly_platform]]
     [[[profiler]]]
       activate = True
-      polling interval = PT10S
+      polling interval = PT1S
       cgroups path = the/thing/that/should/not/be
 "
 
@@ -74,7 +74,7 @@ log_scan "${TEST_NAME_BASE}-task-succeeded" \
 
 # ensure the cpu and memory messages were received and that these messages
 # were received before the failed message
-log_scan "${TEST_NAME_BASE}-task-succeeded" \
+log_scan "${TEST_NAME_BASE}-task-failed" \
     "${WORKFLOW_RUN_DIR}/log/scheduler/log" 1 0 \
     '1/the_bad.*(received)_cylc_profiler.*cpu_time' \
     '1/the_bad.*failed'

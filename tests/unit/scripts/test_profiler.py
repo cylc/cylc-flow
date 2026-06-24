@@ -391,11 +391,11 @@ def options(mocker):
     return opts
 
 
-async def test_main(mocker, options):
+async def test_main(mocker, options, monkeypatch):
     """It should run the profiler and watch and kill functions concurrently."""
     # Mock Cylc env vars
-    os.environ['CYLC_WORKFLOW_ID'] = "Exit Light"
-    os.environ['CYLC_TASK_JOB'] = "Enter Night"
+    monkeypatch.setenv('CYLC_WORKFLOW_ID', "Exit Light")
+    monkeypatch.setenv('CYLC_TASK_JOB', "Enter Night")
 
     # Mock the gets and parse functions to return something sensible
     # without needing actual files
