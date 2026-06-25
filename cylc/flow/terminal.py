@@ -326,6 +326,25 @@ def cli_function(
                         )
                         sys.exit(1)
                     raise
+            except BrokenPipeError:
+                # The output pipe was closed early by the consumer, e.g:
+                #   $ cylc config <flow> | less  # then quit less
+                #   $ cylc config <flow> | grep -q '\\w'
+                # A broken pipe is never user-actionable, so suppress the
+                # traceback at all verbosity levels and exit quietly.
+                # Redirect any remaining buffered stdout to /dev/null to
+                # avoid a second BrokenPipeError when Python flushes stdout
+                # during interpreter shutdown (see the Python docs note on
+                # handling BrokenPipeError).
+                try:
+                    devnull = os.open(os.devnull, os.O_WRONLY)
+                    os.dup2(devnull, sys.stdout.fileno())
+                except (OSError, ValueError):
+                    # stdout may not be backed by a real file descriptor
+                    # (e.g. it has been replaced with a buffer); nothing to
+                    # redirect in that case.
+                    pass
+                sys.exit(1)
             except UnicodeEncodeError as exc:
                 # this error can be raised from any code which attempts to
                 # write a UTF-8 character to a terminal which does not or is
