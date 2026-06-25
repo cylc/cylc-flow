@@ -30,13 +30,13 @@ create_test_global_config "
   [[${CYLC_TEST_PLATFORM}]]
     [[[profiler]]]
       activate = True
-      polling interval = PT1S
+      polling interval = PT10S
   [[ugly_platform]]
     $(cylc config -i "[platforms][$CYLC_TEST_PLATFORM]")
   [[ugly_platform]]
     [[[profiler]]]
       activate = True
-      polling interval = PT1S
+      polling interval = PT10S
       cgroups path = the/thing/that/should/not/be
 "
 
@@ -51,7 +51,7 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
     [[the_good]]
         # this task should succeeded normally
         platform = {{ environ['CYLC_TEST_PLATFORM'] }}
-        script = sleep 1
+        script = sleep 5
     [[the_bad]]
         # this task should fail (it should still send profiling info)
         platform = {{ environ['CYLC_TEST_PLATFORM'] }}

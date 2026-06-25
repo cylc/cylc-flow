@@ -257,11 +257,6 @@ def main(_parser: COP, options) -> None:
 
 
 async def _main(options) -> None:
-    # convert from ISO8601 duration to integer seconds
-    delay = int(dp.parse(options.delay).get_seconds())
-
-    # get cgroup information
-    process = get_cgroup_paths(Path(options.cgroup_location))
 
     # list of asyncio tasks
     tasks: list[asyncio.Task] = []
@@ -273,6 +268,11 @@ async def _main(options) -> None:
     for sig in (signal.SIGINT, signal.SIGHUP, signal.SIGTERM):
         loop.add_signal_handler(sig, lambda: {t.cancel() for t in tasks})
 
+    # convert from ISO8601 duration to integer seconds
+    delay = int(dp.parse(options.delay).get_seconds())
+
+    # get cgroup information
+    process = get_cgroup_paths(Path(options.cgroup_location))
     # the profiler will run until one of these coroutines calls `sys.exit`:
     tasks.extend([
         # run the profiler itself
