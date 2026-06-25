@@ -187,34 +187,32 @@ def get_cgroup_name():
 
 def get_cgroup_paths(location: Path) -> Process:
 
-    try:
-        cgroup_name = get_cgroup_name().lstrip('/')
-        cgroup_version = get_cgroup_version(location, cgroup_name)
-        if cgroup_version == 2:
-            return Process(
-                cgroup_memory_path=location / cgroup_name / "memory.stat",
-                cgroup_cpu_path=location / cgroup_name / "cpu.stat",
-                memory_allocated_path=location / cgroup_name,
-                cgroup_version=cgroup_version,
-                max_rss=0,
-            )
+    cgroup_name = get_cgroup_name().lstrip('/')
+    cgroup_version = get_cgroup_version(location, cgroup_name)
 
-        elif cgroup_version == 1:
-            return Process(
-                cgroup_memory_path=(
-                    location / "memory" / cgroup_name / "memory.stat"
-                ),
-                cgroup_cpu_path=(
-                    location / "cpu" / cgroup_name / "cpuacct.usage"
-                ),
-                memory_allocated_path=Path(),
-                cgroup_version=cgroup_version,
-                max_rss=0,
-            )
-        raise Exception
-    except Exception as err:
-        raise CylcProfilerError(
-            err, "Unable to determine cgroup version") from err
+    if cgroup_version == 2:
+        return Process(
+            cgroup_memory_path=location / cgroup_name / "memory.stat",
+            cgroup_cpu_path=location / cgroup_name / "cpu.stat",
+            memory_allocated_path=location / cgroup_name,
+            cgroup_version=cgroup_version,
+            max_rss=0,
+        )
+
+    elif cgroup_version == 1:
+        return Process(
+            cgroup_memory_path=(
+                location / "memory" / cgroup_name / "memory.stat"
+            ),
+            cgroup_cpu_path=(
+                location / "cpu" / cgroup_name / "cpuacct.usage"
+            ),
+            memory_allocated_path=Path(),
+            cgroup_version=cgroup_version,
+            max_rss=0,
+        )
+
+    raise CylcProfilerError(None, "Unable to determine cgroup version")
 
 
 async def profile(process: Process, delay, keep_looping=lambda: True):
