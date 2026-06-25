@@ -81,6 +81,7 @@ log_scan "${TEST_NAME_BASE}-task-failed" \
 
 # ensure this task succeeded despite the broken profiler configuration
 grep_workflow_log_ok "${TEST_NAME_BASE}-broken" '1/the_ugly.*(received)succeeded'
-grep_ok 'Unable to determine cgroup version' "$(cylc cat-log "${WORKFLOW_NAME}//1/the_ugly" -f e -m p)"
+cylc cat-log "${WORKFLOW_NAME}//1/the_ugly" -f e > "${TEST_NAME_BASE}-ugly-stderr.txt"
+grep_ok 'Cgroup not found' "${TEST_NAME_BASE}-ugly-stderr.txt"
 
 purge
