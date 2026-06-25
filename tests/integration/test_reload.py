@@ -380,13 +380,6 @@ async def test_reload_waits_for_preparing_tasks_in_remote_init(
 ):
     """Reload should wait for preparing tasks stuck in remote-init.
 
-    When tasks have entered the preparing state but are waiting for
-    asynchronous operations (e.g. remote-init or file-install) to complete,
-    submit_task_jobs returns an empty list because no submissions can be made
-    yet. The reload flush loop must continue to iterate (calling
-    proc_pool.process() to advance these operations) rather than exiting
-    prematurely.
-
     Test works by simulating a task taking longer than one reload flush
     loop to complete remote-init, catching the situation where
     release_tasks_to_run() returns False (because all tasks started submission)
