@@ -316,32 +316,6 @@ def test_completion_expression_valid(
     validate(id_)
 
 
-def test_completion_expression_cylc7_compat(
-    flow,
-    validate,
-    monkeypatch
-):
-    id_ = flow({
-        'scheduling': {
-            'graph': {'R1': 'foo'},
-        },
-        'runtime': {
-            'foo': {
-                'completion': 'succeeded and x',
-                'outputs': {
-                    'x': 'xxx',
-                },
-            },
-        },
-    })
-    monkeypatch.setattr('cylc.flow.flags.cylc7_back_compat', True)
-    with pytest.raises(
-        WorkflowConfigError,
-        match="completion cannot be used in Cylc 7 compatibility mode."
-    ):
-        validate(id_)
-
-
 def test_unique_messages(
     flow,
     validate

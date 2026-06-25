@@ -68,7 +68,7 @@ class upgrader:
 
     def deprecate(
         self, vn, oldkeys, newkeys=None,
-        cvtr=None, silent=False, is_section=False,
+        cvtr=None, is_section=False,
     ):
         """Replace a deprecated key from a config
         Args:
@@ -81,8 +81,6 @@ class upgrader:
             cvtr (cylc.flow.parsec.upgrade.Converter):
                 Converter object containing a conversion function and a
                 description of that function.
-            silent (bool):
-                Set silent mode for this upgrade.
             is_section (bool):
                 Is a section heading.
         """
@@ -93,18 +91,16 @@ class upgrader:
         self.upgrades[vn].append(
             {
                 'old': oldkeys, 'new': newkeys, 'cvt': cvtr,
-                'silent': silent, 'is_section': is_section
+                'is_section': is_section
             })
 
-    def obsolete(self, vn, oldkeys, silent=False, is_section=False):
+    def obsolete(self, vn, oldkeys, is_section=False):
         """Remove an obsolete key from a config
         Args:
             vn (str):
                 Version at which this obsoletion occurs.
             oldkeys (list):
                 Path within config to be removed.
-            silent:
-                Set silent mode for this upgrade.
             is_section (bool):
                 Is a section heading.
         """
@@ -113,7 +109,7 @@ class upgrader:
         cvtr = converter(lambda x: x, "DELETED (OBSOLETE)")  # identity
         self.upgrades[vn].append(
             {
-                'old': oldkeys, 'new': None, 'cvt': cvtr, 'silent': silent,
+                'old': oldkeys, 'new': None, 'cvt': cvtr,
                 'is_section': is_section
             })
 
@@ -185,7 +181,6 @@ class upgrader:
                         'old': pre + [m] + post,
                         'new': None,
                         'cvt': upg['cvt'],
-                        'silent': upg['silent'],
                         'is_section': upg['is_section'],
                     })
                 return exp_upgs
@@ -203,7 +198,6 @@ class upgrader:
                     'old': pre + [m] + post,
                     'new': npre + [m] + npost,
                     'cvt': upg['cvt'],
-                    'silent': upg['silent'],
                     'is_section': upg['is_section'],
                 })
         return exp_upgs
@@ -237,9 +231,8 @@ class upgrader:
                             old=old,
                             new=upg['cvt'].convert(old)
                         )
-                        if not upg['silent']:
-                            warnings.setdefault(vn, [])
-                            warnings[vn].append(msg)
+                        warnings.setdefault(vn, [])
+                        warnings[vn].append(msg)
                         self.del_item(upg['old'])
                         if upg['new']:
                             # check self.cfg does not already contain a

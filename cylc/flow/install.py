@@ -60,7 +60,6 @@ from cylc.flow.remote import (
 from cylc.flow.workflow_files import (
     WorkflowFiles,
     abort_if_flow_file_in_path,
-    check_deprecation,
     check_flow_file,
     get_cylc_run_abs_path,
     is_valid_run_dir,
@@ -346,7 +345,6 @@ def install_workflow(
             f"An error occurred when copying files from {source} to {rundir}")
         install_log.warning(f" Warning: {stderr}")
     cylc_install = Path(rundir.parent, WorkflowFiles.Install.DIRNAME)
-    check_deprecation(check_flow_file(rundir))
     if no_run_name:
         cylc_install = Path(rundir, WorkflowFiles.Install.DIRNAME)
     source_link = cylc_install.joinpath(WorkflowFiles.Install.SOURCE)
@@ -472,18 +470,24 @@ def link_runN(latest_run: Union[Path, str]):
 
 
 def validate_source_dir(
-    source: Union[Path, str], workflow_name: str
+    source: Union[Path, str],
+    workflow_name: str,
 ) -> None:
     """Ensure the source directory is valid:
         - has flow file
         - does not contain reserved dir names
 
     Args:
-        source: Path to source directory
+        source:
+            Path to source directory
+        workflow_name:
+            Workflow ID without the run identifier.
+
     Raises:
         WorkflowFilesError:
             If log, share, work or _cylc-install directories exist in the
             source directory.
+
     """
     # Source dir must not contain reserved run dir names (as file or dir).
     for dir_ in WorkflowFiles.RESERVED_DIRNAMES:
@@ -492,7 +496,7 @@ def validate_source_dir(
                 f"{workflow_name} installation failed "
                 f"- {dir_} exists in source directory."
             )
-    check_flow_file(source)
+    check_flow_file(source, allow_suite_rc=False)
 
 
 def parse_cli_sym_dirs(symlink_dirs: str) -> Dict[str, Dict[str, Any]]:

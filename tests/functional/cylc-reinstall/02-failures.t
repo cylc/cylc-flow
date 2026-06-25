@@ -53,9 +53,7 @@ make_rnd_workflow
 run_ok "${TEST_NAME}-install" cylc install "${RND_WORKFLOW_SOURCE}" --workflow-name="${RND_WORKFLOW_NAME}" --no-run-name
 rm -f "${RND_WORKFLOW_SOURCE}/flow.cylc"
 run_fail "${TEST_NAME}" cylc reinstall "${RND_WORKFLOW_NAME}"
-cmp_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: No flow.cylc or suite.rc in ${RND_WORKFLOW_SOURCE}
-__ERR__
+grep_ok 'No flow.cylc in' "${TEST_NAME}.stderr"
 purge_rnd_workflow
 
 # Test fail both flow.cylc and suite.rc file

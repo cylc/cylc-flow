@@ -58,7 +58,7 @@ TEST_NAME="${TEST_NAME_BASE}-no-flow-file"
 rm -f "${RND_WORKFLOW_SOURCE}/flow.cylc"
 run_fail "${TEST_NAME}" cylc install --workflow-name="${RND_WORKFLOW_NAME}" "${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: No flow.cylc or suite.rc in ${RND_WORKFLOW_SOURCE}
+WorkflowFilesError: No flow.cylc in ${RND_WORKFLOW_SOURCE}
 __ERR__
 
 # -----------------------------------------------------------------------------
@@ -81,7 +81,7 @@ TEST_NAME="${TEST_NAME_BASE}-nodir"
 rm -rf "${RND_WORKFLOW_SOURCE}"
 run_fail "${TEST_NAME}" cylc install --workflow-name="${RND_WORKFLOW_NAME}" --no-run-name "${RND_WORKFLOW_SOURCE}"
 contains_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: No flow.cylc or suite.rc in ${RND_WORKFLOW_SOURCE}
+WorkflowFilesError: No flow.cylc in ${RND_WORKFLOW_SOURCE}
 __ERR__
 
 purge_rnd_workflow

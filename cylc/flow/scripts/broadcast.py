@@ -23,7 +23,7 @@ Override "[runtime]" configurations in a running workflow.
 Uses for broadcast include making temporary changes to task behaviour, and
 task-to-downstream-task communication via environment variables.
 
-See also "cylc reload" which reads in the flow.cylc (or suite.rc) file.
+See also "cylc reload" which reads in the flow.cylc file.
 
 A broadcast can set/override any "[runtime]" configuration for all cycles or
 for a specific cycle. If a task is affected by specific-cycle and all-cycle

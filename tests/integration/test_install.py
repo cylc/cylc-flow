@@ -29,7 +29,6 @@ from cylc.flow.scripts.install import (
 )
 
 from .network.test_scan import init_flows
-from .utils.entry_points import EntryPointWrapper
 
 SRV_DIR = Path(WorkflowFiles.Service.DIRNAME)
 CONTACT = Path(WorkflowFiles.Service.CONTACT)
@@ -148,47 +147,3 @@ async def test_install_scan_ping(
     out = capsys.readouterr().out
     assert INSTALLED_MSG.format(wfrun='w2/run1') in out
     assert WF_ACTIVE_MSG.format(wf='w2') not in out
-
-
-async def test_install_gets_back_compat_mode_for_plugins(
-    src_run_dirs: Tuple[Path, Path],
-    monkeypatch: pytest.MonkeyPatch,
-    capcall,
-    capsys: pytest.CaptureFixture,
-):
-    """Assert that cylc install will detect whether a workflow
-    should use back compat mode _before_ running pre_configure plugins
-    so that those plugins can use that information.
-    """
-    # track calls of the check_deprecation method
-    # (this is the thing that sets cylc.flow.flags.back_compat)
-    check_deprecation_calls = capcall(
-        'cylc.flow.scripts.install.check_deprecation'
-    )
-
-    @EntryPointWrapper
-    def failIfDeprecated(*args, **kwargs):
-        """A fake Cylc Plugin entry point"""
-        # print the number of times the check_deprecation method has been
-        # called
-        print(f'CALLS={len(check_deprecation_calls)}')
-        # return a blank result
-        return {
-            'env': {},
-            'template_variables': {},
-        }
-
-    # Monkeypatch our fake entry point into iter_entry_points:
-    monkeypatch.setattr(
-        'cylc.flow.plugins.iter_entry_points',
-        lambda namespace: (
-            [failIfDeprecated] if namespace == 'cylc.pre_configure' else []
-        )
-    )
-
-    # install the workflow
-    opts = InstallOptions()
-    await install_cli(opts, id_='w1')
-
-    # ensure the check_deprecation method was called before the plugin was run
-    assert 'CALLS=1' in capsys.readouterr()[0]
