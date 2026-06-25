@@ -72,7 +72,7 @@ async def report_to_scheduler(process: Process, comms_timeout: int):
     )
 
 
-def get_profiler_data(process):
+def get_profiler_data(process: Process):
     if (
         process.cgroup_memory_path is None
         or process.cgroup_cpu_path is None
