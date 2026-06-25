@@ -22,7 +22,6 @@ https://cylc.github.io/cylc-admin/proposal-optional-output-extension.html#propos
 """
 
 from itertools import combinations
-from typing import TYPE_CHECKING
 
 import logging
 import pytest
@@ -37,27 +36,23 @@ from cylc.flow.cycling.iso8601 import ISO8601Point
 from cylc.flow.exceptions import WorkflowConfigError
 from cylc.flow.id import TaskTokens, Tokens
 from cylc.flow.network.resolvers import TaskMsg
-from cylc.flow.task_events_mgr import (
-    TaskEventsManager,
-)
+from cylc.flow.scheduler import Scheduler
 from cylc.flow.task_outputs import (
-    TASK_OUTPUTS,
     TASK_OUTPUT_EXPIRED,
     TASK_OUTPUT_FAILED,
     TASK_OUTPUT_FINISHED,
+    TASK_OUTPUT_SUBMIT_FAILED,
     TASK_OUTPUT_SUCCEEDED,
+    TASK_OUTPUTS,
     get_completion_expression,
 )
+from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import (
     TASK_STATUS_EXPIRED,
     TASK_STATUS_PREPARING,
     TASK_STATUS_RUNNING,
     TASK_STATUS_WAITING,
 )
-
-if TYPE_CHECKING:
-    from cylc.flow.task_proxy import TaskProxy
-    from cylc.flow.scheduler import Scheduler
 
 
 OPT_BOTH_ERR = "Output {} can't be both required and optional"
@@ -217,7 +212,7 @@ async def test_expire_orthogonality(flow, scheduler, start):
                 Tokens('//1/a/01'),
                 '2000-01-01T00:00:00+00',
                 'INFO',
-                TaskEventsManager.EVENT_SUBMIT_FAILED
+                TASK_OUTPUT_SUBMIT_FAILED,
             ),
         )
         schd.process_queued_task_messages()
@@ -231,7 +226,7 @@ async def test_expire_orthogonality(flow, scheduler, start):
                 Tokens('//1/a/01'),
                 '2000-01-01T00:00:00+00',
                 'INFO',
-                TaskEventsManager.EVENT_FAILED,
+                TASK_OUTPUT_FAILED,
             ),
         )
         schd.process_queued_task_messages()
@@ -245,7 +240,7 @@ async def test_expire_orthogonality(flow, scheduler, start):
                 Tokens('//1/a/01'),
                 '2000-01-01T00:00:00+00',
                 'INFO',
-                TaskEventsManager.EVENT_EXPIRED,
+                TASK_OUTPUT_EXPIRED,
             ),
         )
         schd.process_queued_task_messages()
