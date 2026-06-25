@@ -184,7 +184,7 @@ async def test_init_clean(
     )
     monkeypatch.setattr(
         'cylc.flow.clean.get_install_targets_map',
-        lambda p_names: {p: {} for p in p_names if p != 'localhost'}
+        lambda p_names: {p: [{}] for p in p_names if p != 'localhost'}
     )
 
     await init_clean(id_, opts=CleanOptions(**opts))
@@ -858,8 +858,8 @@ def mock_platform_from_name(name: str) -> dict:
             id="Only remote install targets"
         ),
         pytest.param(
-            ['enterprise', 'stargazer', 'voyager'],
-            {'kirk': 255},
+            ['stargazer', 'enterprise', 'voyager'],
+            {'picard': 255},
             {'kirk', 'picard', 'janeway'},
             False,
             [],

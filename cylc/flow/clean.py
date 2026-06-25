@@ -43,6 +43,7 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import (
     CylcError,
     InputError,
+    NoHostsError,
     PlatformError,
     PlatformLookupError,
     SchedulerAlive,
@@ -348,10 +349,12 @@ def _clean_using_glob(
         remove_dir_or_file(path)
 
 
-def get_install_targets_map(platform_names: Iterable[str]) -> dict[str, dict]:
-    """Map install target name to platform config for the given platform names.
-    """
-    ret: dict[str, dict] = {}
+def get_install_targets_map(
+    platform_names: Iterable[str],
+) -> dict[str, list[dict]]:
+    """Map install target name to a list of platform configs for the given
+    platform names."""
+    ret: dict[str, list[dict]] = {}
     for platform_name in platform_names:
         try:
             platform = platform_from_name(platform_name)
@@ -360,7 +363,7 @@ def get_install_targets_map(platform_names: Iterable[str]) -> dict[str, dict]:
             continue
         target = get_install_target_from_platform(platform)
         if target != get_localhost_install_target():
-            ret.setdefault(target, platform)
+            ret.setdefault(target, []).append(platform)
     return ret
 
 
@@ -391,9 +394,15 @@ async def remote_clean(
 
     tasks_map = {
         target: asyncio.create_task(
-            _remote_clean_cmd(id_, platform, rm_dirs, timeout)
+            _remote_clean_cmd(
+                id_,
+                platforms,
+                bad_hosts=set(),
+                rm_dirs=rm_dirs,
+                timeout=timeout,
+            )
         )
-        for target, platform in install_targets_map.items()
+        for target, platforms in install_targets_map.items()
     }
     await asyncio.gather(*tasks_map.values(), return_exceptions=True)
 
@@ -415,28 +424,40 @@ async def remote_clean(
 
 async def _remote_clean_cmd(
     id_: str,
-    platform: dict[str, Any],
+    platforms: list[dict[str, Any]],
+    bad_hosts: set[str],
     rm_dirs: list[str] | None,
     timeout: str,
 ) -> None:
     """Remove a stopped workflow on a remote host.
 
     Call "cylc clean --local-only" over SSH. If the SSH fails, try again with
-    another host from the platform until we run out of hosts.
+    another host from the platform until we run out of hosts, then repeat
+    until we run out of platforms that the workflow submitted jobs to.
 
     Args:
         id_: Workflow name.
-        platform: Config for the platform on which to remove the workflow.
+        platforms: List of platform configs on which to remove the workflow.
         rm_dirs: Sub dirs to remove instead of the whole run dir.
         timeout: Number of seconds to wait before cancelling the command.
 
     Raises:
-        NoHostsError: If none of the platform's hosts are contactable.
+        NoHostsError: If none of the platforms' hosts are contactable.
         RemoteTimeoutErr: If the command times out.
         PlatformError: If the command fails with a non-zero exit code other
             than 255 (SSH failure).
     """
-    host = get_host_from_platform(platform)
+    platform = platforms[0]
+    try:
+        host = get_host_from_platform(platform, bad_hosts)
+    except NoHostsError as no_hosts_exc:
+        # Out of contactable hosts for this platform, try the next one:
+        if len(platforms) <= 1:
+            raise no_hosts_exc
+        return await _remote_clean_cmd(
+            id_, platforms[1:], bad_hosts, rm_dirs, timeout
+        )
+
     target = platform['install target']
     cmd = ['clean', '--local-only', '--no-scan', id_]
     if rm_dirs is not None:
@@ -475,8 +496,10 @@ async def _remote_clean_cmd(
         if proc.returncode == 255:
             # SSH failed; try again using another host
             LOG.debug(exc)
-            platform['hosts'].remove(host)
-            return await _remote_clean_cmd(id_, platform, rm_dirs, timeout)
+            bad_hosts.add(host)
+            return await _remote_clean_cmd(
+                id_, platforms, bad_hosts, rm_dirs, timeout
+            )
         else:
             raise exc
 
