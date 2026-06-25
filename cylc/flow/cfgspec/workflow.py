@@ -164,7 +164,7 @@ with Conf(
 
         .. versionchanged:: 8.0.0
 
-           The configuration file was rename from ``suite.rc`` to
+           The configuration file was renamed from ``suite.rc`` to
            ``flow.cylc``.
     '''
 ) as SPEC:
