@@ -407,9 +407,7 @@ class TaskDef:
             point = min(adjusted)
         return point
 
-    def next_point_parentless(
-        self, cutoff: 'PointBase', point: 'PointBase | None' = None
-    ):
+    def next_point_parentless(self, point: 'PointBase | None' = None):
         """Return next cycle point for which I'm parentless.
 
         For a given recurrence, a task is either parented or parentless.
@@ -417,17 +415,15 @@ class TaskDef:
         If point is None, return the first parentless cycle; otherwise
         the first parentless cycle > point.
 
-        Cutoff is the start cycle point, prior to which we ignore parents.
-
         """
         adjusted = []
         for seq in self.sequences:
             next_point = (
-                seq.get_first_point(cutoff)
+                seq.get_first_point(self.start_point)
                 if point is None
                 else seq.get_next_point(point)
             )
-            if next_point and self.is_parentless(next_point, cutoff):
+            if next_point and self.is_parentless(next_point, self.start_point):
                 adjusted.append(next_point)
         if adjusted:
             return min(adjusted)
