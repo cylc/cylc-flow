@@ -212,7 +212,8 @@ def get_cgroup_paths(location: Path) -> Process:
             max_rss=0,
         )
 
-    raise CylcProfilerError(None, "Unable to determine cgroup version")
+    raise CylcProfilerError(FileNotFoundError(),
+                            "Unable to determine cgroup version")
 
 
 async def profile(process: Process, delay, keep_looping=lambda: True):
