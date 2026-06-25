@@ -855,8 +855,7 @@ class TaskPool:
             or itask.point < self.config.start_point  # Warm start
         ):
             return
-        point = itask.tdef.next_point_parentless(
-            self.config.start_point, itask.point)
+        point = itask.tdef.next_point_parentless(itask.point)
         if point is not None:
             ntask, is_in_pool = (
                 self.get_or_spawn_task(point, itask.tdef, itask.flow_nums)
