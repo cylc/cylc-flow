@@ -9,12 +9,15 @@
 [runtime]
     [[a-task]]
         script = """
-            # Write to task stdout log
-            echo "Master, Master! Where are those dreams that I've been after?"
+            echo "the quick brown fox"
+            echo "the lazy dog" >&2
         """
         platform = {{CYLC_TEST_PLATFORM | default("localhost")}}
     [[b-task]]
         script = """
+            # Wait for job logs to be retrieved
             cylc__job__poll_grep_workflow_log 'TaskJobLogsRetrieveContext.*ret_code.*0'
-            rm ${CYLC_WORKFLOW_RUN_DIR}/log/job/1/a-task/NN/job
+            # Remove job.err locally to simulate a file that was not retrieved
+            # (e.g. due to size limits or retrieval error)
+            rm -f ${CYLC_WORKFLOW_RUN_DIR}/log/job/1/a-task/01/job.err
         """

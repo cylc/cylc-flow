@@ -15,10 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test "cylc cat-log" for a specific circumstance that caused cat-log to
-# not work properly. This tests simulates small window of time where a
-# job has finished but the logs have not yet been retrieved. In this
-# situation cat-log should remote log retrieval
+# Test "cylc cat-log" falls back to remote when a specific log file is missing
+# locally. This simulates the case where job logs were retrieved but a
+# particular file is absent (e.g. due to size limits or retrieval errors).
 export REQUIRE_PLATFORM='loc:remote fs:indep'
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
@@ -26,9 +25,7 @@ set_test_number 5
 create_test_global_config "" "
 [platforms]
    [[${CYLC_TEST_PLATFORM}]]
-       retrieve job logs = True
-       retrieve job log expected files = job
-"
+       retrieve job logs = True"
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-run"
@@ -36,15 +33,17 @@ workflow_run_ok "${TEST_NAME}" \
     cylc play --debug --no-detach \
         -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'" "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
-# remote
-TEST_NAME=${TEST_NAME_BASE}-no_log_remote
-run_ok "$TEST_NAME" cylc cat-log --debug -f j "${WORKFLOW_NAME}//1/a-task"
+# Confirm job.out is present locally (logs were retrieved).
+LOCAL_JOB_DIR=$(cylc cat-log -f a -m d "${WORKFLOW_NAME}//1/a-task")
+exists_ok "${LOCAL_JOB_DIR}/job.out"
+
+# Confirm job.err was removed locally by b-task.
+exists_fail "${LOCAL_JOB_DIR}/job.err"
+
+# Cat the missing file - should fall back to the remote host and succeed.
+TEST_NAME=${TEST_NAME_BASE}-fallback-remote
+run_ok "$TEST_NAME" cylc cat-log --debug -f e "${WORKFLOW_NAME}//1/a-task"
 grep_ok "Not all logs present, getting job log remotely" "${TEST_NAME}.stderr"
 
-# remote
-TEST_NAME=${TEST_NAME_BASE}-no_log_remote_list_dir
-run_ok "$TEST_NAME" cylc cat-log --debug --mode=list-dir "${WORKFLOW_NAME}//1/a-task"
-grep_ok "Not all logs present, getting job log remotely" "${TEST_NAME}.stderr"
-
-# Clean up the task host.
+#-------------------------------------------------------------------------------
 purge
