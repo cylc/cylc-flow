@@ -1,6 +1,0 @@
-[scheduling]
-    [[graph]]
-        R1 = "foo"
-[runtime]
-    [[foo]]
-        script = "foo"bar"baz"
