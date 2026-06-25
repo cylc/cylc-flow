@@ -504,10 +504,6 @@ class XtriggerManager:
         # Signatures of active functions (waiting on callback).
         self.active: list = []
 
-        # A record of parentless sequential xtriggered tasks
-        # that have had their next occurrance spawned.
-        self.sequential_has_spawned_next: Set[str] = set()
-
         self.workflow_run_dir = workflow_run_dir
 
         # For function arg templating.
@@ -659,8 +655,6 @@ class XtriggerManager:
                 if sig in self.sat_xtrig:
                     # Already satisfied, just update the task
                     itask.state.xtriggers[label] = True
-                    if self.all_task_seq_xtriggers_satisfied(itask):
-                        self.schd.pool.check_spawn_psx_task(itask)
                 elif _wall_clock(*ctx.func_args, **ctx.func_kwargs):
                     # Newly satisfied
                     itask.state.xtriggers[label] = True
@@ -668,8 +662,6 @@ class XtriggerManager:
                     self.data_store_mgr.delta_xtrigger(sig, True)
                     self.workflow_db_mgr.put_xtriggers({sig: {}})
                     LOG.info('xtrigger succeeded: %s = %s', label, sig)
-                    if self.all_task_seq_xtriggers_satisfied(itask):
-                        self.schd.pool.check_spawn_psx_task(itask)
                     self.do_housekeeping = True
                 continue
             # General case: potentially slow asynchronous function call.
@@ -689,8 +681,6 @@ class XtriggerManager:
                             [itask.tdef.name],
                             xtrigger_env
                         )
-                    if self.all_task_seq_xtriggers_satisfied(itask):
-                        self.schd.pool.check_spawn_psx_task(itask)
                 continue
 
             # Call the function to check the xtrigger.
@@ -818,8 +808,6 @@ class XtriggerManager:
                 continue
 
             itask.state.xtriggers[label] = satisfied
-            if satisfied and self.all_task_seq_xtriggers_satisfied(itask):
-                self.schd.pool.check_spawn_psx_task(itask)
 
             self.data_store_mgr.delta_task_xtrigger(
                 itask, label, sig, satisfied)
