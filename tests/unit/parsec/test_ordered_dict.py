@@ -146,3 +146,16 @@ class TestOrderedDict(unittest.TestCase):
 
         self.assertEqual('year', next(iterator))
         self.assertEqual('key', next(iterator))
+
+    def test_repl_val(self):
+        """it recursively replaces dict values with str."""
+        level1, level2, level3 = (OrderedDictWithDefaults() for i in range(3))
+        level3['none'] = None
+        level2['level3'] = level3
+        level2['general'] = None
+        level1['level2'] = level2
+
+        level1.repl_val(level1, None, 'Monk')
+
+        assert level1['level2']['level3']['none'] == 'Monk'
+        assert level1['level2']['general'] == 'Monk'
