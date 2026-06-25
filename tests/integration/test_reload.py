@@ -387,6 +387,13 @@ async def test_reload_waits_for_preparing_tasks_in_remote_init(
     proc_pool.process() to advance these operations) rather than exiting
     prematurely.
 
+    Test works by simulating a task taking longer than one reload flush
+    loop to complete remote-init, catching the situation where
+    release_tasks_to_run() returns False (because all tasks started submission)
+    but the task is still waiting_on_job_prep or in the preparing state.
+    The reload flush loop should continue to iterate until the task has
+    actually submitted.
+
     https://github.com/cylc/cylc-flow/issues/7296
     """
     # speed up the test
