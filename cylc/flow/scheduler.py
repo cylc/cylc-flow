@@ -1655,6 +1655,7 @@ class Scheduler:
                 self.broadcast_mgr.check_ext_triggers(
                     itask, self.ext_trigger_queue)
 
+            self.pool.spawn_psx_task(itask)
             self.pool.queue_if_ready(itask)
 
         if self.xtrigger_mgr.do_housekeeping:

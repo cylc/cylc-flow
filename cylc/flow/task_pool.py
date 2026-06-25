@@ -268,8 +268,18 @@ class TaskPool:
             and itask.is_ready_to_run()
         ):
             self.queue_task(itask)
-            if itask.is_xtrigger_sequential:
-                self.spawn_next_parentless(itask)
+
+    def spawn_psx_task(self, itask: 'TaskProxy') -> None:
+        """Spawn a parentless sequential xtriggered task.
+
+        Do it when all of its sequential xtriggers are satisfied.
+
+        """
+        if (
+            itask.is_xtrigger_sequential
+            and self.xtrigger_mgr.all_task_seq_xtriggers_satisfied(itask)
+        ):
+            self.spawn_next_parentless(itask)
 
     def load_from_point(self):
         """Load the task pool for the workflow start point.
@@ -285,7 +295,7 @@ class TaskPool:
             tdef = self.config.get_taskdef(name)
             point = tdef.next_point_parentless(self.config.start_point)
             if point:
-                ntask, _, _ = self.get_or_spawn_task(point, tdef, flow_nums)
+                ntask, _ = self.get_or_spawn_task(point, tdef, flow_nums)
                 if ntask is not None:
                     self.add_to_pool(ntask)
         # Spawning to the runahead limit immediately is not strictly necessary
@@ -806,11 +816,11 @@ class TaskPool:
         tdef: 'TaskDef',
         flow_nums: 'FlowNums',
         flow_wait: bool = False
-    ) -> 'Tuple[Optional[TaskProxy], bool, bool]':
+    ) -> 'Tuple[Optional[TaskProxy], bool]':
         """Return new or existing task point/name with merged flow_nums.
 
         Returns:
-            tuple - (itask, is_in_pool
+            tuple - (itask, is_in_pool)
 
             itask:
                 The requested task proxy, or None if task does not
@@ -848,7 +858,7 @@ class TaskPool:
         point = itask.tdef.next_point_parentless(
             self.config.start_point, itask.point)
         if point is not None:
-            ntask, is_in_pool, _ = (
+            ntask, is_in_pool = (
                 self.get_or_spawn_task(point, itask.tdef, itask.flow_nums)
             )
             if ntask is not None and not is_in_pool:
