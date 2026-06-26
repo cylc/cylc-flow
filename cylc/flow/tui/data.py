@@ -149,6 +149,8 @@ MUTATIONS = {
         'kill',
         'trigger',
         'poll',
+        'set',
+        'remove',
     ],
     'task': [
         'hold',
