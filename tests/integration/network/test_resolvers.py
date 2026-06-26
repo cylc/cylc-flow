@@ -133,8 +133,8 @@ async def test_get_nodes_by_ids(mock_flow, node_args):
     node_args['workflows'].append({
         'user': mock_flow.owner,
         'workflow': mock_flow.name,
-        'workflow_sel': None
     })
+    node_args['ids'] = [Tokens('*/*:waiting', relative=True)]
     nodes = await mock_flow.resolvers.get_nodes_by_ids(TASK_PROXIES, node_args)
     assert len(nodes) == 0
 

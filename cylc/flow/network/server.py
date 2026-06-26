@@ -16,6 +16,7 @@
 """Server for workflow runtime API."""
 
 import asyncio
+from contextlib import suppress
 from queue import Queue
 from textwrap import dedent
 from time import sleep
@@ -59,7 +60,8 @@ if TYPE_CHECKING:
 # maps server methods to the protobuf message (for client/UIS import)
 PB_METHOD_MAP: Dict[str, Any] = {
     'pb_entire_workflow': PbEntireWorkflow,
-    'pb_data_elements': DELTAS_MAP
+    'pb_data_elements': PbEntireWorkflow,
+    'pb_delta_elements': DELTAS_MAP
 }
 
 
@@ -372,14 +374,12 @@ class WorkflowRuntimeServer:
                 if getattr(getattr(self, method), 'exposed', False)
             ]
 
-        try:
+        with suppress(AttributeError):
             method = getattr(self, endpoint)
-        except AttributeError:
-            return 'No method by name "%s"' % endpoint
-        if method.exposed:
-            head, tail = method.__doc__.split('\n', 1)
-            tail = dedent(tail)
-            return '%s\n%s' % (head, tail)
+            if method.exposed:
+                head, tail = method.__doc__.split('\n', 1)
+                tail = dedent(tail)
+                return '%s\n%s' % (head, tail)
         return 'No method by name "%s"' % endpoint
 
     @expose
@@ -431,8 +431,33 @@ class WorkflowRuntimeServer:
         return pb_msg.SerializeToString()
 
     @expose
-    def pb_data_elements(self, element_type: str, **_kwargs) -> bytes:
-        """Send the specified data elements in delta form.
+    def pb_data_elements(
+        self,
+        elements: Optional[Iterable] = None,
+        **_kwargs
+    ) -> bytes:
+        """Send only the selected data elements.
+
+        Args:
+            elements: Keys from DATA_TEMPLATE dictionary.
+
+        Returns serialised Protobuf message
+        """
+        if elements is None:
+            elements = {}
+
+        # BACK COMPAT: CYLC_VERSION < 8.7
+        # elements is Optional for this reason.
+        if not elements and _kwargs.get('element_type'):
+            pb_msg = self.schd.data_store_mgr.get_delta_elements(
+                _kwargs.get('element_type'))
+        else:
+            pb_msg = self.schd.data_store_mgr.get_data_elements(elements)
+        return pb_msg.SerializeToString()
+
+    @expose
+    def pb_delta_elements(self, element_type: str, **_kwargs) -> bytes:
+        """Send the specified data elements in delta added form.
 
         Args:
             element_type: Key from DELTAS_MAP dictionary.
@@ -440,5 +465,5 @@ class WorkflowRuntimeServer:
         Returns serialised Protobuf message
 
         """
-        pb_msg = self.schd.data_store_mgr.get_data_elements(element_type)
+        pb_msg = self.schd.data_store_mgr.get_delta_elements(element_type)
         return pb_msg.SerializeToString()
