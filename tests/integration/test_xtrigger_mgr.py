@@ -762,11 +762,10 @@ async def test_xtrigger_modifiers(flow, scheduler, start):
         assert ds_fproxy.is_xtriggered is False
 
 
-async def test_remove_orphaned_xtrigger_on_reload(
+async def test_orphaned_task_with_xtrigger_on_reload(
     flow, start, scheduler, log_filter
 ):
-    """
-    Removing a task with an xtrigger dependency and reloading should not
+    """Removing a task with an xtrigger dependency and reloading should not
     crash.
     """
     conf = {
