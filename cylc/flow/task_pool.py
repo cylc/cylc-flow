@@ -883,15 +883,22 @@ class TaskPool:
             if ntask is not None and not is_in_pool:
                 self.add_to_pool(ntask)
 
-    def remove(self, itask: 'TaskProxy', reason: Optional[str] = None) -> None:
+    def remove(
+        self, itask: 'TaskProxy',
+        reason: Optional[str] = None,
+        spawn: Optional[bool] = True
+    ) -> None:
         """Remove a task from the pool."""
         # the held state is no longer relevant -> remove it
         self.release_held_active_task(itask)
 
+        # Mark any PSX as spawned if we need to avoid spawning.
+        if itask.is_xtrigger_sequential and not spawn:
+            self.xtrigger_mgr.sequential_has_spawned_next.add(itask.identity)
         # xtriggers are no longer relevant -> remove them
         self.xtrigger_mgr.force_satisfy_all(itask, log=False)
 
-        if itask.state.is_runahead and itask.flow_nums:
+        if itask.state.is_runahead and itask.flow_nums and spawn:
             # If removing a parentless runahead-limited task
             # auto-spawn its next instance first.
             self.spawn_if_parentless(
