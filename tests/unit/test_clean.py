@@ -870,7 +870,7 @@ def mock_platform_from_name(name: str) -> dict:
             {'kirk': 255, 'picard': 255},
             {'kirk', 'picard', 'janeway'},
             True,
-            ["[picard]"],
+            ["picard:"],
             id="Platform with no contactable hosts"
         ),
         pytest.param(
@@ -878,7 +878,7 @@ def mock_platform_from_name(name: str) -> dict:
             {'kirk': 255, 'picard': 255, 'janeway': 255},
             {'kirk', 'picard', 'janeway'},
             True,
-            ["[picard]", "[janeway]"],
+            ["picard:", "janeway:"],
             id="No contactable hosts on any platform"
         ),
         pytest.param(
@@ -886,7 +886,7 @@ def mock_platform_from_name(name: str) -> dict:
             {'kirk': 1},
             {'kirk'},
             True,
-            ["[picard]"],
+            ["picard:"],
             id="Remote clean fails for non-SSH reason - no retry"
         ),
     ]

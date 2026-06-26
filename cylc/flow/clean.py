@@ -27,6 +27,7 @@ import os
 from pathlib import Path
 import shlex
 import sqlite3
+from textwrap import indent
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -44,6 +45,7 @@ from cylc.flow.exceptions import (
     CylcError,
     InputError,
     NoHostsError,
+    NoPlatformsError,
     PlatformError,
     PlatformLookupError,
     SchedulerAlive,
@@ -397,7 +399,7 @@ async def remote_clean(
             _remote_clean_cmd(
                 id_,
                 platforms,
-                bad_hosts=set(),
+                bad_hosts={},
                 rm_dirs=rm_dirs,
                 timeout=timeout,
             )
@@ -418,14 +420,14 @@ async def remote_clean(
         for target, excp in failed_targets.items():
             if cylc.flow.flags.verbosity > 1:
                 LOG.exception(excp, exc_info=excp)
-            msg += f"\n[{target}]\n{excp}"
+            msg += "\n" + indent(f"{target}: {excp}", 4 * ' ')
         raise CylcError(msg)
 
 
 async def _remote_clean_cmd(
     id_: str,
     platforms: list[dict[str, Any]],
-    bad_hosts: set[str],
+    bad_hosts: dict[str, str],
     rm_dirs: list[str] | None,
     timeout: str,
 ) -> None:
@@ -438,11 +440,13 @@ async def _remote_clean_cmd(
     Args:
         id_: Workflow name.
         platforms: List of platform configs on which to remove the workflow.
+        bad_hosts: Mapping of hosts that have already been tried to the reason
+            they failed.
         rm_dirs: Sub dirs to remove instead of the whole run dir.
         timeout: Number of seconds to wait before cancelling the command.
 
     Raises:
-        NoHostsError: If none of the platforms' hosts are contactable.
+        NoPlatformsError: If none of the platforms' hosts are contactable.
         RemoteTimeoutErr: If the command times out.
         PlatformError: If the command fails with a non-zero exit code other
             than 255 (SSH failure).
@@ -453,7 +457,9 @@ async def _remote_clean_cmd(
     except NoHostsError as no_hosts_exc:
         # Out of contactable hosts for this platform, try the next one:
         if len(platforms) <= 1:
-            raise no_hosts_exc
+            raise NoPlatformsError(
+                bad_hosts, install_target=platform['install target']
+            ) from no_hosts_exc
         return await _remote_clean_cmd(
             id_, platforms[1:], bad_hosts, rm_dirs, timeout
         )
@@ -477,9 +483,9 @@ async def _remote_clean_cmd(
         stdout=PIPE,
         stderr=PIPE,
     )
-    out, err = tuple(b.decode() for b in await proc.communicate())
+    out, err = tuple(b.decode().strip() for b in await proc.communicate())
     if out:
-        LOG.info(f"[{target}]\n{out}")
+        LOG.info(f"{target}:\n{out}")
 
     if proc.returncode == RemoteTimeoutErr.ret_code:
         raise RemoteTimeoutErr(timeout)
@@ -496,7 +502,7 @@ async def _remote_clean_cmd(
         if proc.returncode == 255:
             # SSH failed; try again using another host
             LOG.debug(exc)
-            bad_hosts.add(host)
+            bad_hosts[host] = err or 'SSH failure'
             return await _remote_clean_cmd(
                 id_, platforms, bad_hosts, rm_dirs, timeout
             )
@@ -507,7 +513,7 @@ async def _remote_clean_cmd(
         # Only show stderr from remote host in debug mode if ret code 0
         # because stderr often contains useless stuff like ssh login
         # messages
-        LOG.debug(f"[{target}]\n{err}")
+        LOG.debug(f"{target}:\n{err}")
 
 
 def get_platforms_from_db(run_dir: Path) -> Set[str]:

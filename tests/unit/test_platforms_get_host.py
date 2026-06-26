@@ -100,7 +100,7 @@ def test_get_platform_from_group_fails_no_goodhosts(monkeypatch):
         )
     assert err.exconly() == (
         'cylc.flow.exceptions.NoPlatformsError: '
-        'Unable to find a platform from group mygroup_name.'
+        'Unable to find a contactable platform from group mygroup_name'
     )
 
 

@@ -22,6 +22,7 @@ import re
 from typing import (
     TYPE_CHECKING,
     Any,
+    Container,
     Dict,
     Iterable,
     List,
@@ -327,8 +328,7 @@ def get_platform_from_group(
             host
             for platform in group['platforms']
             for host in platform_from_name(platform)['hosts']}
-        raise NoPlatformsError(
-            group_name, hosts_consumed)
+        raise NoPlatformsError(hosts_consumed, group=group_name)
 
     # Get the selection method
     method = group['selection']['method']
@@ -537,7 +537,7 @@ def generic_items_match(
 
 
 def get_host_from_platform(
-    platform: dict[str, Any], bad_hosts: set[str] | None = None
+    platform: dict[str, Any], bad_hosts: Container[str] | None = None
 ) -> str:
     """Placeholder for a more sophisticated function which returns a host
     given a platform dictionary.
