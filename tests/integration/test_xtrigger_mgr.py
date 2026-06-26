@@ -769,7 +769,7 @@ async def test_remove_orphaned_xtrigger_on_reload(
     Removing a task with an xtrigger dependency and reloading should not
     crash.
     """
-    id_ = flow({
+    conf = {
         'scheduling': {
             'xtriggers': {
                 'my_xtrig': 'xrandom(0)',
@@ -781,28 +781,16 @@ async def test_remove_orphaned_xtrigger_on_reload(
                 '''
             },
         },
-    })
+    }
+    id_ = flow(conf)
     schd: Scheduler = scheduler(id_)
     async with start(schd):
         # confirm the task with the xtrigger is in the pool
         assert schd.pool._get_task_by_id('1/foo') is not None
 
-        # remove task with xtrigger dependency
-        flow(
-            {
-                'scheduling': {
-                    'xtriggers': {
-                        'my_xtrig': 'xrandom(0)',
-                    },
-                    'graph': {
-                        'R1': '''
-                            bar
-                        '''
-                    },
-                },
-            },
-            workflow_id=id_,
-        )
+        # remove task with xtrigger dependency (no foo in R1)
+        conf['scheduling']['graph']['R1'] = 'bar'
+        flow(conf, workflow_id=id_)
 
         # reload should not crash
         await commands.run_cmd(commands.reload_workflow(schd))
