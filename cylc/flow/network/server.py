@@ -16,6 +16,7 @@
 """Server for workflow runtime API."""
 
 import asyncio
+import pickle
 from queue import Queue
 from textwrap import dedent
 from time import sleep
@@ -424,8 +425,10 @@ class WorkflowRuntimeServer:
     def reqpub(self, topic: str, payload: Any, **_kawrgs) -> str:
         """Send payload out, under given topic, via the publisher."""
         if isinstance(payload, str):
-            payload = payload.encode('utf-8')
-        self.publish_queue.put([(topic.encode('utf-8'), payload, None)])
+            bpayload = payload.encode('utf-8')
+        else:
+            bpayload = pickle.dumps(payload)
+        self.publish_queue.put([(topic.encode('utf-8'), bpayload, None)])
         return topic
 
     # UIServer Data Commands
