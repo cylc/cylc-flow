@@ -444,7 +444,6 @@ async def test_orphan_reload(
         )
 
 
-
 async def test_data_store_tproxy(flow, scheduler, start):
     """Check N>0 task proxy in data store has correct info on reload.
 
