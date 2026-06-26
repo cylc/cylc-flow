@@ -52,7 +52,7 @@ def test_get_host_from_platform_fails_no_goodhosts():
         get_host_from_platform(platform, {'nellie', 'dumbo', 'jumbo'})
     assert err.exconly() == (
         'cylc.flow.exceptions.NoHostsError: '
-        'Unable to find valid host for Elephant'
+        'Unable to find contactable host for platform: Elephant'
     )
 
 
@@ -100,7 +100,7 @@ def test_get_platform_from_group_fails_no_goodhosts(monkeypatch):
         )
     assert err.exconly() == (
         'cylc.flow.exceptions.NoPlatformsError: '
-        'Unable to find a platform from group mygroup_name.'
+        'Unable to find a contactable platform from group mygroup_name'
     )
 
 

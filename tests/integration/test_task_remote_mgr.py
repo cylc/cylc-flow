@@ -17,7 +17,7 @@
 import cylc
 from cylc.flow.task_remote_mgr import (
     REMOTE_FILE_INSTALL_DONE,
-    REMOTE_FILE_INSTALL_FAILED
+    REMOTE_FILE_INSTALL_FAILED,
 )
 
 
@@ -155,13 +155,12 @@ async def test_remote_tidy(
     # at cases where platform == REMOTE_FILE_INSTALL_DONE
     assert not [r for r in records if 'quiz' in r]
 
-    notthisone_msg = (
+    assert (
         'platform: notthisone - clean up did not complete'
-        '\nUnable to find valid host for notthisone'
-    )
-    assert notthisone_msg in records
+        '\nUnable to find contactable host for platform: notthisone'
+    ) in records
 
-    bay_msg = (
-        'Unable to find a platform from install target'
-        ' bay during remote tidy.')
-    assert bay_msg in records
+    assert (
+        'Unable to find a contactable platform for install target'
+        ' bay during remote tidy'
+    ) in records
