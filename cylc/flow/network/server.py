@@ -419,6 +419,15 @@ class WorkflowRuntimeServer:
             raise Exception(*(error.message for error in executed.errors))
         return executed.data
 
+    # Can be used for REQ/PUB connection testing, or possibly dissemination.
+    @expose
+    def reqpub(self, topic: str, payload: Any, **_kawrgs) -> str:
+        """Send payload out, under given topic, via the publisher."""
+        if isinstance(payload, str):
+            payload = payload.encode('utf-8')
+        self.publish_queue.put([(topic.encode('utf-8'), payload, None)])
+        return topic
+
     # UIServer Data Commands
     @expose
     def pb_entire_workflow(self, **_kwargs) -> bytes:
