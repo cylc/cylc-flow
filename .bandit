@@ -5,7 +5,10 @@
 
 [bandit]
 targets: cylc/flow
-skips: B404,B607
+skips: B403,B404,B607
+# B403: import_pickle - consider security implications
+#       * Ignored as the pickler is a known entity (the scheduler) so the
+#         binary loaded/un-pickled is not a risk.
 # B404: import_subprocess - consider security implications
 #       * Ignored as the use of subprocesses is a project wide decision.
 #       * The purpose of cylc is to run user defined code therefore the use
