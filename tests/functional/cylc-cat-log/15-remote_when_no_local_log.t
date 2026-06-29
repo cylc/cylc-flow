@@ -41,7 +41,7 @@ LOCAL_JOB_DIR=$(cylc cat-log -f a -m d "${WORKFLOW_NAME}//1/a-task")
 exists_ok "${LOCAL_JOB_DIR}/job.out"
 
 # Confirm job.err was removed locally by b-task.
-exists_fail "${LOCAL_JOB_DIR}/job.err"
+exists_fail "${LOCAL_JOB_DIR}/job"
 
 # remote
 TEST_NAME=${TEST_NAME_BASE}-no_log_remote
