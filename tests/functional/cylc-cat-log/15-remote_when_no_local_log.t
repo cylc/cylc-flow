@@ -22,7 +22,7 @@
 export REQUIRE_PLATFORM='loc:remote fs:indep'
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 6
+set_test_number 7
 create_test_global_config "" "
 [platforms]
    [[${CYLC_TEST_PLATFORM}]]
