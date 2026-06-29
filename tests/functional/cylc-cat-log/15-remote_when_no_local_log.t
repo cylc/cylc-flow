@@ -22,7 +22,7 @@
 export REQUIRE_PLATFORM='loc:remote fs:indep'
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 5
+set_test_number 6
 create_test_global_config "" "
 [platforms]
    [[${CYLC_TEST_PLATFORM}]]
@@ -36,9 +36,16 @@ workflow_run_ok "${TEST_NAME}" \
     cylc play --debug --no-detach \
         -s "CYLC_TEST_PLATFORM='${CYLC_TEST_PLATFORM}'" "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
+# Confirm job.out is present locally (logs were retrieved).
+LOCAL_JOB_DIR=$(cylc cat-log -f a -m d "${WORKFLOW_NAME}//1/a-task")
+exists_ok "${LOCAL_JOB_DIR}/job.out"
+
+# Confirm job.err was removed locally by b-task.
+exists_fail "${LOCAL_JOB_DIR}/job.err"
+
 # remote
 TEST_NAME=${TEST_NAME_BASE}-no_log_remote
-run_ok "$TEST_NAME" cylc cat-log --debug -f j "${WORKFLOW_NAME}//1/a-task"
+run_ok "$TEST_NAME" cylc cat-log --debug -f j e "${WORKFLOW_NAME}//1/a-task"
 grep_ok "Not all logs present, getting job log remotely" "${TEST_NAME}.stderr"
 
 # remote
