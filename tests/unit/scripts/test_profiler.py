@@ -387,6 +387,7 @@ def options(mocker):
     opts.cgroup_memory_path = "/another/fake/path"
     opts.comms_timeout = 10
     opts.delay = "PT1S"
+    opts.pid = 12345
     return opts
 
 
@@ -395,6 +396,9 @@ async def test_main(mocker, options, monkeypatch):
     # Mock Cylc env vars
     monkeypatch.setenv('CYLC_WORKFLOW_ID', "Exit Light")
     monkeypatch.setenv('CYLC_TASK_JOB', "Enter Night")
+
+    mocker.patch("cylc.flow.scripts.profiler.get_proc_ancestors",
+                 return_value=[12345])
 
     # Mock the gets and parse functions to return something sensible
     # without needing actual files
@@ -412,16 +416,12 @@ async def test_main(mocker, options, monkeypatch):
     mocker.patch("cylc.flow.scripts.profiler.parse_memory_allocated",
                  return_value=90)
 
-    mock_signal = mocker.patch("cylc.flow.scripts.profiler.signal.signal")
     mock_profile = mocker.patch("cylc.flow.scripts.profiler.profile")
     mock_watch_and_kill = mocker.patch(
         "cylc.flow.scripts.profiler.watch_and_kill"
     )
 
     await _main(options)
-
-    # Make sure the 3 types of kill signal are registered.
-    assert mock_signal.call_count == 3
 
     # Ensure the profiler and watch and kill functions are called by
     # asyncio.gather

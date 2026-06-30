@@ -35,7 +35,7 @@ from cylc.flow import LOG
 from cylc.flow.exceptions import CylcProfilerError
 import cylc.flow.flags
 from cylc.flow.option_parsers import CylcOptionParser as COP
-from cylc.flow.remote import watch_and_kill
+from cylc.flow.remote import watch_and_kill, get_proc_ancestors
 from cylc.flow.task_message import record_messages
 from cylc.flow.terminal import cli_function
 from metomi.isodatetime.parsers import DurationParser
@@ -241,6 +241,9 @@ def get_option_parser() -> COP:
     parser.add_option(
         "-m", type=str, help="Location of cgroups directory",
         dest="cgroup_location")
+    parser.add_option(
+        "-p", type=int, help="Process ID of Jobscript",
+        dest="pid")
 
     return parser
 
@@ -258,6 +261,17 @@ def main(_parser: COP, options) -> None:
 
 
 async def _main(options) -> None:
+
+    PPID = get_proc_ancestors(psutil.Process(os.getpid()))[0]
+    if PPID != options.pid:
+        raise CylcProfilerError(
+            ValueError(),
+            f"Profiler PPID {PPID} does not match jobscript PID "
+            f"{options.pid}."
+            f"The most likely cause of this error is "
+            f"that your job failed immediately and the profiler was not"
+            f"able to start in time."
+        )
 
     # list of asyncio tasks
     tasks: list[asyncio.Task] = []
