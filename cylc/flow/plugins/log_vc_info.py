@@ -60,6 +60,7 @@ Any uncommitted changes will also be saved as a diff in
    Git does not include untracked files in the diff.
 """
 
+import os
 import json
 from pathlib import Path
 from subprocess import Popen, DEVNULL, PIPE
@@ -76,6 +77,7 @@ from typing import (
     overload,
 )
 
+from cylc.flow.loggingutil import get_next_log_number, get_sorted_logs_by_time
 from cylc.flow import LOG as _LOG, LoggerAdaptor
 from cylc.flow.exceptions import CylcError
 import cylc.flow.flags
@@ -342,13 +344,26 @@ def write_diff(
         str(Path().cwd() / repo_path)
     )
 
-    diff_file = Path(
+    diff_location = Path(
         run_dir,
         WorkflowFiles.LogDir.DIRNAME,
         WorkflowFiles.LogDir.VERSION,
-        DIFF_FILENAME
     )
-    diff_file.parent.mkdir(exist_ok=True)
+    diff_location.mkdir(exist_ok=True)
+    install_location = Path(
+        run_dir,
+        WorkflowFiles.LogDir.DIRNAME,
+        WorkflowFiles.LogDir.INSTALL,
+    )
+    log_files = get_sorted_logs_by_time(str(install_location),
+                                        r'*install.log')
+    log_num = get_next_log_number(log_files[-1]) - 1 if log_files else 1
+
+    number = f"{log_num:02d}"
+    diff_file = Path(
+        diff_location,
+        number + '-' + DIFF_FILENAME
+    )
 
     with open(diff_file, 'a') as f:
         f.write(
@@ -361,6 +376,13 @@ def write_diff(
             _run_cmd(vcs, args, repo_path, stdout=f)
         except VCSMissingBaseError as exc:
             print(f"# No diff - {exc}", file=f)
+
+    try:
+        Path(str(diff_location), DIFF_FILENAME).symlink_to(diff_file)
+    except FileExistsError:
+        os.remove(str(diff_location) + "/" + DIFF_FILENAME)
+        Path(str(diff_location), DIFF_FILENAME).symlink_to(diff_file)
+
     return diff_file
 
 
