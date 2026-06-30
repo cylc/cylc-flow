@@ -57,7 +57,9 @@ def _check_contact_file(scheduler):
             scheduler.workflow)
         if contact_data != scheduler.contact_data:
             raise MainLoopPluginException('contact file modified')
-    except (AssertionError, IOError, ValueError, ServiceFileError) as exc:
+    except ServiceFileError as exc:
+        raise MainLoopPluginException(exc) from exc.__cause__
+    except (AssertionError, IOError, ValueError) as exc:
         raise MainLoopPluginException(
             '%s: contact file corrupted/modified and may be left'
             % workflow_files.get_contact_file_path(scheduler.workflow)

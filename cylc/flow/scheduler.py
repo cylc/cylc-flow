@@ -1934,9 +1934,16 @@ class Scheduler:
             fname = workflow_files.get_contact_file_path(self.workflow)
             try:
                 os.unlink(fname)
+            except FileNotFoundError as exc:
+                LOG.warning(
+                    f"contact file missing on shutdown: {fname}",
+                    exc_info=(exc if cylc.flow.flags.verbosity > 1 else None)
+                )
             except OSError as exc:
-                LOG.warning(f"failed to remove workflow contact file: {fname}")
-                LOG.exception(exc)
+                LOG.critical(
+                    f"failed to remove workflow contact file: {fname}",
+                    exc_info=exc,
+                )
             else:
                 # Useful to identify that this Scheduler has shut down
                 # properly (e.g. in tests):
