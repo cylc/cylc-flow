@@ -248,7 +248,8 @@ class TaskPool:
         """Spawn the task pool out to the runahead limit in one go.
 
         Not strictly necessary, it will spawn ahead per main loop iteration,
-        but useful back-compat for tests that expect this prior to GH #....
+        but useful back-compat for tests that expect this prior to
+        https://github.com/cylc/cylc-flow/pull/7237
 
         """
         self.compute_runahead()
