@@ -802,6 +802,12 @@ class XtriggerManager:
             if label not in itask.state.xtriggers:
                 continue
 
+            if label not in self.xtriggers.functx_map:
+                # This xtrigger's definition was removed (e.g. by reload).
+                # Just satisfy it directly without context lookup.
+                itask.state.xtriggers[label] = satisfied
+                continue
+
             ctx = self.get_xtrig_ctx(itask, label)
             sig = ctx.get_signature()
 
