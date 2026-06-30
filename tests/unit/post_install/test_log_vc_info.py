@@ -25,6 +25,10 @@ import subprocess
 from typing import Any, Callable, Tuple
 from unittest.mock import Mock
 
+from dateutil import parser
+from datetime import date
+import datetime
+
 from cylc.flow.install_plugins.log_vc_info import (
     INFO_FILENAME,
     VCSNotInstalledError,
@@ -172,7 +176,10 @@ def test_write_diff_git(git_source_repo: Tuple[str, str], tmp_path: Path):
     (run_dir / WorkflowFiles.LogDir.DIRNAME).mkdir(parents=True)
     diff_file = write_diff('git', source_dir, run_dir)
     diff_lines = diff_file.read_text().splitlines()
-    assert diff_lines[0].startswith("# Auto-generated diff")
+    diffDate = parser.parse(diff_lines[0][2:])
+    diffDate = datetime.date(diffDate.year, diffDate.month, diffDate.day)
+    assert diffDate == date.today()
+    assert diff_lines[1].startswith("# Auto-generated diff")
     for line in ("diff --git a/flow.cylc b/flow.cylc",
                  "-        R1 = foo",
                  "+        R1 = bar"):
@@ -223,7 +230,10 @@ def test_write_diff_svn(svn_source_repo: Tuple[str, str, str], tmp_path: Path):
     (run_dir / WorkflowFiles.LogDir.DIRNAME).mkdir(parents=True)
     diff_file = write_diff('svn', source_dir, run_dir)
     diff_lines = diff_file.read_text().splitlines()
-    assert diff_lines[0].startswith("# Auto-generated diff")
+    diffDate = parser.parse(diff_lines[0][2:])
+    diffDate = datetime.date(diffDate.year, diffDate.month, diffDate.day)
+    assert diffDate == date.today()
+    assert diff_lines[1].startswith("# Auto-generated diff")
     for line in (f"--- {source_dir}/flow.cylc	(revision 1)",
                  f"+++ {source_dir}/flow.cylc	(working copy)",
                  "-        R1 = foo",
