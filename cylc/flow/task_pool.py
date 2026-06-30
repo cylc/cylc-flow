@@ -252,8 +252,10 @@ class TaskPool:
 
         """
         self.compute_runahead()
-        while self.release_runahead_tasks():
-            pass
+        # Arbitrary limit to avoid infinite loop if something goes wrong.
+        for _ in range(10):
+            if not self.release_runahead_tasks():
+                break
 
     def queue_if_ready(self, itask: 'TaskProxy') -> None:
         """Queue itask if it is ready to run.
