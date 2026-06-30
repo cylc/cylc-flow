@@ -2713,4 +2713,4 @@ async def test_parentless_spawning(flow, scheduler, run, complete):
     async with run(schd):
         await complete(schd, "2/b")
         # The task pool should not be empty now.
-        assert schd.pool.get_tasks() != []
+        assert len(schd.pool.get_tasks())
