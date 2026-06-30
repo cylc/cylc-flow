@@ -59,6 +59,7 @@ Any uncommitted changes will also be saved as a diff in
    Git does not include untracked files in the diff.
 """
 
+from datetime import datetime
 import json
 from pathlib import Path
 from subprocess import Popen, DEVNULL, PIPE
@@ -350,7 +351,9 @@ def write_diff(
     diff_file.parent.mkdir(exist_ok=True)
 
     with open(diff_file, 'a') as f:
+        now = datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
         f.write(
+            f"# {now}\n"
             "# Auto-generated diff of uncommitted changes in the Cylc "
             "workflow repository:\n"
             f"#   {repo_path}\n"
