@@ -54,10 +54,11 @@ def test_simple():
     # NOTE change to new item keys here!
     upg.deprecate('1.3', ['Heading A', 'cde'], ['Heading A', 'CDE'])
     upg.deprecate(
-        '1.4', ['Heading A', 'abc'], ['Heading A', 'abc'], cvtr=x2,
-        silent=True)
+        '1.4', ['Heading A', 'abc'], ['Heading A', 'abc'], cvtr=x2
+    )
     upg.deprecate(
-        '1.4.1', ['item two'], ['Heading A', 'item two'], silent=True)
+        '1.4.1', ['item two'], ['Heading A', 'item two']
+    )
     upg.deprecate('1.5', ['hostnames'], ['hosts'])
     upg.deprecate(
         '1.5',
@@ -158,9 +159,8 @@ class TestUpgrade(unittest.TestCase):
 
     def test_obsolete(self):
         # b is obsolete, so the value is omitted
-        self.u.obsolete(vn='entry', oldkeys=['section', 'b'], silent=True)
+        self.u.obsolete(vn='entry', oldkeys=['section', 'b'])
         self.assertTrue('entry' in self.u.upgrades)
-        self.assertEqual(True, self.u.upgrades['entry'][0]['silent'])
 
         self.assertTrue('b' in self.cfg['section'])
         self.u.upgrade()
@@ -169,11 +169,7 @@ class TestUpgrade(unittest.TestCase):
         self.u.obsolete(
             vn='entry',
             oldkeys=['section', 'b'],
-            silent=False)
-        self.assertEqual(True, self.u.upgrades['entry'][0]['silent'])
-        self.assertEqual(False, self.u.upgrades['entry'][1]['silent'])
-
-        self.u.obsolete(vn='whocalled?', oldkeys=['section', 'b'], silent=True)
+        )
 
     def test_get_item(self):
         for keys, results in [
@@ -197,7 +193,6 @@ class TestUpgrade(unittest.TestCase):
         upg = {
             'new': None,
             'cvt': None,
-            'silent': True,
             'is_section': False,
             'old': [
             ]
@@ -208,7 +203,6 @@ class TestUpgrade(unittest.TestCase):
         upg = {
             'new': None,
             'cvt': None,
-            'silent': True,
             'is_section': True,
             'old': [
                 'section', '__MANY__', '__MANY__'
@@ -225,7 +219,6 @@ class TestUpgrade(unittest.TestCase):
                 'section', '__MANY__'
             ],
             'cvt': None,
-            'silent': True,
             'is_section': False,
             'old': [
                 'section', '__MANY__', 'b'
@@ -246,7 +239,6 @@ class TestUpgrade(unittest.TestCase):
                 'section', '__MANY__', 'e'
             ],
             'cvt': c,
-            'silent': True,
             'is_section': False,
             'old': [
                 'section', '__MANY__', 'c'
@@ -261,7 +253,6 @@ class TestUpgrade(unittest.TestCase):
         upg = {
             'new': None,
             'cvt': None,
-            'silent': True,
             'is_section': False,
             'old': [
                 'section', '__MANY__', 'a'
@@ -283,7 +274,6 @@ def test_template_in_converter_description(caplog, capsys):
     u.deprecate(
         '2.0.0', ['old'], ['new'],
         cvtr=converter(lambda x: x + 20, '{old} -> {new}'),
-        silent=False,
     )
     u.upgrade()
     assert cfg == {'new': 62}

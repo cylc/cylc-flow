@@ -52,7 +52,6 @@ from cylc.flow.cfgspec.globalcfg import (
     TASK_EVENTS_SETTINGS,
     UTC_MODE_DESCR,
 )
-import cylc.flow.flags
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.config import (
     ConfigNode as Conf,
@@ -165,10 +164,8 @@ with Conf(
 
         .. versionchanged:: 8.0.0
 
-           The configuration file was previously named ``suite.rc``, but that
-           name is now deprecated.
-           The ``suite.rc`` file name now activates :ref:`cylc_7_compat_mode`.
-           Rename to ``flow.cylc`` to turn off compatibility mode.
+           The configuration file was renamed from ``suite.rc`` to
+           ``flow.cylc``.
     '''
 ) as SPEC:
 
@@ -2160,13 +2157,11 @@ def upg(
         '8.0.0',
         ['cylc', 'task event mail interval'],
         ['cylc', 'mail', 'task event batch interval'],
-        silent=cylc.flow.flags.cylc7_back_compat,
     )
     u.deprecate(
         '8.0.0',
         ['runtime', '__MANY__', 'suite state polling'],
         ['runtime', '__MANY__', 'workflow state polling'],
-        silent=cylc.flow.flags.cylc7_back_compat,
         is_section=True,
     )
     u.obsolete(
@@ -2178,21 +2173,18 @@ def upg(
         '8.3.0',
         ['runtime', '__MANY__', 'workflow state polling', 'run-dir'],
         ['runtime', '__MANY__', 'workflow state polling', 'alt-cylc-run-dir'],
-        silent=cylc.flow.flags.cylc7_back_compat,
     )
 
     u.deprecate(
         '8.0.0',
         ['cylc', 'parameters'],
         ['task parameters'],
-        silent=cylc.flow.flags.cylc7_back_compat,
         is_section=True,
     )
     u.deprecate(
         '8.0.0',
         ['cylc', 'parameter templates'],
         ['task parameters', 'templates'],
-        silent=cylc.flow.flags.cylc7_back_compat,
         is_section=True,
     )
     # Whole workflow task mail settings
@@ -2201,7 +2193,6 @@ def upg(
             '8.0.0',
             ['cylc', 'events', f'mail {mail_setting}'],
             ['cylc', 'mail', mail_setting],
-            silent=cylc.flow.flags.cylc7_back_compat,
         )
     # Task mail settings in [runtime][TASK]
     for mail_setting in ['to', 'from']:
@@ -2209,7 +2200,6 @@ def upg(
             '8.0.0',
             ['runtime', '__MANY__', 'events', f'mail {mail_setting}'],
             ['runtime', '__MANY__', 'mail', mail_setting],
-            silent=cylc.flow.flags.cylc7_back_compat,
         )
     u.deprecate(
         '8.0.0',
@@ -2219,7 +2209,6 @@ def upg(
             'DELETED (OBSOLETE) - use "global.cylc[scheduler][mail]smtp" '
             'instead')
         ),
-        silent=cylc.flow.flags.cylc7_back_compat,
     )
     u.deprecate(
         '8.0.0',
@@ -2229,7 +2218,6 @@ def upg(
             'DELETED (OBSOLETE) - use "global.cylc[scheduler][mail]smtp" '
             'instead')
         ),
-        silent=cylc.flow.flags.cylc7_back_compat,
     )
     u.deprecate(
         '8.0.0',
@@ -2239,13 +2227,11 @@ def upg(
             lambda x: f'P{int(x) - 1}' if x != '' else '',
             '"{old}" -> "{new}"'
         ),
-        silent=cylc.flow.flags.cylc7_back_compat,
     )
     u.deprecate(
         '8.0.0',
         ['scheduling', 'hold after point'],
         ['scheduling', 'hold after cycle point'],
-        silent=cylc.flow.flags.cylc7_back_compat,
     )
 
     for job_setting in [
@@ -2259,7 +2245,6 @@ def upg(
             '8.0.0',
             ['runtime', '__MANY__', 'job', job_setting],
             ['runtime', '__MANY__', job_setting],
-            silent=cylc.flow.flags.cylc7_back_compat,
         )
 
     # Workflow timeout is now measured from start of run.
@@ -2280,7 +2265,6 @@ def upg(
             '8.0.0',
             ['cylc', 'events', old],
             ['cylc', 'events', new],
-            silent=cylc.flow.flags.cylc7_back_compat,
         )
 
     for old in [
@@ -2303,7 +2287,6 @@ def upg(
             '8.0.0',
             ['runtime', '__MANY__', 'events', old],
             ['runtime', '__MANY__', 'events', f"{old}s"],
-            silent=cylc.flow.flags.cylc7_back_compat,
         )
 
     for old in [
@@ -2320,7 +2303,6 @@ def upg(
         '8.0.0',
         ['cylc'],
         ['scheduler'],
-        silent=cylc.flow.flags.cylc7_back_compat,
         is_section=True,
     )
     u.upgrade()
@@ -2373,7 +2355,7 @@ def upgrade_graph_section(cfg: Dict[str, Any], descr: str) -> None:
                     elif key == 'graph' and isinstance(value, str):
                         graphdict[key] = value
                         keys.add(key)
-                if keys and not cylc.flow.flags.cylc7_back_compat:
+                if keys:
                     msg = (
                         'graph items were automatically upgraded '
                         f'in "{descr}":\n'
@@ -2395,14 +2377,13 @@ def upgrade_param_env_templates(cfg, descr):
         for task_name, task_items in cfg['runtime'].items():
             if 'parameter environment templates' not in task_items:
                 continue
-            if not cylc.flow.flags.cylc7_back_compat:
-                if first_warn:
-                    LOG.warning(upgrader.depr_msg)
-                    first_warn = False
-                LOG.warning(
-                    f' * (8.0.0) {dep % task_name} contents prepended to '
-                    f'{new % task_name}'
-                )
+            if first_warn:
+                LOG.warning(upgrader.depr_msg)
+                first_warn = False
+            LOG.warning(
+                f' * (8.0.0) {dep % task_name} contents prepended to '
+                f'{new % task_name}'
+            )
             for key, val in reversed(
                     task_items['parameter environment templates'].items()):
                 if 'environment' in task_items:
@@ -2432,7 +2413,7 @@ def warn_about_depr_platform(cfg):
             fail_if_platform_and_host_conflict(task_cfg, task_name)
             # Fail if backticks subshell e.g. platform = `foo`:
             is_platform_definition_subshell(task_cfg['platform'])
-        elif not cylc.flow.flags.cylc7_back_compat:
+        else:
             depr = get_platform_deprecated_settings(task_cfg, task_name)
             if depr:
                 msg = "\n".join(depr)
@@ -2445,7 +2426,7 @@ def warn_about_depr_platform(cfg):
 
 def warn_about_depr_event_handler_tmpl(cfg):
     """Warn if deprecated template strings appear in event handlers."""
-    if 'runtime' not in cfg or cylc.flow.flags.cylc7_back_compat:
+    if 'runtime' not in cfg:
         return
     deprecation_msg = (
         'The event handler template variable "%({0})s" is deprecated - '

@@ -15,14 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from cylc.flow import LOG
-import cylc.flow.flags
 from cylc.flow.xtriggers.workflow_state import _workflow_state_backcompat
 
-if not cylc.flow.flags.cylc7_back_compat:
-    LOG.warning(
-        "The suite_state xtrigger is deprecated. "
-        "Please use the workflow_state xtrigger instead."
-    )
+
+LOG.warning(
+    "The suite_state xtrigger is deprecated. "
+    "Please use the workflow_state xtrigger instead."
+)
 
 
 def suite_state(suite, task, point, offset=None, status='succeeded',

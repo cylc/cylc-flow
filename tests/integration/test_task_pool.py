@@ -1656,17 +1656,14 @@ async def test_prereq_satisfaction(
         assert b.prereqs_are_satisfied()
 
 
-@pytest.mark.parametrize('compat_mode', ['compat-mode', 'normal-mode'])
 @pytest.mark.parametrize('cycling_mode', ['integer', 'datetime'])
 @pytest.mark.parametrize('runahead_format', ['P3Y', 'P3'])
 async def test_compute_runahead(
     cycling_mode,
-    compat_mode,
     runahead_format,
     flow,
     scheduler,
     start,
-    monkeypatch,
 ):
     """Test the calculation of the runahead limit.
 
@@ -1710,11 +1707,6 @@ async def test_compute_runahead(
         }
         point = ISO8601Point
 
-    monkeypatch.setattr(
-        'cylc.flow.flags.cylc7_back_compat',
-        compat_mode == 'compat-mode',
-    )
-
     id_ = flow(config)
     schd = scheduler(id_)
     async with start(schd):
@@ -1748,10 +1740,7 @@ async def test_compute_runahead(
             TASK_STATUS_FAILED
         )
         schd.pool.compute_runahead(force=True)
-        if compat_mode == 'compat-mode':
-            assert int(str(schd.pool.runahead_limit_point)) == 5
-        else:
-            assert int(str(schd.pool.runahead_limit_point)) == 4  # no change
+        assert int(str(schd.pool.runahead_limit_point)) == 4  # no change
 
         # mark cycle 1 as complete
         # (via task message so the task gets removed before runahead compute)
@@ -1816,14 +1805,12 @@ async def test_compute_runahead_with_no_sequences(
 
 
 @pytest.mark.parametrize('rhlimit', ['P2D', 'P2'])
-@pytest.mark.parametrize('compat_mode', ['compat-mode', 'normal-mode'])
 async def test_runahead_future_trigger(
     flow,
     scheduler,
     start,
     monkeypatch,
     rhlimit,
-    compat_mode,
 ):
     """Equivalent time interval and cycle count runahead limits should yield
     the same limit point, even if there is a future trigger.
@@ -1847,10 +1834,6 @@ async def test_runahead_future_trigger(
         }
     })
 
-    monkeypatch.setattr(
-        'cylc.flow.flags.cylc7_back_compat',
-        compat_mode == 'compat-mode',
-    )
     schd = scheduler(id_,)
     async with start(schd, level=logging.DEBUG):
         assert str(schd.pool.runahead_limit_point) == '20010103'
@@ -1888,52 +1871,6 @@ async def mod_blah(
     schd: 'Scheduler' = mod_scheduler(id_, paused_start=True)
     async with mod_run(schd):
         yield schd
-
-
-@pytest.mark.parametrize(
-    'status, expected',
-    [
-        # (Status, Are we expecting an update?)
-        (TASK_STATUS_WAITING, False),
-        (TASK_STATUS_EXPIRED, False),
-        (TASK_STATUS_PREPARING, False),
-        (TASK_STATUS_SUBMIT_FAILED, False),
-        (TASK_STATUS_SUBMITTED, False),
-        (TASK_STATUS_RUNNING, False),
-        (TASK_STATUS_FAILED, True),
-        (TASK_STATUS_SUCCEEDED, True)
-    ]
-)
-async def test_runahead_c7_compat_task_state(
-    status,
-    expected,
-    mod_blah,
-    monkeypatch,
-):
-    """For each task status check whether changing the oldest task
-    to that status will cause compute_runahead to make a change.
-
-    Compat mode: Cylc 7 ignored failed tasks but not submit-failed!
-
-    """
-
-    def max_cycle(tasks):
-        return max([int(t.tokens.get("cycle")) for t in tasks])
-
-    monkeypatch.setattr(
-        'cylc.flow.flags.cylc7_back_compat', True)
-    monkeypatch.setattr(
-        'cylc.flow.task_events_mgr.TaskEventsManager._insert_task_job',
-        lambda *_: True)
-
-    mod_blah.pool.compute_runahead()
-    before_pt = max_cycle(mod_blah.pool.get_tasks())
-    before = mod_blah.pool.runahead_limit_point
-    itask = mod_blah.pool.get_task(ISO8601Point(f'{before_pt - 2:04}'), 'a')
-    itask.state_reset(status, is_queued=False)
-    mod_blah.pool.compute_runahead()
-    after = mod_blah.pool.runahead_limit_point
-    assert bool(before != after) == expected
 
 
 async def test_fast_respawn(

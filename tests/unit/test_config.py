@@ -36,7 +36,6 @@ import pytest
 
 from cylc.flow import (
     CYLC_LOG,
-    flags,
 )
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.cycling import loader
@@ -46,7 +45,6 @@ from cylc.flow.cycling.loader import (
     ISO8601_CYCLING_TYPE,
 )
 from cylc.flow.exceptions import (
-    GraphParseError,
     InputError,
     PointParsingError,
     WorkflowConfigError,
@@ -58,7 +56,6 @@ from cylc.flow.parsec.exceptions import (
 from cylc.flow.scheduler_cli import RunOptions
 from cylc.flow.scripts.validate import ValidateOptions
 from cylc.flow.task_outputs import (
-    TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUCCEEDED,
 )
 from cylc.flow.wallclock import (
@@ -1230,40 +1227,6 @@ def test_invalid_custom_output_msg(tmp_flow_config: Callable):
     ) in str(cm.value)
 
 
-def test_c7_back_compat_optional_outputs(tmp_flow_config, monkeypatch):
-    """Test optional and required outputs Cylc 7 back compat mode.
-
-    Success outputs should be required, others optional. Tested here because
-    success is set to required after graph parsing, in taskdef processing.
-
-    """
-    monkeypatch.setattr('cylc.flow.flags.cylc7_back_compat', True)
-    id_ = 'custom_out2'
-    flow_file = tmp_flow_config(id_, '''
-    [scheduling]
-        [[graph]]
-            R1 = """
-            foo:x => bar
-            foo:fail = oops
-            foo => spoo
-            """
-    [runtime]
-        [[bar, oops, spoo]]
-        [[foo]]
-           [[[outputs]]]
-                x = x
-    ''')
-
-    cfg = WorkflowConfig(workflow=id_, fpath=flow_file, options=None)
-
-    for taskdef in cfg.taskdefs.values():
-        for output, (_, required) in taskdef.outputs.items():
-            if output in [TASK_OUTPUT_SUBMITTED, TASK_OUTPUT_SUCCEEDED]:
-                assert required
-            else:
-                assert not required
-
-
 @pytest.mark.parametrize(
     'graph',
     [
@@ -1289,44 +1252,10 @@ def test_implicit_success_required(tmp_flow_config, graph):
     assert cfg.taskdefs['foo'].outputs[TASK_OUTPUT_SUCCEEDED][1]
 
 
-@pytest.mark.parametrize(
-    'allow_implicit_tasks',
-    [
-        pytest.param(True, id="allow implicit tasks = True"),
-        pytest.param(None, id="allow implicit tasks not set"),
-        pytest.param(False, id="allow implicit tasks = False")
-    ]
-)
-@pytest.mark.parametrize(
-    'cylc7_compat, rose_suite_conf, expected_exc, extra_msg_expected',
-    [
-        pytest.param(
-            False, False, WorkflowConfigError, True,
-            id="Default"
-        ),
-        pytest.param(
-            False, True, WorkflowConfigError, True,
-            id="rose-suite.conf present"
-        ),
-        pytest.param(
-            True, False, None, False,
-            id="Cylc 7 back-compat"
-        ),
-        pytest.param(
-            True, True, WorkflowConfigError, False,
-            id="Cylc 7 back-compat, rose-suite.conf present"
-        ),
-    ]
-)
+@pytest.mark.parametrize('allow_implicit_tasks', [True, False, None])
 def test_implicit_tasks(
     allow_implicit_tasks: Optional[bool],
-    cylc7_compat: bool,
-    rose_suite_conf: bool,
-    expected_exc: Optional[Type[Exception]],
-    extra_msg_expected: bool,
     caplog: pytest.LogCaptureFixture,
-    log_filter: Callable,
-    monkeypatch: pytest.MonkeyPatch,
     tmp_flow_config: Callable
 ):
     """Test that the prescence of implicit tasks in the config
@@ -1334,10 +1263,6 @@ def test_implicit_tasks(
 
     Params:
         allow_implicit_tasks: Value of "[scheduler]allow implicit tasks".
-        cylc7_compat: Whether Cylc 7 backwards compatibility is turned on.
-        rose_suite_conf: Whether a rose-suite.conf file is present in run dir.
-        expected_exc: Exception expected to be raised only when
-            "[scheduler]allow implicit tasks" is not set.
         extra_msg_expected: If True, there should be the note on how to allow
             implicit tasks in the err msg.
     """
@@ -1358,24 +1283,23 @@ def test_implicit_tasks(
                     R1 = foo
         """)
     )
-    monkeypatch.setattr('cylc.flow.flags.cylc7_back_compat', cylc7_compat)
-    if rose_suite_conf:
-        (flow_file.parent / 'rose-suite.conf').touch()
+
     caplog.set_level(logging.DEBUG, CYLC_LOG)
+
     if allow_implicit_tasks is True:
         expected_exc = None
-    elif allow_implicit_tasks is False:
+    else:
         expected_exc = WorkflowConfigError
-    extra_msg_expected &= (allow_implicit_tasks is None)
+
     # Test
     args: dict = {'workflow': id_, 'fpath': flow_file, 'options': None}
-    expected_msg = r"implicit tasks detected.*"
     if expected_exc:
-        with pytest.raises(expected_exc, match=expected_msg) as excinfo:
+        with pytest.raises(
+            expected_exc, match=r"implicit tasks detected.*"
+        ) as excinfo:
             WorkflowConfig(**args)
-        assert (
-            "To allow implicit tasks" in str(excinfo.value)
-        ) is extra_msg_expected
+        if allow_implicit_tasks is None:
+            assert "To allow implicit tasks" in str(excinfo.value)
     else:
         WorkflowConfig(**args)
 
@@ -1719,22 +1643,6 @@ def test_cylc_env_at_parsing(
             assert var not in cylc_env
 
 
-def test_force_workflow_compat_mode(tmp_path):
-    fpath = (tmp_path / 'flow.cylc')
-    fpath.write_text(dedent("""
-        [scheduler]
-            allow implicit tasks = true
-        [scheduling]
-            [[graph]]
-                R1 = a:succeeded | a:failed => b
-    """))
-    # It fails without compat mode:
-    with pytest.raises(GraphParseError, match='Opposite outputs'):
-        WorkflowConfig('foo', str(fpath), {})
-    # It succeeds with compat mode:
-    WorkflowConfig('foo', str(fpath), {}, force_compat_mode=True)
-
-
 @pytest.mark.parametrize(
     'registered_outputs, tasks_and_outputs, fails',
     (
@@ -1765,10 +1673,8 @@ def test_check_outputs(tmp_path, registered_outputs, tasks_and_outputs, fails):
         assert cfg.check_terminal_outputs(tasks_and_outputs) is None
 
 
-@pytest.mark.parametrize('back_compat', [True, False])
-def test_upg_wflow_event_names(back_compat, tmp_flow_config, log_filter):
+def test_upg_wflow_event_names(tmp_flow_config, log_filter):
     """Cylc 7 workflow handler/mail event names are upgraded."""
-    flags.cylc7_back_compat = back_compat
     events = 'inactivity, abort, stalled'
     expected = ['inactivity timeout', 'abort', 'stall']
     flow_file = tmp_flow_config('foo', f"""
@@ -1784,8 +1690,6 @@ def test_upg_wflow_event_names(back_compat, tmp_flow_config, log_filter):
     cfg = WorkflowConfig('foo', str(flow_file), ValidateOptions())
     for item in ('handler events', 'mail events'):
         assert cfg.cfg['scheduler']['events'][item] == expected
-    if back_compat:
-        assert not log_filter(logging.WARNING)
     else:
         assert log_filter(
             logging.WARNING,
