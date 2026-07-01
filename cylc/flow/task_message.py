@@ -92,24 +92,31 @@ def split_run_signal(message: str) -> tuple[str, str | None]:
     return prefix, signal[0] if signal else None
 
 
-def record_messages(workflow: str, job_id: str, messages: List[list]) -> None:
+async def record_messages(
+    workflow: str,
+    job_id: str,
+    messages: List[list],
+    comms_timeout: float | None = None,
+) -> None:
     """Record task job messages.
 
-    Print the messages according to their severity.
-    Write the messages in the job status file.
-    Send the messages to the workflow, if possible.
+    * Print the messages according to their severity.
+    * Write the messages in the job status file.
+    * Send the messages to the workflow, if possible.
 
     Arguments:
         workflow: Workflow ID.
         job_id: Job identifier "CYCLE/TASK_NAME/SUBMIT_NUM".
         messages: List of messages "[[severity, message], ...]".
+        comms_timeout: Used for sending messages if appropriate.
     """
     # Record the event time, in case the message is delayed in some way.
     event_time = get_current_time_string(
         override_use_utc=(os.getenv('CYLC_UTC') == 'True'))
     write_messages(workflow, job_id, messages, event_time)
     if get_comms_method() != CommsMeth.POLL:
-        send_messages(workflow, job_id, messages, event_time)
+        await send_messages(workflow, job_id, messages,
+                            event_time, comms_timeout)
 
 
 def write_messages(workflow, job_id, messages, event_time):
@@ -125,12 +132,16 @@ def write_messages(workflow, job_id, messages, event_time):
     _append_job_status_file(workflow, job_id, event_time, messages)
 
 
-def send_messages(
-    workflow: str, job_id: str, messages: List[list], event_time: str
+async def send_messages(
+    workflow: str,
+    job_id: str,
+    messages: List[list],
+    event_time: str,
+    comms_timeout: float | None = None,
 ) -> None:
     workflow = os.path.normpath(workflow)
     try:
-        pclient = get_client(workflow)
+        pclient = get_client(workflow, timeout=comms_timeout)
     except WorkflowStopped:
         # on a remote host this means the contact file is not present
         # either the workflow is stopped or the contact file is not present
@@ -153,7 +164,7 @@ def send_messages(
             'messages': messages,
         }
     }
-    pclient('graphql', mutation_kwargs)
+    await pclient.async_request('graphql', mutation_kwargs)
 
 
 def _append_job_status_file(workflow, job_id, event_time, messages):

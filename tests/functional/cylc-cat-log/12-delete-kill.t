@@ -33,6 +33,7 @@ __EOF__
 log_file="${WORKFLOW_RUN_DIR}/log/foo.log"
 echo "Hello, Mr. Thompson" > "$log_file"
 
+
 TEST_NAME="${TEST_NAME_BASE}-delete"
 cylc cat-log --mode=tail "$WORKFLOW_NAME" -f foo.log 2>&1 &
 cat_log_pid="$!"
