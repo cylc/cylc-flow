@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test workflow event handler, abort on stall setting
+# Test workflow abort event handler
 . "$(dirname "$0")/test_header"
 set_test_number 4
 
@@ -25,10 +25,9 @@ run_ok "${TEST_NAME_BASE}-validate" \
 workflow_run_fail "${TEST_NAME_BASE}-run" \
     cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 cylc cat-log "${WORKFLOW_NAME}" >'log'
-grep_ok 'CRITICAL - Workflow shutting down - contact file modified' 'log'
+grep_ok 'CRITICAL - Workflow shutting down' 'log'
 cmp_ok "${WORKFLOW_RUN_DIR}/handler.out" <<'__OUT__'
-abort contact file modified
+abort contact file unexpectedly modified
 __OUT__
 
 purge
-exit

@@ -108,6 +108,7 @@ from cylc.flow.loggingutil import (
     get_sorted_logs_by_time,
     patch_log_level,
 )
+from cylc.flow.main_loop.health_check import HealthCheckFailed
 from cylc.flow.network import API
 from cylc.flow.network.authentication import key_housekeeping
 from cylc.flow.network.server import WorkflowRuntimeServer
@@ -728,8 +729,8 @@ class Scheduler:
         except asyncio.CancelledError as exc:
             await self.handle_exception(exc)
 
-        except CylcError as exc:  # Includes SchedulerError
-            # catch "expected" errors
+        except (CylcError, HealthCheckFailed) as exc:
+            # catch "expected" errors (includes SchedulerError)
             await self.handle_exception(exc)
 
         except Exception as exc:
@@ -1868,9 +1869,10 @@ class Scheduler:
             # Suppress the reason for shutdown, which is logged separately
             exc.__suppress_context__ = True
             if isinstance(exc, CylcError):
-                LOG.error(f"{exc.__class__.__name__}: {exc}")
-                if cylc.flow.flags.verbosity > 1:
-                    LOG.exception(exc)
+                LOG.error(
+                    f"{type(exc).__name__}: {exc}",
+                    exc_info=(exc if cylc.flow.flags.verbosity > 1 else None)
+                )
             else:
                 LOG.exception(exc)
             # Re-raise exception to be caught higher up (sets the exit code)
@@ -1934,9 +1936,16 @@ class Scheduler:
             fname = workflow_files.get_contact_file_path(self.workflow)
             try:
                 os.unlink(fname)
+            except FileNotFoundError as exc:
+                LOG.warning(
+                    f"contact file missing on shutdown: {fname}",
+                    exc_info=(exc if cylc.flow.flags.verbosity > 1 else None)
+                )
             except OSError as exc:
-                LOG.warning(f"failed to remove workflow contact file: {fname}")
-                LOG.exception(exc)
+                LOG.critical(
+                    f"failed to remove workflow contact file: {fname}",
+                    exc_info=exc,
+                )
             else:
                 # Useful to identify that this Scheduler has shut down
                 # properly (e.g. in tests):
@@ -1954,6 +1963,7 @@ class Scheduler:
     def _log_shutdown_reason(self, reason: BaseException) -> None:
         """Appropriately log the reason for scheduler shutdown."""
         shutdown_msg = "Workflow shutting down"
+        exc_info = reason if cylc.flow.flags.verbosity > 1 else None
         with patch_log_level(LOG):
             if isinstance(reason, SchedulerStop):
                 LOG.info(f'{shutdown_msg} - {reason.args[0]}')
@@ -1967,11 +1977,14 @@ class Scheduler:
                 isinstance(reason, ParsecError) and reason.schd_expected
             ):
                 LOG.error(
-                    f"{shutdown_msg} - {type(reason).__name__}: {reason}"
+                    f"{shutdown_msg} - {type(reason).__name__}: {reason}",
+                    exc_info=exc_info,
                 )
-                if cylc.flow.flags.verbosity > 1:
-                    # Print traceback
-                    LOG.exception(reason)
+            elif isinstance(reason, HealthCheckFailed):
+                LOG.critical(
+                    f"{shutdown_msg} - health check failed: {reason}",
+                    exc_info=exc_info,
+                )
             else:
                 LOG.exception(reason)
                 if str(reason):

@@ -24,8 +24,17 @@ Shuts down the workflow in the event of inconsistency or error.
 import os
 
 from cylc.flow import workflow_files
-from cylc.flow.exceptions import CylcError, ServiceFileError
-from cylc.flow.main_loop import periodic
+from cylc.flow.exceptions import (
+    ServiceFileError,
+)
+from cylc.flow.main_loop import (
+    MainLoopPluginException,
+    periodic,
+)
+
+
+class HealthCheckFailed(MainLoopPluginException):
+    """Raised when a health check fails for a (rarely) expected reason."""
 
 
 @periodic
@@ -40,7 +49,7 @@ async def health_check(scheduler, _):
 
 def _check_workflow_run_dir(scheduler):
     if not os.path.exists(scheduler.workflow_run_dir):
-        raise CylcError(
+        raise HealthCheckFailed(
             'Workflow run directory does not exist:'
             f' {scheduler.workflow_run_dir}'
         )
@@ -51,9 +60,11 @@ def _check_contact_file(scheduler):
         contact_data = workflow_files.load_contact_file(
             scheduler.workflow)
         if contact_data != scheduler.contact_data:
-            raise CylcError('contact file modified')
-    except (AssertionError, IOError, ValueError, ServiceFileError) as exc:
-        raise CylcError(
+            raise HealthCheckFailed('contact file unexpectedly modified')
+    except ServiceFileError as exc:
+        raise HealthCheckFailed(exc) from exc.__cause__
+    except (AssertionError, IOError, ValueError) as exc:
+        raise MainLoopPluginException(
             '%s: contact file corrupted/modified and may be left'
             % workflow_files.get_contact_file_path(scheduler.workflow)
         ) from exc

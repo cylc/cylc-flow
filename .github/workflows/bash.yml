@@ -84,9 +84,7 @@ jobs:
             tests/functional/job-file-trap/03-user-trap.t \
             tests/functional/jobscript/00-torture.t \
             tests/functional/pause-resume/12-pause-then-retry.t \
-            tests/functional/shutdown/09-now2.t \
-            tests/functional/shutdown/13-no-port-file-check.t \
-            tests/functional/shutdown/14-no-dir-check.t
+            tests/functional/shutdown/09-now2.t
 
       - name: Copy cylc-run out of container
         if: failure()

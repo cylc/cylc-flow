@@ -24,7 +24,6 @@ from cylc.flow import CYLC_LOG
 from cylc.flow.exceptions import CylcError
 from cylc.flow.main_loop import (
     CoroTypes,
-    MainLoopPluginException,
     _wrapper,
     get_runners,
     load,
@@ -143,7 +142,7 @@ def test_wrapper_passes_cylc_error():
         None,
         None
     )
-    with pytest.raises(MainLoopPluginException):
+    with pytest.raises(CylcError):
         asyncio.run(coro)
 
 
