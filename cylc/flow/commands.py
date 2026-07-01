@@ -180,10 +180,6 @@ def _remove_matched_tasks(
                 continue
             removed[itask.tokens.task] = fnums_to_remove
             if fnums_to_remove == itask.flow_nums:
-                # Need to remove the task from the pool.
-                # Spawn next occurrence of xtrigger sequential task (otherwise
-                # this would not happen after removing this occurrence):
-                schd.pool.check_spawn_psx_task(itask)
                 schd.pool.remove(itask, 'request')
                 to_kill.append(itask)
                 itask.removed = True
