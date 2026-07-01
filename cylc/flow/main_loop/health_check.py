@@ -33,6 +33,10 @@ from cylc.flow.main_loop import (
 )
 
 
+class HealthCheckFailed(MainLoopPluginException):
+    """Raised when a health check fails for a (rarely) expected reason."""
+
+
 @periodic
 async def health_check(scheduler, _):
     """Perform workflow health checks."""
@@ -45,7 +49,7 @@ async def health_check(scheduler, _):
 
 def _check_workflow_run_dir(scheduler):
     if not os.path.exists(scheduler.workflow_run_dir):
-        raise MainLoopPluginException(
+        raise HealthCheckFailed(
             'Workflow run directory does not exist:'
             f' {scheduler.workflow_run_dir}'
         )
@@ -56,9 +60,9 @@ def _check_contact_file(scheduler):
         contact_data = workflow_files.load_contact_file(
             scheduler.workflow)
         if contact_data != scheduler.contact_data:
-            raise MainLoopPluginException('contact file modified')
+            raise HealthCheckFailed('contact file unexpectedly modified')
     except ServiceFileError as exc:
-        raise MainLoopPluginException(exc) from exc.__cause__
+        raise HealthCheckFailed(exc) from exc.__cause__
     except (AssertionError, IOError, ValueError) as exc:
         raise MainLoopPluginException(
             '%s: contact file corrupted/modified and may be left'
