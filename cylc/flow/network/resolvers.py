@@ -17,7 +17,10 @@
 
 """GraphQL resolvers for use in data accessing and mutation of workflows."""
 
-from abc import ABCMeta, abstractmethod
+from abc import (
+    ABCMeta,
+    abstractmethod,
+)
 import asyncio
 from contextlib import suppress
 from fnmatch import fnmatchcase
@@ -25,6 +28,7 @@ import logging
 import queue
 from time import time
 from typing import (
+    TYPE_CHECKING,
     Any,
     AsyncGenerator,
     Dict,
@@ -32,7 +36,6 @@ from typing import (
     NamedTuple,
     Optional,
     Tuple,
-    TYPE_CHECKING,
     cast,
 )
 from uuid import uuid4
@@ -42,29 +45,40 @@ from graphene.utils.str_converters import to_snake_case
 from cylc.flow import LOG
 from cylc.flow.commands import COMMANDS
 from cylc.flow.data_store_mgr import (
-    EDGES, FAMILY_PROXIES, TASK_PROXIES, WORKFLOW,
-    DELTA_ADDED, create_delta_store
+    DELTA_ADDED,
+    EDGES,
+    FAMILY_PROXIES,
+    TASK_PROXIES,
+    WORKFLOW,
+    create_delta_store,
 )
 import cylc.flow.flags
 from cylc.flow.id import Tokens
 from cylc.flow.network.schema import (
     DEF_TYPES,
-    NodesEdges,
     PROXY_NODES,
     SUB_RESOLVERS,
+    NodesEdges,
     runtime_schema_to_cfg,
     sort_elements,
 )
-from cylc.flow.util import uniq, iter_uniq
+from cylc.flow.util import (
+    iter_uniq,
+    uniq,
+)
+
 
 if TYPE_CHECKING:
     from enum import Enum
     from uuid import UUID
-    from graphql import GraphQLResolveInfo
-    from cylc.flow.data_store_mgr import DataStoreMgr
-    from cylc.flow.scheduler import Scheduler
 
-    DeltaQueue = queue.Queue[Tuple[str, str, dict]]
+    from graphql import GraphQLResolveInfo
+
+    from cylc.flow.data_store_mgr import (
+        DataStoreBase,
+        DeltaQueue,
+    )
+    from cylc.flow.scheduler import Scheduler
 
 
 class TaskMsg(NamedTuple):
@@ -295,17 +309,17 @@ def get_data_elements(flow, nat_ids, element_type):
     ]
 
 
-class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
+class BaseResolvers(metaclass=ABCMeta):
     """Data access methods for resolving GraphQL queries."""
 
-    def __init__(self, data_store_mgr: 'DataStoreMgr'):
+    def __init__(self, data_store_mgr: 'DataStoreBase'):
         self.data_store_mgr = data_store_mgr
         # Used with subscriptions for a temporary delta-store,
         # [sub_id][w_id] = store
-        self.delta_store: Dict['UUID', Dict[str, dict]] = {}
+        self.delta_store: dict[UUID, dict[str, dict]] = {}
         # Used to serialised deltas from a single workflow, needed for
         # the management of a common data object.
-        self.delta_processing_flows: Dict['UUID', set] = {}
+        self.delta_processing_flows: dict[UUID, set] = {}
 
     # Query resolvers
     async def get_workflow_by_id(self, args):
@@ -529,18 +543,18 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
         cast('dict', info.context).setdefault(
             'ops_queue', {}
         )[op_id] = op_queue
-        self.delta_processing_flows[sub_id] = set()
-        delta_processing_flows = self.delta_processing_flows[sub_id]
+        delta_processing_flows = self.delta_processing_flows[sub_id] = set()
 
         delta_queues = self.data_store_mgr.delta_queues
-        deltas_queue: DeltaQueue = queue.Queue()
+        delta_queue: DeltaQueue = queue.Queue()
 
-        counters: Dict[str, int] = {}
+        counters: dict[str, int] = {}
         delta_yield_queue: DeltaQueue = queue.Queue()
-        flow_delta_queues: Dict[str, queue.Queue[Tuple[str, dict]]] = {}
+        flow_delta_queues: dict[str, DeltaQueue] = {}
+
+        # Iterate over the queue yielding deltas
+        w_ids = workflow_ids
         try:
-            # Iterate over the queue yielding deltas
-            w_ids = workflow_ids
             sub_resolver = SUB_RESOLVERS.get(to_snake_case(info.field_name))
             interval = args['ignore_interval']
             old_time = 0.0
@@ -556,7 +570,7 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
                 for w_id in w_ids:
                     if w_id in self.data_store_mgr.data:
                         if sub_id not in delta_queues[w_id]:
-                            delta_queues[w_id][sub_id] = deltas_queue
+                            delta_queues[w_id][sub_id] = delta_queue
                             # On new yield workflow data-store as added delta
                             if args.get('initial_burst'):
                                 delta_store = create_delta_store(
@@ -566,31 +580,31 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
                                 delta_store[DELTA_ADDED][
                                     WORKFLOW
                                 ].reloaded = True
-                                deltas_queue.put(
-                                    (w_id, 'initial_burst', delta_store))
+                                delta_queue.put(
+                                    (w_id, 'initial_burst', delta_store),
+                                )
                     elif w_id in self.delta_store[sub_id]:
                         del self.delta_store[sub_id][w_id]
                 try:
                     with suppress(queue.Empty):
-                        w_id, topic, delta_store = deltas_queue.get(False)
+                        w_id, topic, delta_store = delta_queue.get(False)
 
                         if w_id not in flow_delta_queues:
                             counters[w_id] = 0
                             flow_delta_queues[w_id] = queue.Queue()
-                        flow_delta_queues[w_id].put((topic, delta_store))
+                        flow_delta_queues[w_id].put((w_id, topic, delta_store))
 
                     # Only yield deltas from the same workflow if previous
                     # delta has finished processing.
-                    for flow_id, flow_queue in flow_delta_queues.items():
+                    for w_id, flow_queue in flow_delta_queues.items():
                         if flow_queue.empty():
                             continue
-                        elif flow_id in delta_processing_flows:
-                            if counters[flow_id] < DELTA_PROC_WAIT:
+                        elif w_id in delta_processing_flows:
+                            if counters[w_id] < DELTA_PROC_WAIT:
                                 continue
-                            delta_processing_flows.remove(flow_id)
-                        counters[flow_id] = 0
-                        topic, delta_store = flow_queue.get()
-                        delta_yield_queue.put((flow_id, topic, delta_store))
+                            delta_processing_flows.remove(w_id)
+                        counters[w_id] = 0
+                        delta_yield_queue.put(flow_queue.get())
 
                     w_id, topic, delta_store = delta_yield_queue.get(False)
 
@@ -616,8 +630,8 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
                             yield result
                 except queue.Empty:
                     await asyncio.sleep(DELTA_SLEEP_INTERVAL)
-                    for flow_id in delta_processing_flows:
-                        counters[flow_id] += 1
+                    for w_id in delta_processing_flows:
+                        counters[w_id] += 1
         except (GeneratorExit, asyncio.CancelledError):
             raise
         except Exception:
@@ -634,6 +648,7 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
             yield None
 
     async def flow_delta_processed(self, context, op_id):
+        """Used by cylc.uiserver.graphql.tornado_ws"""
         if 'ops_queue' in context:
             with suppress(queue.Empty, KeyError):
                 sub_id, w_id = context['ops_queue'][op_id].get(False)
@@ -656,7 +671,7 @@ class Resolvers(BaseResolvers):
 
     schd: 'Scheduler'
 
-    def __init__(self, data: 'DataStoreMgr', schd: 'Scheduler') -> None:
+    def __init__(self, data: 'DataStoreBase', schd: 'Scheduler') -> None:
         super().__init__(data)
         self.schd = schd
 
