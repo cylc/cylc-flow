@@ -45,7 +45,9 @@ exists_fail "${LOCAL_JOB_DIR}/job"
 
 # remote
 TEST_NAME=${TEST_NAME_BASE}-no_log_remote
-run_ok "$TEST_NAME" cylc cat-log --debug -f j e "${WORKFLOW_NAME}//1/a-task"
+# Even though job.out is present, not all expected files are present,
+# so it should treat retrieval as incomplete and go remote:
+run_ok "$TEST_NAME" cylc cat-log --debug -f job.out "${WORKFLOW_NAME}//1/a-task"
 grep_ok "Not all logs present, getting job log remotely" "${TEST_NAME}.stderr"
 
 # remote
