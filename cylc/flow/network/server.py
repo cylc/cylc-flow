@@ -16,6 +16,7 @@
 """Server for workflow runtime API."""
 
 import asyncio
+import pickle
 from queue import Queue
 from textwrap import dedent
 from time import sleep
@@ -418,6 +419,17 @@ class WorkflowRuntimeServer:
             # error, so fail the command.
             raise Exception(*(error.message for error in executed.errors))
         return executed.data
+
+    # Can be used for REQ/PUB connection testing, or possibly dissemination.
+    @expose
+    def reqpub(self, topic: str, payload: Any, **_kawrgs) -> str:
+        """Send payload out, under given topic, via the publisher."""
+        if isinstance(payload, str):
+            bpayload = payload.encode('utf-8')
+        else:
+            bpayload = pickle.dumps(payload)
+        self.publish_queue.put([(topic.encode('utf-8'), bpayload, None)])
+        return topic
 
     # UIServer Data Commands
     @expose
