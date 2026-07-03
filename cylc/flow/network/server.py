@@ -16,6 +16,7 @@
 """Server for workflow runtime API."""
 
 import asyncio
+import json
 import pickle
 from queue import Queue
 from textwrap import dedent
@@ -40,7 +41,7 @@ from cylc.flow import (
 )
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.data_messages_pb2 import PbEntireWorkflow
-from cylc.flow.data_store_mgr import DELTAS_MAP
+from cylc.flow.data_store_mgr import DELTAS_MAP, WORKFLOW
 from cylc.flow.network.graphql import (
     CylcExecutionContext,
     IgnoreFieldMiddleware,
@@ -425,6 +426,14 @@ class WorkflowRuntimeServer:
     def reqpub(self, topic: str, payload: Any, **_kawrgs) -> str:
         """Send payload out, under given topic, via the publisher."""
         if isinstance(payload, str):
+            if payload == 'status':
+                data = self.schd.data_store_mgr.data[
+                    self.schd.data_store_mgr.workflow_id
+                ]
+                payload = json.dumps({
+                    'status': data[WORKFLOW].status,
+                    'status_msg': data[WORKFLOW].status_msg,
+                })
             bpayload = payload.encode('utf-8')
         else:
             bpayload = pickle.dumps(payload)
