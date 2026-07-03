@@ -22,6 +22,7 @@ from abc import (
     abstractmethod,
 )
 import asyncio
+from collections import Counter
 from contextlib import suppress
 from fnmatch import fnmatchcase
 import logging
@@ -318,9 +319,10 @@ class BaseResolvers(metaclass=ABCMeta):
         # Used with subscriptions for a temporary delta-store,
         # [sub_id][w_id] = store
         self.delta_store: dict[UUID, dict[str, dict]] = {}
-        # Used to serialised deltas from a single workflow, needed for
-        # the management of a common data object.
-        self.delta_processing_flows: dict[UUID, set[str]] = {}
+        # Used to serialise deltas from a single workflow. Tracks how long
+        # each workflow has been waiting to continue processing.
+        # [sub_id][w_id] = wait_counter
+        self.delta_processing_counters: dict[UUID, Counter[str]] = {}
 
     # Query resolvers
     async def get_workflow_by_id(self, args):
@@ -548,22 +550,19 @@ class BaseResolvers(metaclass=ABCMeta):
         self,
         delta_queue: 'DeltaQueue',
         flow_delta_queues: 'dict[str, DeltaQueue]',
-        counters: dict[str, int],
     ) -> None:
         """Move one delta from the shared queue into per-workflow queues."""
         if delta_queue.empty():
             return
         w_id, topic, delta_store = delta_queue.get(False)
         if w_id not in flow_delta_queues:
-            counters[w_id] = 0
             flow_delta_queues[w_id] = queue.Queue()
         flow_delta_queues[w_id].put((w_id, topic, delta_store))
 
     def _next_ready_flow_delta(
         self,
-        sub_id: 'UUID',
         flow_delta_queues: 'dict[str, DeltaQueue]',
-        counters: dict[str, int],
+        wait_counter: Counter[str],
     ):
         """Yield one delta per workflow when processing constraints allow.
 
@@ -573,12 +572,10 @@ class BaseResolvers(metaclass=ABCMeta):
         for w_id, flow_queue in flow_delta_queues.items():
             if flow_queue.empty():
                 continue
-            if w_id in self.delta_processing_flows[sub_id]:
-                if counters[w_id] < DELTA_PROC_WAIT:
-                    continue
-                self.delta_processing_flows[sub_id].remove(w_id)
-            counters[w_id] = 0
-            yield flow_queue.get()
+            if not wait_counter[w_id]:
+                yield flow_queue.get()
+            elif wait_counter[w_id] >= DELTA_PROC_WAIT:
+                del wait_counter[w_id]
 
     async def subscribe_delta(
         self, root, info: 'GraphQLResolveInfo', args
@@ -602,11 +599,10 @@ class BaseResolvers(metaclass=ABCMeta):
         cast('dict', info.context).setdefault(
             'ops_queue', {}
         )[op_id] = op_queue
-        self.delta_processing_flows[sub_id] = set()
+        wait_counter = self.delta_processing_counters[sub_id] = Counter()
 
         delta_queue: DeltaQueue = queue.Queue()
 
-        counters: dict[str, int] = {}
         delta_yield_queue: DeltaQueue = queue.Queue()
         flow_delta_queues: dict[str, DeltaQueue] = {}
 
@@ -628,17 +624,17 @@ class BaseResolvers(metaclass=ABCMeta):
                     w_ids, sub_id, delta_queue, args.get('initial_burst')
                 )
                 self._enqueue_next_delta_by_workflow(
-                    delta_queue, flow_delta_queues, counters
+                    delta_queue, flow_delta_queues
                 )
                 for delta in self._next_ready_flow_delta(
-                    sub_id, flow_delta_queues, counters
+                    flow_delta_queues, wait_counter
                 ):
                     delta_yield_queue.put(delta)
 
                 if delta_yield_queue.empty():
                     await asyncio.sleep(DELTA_SLEEP_INTERVAL)
-                    for w_id in self.delta_processing_flows[sub_id]:
-                        counters[w_id] += 1
+                    # Increment every workflow's wait count
+                    wait_counter.update(wait_counter.keys())
                     continue
 
                 w_id, topic, delta_store = delta_yield_queue.get(False)
@@ -653,7 +649,6 @@ class BaseResolvers(metaclass=ABCMeta):
                         continue
                     old_time = new_time
 
-                self.delta_processing_flows[sub_id].add(w_id)
                 op_queue.put((sub_id, w_id))
                 self.delta_store[sub_id][w_id] = delta_store
                 if sub_resolver is None:
@@ -669,7 +664,7 @@ class BaseResolvers(metaclass=ABCMeta):
                 if delta_queues := self.data_store_mgr.delta_queues.get(w_id):
                     delta_queues.pop(sub_id, None)
             self.delta_store.pop(sub_id, None)
-            self.delta_processing_flows.pop(sub_id, None)
+            self.delta_processing_counters.pop(sub_id, None)
             yield None
 
     async def flow_delta_processed(self, context, op_id):
@@ -677,7 +672,7 @@ class BaseResolvers(metaclass=ABCMeta):
         if 'ops_queue' in context:
             with suppress(queue.Empty, KeyError):
                 sub_id, w_id = context['ops_queue'][op_id].get(False)
-                self.delta_processing_flows[sub_id].remove(w_id)
+                self.delta_processing_counters[sub_id].pop(w_id, None)
 
     @abstractmethod
     async def mutator(
