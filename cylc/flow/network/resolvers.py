@@ -521,6 +521,69 @@ class BaseResolvers(metaclass=ABCMeta):
             nodes=sort_elements(nodes, args),
             edges=sort_elements(edges, args))
 
+    def _subscribe_workflow_delta_queues(
+        self,
+        w_ids,
+        sub_id,
+        delta_queue,
+        delta_queues,
+        args,
+    ) -> None:
+        """Attach this subscription to workflow delta queues."""
+        for w_id in w_ids:
+            if w_id in self.data_store_mgr.data:
+                if sub_id not in delta_queues[w_id]:
+                    delta_queues[w_id][sub_id] = delta_queue
+                    # On new yield workflow data-store as added delta
+                    if args.get('initial_burst'):
+                        delta_store = create_delta_store(
+                            workflow_id=w_id)
+                        delta_store[DELTA_ADDED] = (
+                            self.data_store_mgr.data[w_id])
+                        delta_store[DELTA_ADDED][
+                            WORKFLOW
+                        ].reloaded = True
+                        delta_queue.put(
+                            (w_id, 'initial_burst', delta_store),
+                        )
+            elif w_id in self.delta_store[sub_id]:
+                del self.delta_store[sub_id][w_id]
+
+    def _enqueue_next_delta_by_workflow(
+        self,
+        delta_queue,
+        flow_delta_queues,
+        counters,
+    ) -> None:
+        """Move one delta from the shared queue into per-workflow queues."""
+        with suppress(queue.Empty):
+            w_id, topic, delta_store = delta_queue.get(False)
+
+            if w_id not in flow_delta_queues:
+                counters[w_id] = 0
+                flow_delta_queues[w_id] = queue.Queue()
+            flow_delta_queues[w_id].put((w_id, topic, delta_store))
+
+    def _enqueue_next_ready_flow_delta(
+        self,
+        flow_delta_queues,
+        delta_processing_flows,
+        counters,
+        delta_yield_queue,
+    ):
+        """Queue one delta per workflow when processing constraints allow."""
+        # Only yield deltas from the same workflow if previous delta has
+        # finished processing.
+        for w_id, flow_queue in flow_delta_queues.items():
+            if flow_queue.empty():
+                continue
+            elif w_id in delta_processing_flows:
+                if counters[w_id] < DELTA_PROC_WAIT:
+                    continue
+                delta_processing_flows.remove(w_id)
+            counters[w_id] = 0
+            delta_yield_queue.put(flow_queue.get())
+
     async def subscribe_delta(
         self, root, info: 'GraphQLResolveInfo', args
     ) -> AsyncGenerator[Any, None]:
@@ -567,44 +630,19 @@ class BaseResolvers(metaclass=ABCMeta):
                     for remove_id in old_ids.difference(w_ids):
                         if remove_id in self.delta_store[sub_id]:
                             del self.delta_store[sub_id][remove_id]
-                for w_id in w_ids:
-                    if w_id in self.data_store_mgr.data:
-                        if sub_id not in delta_queues[w_id]:
-                            delta_queues[w_id][sub_id] = delta_queue
-                            # On new yield workflow data-store as added delta
-                            if args.get('initial_burst'):
-                                delta_store = create_delta_store(
-                                    workflow_id=w_id)
-                                delta_store[DELTA_ADDED] = (
-                                    self.data_store_mgr.data[w_id])
-                                delta_store[DELTA_ADDED][
-                                    WORKFLOW
-                                ].reloaded = True
-                                delta_queue.put(
-                                    (w_id, 'initial_burst', delta_store),
-                                )
-                    elif w_id in self.delta_store[sub_id]:
-                        del self.delta_store[sub_id][w_id]
+                self._subscribe_workflow_delta_queues(
+                    w_ids, sub_id, delta_queue, delta_queues, args
+                )
                 try:
-                    with suppress(queue.Empty):
-                        w_id, topic, delta_store = delta_queue.get(False)
-
-                        if w_id not in flow_delta_queues:
-                            counters[w_id] = 0
-                            flow_delta_queues[w_id] = queue.Queue()
-                        flow_delta_queues[w_id].put((w_id, topic, delta_store))
-
-                    # Only yield deltas from the same workflow if previous
-                    # delta has finished processing.
-                    for w_id, flow_queue in flow_delta_queues.items():
-                        if flow_queue.empty():
-                            continue
-                        elif w_id in delta_processing_flows:
-                            if counters[w_id] < DELTA_PROC_WAIT:
-                                continue
-                            delta_processing_flows.remove(w_id)
-                        counters[w_id] = 0
-                        delta_yield_queue.put(flow_queue.get())
+                    self._enqueue_next_delta_by_workflow(
+                        delta_queue, flow_delta_queues, counters
+                    )
+                    self._enqueue_next_ready_flow_delta(
+                        flow_delta_queues,
+                        delta_processing_flows,
+                        counters,
+                        delta_yield_queue,
+                    )
 
                     w_id, topic, delta_store = delta_yield_queue.get(False)
 
