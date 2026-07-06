@@ -39,6 +39,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
 )
+import warnings
 
 from cylc.flow import (
     LOG,
@@ -506,9 +507,24 @@ def read_and_proc(
                     'Jinja2 Python package must be installed '
                     'to process file: ' + fpath
                 ) from None
-            flines = jinja2process(
-                fpath, flines, fdir, template_vars
-            )
+            with warnings.catch_warnings(
+                record=True, action='default'
+            ) as warns:
+                flines = jinja2process(
+                    fpath, flines, fdir, template_vars
+                )
+            if warns:
+                LOG.warning(
+                    "The following warnings were raised during Jinja2 "
+                    "preprocessing (note: any Jinja 3.1 deprecations will "
+                    "break at Cylc 8.7):\n"
+                    + "\n".join(
+                        warnings.formatwarning(
+                            w.message, w.category, w.filename, w.lineno
+                        )
+                        for w in warns
+                    )
+                )
 
     # concatenate continuation lines
     if do_contin:
