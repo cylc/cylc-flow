@@ -35,24 +35,33 @@ import os
 from pathlib import Path
 import re
 import sys
-import typing as t
+from typing import (
+    TYPE_CHECKING,
+    Any,
+)
 
-from cylc.flow import __version__
-from cylc.flow import LOG
+from cylc.flow import (
+    LOG,
+    __version__,
+)
+from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.exceptions import (
-    FileParseError, ParsecError, TemplateVarLanguageClash
+    FileParseError,
+    ParsecError,
+    TemplateVarLanguageClash,
 )
 from cylc.flow.parsec.include import inline
-from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
-from cylc.flow.plugins import run_plugins
 from cylc.flow.parsec.util import itemstr
+from cylc.flow.plugins import run_plugins
 from cylc.flow.templatevars import get_template_vars_from_db
 from cylc.flow.workflow_files import (
-    get_workflow_source_dir, check_flow_file)
+    check_flow_file,
+    get_workflow_source_dir,
+)
 
-if t.TYPE_CHECKING:
+
+if TYPE_CHECKING:
     from optparse import Values
-    from typing import Union
 
 
 # heading/sections can contain commas (namespace name lists) and any
@@ -109,14 +118,14 @@ _UNCLOSED_MULTILINE = re.compile(
 )
 TEMPLATING_DETECTED = 'templating_detected'
 TEMPLATE_VARIABLES = 'template_variables'
-EXTRA_VARS_TEMPLATE: t.Dict[str, t.Any] = {
+EXTRA_VARS_TEMPLATE: dict[str, Any] = {
     'env': {},
     TEMPLATE_VARIABLES: {},
     TEMPLATING_DETECTED: None
 }
 
 
-def get_cylc_env_vars() -> t.Dict[str, str]:
+def get_cylc_env_vars() -> dict[str, str]:
     """Return a restricted dict of CYLC_ environment variables for templating.
 
     The following variables are ignored because the do not necessarily reflect
@@ -251,7 +260,7 @@ def multiline(flines, value, index, maxline):
     return quot + newvalue + line, index
 
 
-def process_plugins(fpath: 'Union[str, Path]', opts: 'Values'):
+def process_plugins(fpath: 'str | Path', opts: 'Values'):
     """Run a Cylc pre-configuration plugin.
 
     Plugins should return a dictionary containing:
@@ -320,9 +329,9 @@ def process_plugins(fpath: 'Union[str, Path]', opts: 'Values'):
 
 
 def merge_template_vars(
-    native_tvars: t.Dict[str, t.Any],
-    plugin_result: t.Dict[str, t.Any]
-) -> t.Dict[str, t.Any]:
+    native_tvars: dict[str, Any],
+    plugin_result: dict[str, Any]
+) -> dict[str, Any]:
     """Manage the merger of Cylc Native and Plugin template variables.
 
     Args:
@@ -363,7 +372,9 @@ def merge_template_vars(
         return native_tvars
 
 
-def _prepend_old_templatevars(fpath: str, template_vars: t.Dict) -> t.Dict:
+def _prepend_old_templatevars(
+    fpath: str, template_vars: dict[str, Any]
+) -> dict[str, Any]:
     """If the fpath is in a rundir, extract template variables from database.
 
     Args:
@@ -402,10 +413,10 @@ def _get_fpath_for_source(fpath: str, opts: "Values") -> str:
 
 def read_and_proc(
     fpath: str,
-    template_vars: t.Optional[t.Dict[str, t.Any]] = None,
-    viewcfg: t.Any = None,
-    opts: t.Any = None,
-) -> t.List[str]:
+    template_vars: dict[str, Any] | None = None,
+    viewcfg: Any = None,
+    opts: Any = None,
+) -> list[str]:
     """
     Read a cylc parsec config file (at fpath), inline any include files,
     process with Jinja2, and concatenate continuation lines.
@@ -512,8 +523,8 @@ def read_and_proc(
 
 
 def hashbang_and_plugin_templating_clash(
-    templating: str, flines: t.List[str]
-) -> t.Optional[str]:
+    templating: str, flines: list[str]
+) -> str | None:
     """Return file's hashbang/shebang, but raise TemplateVarLanguageClash
     if plugin-set template engine and hashbang do not match.
 
@@ -539,7 +550,7 @@ def hashbang_and_plugin_templating_clash(
                 ...
             cylc.flow.parsec.exceptions.TemplateVarLanguageClash: ...
     """
-    hashbang: t.Optional[str] = None
+    hashbang: str | None = None
     # Get hashbang if possible:
     if flines:
         match = re.match(r'^#!(\S+)', flines[0])
@@ -559,9 +570,9 @@ def hashbang_and_plugin_templating_clash(
 
 def parse(
     fpath: str,
-    output_fname: t.Optional[str] = None,
-    template_vars: t.Optional[t.Dict[str, t.Any]] = None,
-    opts: t.Any = None,
+    output_fname: str | None = None,
+    template_vars: dict[str, Any] | None = None,
+    opts: Any = None,
 ) -> OrderedDictWithDefaults:
     """Parse file items line-by-line into a corresponding nested dict."""
 
@@ -574,7 +585,7 @@ def parse(
 
     nesting_level = 0
     config = OrderedDictWithDefaults()
-    parents: t.List[str] = []
+    parents: list[str] = []
 
     maxline = len(flines) - 1
     index = -1
