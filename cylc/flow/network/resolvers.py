@@ -528,7 +528,7 @@ class BaseResolvers(metaclass=ABCMeta):
         self,
         w_ids: 'Iterable[str]',
         sub_id: 'UUID',
-        delta_queue: 'DeltaQueue',
+        shared_delta_queue: 'DeltaQueue',
         initial_burst: bool | None,
     ) -> None:
         """Attach this subscription to workflow delta queues."""
@@ -538,30 +538,30 @@ class BaseResolvers(metaclass=ABCMeta):
                 continue
             if sub_id in self.data_store_mgr.delta_queues[w_id]:
                 continue
-            self.data_store_mgr.delta_queues[w_id][sub_id] = delta_queue
+            self.data_store_mgr.delta_queues[w_id][sub_id] = shared_delta_queue
             # On new yield workflow data-store as added delta
             if initial_burst:
                 delta_store = create_delta_store(workflow_id=w_id)
                 delta_store[DELTA_ADDED] = self.data_store_mgr.data[w_id]
                 delta_store[DELTA_ADDED][WORKFLOW].reloaded = True
-                delta_queue.put((w_id, 'initial_burst', delta_store))
+                shared_delta_queue.put((w_id, 'initial_burst', delta_store))
 
     def _enqueue_next_delta_by_workflow(
         self,
-        delta_queue: 'DeltaQueue',
-        flow_delta_queues: 'dict[str, DeltaQueue]',
+        shared_delta_queue: 'DeltaQueue',
+        per_wflow_delta_queues: 'dict[str, DeltaQueue]',
     ) -> None:
         """Move one delta from the shared queue into per-workflow queues."""
-        if delta_queue.empty():
+        if shared_delta_queue.empty():
             return
-        w_id, topic, delta_store = delta_queue.get(False)
-        if w_id not in flow_delta_queues:
-            flow_delta_queues[w_id] = queue.Queue()
-        flow_delta_queues[w_id].put((w_id, topic, delta_store))
+        w_id, topic, delta_store = shared_delta_queue.get(False)
+        per_wflow_delta_queues.setdefault(w_id, queue.Queue()).put(
+            (w_id, topic, delta_store),
+        )
 
     def _next_ready_flow_delta(
         self,
-        flow_delta_queues: 'dict[str, DeltaQueue]',
+        per_wflow_delta_queues: 'dict[str, DeltaQueue]',
         wait_counter: Counter[str],
     ):
         """Yield one delta per workflow when processing constraints allow.
@@ -569,7 +569,7 @@ class BaseResolvers(metaclass=ABCMeta):
         Only yield deltas from the same workflow if previous delta has
         finished processing.
         """
-        for w_id, flow_queue in flow_delta_queues.items():
+        for w_id, flow_queue in per_wflow_delta_queues.items():
             if flow_queue.empty():
                 continue
             if not wait_counter[w_id]:
@@ -588,7 +588,7 @@ class BaseResolvers(metaclass=ABCMeta):
         """
         # NOTE: we don't expect workflows to be returned in definition order
         # so it is ok to use `set` here
-        workflow_ids = set(args.get('workflows', args.get('ids', ())))
+        workflow_ids = frozenset(args.get('workflows', args.get('ids', ())))
 
         sub_id = uuid4()
         info.context['sub_id'] = sub_id
@@ -601,33 +601,36 @@ class BaseResolvers(metaclass=ABCMeta):
         )[op_id] = op_queue
         wait_counter = self.delta_processing_counters[sub_id] = Counter()
 
-        delta_queue: DeltaQueue = queue.Queue()
+        shared_delta_queue: DeltaQueue = queue.Queue()
 
         delta_yield_queue: DeltaQueue = queue.Queue()
-        flow_delta_queues: dict[str, DeltaQueue] = {}
+        per_wflow_delta_queues: dict[str, DeltaQueue] = {}
 
         # Iterate over the queue yielding deltas
         w_ids = workflow_ids
+        ignore_interval = args['ignore_interval']
+        old_time = 0.0
         try:
             sub_resolver = SUB_RESOLVERS.get(to_snake_case(info.field_name))
-            interval = args['ignore_interval']
-            old_time = 0.0
             while True:
                 if not workflow_ids:
                     old_ids = w_ids
                     # NOTE: we don't expect workflows to be returned in
                     # definition order so it is ok to use `set` here
-                    w_ids = set(self.data_store_mgr.delta_queues.keys())
+                    w_ids = frozenset(self.data_store_mgr.delta_queues.keys())
                     for remove_id in old_ids.difference(w_ids):
                         self.delta_store[sub_id].pop(remove_id, None)
                 self._subscribe_workflow_delta_queues(
-                    w_ids, sub_id, delta_queue, args.get('initial_burst')
+                    w_ids,
+                    sub_id,
+                    shared_delta_queue,
+                    args.get('initial_burst'),
                 )
                 self._enqueue_next_delta_by_workflow(
-                    delta_queue, flow_delta_queues
+                    shared_delta_queue, per_wflow_delta_queues
                 )
                 for delta in self._next_ready_flow_delta(
-                    flow_delta_queues, wait_counter
+                    per_wflow_delta_queues, wait_counter
                 ):
                     delta_yield_queue.put(delta)
 
@@ -642,10 +645,14 @@ class BaseResolvers(metaclass=ABCMeta):
                 # Handle shutdown delta, don't ignore.
                 if topic == 'shutdown':
                     delta_store['shutdown'] = True
-                else:
-                    # ignore deltas that are more frequent than interval.
+                elif ignore_interval:
+                    # Ignore updates that are more frequent than interval.
+                    # Some updates dump the entire store (not deltas) depending
+                    # on args, so we should not be losing any deltas here
+                    # (deltas types have ignore_interval=0 in the schema).
+                    # https://github.com/cylc/cylc-uiserver/issues/384#issuecomment-1313187896
                     new_time = time()
-                    if (new_time - old_time) <= interval:
+                    if (new_time - old_time) <= ignore_interval:
                         continue
                     old_time = new_time
 
