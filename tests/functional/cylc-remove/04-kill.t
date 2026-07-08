@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Test that removing submited/running tasks causes them to be killed.
+# Test that removing submitted/running tasks causes them to be killed.
 # Any downstream tasks that depend on the `:submit-fail`/`:fail` outputs
 # should NOT run.
 # Handlers for the `submission failed`/`failed` events should not run either.

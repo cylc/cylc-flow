@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Test subsciber module components."""
+"""Test subscriber module components."""
 
 
 from cylc.flow.network.subscriber import process_delta_msg

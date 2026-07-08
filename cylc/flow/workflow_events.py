@@ -145,7 +145,7 @@ def get_template_variables(
     event: str,
     reason: str
 ) -> Dict[str, Union[str, int]]:
-    """Return a dictionary of template varaibles for a workflow event."""
+    """Return a dictionary of template variables for a workflow event."""
     workflow_url: str = schd.config.cfg['meta'].get('URL', '')
     return {
         # scheduler properties

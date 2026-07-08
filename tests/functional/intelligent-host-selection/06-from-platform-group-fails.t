@@ -15,9 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test that Cylc fails sensibly when a plaform group with no
+# Test that Cylc fails sensibly when a platform group with no
 # accessible hosts is selected.
-# n.b. We don't care about definition order in this test becuase all
+# n.b. We don't care about definition order in this test because all
 # hosts and platforms fail.
 . "$(dirname "$0")/test_header"
 set_test_number 12

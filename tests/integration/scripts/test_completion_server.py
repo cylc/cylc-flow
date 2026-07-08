@@ -142,10 +142,10 @@ async def test_list_prereqs_and_outputs(flow, scheduler, start):
             '1/c:succeeded',
         }
 
-        # list outputs for a non-existant task
+        # list outputs for a non-existent task
         assert await _complete_cylc('cylc', 'set', e1.id, '--out', '') == set()
 
-        # list outputs for a non-existant workflow
+        # list outputs for a non-existent workflow
         assert await _complete_cylc(
             'cylc',
             'set',

@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # -----------------------------------------------------------------------------
 # This is illustrative code developed for tutorial purposes, it is not
-# intended for scientific use and is not guarantied to be accurate or correct.s
+# intended for scientific use and is not guaranteed to be accurate or correct.
 """
 Usage:
     get-observations
@@ -144,7 +144,7 @@ def reference_lat_long(site_id):
 
 
 def synop_grab(site_id, time):
-    """Get obs data from a resonably reliable 3rd Party source.
+    """Get obs data from a reasonably reliable 3rd Party source.
 
     n.b. In theory the remote site has some limits on how many requests
     you throw at it, but this is in the tens of thousands of lines, and

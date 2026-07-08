@@ -358,7 +358,7 @@ def _platform_name_from_job_info(
     |     +----------v----------------+
     |     | Do all items other than   |
     +<----+ "host" and "batch system" |
-    |   No| match for this plaform    |
+    |   No| match for this platform   |
     |     +---------------------------+
     |                           |Yes
     |                +----------v----------------+ No

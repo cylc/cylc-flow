@@ -135,7 +135,7 @@ async def test_task_completion(
         *TASK_OUTPUTS,
         # all registered custom outputs
         'x'
-        # but not the finished psudo output
+        # but not the finished pseudo output
     } - {TASK_OUTPUT_FINISHED}
 
     async with start(schd):

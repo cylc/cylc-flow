@@ -407,7 +407,7 @@ def prompt(
             A value to be chosen if the user presses <return> without first
             typing anything.
         process:
-            A function to run the user's input through before comparision.
+            A function to run the user's input through before comparison.
             E.G. string.lower.
 
     Returns:

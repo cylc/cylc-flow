@@ -89,7 +89,7 @@ INTERNAL = True
 # User's will be presented with an upgrade notice if this happens.
 REQUIRED_SCRIPT_VERSION = '>=1.0.0, <2.0.0'
 
-# register the psudo "help" and "version" commands
+# register the pseudo "help" and "version" commands
 COMMAND_LIST = list(COMMANDS) + ['help', 'version']
 
 

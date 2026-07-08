@@ -400,7 +400,7 @@ def test_iter_required_outputs__disable():
         'b',
     }
 
-    # Disabling an abitrary output leaves us with required outputs
+    # Disabling an arbitrary output leaves us with required outputs
     # from another branch:
     assert set(outputs.iter_required_messages(disable='a')) == {
         TASK_OUTPUT_FAILED,

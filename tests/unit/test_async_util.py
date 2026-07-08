@@ -224,7 +224,7 @@ def test_documentation():
 
 
 def test_rewind():
-    """It should be possible to move throught the pipe stages."""
+    """It should be possible to move through the pipe stages."""
     pipe = a_range | mult | even
     assert pipe.fastforward().rewind() == pipe
 

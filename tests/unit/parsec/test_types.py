@@ -40,7 +40,7 @@ def generate_spec():
 
         Args:
             typ (str):
-                An arbirtrary name for this type.
+                An arbitrary name for this type.
             validator (str):
                 A parsec validator.
 

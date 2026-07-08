@@ -503,7 +503,7 @@ def get_platforms_from_db(run_dir: Path) -> Set[str]:
     Warning:
         This does NOT upgrade the workflow database!
 
-        We could upgrade the DB for backward compatiblity, but we haven't
+        We could upgrade the DB for backward compatibility, but we haven't
         got any upgraders for this table yet so there's no point.
 
         Note that upgrading the DB here would not help with forward

@@ -31,7 +31,7 @@ def test_get_resources_one(tmpdir):
     """Test extraction of a specific resource.
 
     Check that a file of the right name gets extracted.
-    Do not check file content becuase there is no assurance that it will
+    Do not check file content because there is no assurance that it will
     remain constant.
     """
     get_resources('job.sh', tmpdir)

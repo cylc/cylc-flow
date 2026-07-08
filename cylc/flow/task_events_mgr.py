@@ -856,7 +856,7 @@ class TaskEventsManager():
             self.spawn_children(itask, TASK_OUTPUT_SUBMITTED, forced)
 
         elif run_signal is not None and task_output == VACATION_MESSAGE_PREFIX:
-            # Task job pre-empted into a vacation state
+            # Task job preempted into a vacation state
             self._db_events_insert(itask, "vacated", message)
             itask.set_summary_time('started')  # unset
             if TimerFlags.SUBMISSION_RETRY in itask.try_timers:
@@ -2003,7 +2003,7 @@ class TaskEventsManager():
         >>> this([40, 40], 60, [10])
         [40, 30, 10]
 
-        # Expand last item in exection polling intervals to fill the
+        # Expand last item in execution polling intervals to fill the
         # execution time limit:
         >>> this([5, 20], 100, [10])
         [5, 20, 20, 20, 20, 25, 10]

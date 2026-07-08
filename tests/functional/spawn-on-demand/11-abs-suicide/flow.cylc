@@ -1,4 +1,4 @@
-# This workflow spawns instances of c (as partially satsified prerequisites)
+# This workflow spawns instances of c (as partially satisfied prerequisites)
 # out to the runahead limit before the suicide trigger gets activated. If the
 # suicide trigger cleans up all c instances the scheduler can shut down
 # cleanly. Otherwise it will abort on stall with unsatisfied prerequisites.

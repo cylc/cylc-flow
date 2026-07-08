@@ -30,7 +30,7 @@ async def test_almost_self_suicide(flow, scheduler, start):
 
     For the example under test, pre-requisites for ``!a`` should not be
     considered the same as pre-requisites for ``a``. If the are then then
-    is parentless return false for all cases of ``a`` not in the inital cycle
+    is parentless return false for all cases of ``a`` not in the initial cycle
     and subsequent cycles never run.
     """
     wid = flow({

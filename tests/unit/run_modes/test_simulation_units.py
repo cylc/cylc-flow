@@ -42,7 +42,7 @@ def test_get_simulated_run_len(
 ):
     """Test the logic of the presence or absence of config items.
 
-    Avoid testing the correct workign of DurationParser.
+    Avoid testing the correct working of DurationParser.
     """
     rtc = {
         'execution time limit': execution_time_limit,

@@ -375,7 +375,7 @@ async def test_errors(
         # open the file selector
         rk.user_input('enter')
 
-        # it will fail to list avialable log files
+        # it will fail to list available log files
         rk.compare_screenshot(
             'list-error',
             'the error message should be displayed in a pop up',

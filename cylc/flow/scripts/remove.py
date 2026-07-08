@@ -26,7 +26,7 @@ The primary use cases for this command are:
  * Erase the flow history of tasks to allow them to rerun without starting a
    new flow. (Note that `cylc trigger` now does this automatically, however).
 
-Tasks will be removed from ALL flows, by defaut.
+Tasks will be removed from ALL flows, by default.
 
 Tasks removed from all flows, and any waiting downstream tasks spawned by
 their outputs, will be recorded with no flow numbers and will not affect

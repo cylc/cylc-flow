@@ -71,7 +71,7 @@ TEST_NAME="${TEST_NAME_BASE}.zero-issues"
 run_ok "${TEST_NAME}" cylc lint .
 named_grep_ok "${TEST_NAME_BASE}-message-on-no-errors" "found no issues" "${TEST_NAME}.stdout"
 
-# It returns an error message if you attempt to lint a non-existant location
+# It returns an error message if you attempt to lint a non-existent location
 TEST_NAME="it-fails-if-not-target"
 run_fail "${TEST_NAME}" cylc lint "a-$(uuidgen)"
 grep_ok "Workflow ID not found" "${TEST_NAME}.stderr"

@@ -46,7 +46,7 @@ between the nodes of active paths (paths whose node is in n=0) and the nodes of
 flagged paths (whose boundary node(s) have become active).
 This method is used to avoid "blinking", where a task becomes non-active then
 is removed (along with it's window/walk) before a descendant is added, causing
-it to disapear then reappear in the store (and, hence, UIs).
+it to disappear then reappear in the store (and, hence, UIs).
 
 Updates are created by the event/task/job managers.
 
@@ -381,7 +381,7 @@ def runtime_from_config(rtconfig):
 def runtime_from_partial(rtconfig, runtimeold: Optional[PbRuntime] = None):
     """Populate runtime object from partial/full config.
 
-    Potentially slower than the non-partial one, due to tha the setattr calls,
+    Potentially slower than the non-partial one, due to the setattr calls,
     but does not have expected fields.
     """
     runtime = PbRuntime()
@@ -885,7 +885,7 @@ class DataStoreMgr:
         """Generate graph window about active task proxy to n-edge-distance.
 
         Fills in graph walk from existing walks if possible, otherwise expands
-        the graph front from whereever hasn't been walked.
+        the graph front from wherever hasn't been walked.
         Walk nodes are grouped into locations which are tag according to
         parent child path, i.e. 'cpc' would be children-parents-children away
         from active/start task. Which not only provide a way to cheaply rewalk,
@@ -902,7 +902,7 @@ class DataStoreMgr:
                 Active/Other task proxy, passed in with pool invocation.
         """
 
-        # common refrences
+        # common references
         active_id = source_tokens.id
         all_walks = self.n_window_node_walks
         taskdefs = self.schd.config.taskdefs

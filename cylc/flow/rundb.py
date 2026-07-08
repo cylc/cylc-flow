@@ -519,7 +519,7 @@ class CylcWorkflowDAO:
                 error_name = "Not available"
 
             if not self.is_public:
-                # incase this isn't a filesystem issue, log the statements
+                # in case this isn't a filesystem issue, log the statements
                 # which make up the transaction to assist debug
                 LOG.error(
                     'An error occurred when writing to the database %(file)s,'

@@ -804,7 +804,7 @@ async def test_graph_change_prereq_satisfaction(
     """It should handle graph prerequisites change on reload/restart.
 
     If the graph is changed to add a dependency which has been previously
-    satisfied, then Cylc should perform a DB check and mark the prerequsite
+    satisfied, then Cylc should perform a DB check and mark the prerequisite
     as satisfied accordingly.
 
     See https://github.com/cylc/cylc-flow/pull/5334
@@ -832,7 +832,7 @@ async def test_graph_change_prereq_satisfaction(
             # start the workflow and run part 1 of the tests
             await test.asend(schd)
 
-        # shutdown and change the workflow definiton
+        # shutdown and change the workflow definition
         conf['scheduling']['graph']['R1'] += '\nb => c'
         flow(conf, workflow_id=id_)
         schd = scheduler(id_, run_mode='simulation', paused_start=False)

@@ -67,7 +67,7 @@ that distinguish repeated directives from one another:
 .. code-block:: cylc
 
    [runtime]
-       # run two heterogenous job components:
+       # run two heterogeneous job components:
        script = srun sleep 10 : sleep 30
        [[my_task]]
            execution time limit = PT1H
@@ -141,7 +141,7 @@ class SLURMHandler():
     def filter_poll_many_output(cls, out):
         """Return list of job IDs extracted from job poll stdout.
 
-        Needed to avoid the extension for heterogenous jobs ("+0", "+1" etc.)
+        Needed to avoid the extension for heterogeneous jobs ("+0", "+1" etc.)
 
         """
         job_ids = set()

@@ -18,7 +18,7 @@
 # Test whether job vacation trap is included in a loadleveler job or not.
 # A job for a task with the restart=yes directive will have the trap.
 # This does not test loadleveler job vacation itself, because the test will
-# require a site admin to pre-empt a job.
+# require a site admin to preempt a job.
 # TODO Check this test on a dockerized system or VM.
 export REQUIRE_PLATFORM="runner:loadleveler"
 . "$(dirname "$0")/test_header"

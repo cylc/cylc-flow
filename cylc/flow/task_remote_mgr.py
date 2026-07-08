@@ -287,7 +287,7 @@ class TaskRemoteMgr:
     ) -> Tuple[List[str], str]:
         """Return a remote-tidy SSH command.
 
-        Rasies:
+        Raises:
             NoHostsError: If the platform is not contactable.
         """
         cmd = ['remote-tidy']

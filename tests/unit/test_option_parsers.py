@@ -313,7 +313,7 @@ def test_combine_options(inputs, expect):
     result = combine_options(*inputs)
     result_args = [i.args for i in result]
 
-    # Order of args irrelevent to test
+    # Order of args irrelevant to test
     for option in expect:
         assert option[ARGS] in result_args
 

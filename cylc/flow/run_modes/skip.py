@@ -160,7 +160,7 @@ def check_task_skip_config(tdef: 'TaskDef') -> None:
     if not skip_outputs:
         return
 
-    # Error if outputs include succeded and failed:
+    # Error if outputs include succeeded and failed:
     if (
         TASK_OUTPUT_SUCCEEDED in skip_outputs
         and TASK_OUTPUT_FAILED in skip_outputs

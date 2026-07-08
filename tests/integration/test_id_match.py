@@ -86,7 +86,7 @@ async def test_id_match(flow, scheduler, start, caplog):
         #   * n=1 b2 waiting
         #   * n=2 c2 waiting
 
-        # check the n=0 window matches expecations before proceeding
+        # check the n=0 window matches expectations before proceeding
         assert {
             itask.tokens.relative_id for itask in schd.pool.get_tasks()
         } == {'1/a1', '1/b2', '3/a1', '3/a2'}
@@ -176,7 +176,7 @@ async def test_id_match(flow, scheduler, start, caplog):
         assert match('1/a1', '2/a1', '3/a1') == ({'1/a1', '3/a1'}, {'2/a1'})
 
         # ensure warnings are raised for off-sequence tasks if the user
-        # explcitly specified them
+        # explicitly specified them
         # NOTE: 2/a1 should result in a warning (because the user asked for
         # this exact combination), however, "2/a*" should not (because there
         # may be a combination of tasks which are or are not valid at the given

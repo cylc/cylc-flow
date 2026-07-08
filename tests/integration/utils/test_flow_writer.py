@@ -75,7 +75,7 @@ def test_write_setting_multiline():
 
 
 def test_write_section():
-    """It should write out entire cylc configuraitons."""
+    """It should write out entire cylc configurations."""
     assert _write_section(
         'foo',
         {

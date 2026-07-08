@@ -643,7 +643,7 @@ class WorkflowConfig:
     def _warn_if_queues_have_implicit_tasks(
         config, taskdefs, max_warning_lines
     ):
-        """Warn if queues contain implict tasks.
+        """Warn if queues contain implicit tasks.
         """
         implicit_q_msg = ''
 
@@ -1852,7 +1852,7 @@ class WorkflowConfig:
     def get_task_name_list(self):
         """Return a sorted list of all tasks used in the dependency graph.
 
-        Note: the sort order may effect get_graph_raw ouput.
+        Note: the sort order may effect get_graph_raw output.
 
         """
         return sorted(self.taskdefs)
@@ -2384,7 +2384,7 @@ class WorkflowConfig:
             # dependencies are checked in generate_triggers:
             self.check_terminal_outputs(parser.terminals)
 
-        # set of all cycling intervals containined within the workflow
+        # set of all cycling intervals contained within the workflow
         cycling_intervals = {
             sequence.get_interval()
             for sequence in self.sequences

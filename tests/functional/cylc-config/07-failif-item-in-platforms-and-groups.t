@@ -18,7 +18,7 @@
 # Test that Platforms and Platform Groups return an error listing items
 # defined in both.
 # Not having additional tests for cases with no overlap or platforms only
-# becuase other tests will fail.
+# because other tests will fail.
 # Not testing for platform groups only because the really should never happen.
 
 . "$(dirname "$0")/test_header"

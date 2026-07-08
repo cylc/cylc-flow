@@ -206,7 +206,7 @@ async def dump(workflow_id, options, write=print):
     else:
         sort_args = {'keys': ['name', 'cyclePoint']}
 
-    # retrict to the n=0 window
+    # restrict to the n=0 window
     graph_depth = 0
 
     if options.disp_form == "raw":

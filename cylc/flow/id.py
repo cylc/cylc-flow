@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Cylc univeral identifier system for referencing Cylc "objects".
+"""Cylc universal identifier system for referencing Cylc "objects".
 
 This module contains the abstract ID tokenising/detokenising code.
 """

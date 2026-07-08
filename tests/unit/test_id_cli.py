@@ -251,7 +251,7 @@ async def test_parse_ids_infer_run_name(tmp_run_dir):
     assert list(workflows) == ['bar']
 
     # Now test we can see workflows in alternate cylc-run directories
-    # e.g. for `cylc workflow-state` or xtriggers targetting another user.
+    # e.g. for `cylc workflow-state` or xtriggers targeting another user.
     cylc_run_dir = get_cylc_run_dir()
     alt_cylc_run_dir = cylc_run_dir + "_alt"
 

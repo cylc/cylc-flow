@@ -354,7 +354,7 @@ def restricted_evaluator(
                 },
             ) from None
 
-        # run the expresion
+        # run the expression
         # Note: this may raise runtime errors
         return eval(  # nosec
             # acceptable use of eval as only whitelisted operations are

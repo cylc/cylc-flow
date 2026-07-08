@@ -16,7 +16,7 @@
 
 """Built-in Cylc task qualifiers.
 
-Qualifier, i.e. the bit after a colon in a graph string: <task>:<qualifer>
+Qualifier, i.e. the bit after a colon in a graph string: <task>:<qualifier>
 """
 
 from cylc.flow.task_outputs import (

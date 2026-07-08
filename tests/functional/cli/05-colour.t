@@ -21,7 +21,7 @@
 
 . "$(dirname "$0")/test_header"
 if [[ "$OSTYPE" != "linux-gnu"* ]]; then
-    skip_all "Tests not compatibile with $OSTYPE"
+    skip_all "Tests not compatible with $OSTYPE"
 fi
 set_test_number 7
 

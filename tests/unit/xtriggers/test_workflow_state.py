@@ -48,7 +48,7 @@ def test_inferred_run(tmp_run_dir: 'Callable', capsys: pytest.CaptureFixture):
     assert expected_workflow_id in capsys.readouterr().err
 
     # Now test we can see workflows in alternate cylc-run directories
-    # e.g. for `cylc workflow-state` or xtriggers targetting another user.
+    # e.g. for `cylc workflow-state` or xtriggers targeting another user.
     alt_cylc_run_dir = cylc_run_dir + "_alt"
 
     # copy the cylc-run dir to alt location and delete the original.
@@ -212,7 +212,7 @@ def test_c8_db_back_compat(
     _, err = capsys.readouterr()
     assert not err
     # Output label selector falls back to message
-    # (won't work if messsage != output label)
+    # (won't work if message != output label)
     satisfied, _ = workflow_state(f'{gimli}:axe', is_trigger=True)
     assert satisfied
     _, err = capsys.readouterr()

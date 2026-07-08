@@ -39,8 +39,8 @@ async def test_remote_tidy(
           message != REMOTE_FILE_INSTALL_DONE to ensure that
           this is picked out.
         - Install targets where we can get a platform
-          - foo - Install target is implicitly the platfrom name.
-          - bar9 - The install target is implicitly the plaform name,
+          - foo - Install target is implicitly the platform name.
+          - bar9 - The install target is implicitly the platform name,
             and the platform name matches a platform regex.
           - baz - Install target is set explicitly.
         - An install target (qux) where we cannot get a platform: Ensure
@@ -127,8 +127,8 @@ async def test_remote_tidy(
         schd.task_job_mgr.task_remote_mgr.remote_init_map = {
             'baz': REMOTE_FILE_INSTALL_DONE,      # Should match platform baz
             'bar9': REMOTE_FILE_INSTALL_DONE,     # Should match platform bar.
-            'foo': REMOTE_FILE_INSTALL_DONE,      # Should match plaform foo
-            'qux': REMOTE_FILE_INSTALL_DONE,      # Should not match a plaform
+            'foo': REMOTE_FILE_INSTALL_DONE,      # Should match platform foo
+            'qux': REMOTE_FILE_INSTALL_DONE,      # Should not match a platform
             'quiz': REMOTE_FILE_INSTALL_FAILED,   # Should not be considered
             'bay': REMOTE_FILE_INSTALL_DONE,      # Should return NoPlatforms
         }

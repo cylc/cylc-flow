@@ -618,7 +618,7 @@ async def _complete(
             async.timeout (handles shutdown logic more cleanly).
         allow_paused:
             This function will raise an Exception if the scheduler is paused
-            (because this usually means the sepecified tasks cannot complete)
+            (because this usually means the specified tasks cannot complete)
             unless allow_paused==True.
 
     Raises:

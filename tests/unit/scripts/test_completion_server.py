@@ -484,7 +484,7 @@ async def test_list_in_workflow(dummy_workflow):
 
     # no tokens => nothing to list
     assert await _list_in_workflow(Tokens()) == set()
-    # non-existant workflow => nothing to list
+    # non-existent workflow => nothing to list
     assert await _list_in_workflow(
         Tokens('forty-two'),
         # set infer_run to false as this workflow does not exist so will raise
@@ -493,11 +493,11 @@ async def test_list_in_workflow(dummy_workflow):
         # level)
         infer_run=False
     ) == set()
-    # non-existant cycle => nothing to list
+    # non-existent cycle => nothing to list
     assert await _list_in_workflow(Tokens('foo/run2//4')) == set()
-    # non-existant task => nothing to list
+    # non-existent task => nothing to list
     assert await _list_in_workflow(Tokens('foo/run2//4/foo')) == set()
-    # non-existant job => nothing to list
+    # non-existent job => nothing to list
     assert await _list_in_workflow(Tokens('foo/run2//4/foo/02')) == set()
 
 
@@ -661,7 +661,7 @@ def test_get_current_completion_script_version(tmp_path):
 def test_check_completion_script_compatibility(monkeypatch, capsys):
     """Test whether a completion script is compatible with the server.
 
-    Incase the server interface changes at a later date this will allow us to
+    In case the server interface changes at a later date this will allow us to
     exit gracefully rather than crashing in a horrible way.
     """
     # set the bash completion script version to 1.0.1

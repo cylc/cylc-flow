@@ -197,7 +197,7 @@ def test_graph_upgrade_msg_graph_equals(flow, validate, caplog, log_filter):
 
 
 def test_graph_upgrade_msg_graph_equals2(flow, validate, caplog, log_filter):
-    """Both an implicit R1 and explict reccurance exist:
+    """Both an implicit R1 and explicit reccurance exist:
     It appends a note.
     """
     id_ = flow({

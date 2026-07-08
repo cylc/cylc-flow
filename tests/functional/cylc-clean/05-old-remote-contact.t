@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # -----------------------------------------------------------------------------
-# Test that cylc clean succesfully removes the workflow on remote host even
+# Test that cylc clean successfully removes the workflow on remote host even
 # when there is a leftover contact file with an unreachable host recorded in it
 
 export REQUIRE_PLATFORM='loc:remote fs:indep comms:tcp'
