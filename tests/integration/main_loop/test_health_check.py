@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import asyncio
 import logging
 import os
+import shutil
+from unittest.mock import Mock
 
 import pytest
 
@@ -39,15 +40,17 @@ def rapid_health_check(mock_glbl_cfg):
     ''')
 
 
-async def test_bad_contact_file(one, run, log_filter):
+async def test_bad_contact_file(one: Scheduler, run, log_filter):
     """Test workflow shuts down with error on corrupted contact file."""
     with pytest.raises(MainLoopPluginException):
         async with run(one):
             with open(get_contact_file_path(one.workflow), 'a') as f:
                 f.write("Haha! I have corrupted the port file!")
-            await asyncio.sleep(2)
+            await one._main_loop()
 
-    assert log_filter(contains="contact file corrupted/modified")
+    assert log_filter(
+        regex=r"Workflow shutting down - .* contact file corrupted/modified"
+    )
 
 
 @pytest.mark.parametrize('debug', [True, False])
@@ -65,7 +68,7 @@ async def test_no_contact_file(
     with pytest.raises(HealthCheckFailed):
         async with run(one):
             os.unlink(get_contact_file_path(one.workflow))
-            await asyncio.sleep(2)
+            await one._main_loop()
 
     assert log_filter(
         logging.CRITICAL,
@@ -77,22 +80,19 @@ async def test_no_contact_file(
     assert ("Traceback" in caplog.text) is debug
 
 
-async def test_deleted_run_dir(
-    one: Scheduler, run, log_filter, monkeypatch: pytest.MonkeyPatch
-):
+async def test_deleted_run_dir(one: Scheduler, run, log_filter):
     """Test workflow shuts down with error on missing run directory."""
     with pytest.raises(HealthCheckFailed):
         async with run(one):
-            # Cannot actually test removing the run dir as we will get a
-            # DB write failure before the health check runs
-            # TODO: does this mean this part of the health check is redundant?
-            with monkeypatch.context() as mp:
-                mp.setattr(
-                    'cylc.flow.main_loop.health_check.os.path.exists',
-                    lambda path: False,
-                )
-                await asyncio.sleep(2)
+            # Stop the scheduler from trying to access the DB as that will
+            # cause a different abort that we're not testing here
+            one.process_workflow_db_queue = Mock()
+
+            shutil.rmtree(one.workflow_run_dir)
+            await one._main_loop()
 
     assert log_filter(
-        logging.CRITICAL, "Workflow run directory does not exist"
+        logging.CRITICAL,
+        "Workflow shutting down - health check failed: "
+        "Workflow run directory does not exist",
     )
