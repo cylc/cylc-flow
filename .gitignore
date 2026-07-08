@@ -35,6 +35,9 @@ MANIFEST
 cylc_flow.egg-info
 .eggs
 
+# uv environments
+uv.lock
+
 # virtualenv
 venv
 
