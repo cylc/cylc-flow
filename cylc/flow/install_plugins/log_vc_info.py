@@ -361,7 +361,6 @@ def write_diff(
         diff_location,
         str(number) + "-" + DIFF_FILENAME
     )
-    diff_file.parent.mkdir(exist_ok=True)
 
     with open(diff_file, 'a') as f:
         f.write(
