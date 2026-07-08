@@ -59,6 +59,7 @@ Any uncommitted changes will also be saved as a diff in
    Git does not include untracked files in the diff.
 """
 
+import os
 from datetime import datetime
 import json
 from pathlib import Path
@@ -342,18 +343,34 @@ def write_diff(
         str(Path().cwd() / repo_path)
     )
 
-    diff_file = Path(
+    date_format = "%d-%m-%Y, %H:%M:%S"
+    now = datetime.now().strftime(date_format)
+    diff_location = Path(
         run_dir,
         WorkflowFiles.LogDir.DIRNAME,
         WorkflowFiles.LogDir.VERSION,
-        DIFF_FILENAME
+    )
+    diff_location.mkdir(exist_ok=True)
+    existingUncommits = 0
+    oldestDate = datetime.now()
+    for e in os.scandir(diff_location):
+        if e.is_file(follow_symlinks=False) and DIFF_FILENAME in e.name:
+            existingUncommits += 1
+            test_date = datetime.strptime(e.name, date_format)
+            if oldestDate > test_date:
+                oldestDate = test_date
+    if existingUncommits > 5:
+        os.remove(str(Path(diff_location,
+                           oldestDate.strftime(date_format) + DIFF_FILENAME)))
+
+    diff_file = Path(
+        diff_location,
+        now + DIFF_FILENAME
     )
     diff_file.parent.mkdir(exist_ok=True)
 
     with open(diff_file, 'a') as f:
-        now = datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
         f.write(
-            f"# {now}\n"
             "# Auto-generated diff of uncommitted changes in the Cylc "
             "workflow repository:\n"
             f"#   {repo_path}\n"
@@ -363,6 +380,13 @@ def write_diff(
             _run_cmd(vcs, args, repo_path, stdout=f)
         except VCSMissingBaseError as exc:
             print(f"# No diff - {exc}", file=f)
+
+    try:
+        os.symlink(diff_file, str(diff_location) + "/n")
+    except FileExistsError:
+        os.remove(str(diff_location) + "/n")
+        os.symlink(diff_file, str(diff_location) + "/n",)
+
     return diff_file
 
 
