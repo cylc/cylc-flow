@@ -223,7 +223,7 @@ def test_write_diff_svn(svn_source_repo: Tuple[str, str, str], tmp_path: Path):
     (run_dir / WorkflowFiles.LogDir.DIRNAME).mkdir(parents=True)
     diff_file = write_diff('svn', source_dir, run_dir)
     diff_lines = diff_file.read_text().splitlines()
-    assert diff_lines[1].startswith("# Auto-generated diff")
+    assert diff_lines[0].startswith("# Auto-generated diff")
     for line in (f"--- {source_dir}/flow.cylc	(revision 1)",
                  f"+++ {source_dir}/flow.cylc	(working copy)",
                  "-        R1 = foo",
