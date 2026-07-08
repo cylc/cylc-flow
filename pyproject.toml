@@ -3,9 +3,10 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
+
 name = "cylc-flow"
 authors = [
-    {name = "Hilary Oliver", email = "hilary.j.oliver@gmail.com"},
+    {name = "Earth Sciences New Zealand & British Crown (Met Office) & Contributors"},
 ]
 description = "A workflow engine for cycling systems"
 readme = "README.md"
