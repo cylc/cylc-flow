@@ -181,7 +181,7 @@ class VersionIncompat(Exception):
 
 
 def get_query(scheduler_version: str) -> str:
-    """Return a GraphQL query compatibile with the provided scheduler version.
+    """Return a GraphQL query compatible with the provided scheduler version.
 
     Args:
         scheduler_version: The version of the scheduler we are connecting to.
@@ -211,7 +211,7 @@ def cli_cmd(*cmd, ret=False):
         ret:
             If True, the stdout will be returned.
 
-    Rasies:
+    Raises:
         ClientError:
             In the event of mishap for consistency with the network
             client alternative.
@@ -483,7 +483,7 @@ def online_mutate(mutation, selection):
         client = get_client(workflow)
     except WorkflowStopped:
         raise Exception(
-            f'Cannot peform command {mutation} on a stopped workflow'
+            f'Cannot perform command {mutation} on a stopped workflow'
         ) from None
     except (ClientError, ClientTimeout) as exc:
         raise Exception(

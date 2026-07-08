@@ -135,7 +135,7 @@ class RakiuraSession:
             if force_update:
                 self.force_update()
             # force urwid to draw the screen
-            # (the main loop isn't runing so this doesn't happen automatically)
+            # (the main loop isn't running so this doesn't happen automatically)
             self.app.loop.draw_screen()
             # take a screenshot
             screenshot = self.html_fragment.screenshot_collect()[-1]

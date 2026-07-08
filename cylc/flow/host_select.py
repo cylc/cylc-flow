@@ -20,7 +20,7 @@
 Ranking/filtering hosts can be achieved using Python expressions which work
 with the `psutil` interfaces.
 
-These expressions are used-defined, buy run a restricted evluation environment
+These expressions are used-defined, buy run a restricted evaluation environment
 where only certain whitelisted operations are permitted.
 
 Examples:
@@ -458,7 +458,7 @@ def _get_rankings(string):
 
         Comments (not in-line) and multi-line strings are permitted:
         >>> _get_rankings('''
-        ...     # earl of sandwhich
+        ...     # earl of sandwich
         ...     foo() == 123
         ...     # beef wellington
         ... ''').__next__()

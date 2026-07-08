@@ -48,7 +48,7 @@ class RunMode(Enum):
     """Tasks will submit their configured jobs."""
 
     SIMULATION = 'simulation'
-    """Simulates job submission with configurable exection time
+    """Simulates job submission with configurable execution time
     and succeeded/failed outcomes (but does not submit real jobs)."""
 
     DUMMY = 'dummy'
@@ -75,7 +75,7 @@ class RunMode(Enum):
         # self == self.SIMULATION:
         return (
             "Simulates job submission with configurable"
-            " exection time and succeeded/failed outcomes"
+            " execution time and succeeded/failed outcomes"
             " (but does not submit real jobs).")
 
     @staticmethod
