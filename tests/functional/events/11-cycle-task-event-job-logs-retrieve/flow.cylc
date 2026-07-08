@@ -1,23 +1,15 @@
 [meta]
     title = Task Event Job Log Retrieve
 
-[scheduler]
-    UTC mode = True
-    cycle point format = %Y%m%dT%H%MZ
-
 [scheduling]
-    initial cycle point = 20200202T0202Z
-    final cycle point = 20200202T0202Z
     [[graph]]
-        R1 = T
+        R1 = y & n
 
 [runtime]
-    [[T]]
-        script = test "${CYLC_TASK_TRY_NUMBER}" -eq 3
-        execution retry delays = PT0S, 2*PT1S
-    [[t1]]
-        inherit = T
+    [[root]]
+        script = test "${CYLC_TASK_TRY_NUMBER}" -eq 2
+        execution retry delays = PT0S, PT1S
+    [[y]]
         platform = _retrieve
-    [[t2]]
-        inherit = T
+    [[n]]
         platform = _no_retrieve

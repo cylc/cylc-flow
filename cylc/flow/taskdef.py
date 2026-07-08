@@ -94,13 +94,13 @@ def generate_graph_children(
 
 
 def generate_graph_parents(
-    tdef: 'TaskDef', point: 'PointBase', taskdefs: Dict[str, 'TaskDef']
-) -> Dict['SequenceBase', List[TaskTuple]]:
+    tdef: 'TaskDef', point: 'PointBase', taskdefs: dict[str, 'TaskDef']
+) -> list[TaskTuple]:
     """Determine concrete graph parents of task tdef at point.
 
     Infer parents by reversing upstream triggers that lead to point/task.
     """
-    graph_parents: Dict['SequenceBase', List[TaskTuple]] = {}
+    graph_parents: list[TaskTuple] = []
 
     for seq, triggers in tdef.graph_parents.items():
         if not seq.is_valid(point):
@@ -109,7 +109,6 @@ def generate_graph_parents(
             #   T06 = "waz[-PT6H] => foo"
             # here waz[-PT6H] is a parent of T06/foo but not of T12/foo.
             continue
-        graph_parents[seq] = []
         for parent_name, trigger in triggers:
             parent_point = trigger.get_parent_point(point)
             if (
@@ -126,21 +125,23 @@ def generate_graph_parents(
                 # TODO ideally validation would flag this as an error.
                 continue
             is_abs = trigger.offset_is_absolute or trigger.offset_is_from_icp
-            graph_parents[seq].append(
+            graph_parents.append(
                 TaskTuple(parent_name, parent_point, is_abs)
             )
 
     if tdef.sequential:
         # Add implicit previous-instance parent.
-        prevs = []
-        for seq in tdef.sequences:
-            prev = seq.get_prev_point(point)
-            if prev is not None:
-                # Within sequence bounds.
-                prevs.append(prev)
-        if prevs:
-            graph_parents.setdefault(seq, []).append(
-                TaskTuple(tdef.name, min(prevs), False)
+        closest_prev_point: PointBase | None = max(
+            (
+                prev
+                for seq in tdef.sequences
+                if (prev := seq.get_prev_point(point)) is not None
+            ),
+            default=None,
+        )
+        if closest_prev_point is not None:
+            graph_parents.append(
+                TaskTuple(tdef.name, closest_prev_point, False)
             )
 
     return graph_parents
@@ -406,18 +407,31 @@ class TaskDef:
             point = min(adjusted)
         return point
 
-    def next_point(self, point):
-        """Return the next cycle point after point."""
-        p_next = None
+    def next_point_parentless(
+        self, cutoff: 'PointBase', point: 'PointBase | None' = None
+    ):
+        """Return next cycle point for which I'm parentless.
+
+        For a given recurrence, a task is either parented or parentless.
+
+        If point is None, return the first parentless cycle; otherwise
+        the first parentless cycle > point.
+
+        Cutoff is the start cycle point, prior to which we ignore parents.
+
+        """
         adjusted = []
         for seq in self.sequences:
-            nxt = seq.get_next_point(point)
-            if nxt:
-                # may be None if beyond the sequence bounds
-                adjusted.append(nxt)
+            next_point = (
+                seq.get_first_point(cutoff)
+                if point is None
+                else seq.get_next_point(point)
+            )
+            if next_point and self.is_parentless(next_point, cutoff):
+                adjusted.append(next_point)
         if adjusted:
-            p_next = min(adjusted)
-        return p_next
+            return min(adjusted)
+        return None
 
     def is_parentless(self, point: 'PointBase', cutoff: 'PointBase') -> bool:
         """Return True if task has no parents at the given point.

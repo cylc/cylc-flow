@@ -1,7 +1,0 @@
-[scheduler]
-    cycle point format = %Y-%m
-    allow implicit tasks = True
-[scheduling]
-    initial cycle point = 2015-08
-    [[graph]]
-        P1D = foo

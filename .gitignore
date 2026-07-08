@@ -1,6 +1,7 @@
-# python bytecode
+# python bytecode & caches
 *.py[cod]
 __pycache__/
+.*_cache/
 
 # vim backup files
 *.swp
@@ -37,11 +38,11 @@ MANIFEST
 cylc_flow.egg-info
 .eggs
 
+# uv environments
+uv.lock
+
 # virtualenv
 venv
-
-# mypy
-.mypy_cache/
 
 # docker stuffs
 .docker*

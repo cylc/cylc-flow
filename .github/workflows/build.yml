@@ -9,7 +9,6 @@ on:
       - 'README.md'       # check markdown is valid
       - 'MANIFEST.in'     # check packaging
       - 'pyproject.toml'  # check build config
-      - 'setup.cfg'       # check deps and project config
       - '.gitignore'
       - '.github/workflows/build.yml'
 
@@ -36,7 +35,7 @@ jobs:
         python: ['3.12', '3']
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Python
         uses: mamba-org/setup-micromamba@v3

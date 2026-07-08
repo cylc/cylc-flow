@@ -114,7 +114,10 @@ if TYPE_CHECKING:
 COMMANDS: 'Dict[str, Command]' = {}
 
 
-# BACK COMPAT: handle --flow=all from pre-8.5 clients.
+# BACK COMPAT: handle --flow=all from earlier clients
+# FROM: 8.0
+# TO: 8.5.0
+# REMOVE AT: 8.8
 def back_compat_flow_all(flow: List[str]) -> List[str]:
     """From 8.5 the old --flow=all is just the default.
 
@@ -180,10 +183,6 @@ def _remove_matched_tasks(
                 continue
             removed[itask.tokens.task] = fnums_to_remove
             if fnums_to_remove == itask.flow_nums:
-                # Need to remove the task from the pool.
-                # Spawn next occurrence of xtrigger sequential task (otherwise
-                # this would not happen after removing this occurrence):
-                schd.pool.check_spawn_psx_task(itask)
                 schd.pool.remove(itask, 'request')
                 to_kill.append(itask)
                 itask.removed = True
@@ -386,7 +385,7 @@ async def stop(
             #     versions
             # From: 8.4
             # To: 8.5
-            # Remove at: 8.x
+            # Remove at: 8.8
             mode = StopMode(mode.value) if mode else StopMode.REQUEST_CLEAN
         except ValueError:
             raise CommandFailedError(f"Invalid stop mode: '{mode}'") from None
@@ -528,7 +527,10 @@ async def reload_workflow(schd: 'Scheduler', reload_global: bool = False):
 
     # flush out preparing tasks before attempting reload
     schd.reload_pending = 'waiting for pending tasks to submit'
-    while schd.release_tasks_to_run():
+    while schd.release_tasks_to_run() or any(
+        itask.waiting_on_job_prep or itask.state(TASK_STATUS_PREPARING)
+        for itask in schd.pool.get_tasks()
+    ):
         # Run the subset of main-loop functionality required to push
         # preparing through the submission pipeline and keep the workflow
         # responsive (e.g. to the `cylc stop` command).
