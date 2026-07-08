@@ -201,7 +201,7 @@ cylc__set_return() {
 # Save the data using cylc message and exit the profiler
 cylc__kill_profiler() {
     if [[ -n "${profiler_pid:-}" ]] && ps -p "$profiler_pid" > /dev/null; then
-      kill -s SIGINT "${profiler_pid}" || true
+      kill -s SIGTERM "${profiler_pid}" || true
       wait "${profiler_pid}" 2>'/dev/null' || true
     fi
 }
