@@ -65,6 +65,8 @@ class WorkflowPublisher(ZMQSocketBase):
         # allow more time for connect/reconnect
         self.socket.setsockopt(zmq.CONNECT_TIMEOUT, 10 * 1000)
         self.socket.setsockopt(zmq.RECONNECT_IVL_MAX, 5000)
+        # send heartbeat to keep subscriber connections active
+        self.socket.setsockopt(zmq.HEARTBEAT_IVL, 20 * 1000)
 
     def _bespoke_stop(self):
         """Bespoke stop items."""
