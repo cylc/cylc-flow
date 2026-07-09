@@ -396,7 +396,6 @@ async def test_main(mocker, options, monkeypatch):
     monkeypatch.setenv('CYLC_WORKFLOW_ID', "Exit Light")
     monkeypatch.setenv('CYLC_TASK_JOB', "Enter Night")
 
-
     # Mock the gets and parse functions to return something sensible
     # without needing actual files
     mocker.patch("cylc.flow.scripts.profiler.get_cgroup_paths",
