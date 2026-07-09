@@ -22,7 +22,9 @@ from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.workflow_files import WorkflowFiles
 
 
-async def test_almost_self_suicide(flow, scheduler, start):
+async def test_almost_self_suicide(
+    flow, scheduler, start, spawn_ahead
+):
     """Suicide triggers should not count as upstream tasks when looking
     to spawn parentless tasks.
 
@@ -46,6 +48,7 @@ async def test_almost_self_suicide(flow, scheduler, start):
     })
     schd = scheduler(wid)
     async with start(schd):
+        spawn_ahead(schd.pool)
         tasks = [str(t) for t in schd.pool.get_tasks()]
         for task in ['1990/a:waiting', '1991/a:waiting', '1992/a:waiting']:
             assert task in tasks
