@@ -387,7 +387,6 @@ def options(mocker):
     opts.cgroup_memory_path = "/another/fake/path"
     opts.comms_timeout = 10
     opts.delay = "PT1S"
-    opts.pid = 12345
     return opts
 
 
@@ -397,8 +396,6 @@ async def test_main(mocker, options, monkeypatch):
     monkeypatch.setenv('CYLC_WORKFLOW_ID', "Exit Light")
     monkeypatch.setenv('CYLC_TASK_JOB', "Enter Night")
 
-    mocker.patch("cylc.flow.scripts.profiler.get_proc_ancestors",
-                 return_value=[12345])
 
     # Mock the gets and parse functions to return something sensible
     # without needing actual files
