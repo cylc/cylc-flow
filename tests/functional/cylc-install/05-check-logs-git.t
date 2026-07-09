@@ -58,7 +58,7 @@ echo "Outside workflow" > test_file_outside_workflow
 # Carry out actual test with relpath:
 run_ok "${TEST_NAME_BASE}-install" \
     cylc install "./${WORKFLOW}" --workflow-name "${WORKFLOW_NAME}"
-DIFF_FILE="${WORKFLOW_RUN_DIR}/log/version/uncommitted.diff"
+DIFF_FILE="${WORKFLOW_RUN_DIR}/log/version/1-uncommitted.diff"
 grep_ok "Inside workflow" "$DIFF_FILE"
 grep_fail "Outside workflow" "$DIFF_FILE"
 
