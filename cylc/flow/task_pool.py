@@ -244,20 +244,6 @@ class TaskPool:
             self.active_tasks[itask.point][itask.identity] = itask
             self.active_tasks_changed = True
 
-    def spawn_to_runahead_limit(self):
-        """Spawn the task pool out to the runahead limit in one go.
-
-        Not strictly necessary, it will spawn ahead per main loop iteration,
-        but useful back-compat for tests that expect this prior to
-        https://github.com/cylc/cylc-flow/pull/7237
-
-        """
-        self.compute_runahead()
-        # Arbitrary limit to avoid infinite loop if something goes wrong.
-        for _ in range(10):
-            if not self.release_runahead_tasks():
-                break
-
     def queue_if_ready(self, itask: 'TaskProxy') -> None:
         """Queue itask if it is ready to run.
 
@@ -301,12 +287,6 @@ class TaskPool:
                 ntask, _ = self.get_or_spawn_task(point, tdef, flow_nums)
                 if ntask is not None:
                     self.add_to_pool(ntask)
-        # Spawning to the runahead limit immediately is not strictly necessary
-        # as it would occur over several scheduler main loop iterations; we do
-        # it mainly for compatibility with integration tests pre PR #7237.
-        self.spawn_to_runahead_limit()
-        for itask in self.get_tasks():
-            self.queue_if_ready(itask)
 
     def db_add_new_flow_rows(self, itask: TaskProxy) -> None:
         """Add new rows to DB task tables that record flow_nums.

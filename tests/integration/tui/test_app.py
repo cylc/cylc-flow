@@ -121,12 +121,13 @@ async def test_tui_basics(rakiura):
 
 
 async def test_subscribe_unsubscribe(
-    one_conf, flow, scheduler, start, rakiura
+    one_conf, flow, scheduler, start, rakiura, spawn_ahead
 ):
     """Test a simple workflow with one task."""
     id_ = flow(one_conf, name='one')
     schd = scheduler(id_)
     async with start(schd):
+        spawn_ahead(schd.pool)
         await schd.update_data_structure()
         with rakiura(size='80,15') as rk:
             rk.compare_screenshot(
@@ -223,7 +224,9 @@ async def test_workflow_states(one_conf, flow, scheduler, start, rakiura):
                 )
 
 
-async def test_task_states(flow, scheduler, start, rakiura):
+async def test_task_states(
+    flow, scheduler, start, rakiura, spawn_ahead
+):
     id_ = flow({
         'scheduler': {
             'allow implicit tasks': 'true',
@@ -249,6 +252,7 @@ async def test_task_states(flow, scheduler, start, rakiura):
     }, name='test_task_states')
     schd = scheduler(id_)
     async with start(schd):
+        spawn_ahead(schd.pool)
         set_task_state(
             schd,
             [
@@ -332,7 +336,9 @@ async def test_task_states(flow, scheduler, start, rakiura):
             )
 
 
-async def test_task_modifiers(flow, scheduler, start, rakiura):
+async def test_task_modifiers(
+    flow, scheduler, start, rakiura, spawn_ahead
+):
     """It should display task modifiers and text summaries of them."""
     id_ = flow({
         'scheduling': {
@@ -346,6 +352,7 @@ async def test_task_modifiers(flow, scheduler, start, rakiura):
     }, name='test_task_modifiers')
     schd = scheduler(id_)
     async with start(schd):
+        spawn_ahead(schd.pool)
         set_task_state(
             schd,
             [
@@ -390,7 +397,9 @@ async def test_task_modifiers(flow, scheduler, start, rakiura):
             )
 
 
-async def test_navigation(flow, scheduler, start, rakiura):
+async def test_navigation(
+    flow, scheduler, start, rakiura, spawn_ahead
+):
     """Test navigating with the arrow keys."""
     id_ = flow({
         'scheduling': {
@@ -413,6 +422,7 @@ async def test_navigation(flow, scheduler, start, rakiura):
     }, name='one')
     schd = scheduler(id_)
     async with start(schd):
+        spawn_ahead(schd.pool)
         await schd.update_data_structure()
 
         with rakiura(size='80,30') as rk:
@@ -449,7 +459,9 @@ async def test_navigation(flow, scheduler, start, rakiura):
             )
 
 
-async def test_auto_expansion(flow, scheduler, start, rakiura):
+async def test_auto_expansion(
+    flow, scheduler, start, rakiura, spawn_ahead
+):
     """It should automatically expand cycles and top-level families.
 
     When a workflow is expanded, Tui should auto expand cycles and top-level
@@ -474,6 +486,7 @@ async def test_auto_expansion(flow, scheduler, start, rakiura):
     schd = scheduler(id_)
     with rakiura(size='80,20') as rk:
         async with start(schd):
+            spawn_ahead(schd.pool)
             await schd.update_data_structure()
             # wait for the workflow to appear (collapsed)
             rk.wait_until_loaded('#spring')
@@ -505,7 +518,9 @@ async def test_auto_expansion(flow, scheduler, start, rakiura):
             )
 
 
-async def test_restart_reconnect(one_conf, flow, scheduler, start, rakiura):
+async def test_restart_reconnect(
+    one_conf, flow, scheduler, start, rakiura, spawn_ahead
+):
     """It should handle workflow shutdown and restart.
 
     The Cylc client can raise exceptions e.g. WorkflowStopped. Any text written
@@ -518,6 +533,7 @@ async def test_restart_reconnect(one_conf, flow, scheduler, start, rakiura):
 
         # 1- start the workflow
         async with start(schd):
+            spawn_ahead(schd.pool)
             await schd.update_data_structure()
             # wait for the workflow to appear (collapsed)
             rk.wait_until_loaded('#spring')
@@ -543,7 +559,7 @@ async def test_restart_reconnect(one_conf, flow, scheduler, start, rakiura):
         # 3- restart the workflow
         schd = scheduler(flow(one_conf, name='one'))
         async with start(schd):
-            await schd._main_loop()
+            spawn_ahead(schd.pool)
             await schd.update_data_structure()
             rk.wait_until_loaded(schd.tokens.id)
             rk.compare_screenshot(
@@ -552,7 +568,9 @@ async def test_restart_reconnect(one_conf, flow, scheduler, start, rakiura):
             )
 
 
-async def test_states(flow, scheduler, start, rakiura):
+async def test_states(
+    flow, scheduler, start, rakiura, spawn_ahead
+):
     """It should dim no-flow tasks and display state summary in context menus.
     """
     id_ = flow(
@@ -569,6 +587,7 @@ async def test_states(flow, scheduler, start, rakiura):
     schd: Scheduler = scheduler(id_)
 
     async with start(schd):
+        spawn_ahead(schd.pool)
         a = schd.pool.get_task(IntegerPoint('1'), 'a')
         b = schd.pool.get_task(IntegerPoint('1'), 'b')
         c = schd.pool.get_task(IntegerPoint('1'), 'c')

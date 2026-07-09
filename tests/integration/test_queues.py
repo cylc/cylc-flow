@@ -60,6 +60,7 @@ async def test_queue_release(
     capture_submission,
     start_paused,
     queue_limit,
+    spawn_ahead
 ):
     """Tasks should be released up to the limit if the scheduler is not paused.
 
@@ -80,7 +81,7 @@ async def test_queue_release(
         # release runahead/queued tasks
         # (if scheduler is paused we should not have any submissions)
         # (otherwise a number of tasks up to the limit should be released)
-        schd.pool.release_runahead_tasks()
+        spawn_ahead(schd.pool)
         schd.release_tasks_to_run()
         assert len(submitted_tasks) == expected_submissions
 
@@ -94,7 +95,8 @@ async def test_queue_release(
 async def test_queue_held_tasks(
     param_workflow,
     start,
-    capture_submission
+    capture_submission,
+    spawn_ahead
 ):
     """Held tasks should not be released from queues.
 
@@ -106,6 +108,7 @@ async def test_queue_held_tasks(
     schd: Scheduler = param_workflow(paused_start=True, queue_limit=1)
 
     async with start(schd):
+        spawn_ahead(schd.pool)
         # capture task submissions (prevents real submissions)
         submitted_tasks = capture_submission(schd)
 

@@ -54,12 +54,14 @@ async def test_online_mutation(
     rakiura,
     monkeypatch,
     log_filter,
+    spawn_ahead
 ):
     """Test a simple workflow with one task."""
     id_ = flow(one_conf, name='one')
     schd = scheduler(id_)
     with rakiura(size='80,15') as rk:
         async with start(schd):
+            spawn_ahead(schd.pool)
             await schd.update_data_structure()
             assert schd.command_queue.empty()
 
@@ -236,6 +238,7 @@ async def test_set_mutation(
     scheduler,
     start,
     rakiura,
+    spawn_ahead
 ):
     id_ = flow({
         'scheduling': {
@@ -246,6 +249,7 @@ async def test_set_mutation(
     }, name='one')
     schd = scheduler(id_)
     async with start(schd):
+        spawn_ahead(schd.pool)
         await schd.update_data_structure()
         with rakiura(schd.tokens.id, size='80,15') as rk:
             # open the context menu on 1/a

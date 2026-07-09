@@ -154,14 +154,24 @@ async def test_reload(sequential, start):
 
 @pytest.mark.parametrize('is_sequential', [True, False])
 @pytest.mark.parametrize('xtrig_def', [
-    'wall_clock(sequential={})',
-    'wall_clock(PT1H, sequential={})',
-    'xrandom(1, 1, sequential={})',
+    'xrandom(0, 0, sequential={})',
+    'wall_clock(P100Y, sequential={})',
 ])
 async def test_sequential_arg_ok(
-    flow, scheduler, start, xtrig_def: str, is_sequential: bool
+    flow,
+    scheduler,
+    start,
+    xtrig_def: str,
+    is_sequential: bool,
+    spawn_ahead
 ):
-    """Test passing the sequential argument to xtriggers."""
+    """Test passing the sequential argument to xtriggers.
+
+    The xtriggers are chosen to never be satisfied, so when we evolve the
+    workflow out to the runahead limit, sequential parentless tasks will
+    not spawn ahead to the limit, but non-sequential ones will.
+
+    """
     wid = flow({
         'scheduler': {
             'cycle point format': 'CCYY',
@@ -180,6 +190,7 @@ async def test_sequential_arg_ok(
     schd: Scheduler = scheduler(wid)
     expected_num_cycles = 1 if is_sequential else 3
     async with start(schd):
+        spawn_ahead(schd.pool)
         itask = schd.pool.get_task(ISO8601Point('2000'), 'foo')
         assert itask.is_xtrigger_sequential is is_sequential
         assert len(list_cycles(schd)) == expected_num_cycles

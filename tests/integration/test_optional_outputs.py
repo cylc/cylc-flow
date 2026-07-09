@@ -425,6 +425,9 @@ async def test_clock_expiry(
         one = schd.pool.get_task(ISO8601Point('20000101T0000Z'), 'x')
         assert one
 
+        # spawn the second one
+        schd.pool.spawn_next_parentless(one)
+
         # the second task (preparing)
         two = schd.pool.get_task(ISO8601Point('20010101T0000Z'), 'x')
         assert two

@@ -78,8 +78,10 @@ Workflows can be run in two ways:
 
 ```
 with start(schd):
-    # starts the Scheduler but does not start the main loop
-    # (always the better option if its possible)
+    # Starts the Scheduler but does not start the main loop
+    #   (always the better option if its possible).
+    # Use the spawn_ahead fixture if you need to examine how
+    #   parentless tasks advance (without iterating the main loop).
     ...
 
 with run(schd):
@@ -92,3 +94,10 @@ These methods both shut down the workflow / clean up after themselves.
 
 It is necessary to shut down workflows correctly to clean up resorces and
 running tasks.
+
+Note at start-up tasks states remain as as initially loaded until evolved by
+the main loop (or otherwise by direct manipulation in tests).
+
+Parentless tasks can spawn freely to the runahead limit, but that happens
+incremently via main loop iterations. Use the spawn_ahead fixture to do the
+same thing without running the main loop in tests.

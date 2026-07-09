@@ -38,6 +38,7 @@ async def test_reload_waits_for_pending_tasks(
     start,
     monkeypatch,
     log_scan,
+    spawn_ahead
 ):
     """Reload should flush out preparing tasks and pause the workflow.
 
@@ -83,6 +84,7 @@ async def test_reload_waits_for_pending_tasks(
         assert foo.state(TASK_STATUS_WAITING)
 
         # put the task into the preparing state
+        spawn_ahead(schd.pool)
         schd.release_tasks_to_run()
         assert foo.state(TASK_STATUS_PREPARING)
 
@@ -116,6 +118,7 @@ async def test_reload_waits_for_preparing_tasks_in_remote_init(
     scheduler,
     start,
     monkeypatch,
+    spawn_ahead
 ):
     """Reload should wait for preparing tasks stuck in remote-init.
 
@@ -166,6 +169,7 @@ async def test_reload_waits_for_preparing_tasks_in_remote_init(
         )
 
         # Put the task into the preparing state
+        spawn_ahead(schd.pool)
         schd.release_tasks_to_run()
         assert foo.state(TASK_STATUS_PREPARING)
         assert foo.waiting_on_job_prep
