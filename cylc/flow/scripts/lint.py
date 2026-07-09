@@ -139,7 +139,6 @@ DEPRECATED_ENV_VARS = {
     'CYLC_SUITE_WORK_DIR': 'CYLC_WORKFLOW_WORK_DIR',
     'CYLC_SUITE_UUID': 'CYLC_WORKFLOW_UUID',
     'CYLC_SUITE_RUN_DIR': 'CYLC_WORKFLOW_RUN_DIR',
-    'clock-trigger': 'Use @wallclock',
 }
 
 OBSOLETE_ENV_VARS = {
@@ -808,6 +807,12 @@ MANUAL_DEPRECATIONS = {
             '``&`` and ``|`` imply line continuation without ``\\``'
         ),
         FUNCTION: re.compile(r'[&|]\s*\\').findall
+    },
+    'U018': {
+        'short': (
+            'clock-trigger is deprecated, please use @wallclock'
+        ),
+        FUNCTION: re.compile(r'clock-trigger*=*').findall
     },
 }
 ALL_RULESETS = ['728', 'style', 'all']
