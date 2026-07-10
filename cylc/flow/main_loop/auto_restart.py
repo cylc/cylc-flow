@@ -86,6 +86,7 @@ restart of the workflow if desired.
 
 """
 from random import random
+from socket import gaierror
 from time import time
 import traceback
 
@@ -148,10 +149,15 @@ def _should_auto_restart(scheduler, current_glbl_cfg):
                     # AutoRestartMode.FORCE_STOP can override this.
                     continue
 
-            if get_fqdn_by_host(host) == scheduler.host:
+            try:
+                fqdn = get_fqdn_by_host(host)
+            except gaierror:
+                # that host is down - can't be the scheduler host
+                continue
+            if fqdn == scheduler.host:
                 # this host is condemned, take the appropriate action
-
                 return mode
+
     return False
 
 
