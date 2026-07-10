@@ -35,7 +35,6 @@ from cylc.flow.task_remote_mgr import (
     REMOTE_INIT_255,
     REMOTE_INIT_DONE,
     REMOTE_INIT_FAILED,
-    REMOTE_INIT_IN_PROGRESS,
 )
 from cylc.flow.task_state import (
     TASK_STATUS_SUCCEEDED,
