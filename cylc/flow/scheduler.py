@@ -921,20 +921,28 @@ class Scheduler:
 
         * Called within the main loop.
         * Starts file installation when Remote init is complete.
-        * Removes complete installations or installations encountering SSH
-          error (remote init will take place on next job submission).
+        * Retries remote init/file install on SSH failure (255).
+        * Removes complete or fatally failed installations.
         """
         for install_target, platform in list(self.incomplete_ri_map.items()):
             status = self.task_job_mgr.task_remote_mgr.remote_init_map[
                 install_target]
             if status == REMOTE_INIT_DONE:
                 self.task_job_mgr.task_remote_mgr.file_install(platform)
-            if status in [REMOTE_FILE_INSTALL_DONE,
-                          REMOTE_INIT_255,
-                          REMOTE_FILE_INSTALL_255,
-                          REMOTE_INIT_FAILED,
-                          REMOTE_FILE_INSTALL_FAILED]:
-                # Remove install target
+            elif status == REMOTE_INIT_255:
+                # Remote init failed due to unreachable host, retry.
+                del self.task_job_mgr.task_remote_mgr.remote_init_map[
+                    install_target]
+                self.task_job_mgr.task_remote_mgr.remote_init(platform)
+            elif status == REMOTE_FILE_INSTALL_255:
+                # File install failed due to unreachable host, retry.
+                del self.task_job_mgr.task_remote_mgr.remote_init_map[
+                    install_target]
+                self.task_job_mgr.task_remote_mgr.file_install(platform)
+            elif status in [REMOTE_FILE_INSTALL_DONE,
+                            REMOTE_INIT_FAILED,
+                            REMOTE_FILE_INSTALL_FAILED]:
+                # Complete or fatally failed - remove install target.
                 self.incomplete_ri_map.pop(install_target)
 
     def _load_task_run_times(self, row_idx, row):
