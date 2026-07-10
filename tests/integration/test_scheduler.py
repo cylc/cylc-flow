@@ -492,7 +492,7 @@ async def test_manage_remote_init_retry_on_255(
         # tracked via incomplete_ri_map:
         schd.incomplete_ri_map[missing_target] = fake_platform
 
-        # --- REMOTE_INIT_255: should retry remote_init, NOT pop from map ---
+        # REMOTE_INIT_255: retry remote_init, pop from init map, NOT ri map
         remote_mgr.remote_init_map[missing_target] = REMOTE_INIT_255
         schd.manage_remote_init()
         assert missing_target not in remote_mgr.remote_init_map, (
@@ -504,14 +504,14 @@ async def test_manage_remote_init_retry_on_255(
         )
         mock_remote_init.reset_mock()
 
-        # --- REMOTE_INIT_DONE: should trigger file_install ---
+        # REMOTE_INIT_DONE: should trigger file_install
         remote_mgr.remote_init_map[missing_target] = REMOTE_INIT_DONE
         schd.manage_remote_init()
         mock_file_install.assert_called_once_with(fake_platform)
         assert missing_target in schd.incomplete_ri_map
         mock_file_install.reset_mock()
 
-        # --- REMOTE_FILE_INSTALL_255: should retry file_install ---
+        # REMOTE_FILE_INSTALL_255: should retry file_install
         remote_mgr.remote_init_map[missing_target] = REMOTE_FILE_INSTALL_255
         schd.manage_remote_init()
         assert missing_target not in remote_mgr.remote_init_map
@@ -519,18 +519,18 @@ async def test_manage_remote_init_retry_on_255(
         assert missing_target in schd.incomplete_ri_map
         mock_file_install.reset_mock()
 
-        # --- REMOTE_FILE_INSTALL_DONE: should remove from map (success) ---
+        # REMOTE_FILE_INSTALL_DONE: should remove from ri map
         remote_mgr.remote_init_map[missing_target] = REMOTE_FILE_INSTALL_DONE
         schd.manage_remote_init()
         assert missing_target not in schd.incomplete_ri_map
 
-        # --- REMOTE_INIT_FAILED: should remove from map (fatal) ---
+        # REMOTE_INIT_FAILED: should remove from ri map
         schd.incomplete_ri_map[missing_target] = fake_platform
         remote_mgr.remote_init_map[missing_target] = REMOTE_INIT_FAILED
         schd.manage_remote_init()
         assert missing_target not in schd.incomplete_ri_map
 
-        # --- REMOTE_FILE_INSTALL_FAILED: should remove from map (fatal) ---
+        # REMOTE_FILE_INSTALL_FAILED: should remove from ri map
         schd.incomplete_ri_map[missing_target] = fake_platform
         remote_mgr.remote_init_map[missing_target] = REMOTE_FILE_INSTALL_FAILED
         schd.manage_remote_init()
