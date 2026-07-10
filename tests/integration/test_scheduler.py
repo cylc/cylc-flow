@@ -17,17 +17,27 @@
 import asyncio
 import logging
 from pathlib import Path
+import re
+from signal import (
+    SIGHUP,
+    SIGINT,
+    SIGTERM,
+)
+from typing import (
+    Any,
+    Callable,
+)
 from unittest.mock import Mock
 
 import pytest
-import re
-from signal import SIGHUP, SIGINT, SIGTERM
-from typing import Any, Callable
 
 from cylc.flow import commands
 from cylc.flow.exceptions import CylcError
 from cylc.flow.parsec.exceptions import ParsecError
-from cylc.flow.scheduler import Scheduler, SchedulerStop
+from cylc.flow.scheduler import (
+    Scheduler,
+    SchedulerStop,
+)
 from cylc.flow.task_remote_mgr import (
     REMOTE_FILE_INSTALL_255,
     REMOTE_FILE_INSTALL_DONE,
@@ -37,15 +47,17 @@ from cylc.flow.task_remote_mgr import (
     REMOTE_INIT_FAILED,
 )
 from cylc.flow.task_state import (
-    TASK_STATUS_SUCCEEDED,
-    TASK_STATUS_WAITING,
+    TASK_STATUS_FAILED,
+    TASK_STATUS_RUNNING,
     TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_SUBMITTED,
-    TASK_STATUS_RUNNING,
-    TASK_STATUS_FAILED
+    TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_WAITING,
 )
-
-from cylc.flow.workflow_status import AutoRestartMode, StopMode
+from cylc.flow.workflow_status import (
+    AutoRestartMode,
+    StopMode,
+)
 
 
 Fixture = Any
