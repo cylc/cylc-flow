@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+from socket import gaierror
 from unittest.mock import Mock
 
 import pytest
@@ -147,6 +148,30 @@ def test_should_auto_restart(
     cfg.get = lambda x: condemned_hosts
     # test
     assert _should_auto_restart(scheduler, cfg) == should_auto_restart
+
+
+def test_should_auto_restart__condemned_host_down(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+):
+    """Check we don't get any spurious error messages if a condemned host is
+    unavailable.
+
+    A condemned host being unavailable is expected!
+    """
+    monkeypatch.setattr(
+        'cylc.flow.main_loop.auto_restart.get_fqdn_by_host',
+        Mock(side_effect=gaierror('oopsie'))
+    )
+    scheduler = Mock(
+        spec=Scheduler,
+        host='localhost',
+        stop_mode=None,
+        auto_restart_time=None,
+    )
+    cfg = Mock(get=lambda x: ['condemned-host'])
+
+    assert _should_auto_restart(scheduler, cfg) is False
+    assert not caplog.records
 
 
 async def test_set_auto_restart_already_stopping(caplog):
