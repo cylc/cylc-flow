@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -446,8 +447,8 @@ def remote_clean(
             f"Remote clean failed for {id_} - could not clean on these "
             "install target(s):"
         )
-        for target, exc in failed_targets.items():
-            msg += f"\n[{target}]\n{exc}"
+        for target, excep in failed_targets.items():
+            msg += f"\n[{target}]\n{excep}"
         raise CylcError(msg)
 
 

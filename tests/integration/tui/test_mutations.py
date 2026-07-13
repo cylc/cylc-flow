@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -268,6 +269,7 @@ async def test_set_mutation(
 
             # wait for the command to be received and run it
             await process_command(schd)
+            await schd._main_loop()
 
             # close the error dialogue
             # NOTE: This hides an asyncio error that does not occur outside of

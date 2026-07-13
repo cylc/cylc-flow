@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -96,6 +97,7 @@ async def test_set_parentless_spawning(
             ['1'],
         )
 
+        schd.pool.spawn_to_runahead_limit()
         # the parentless task "a" should be spawned out to the runahead limit
         assert schd.pool.get_task_ids() == {'2/a', '3/a'}
 
