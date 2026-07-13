@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -67,17 +68,17 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
 workflow_log="${WORKFLOW_RUN_DIR}/log/scheduler/log"
 
 # Check that badhosttask has submit failed, but not good or mixed
-named_grep_ok "badhost task submit failed" \
+named_grep_ok "${TEST_NAME_BASE}-badhost-task-submit-failed" \
     "1/badhosttask.* submit-failed" "${workflow_log}"
-named_grep_ok "goodhost suceeded" \
+named_grep_ok "${TEST_NAME_BASE}-goodhost-suceeded" \
     "1/mixedhosttask.* succeeded" "${workflow_log}"
-named_grep_ok "mixedhost task suceeded" \
+named_grep_ok "${TEST_NAME_BASE}-mixedhost-task-suceeded" \
     "1/goodhosttask.* succeeded" "${workflow_log}"
 
 # Check for remote-init fail reason given in scheduler and job activity logs
 job_activity_log="${WORKFLOW_RUN_DIR}/log/job/1/badhosttask/01/job-activity.log"
 msg="initialisation did not complete (no hosts were reachable)"
-named_grep_ok "${msg:0:30}... (workflow log)" "$msg" "$workflow_log"
-named_grep_ok "${msg:0:30}... (job activity log)" "$msg" "$job_activity_log"
+grep_ok "$msg" "$workflow_log"
+grep_ok "$msg" "$job_activity_log"
 
 purge

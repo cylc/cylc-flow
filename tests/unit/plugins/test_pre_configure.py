@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -129,3 +130,7 @@ def test_pre_configure_exception(monkeypatch):
     assert exc_ctx.value.entry_point == 'cylc.pre_configure'
     assert exc_ctx.value.plugin_name == 'pre_configure_error'
     assert str(exc_ctx.value.exc) == 'foo'
+    assert str(exc_ctx.value) == (
+        "Error in plugin cylc.pre_configure.pre_configure_error\n"
+        "Exception: foo"
+    )

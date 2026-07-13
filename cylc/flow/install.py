@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -57,7 +58,6 @@ from cylc.flow.pathutil import (
 from cylc.flow.remote import (
     DEFAULT_RSYNC_OPTS,
 )
-from cylc.flow.util import cli_format
 from cylc.flow.workflow_files import (
     WorkflowFiles,
     abort_if_flow_file_in_path,
@@ -218,8 +218,8 @@ def reinstall_workflow(
     # changed permissions
 
     # Run rsync command:
-    reinstall_log.info(cli_format(rsync_cmd))
-    LOG.debug(cli_format(rsync_cmd))
+    reinstall_log.info(shlex.join(rsync_cmd))
+    LOG.debug(shlex.join(rsync_cmd))
     proc = Popen(rsync_cmd, stdout=PIPE, stderr=PIPE, text=True)  # nosec
     # * command is constructed via internal interface
     stdout, stderr = (i.strip() for i in proc.communicate())

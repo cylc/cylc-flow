@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -564,6 +565,7 @@ class TaskPool:
                 #   messages were stored in the DB as a list.
                 # from: 8.0.0
                 # to: 8.3.0
+                # remove at: 8.7
                 outputs: Union[
                     Dict[str, str], List[str]
                 ] = json.loads(task_outputs)
@@ -742,6 +744,7 @@ class TaskPool:
                         # BACK COMPAT: no-longer used ctx_type arg
                         # from: Cylc 7
                         # to: 8.3.0
+                        # remove at: 8.7
                         ctx_args.pop(1)
                     ctx: tuple = known_cls(*ctx_args)
                     break
@@ -1756,6 +1759,8 @@ class TaskPool:
                     #   messages were stored in the DB as a list.
                     # from: 8.0.0
                     # to: 8.3.0
+                    # remove after:
+                    #     https://github.com/cylc/cylc-flow/issues/7339
                     outputs: Union[
                         Dict[str, str], List[str]
                     ] = json.loads(outputs_str)

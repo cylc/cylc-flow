@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -279,7 +280,7 @@ def set_timezone(monkeypatch):
 
     Will use a very implausible timezone if none is provided.
     """
-    def patch(time_zone: str = 'XXX-19:17'):
+    def patch(time_zone: str):
         monkeypatch.setenv('TZ', time_zone)
         time.tzset()
 

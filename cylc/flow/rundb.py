@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -219,7 +220,7 @@ class CylcWorkflowDAO:
     # xtriggers (and the `cylc workflow-state` command) to
     # work with Cylc 7 workflows.
     # url: https://github.com/cylc/cylc-flow/issues/5236
-    # remove at: 8.x
+    # remove at: 8.7
     TABLE_SUITE_PARAMS = "suite_params"
     TABLE_WORKFLOW_FLOWS = "workflow_flows"
     TABLE_WORKFLOW_TEMPLATE_VARS = "workflow_template_vars"
@@ -452,7 +453,9 @@ class CylcWorkflowDAO:
     def connect(self) -> sqlite3.Connection:
         """Connect to the database."""
         if self.conn is None:
-            self.conn = sqlite3.connect(self.db_file_name, self.CONN_TIMEOUT)
+            self.conn = sqlite3.connect(
+                self.db_file_name, timeout=self.CONN_TIMEOUT
+            )
         return self.conn
 
     def create_tables(self):

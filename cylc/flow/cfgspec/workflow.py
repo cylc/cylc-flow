@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -834,7 +835,7 @@ with Conf(
                 Externally triggered tasks (see :ref:`Old-Style External
                 Triggers`) wait on external events reported via the
                 ``cylc ext-trigger`` command. To constrain triggers to a
-                specific cycle point, include ``$CYLC_TASK_CYCLE_POINT``
+                specific cycle point, include :envvar:`CYLC_TASK_CYCLE_POINT`
                 in the trigger message string and pass the cycle point to the
                 ``cylc ext-trigger`` command.
             ''')
@@ -1361,7 +1362,8 @@ with Conf(
 
                 Job scripts are executed from within *work directories*
                 created automatically under the workflow run directory. A task
-                can get its own work directory from ``$CYLC_TASK_WORK_DIR``
+                can get its own work directory from
+                :envvar:`CYLC_TASK_WORK_DIR`
                 (or ``$PWD`` if it does not ``cd`` elsewhere at
                 runtime). The default directory path contains task name and
                 cycle point, to provide a unique workspace for every instance
@@ -1398,7 +1400,7 @@ with Conf(
                 Execution retry delays is a list of ISO 8601 durations which
                 tell Cylc how long to wait before the next try.
 
-                The job environment variable ``$CYLC_TASK_TRY_NUMBER``
+                The job environment variable :envvar:`CYLC_TASK_TRY_NUMBER`
                 increments with each automatic retry, allowing you to vary task
                 behaviour between retries.
 

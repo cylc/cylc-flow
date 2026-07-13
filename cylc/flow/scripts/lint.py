@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -116,7 +117,7 @@ LINT_SECTION = '.'.join(LINT_TABLE)
 # to:
 #    8.3.0
 # remove at:
-#    8.4.0 ?
+#    8.7
 DEPR_LINT_SECTION = 'cylc-lint'
 
 IGNORE = 'ignore'

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -112,7 +113,7 @@ if TYPE_CHECKING:
 
 
 RAW_DEPR_MSG = (
-    "DEPRECATED: the --raw option will be removed at Cylc 8.7; "
+    "DEPRECATED: the --raw option will be removed at Cylc 8.9; "
     "use --format=raw instead."
 )
 
@@ -347,7 +348,7 @@ def get_option_parser() -> COP:
     # BACK COMPAT: --raw
     # From: < 8.5.1
     # To: 8.5.1
-    # Remove at: 8.7.0
+    # Remove at: 8.9
     parser.add_option(
         "-r", "--raw",
         help=(

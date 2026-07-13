@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1011,14 +1012,6 @@ class Task(ObjectType):
     depth = Int(
         description='The family inheritance depth.'
     )
-    proxies = graphene.List(
-        lambda: TaskProxy,
-        description="Associated cycle point proxies",
-        args=PROXY_ARGS,
-        strip_null=STRIP_NULL_DEFAULT,
-        delta_store=DELTA_STORE_DEFAULT,
-        delta_type=DELTA_TYPE_DEFAULT,
-        resolver=get_nodes_by_ids)
     parents = graphene.List(
         lambda: Family,
         description="Family definition parent.",
@@ -1261,14 +1254,6 @@ class Family(ObjectType):
     meta = Field(NodeMeta)
     runtime = Field(Runtime)
     depth = Int()
-    proxies = graphene.List(
-        lambda: FamilyProxy,
-        description='Associated family proxy instances.',
-        args=PROXY_ARGS,
-        strip_null=STRIP_NULL_DEFAULT,
-        delta_store=DELTA_STORE_DEFAULT,
-        delta_type=DELTA_TYPE_DEFAULT,
-        resolver=get_nodes_by_ids)
     parents = graphene.List(
         lambda: Family,
         description='Families that this family directly inherits from.',

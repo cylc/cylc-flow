@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -121,7 +122,7 @@ Examples
 ^^^^^^^^
 
 For examples see the built-in plugins in the :py:mod:`cylc.flow.main_loop`
-module which are registered in the Cylc Flow ``setup.cfg`` file.
+module which are registered in the Cylc Flow ``pyproject.toml`` file.
 
 Coroutines
 ^^^^^^^^^^

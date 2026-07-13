@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -347,6 +348,7 @@ class CylcTimeParser:
     def _get_interval_from_expression(
         self, expr: Optional[str], context: Optional['TimePoint'] = None
     ) -> Optional[Duration]:
+        """Gets a duration from an expression."""
         if expr is None:
             if context is None or not context.truncated:
                 return None

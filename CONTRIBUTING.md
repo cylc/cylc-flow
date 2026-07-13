@@ -25,12 +25,22 @@ first Pull Request (for each Cylc repository you contribute to).
 We use [semver](https://semver.org/) to separate riskier changes (e.g. new features
 & code refactors) from bugfixes to provide more stable releases for production environments.
 
-**Enhancements** are made on the `master` branch and released in the next minor version
-(e.g. 8.1, 8.2, 8.3)
+**Enhancements**:
+* Made on the `master` branch.
+* Released in the next minor version (e.g. 8.1, 8.2, 8.3).
 
-**Bugfixes** and minor usability enhancements are made on bugfix branches and
-released as the next maintenance version (e.g. 8.0.1, 8.0.2, 8.0.3). E.G. if the issue is on the `8.0.x` milestone, branch off of `8.0.x` to
-develop your bugfix, then raise the pull request against the `8.0.x` branch. We will later merge the `8.0.x` branch into `master`.
+**Bugfixes** (and minor usability enhancements):
+* Should have either the https://github.com/cylc/cylc-flow/labels/bug,
+  https://github.com/cylc/cylc-flow/labels/could%20be%20better
+  or https://github.com/cylc/cylc-flow/labels/doc label.
+* Made on bugfix branches (e.g, 8.1.x, 8.2.x, etc).
+* Released as the next maintenance version (e.g. 8.1.1, 8.1.2, 8.1.3).
+* E.G. if the issue is on the `8.0.x` milestone, branch off of `8.0.x` to
+  develop your bugfix, then raise the pull request against the `8.0.x` branch. We will later merge the `8.0.x` branch into `master`.
+* See the [list of bugfix branches currently being maintained](https://cylc.github.io/cylc-admin/status/status.html#branches).
+
+See the [developer docs](https://cylc.github.io/cylc-admin/howto/dev-setup#versions--branches)
+for more info on versions and branches.
 
 Feel free to ask questions on the issue or
 [developers chat](https://matrix.to/#/#cylc-general:matrix.org) if unsure about
@@ -47,7 +57,7 @@ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 The following people have contributed to this code under the terms of
 the Contributor Licence Agreement and Certificate of Origin detailed
 below (_except for the parenthesised names, which represent contributions
-from outside of NIWA and the Met Office that predate the explicit introduction
+from outside of Earth Sciences New Zealand and the Met Office that predate the explicit introduction
 of this Agreement in July 2018; they must be un-parenthesised in future pull
 requests_).
 
@@ -101,7 +111,10 @@ requests_).
  - Paul Earnshaw
  - Christopher Bennett
  - Ryan Boult
+ - Mike Taves
  - Samuel Denton
+ - Scott Owen James
+ - James Frost
 <!-- end-shortlog -->
 
 (All contributors are identifiable with email addresses in the git version
@@ -133,7 +146,7 @@ By making a contribution to this project, I certify that:
     the copyright and may be redistributed consistent with this project
     or the licence(s) involved.
 
-(e) I, or my employer, grant to NIWA and all recipients of
+(e) I, or my employer, grant to Earth Sciences New Zealand and all recipients of
     this software a perpetual, worldwide, non-exclusive, no-charge,
     royalty-free, irrevocable copyright licence to reproduce, modify,
     prepare derivative works of, publicly display, publicly perform,
@@ -144,7 +157,7 @@ By making a contribution to this project, I certify that:
     [Open Source Initiative (OSI)](http://www.opensource.org/).
 
 (f) If I become aware of anything that would make any of the above
-    inaccurate, in any way, I will let NIWA know as soon as
+    inaccurate, in any way, I will let Earth Sciences New Zealand know as soon as
     I become aware.
 
 (The Cylc Contributor Licence Agreement and Certificate of Origin is

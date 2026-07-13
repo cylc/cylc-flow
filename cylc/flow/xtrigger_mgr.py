@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -386,7 +387,7 @@ class XtriggerCollator:
     # BACK COMPAT: workflow_state_backcompat
     # from: 8.0.0
     # to: 8.3.0
-    # remove at: 8.x
+    # remove at: 8.7
     @classmethod
     def _try_workflow_state_backcompat(
         cls,

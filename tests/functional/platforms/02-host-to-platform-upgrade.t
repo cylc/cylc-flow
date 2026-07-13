@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +20,12 @@
 # The following scenarios should be covered:
 #   - Task with no settings
 #   - Task with a host setting that should match the test platform
-export REQUIRE_PLATFORM='loc:remote'
+
+# Note: We cannot run this test with job runners that may be configured to
+# submit the job to a compute node (e.g. pbs, slurm, etc) as we are unable
+# to check the hostname
+export REQUIRE_PLATFORM='loc:remote runner:?(background|at)'
+
 . "$(dirname "$0")/test_header"
 set_test_number 7
 
