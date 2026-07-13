@@ -2827,7 +2827,7 @@ class WorkflowConfig:
         # from: 8.0.0
         # remove at: x
         if len(self.cfg['scheduling']['special tasks']['clock-trigger']) > 0:
-            LOG.warning(r"Clock-trigger has been deprecated, "
+            LOG.warning(r"Clock-trigger is deprecated; "
                         r"please use @wall_clock")
         for item in self.cfg['scheduling']['special tasks']['clock-trigger']:
             match = RE_CLOCK_OFFSET.match(item)
