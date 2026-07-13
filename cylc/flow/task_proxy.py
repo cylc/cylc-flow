@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -470,10 +471,6 @@ class TaskProxy:
             return self.try_timers[TimerFlags.EXECUTION_RETRY].num + 1
         except (AttributeError, KeyError):
             return 0
-
-    def next_point(self):
-        """Return the next cycle point."""
-        return self.tdef.next_point(self.point)
 
     def is_ready_to_run(self) -> bool:
         """Is this task ready to run?

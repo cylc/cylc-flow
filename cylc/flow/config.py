@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -2437,8 +2438,6 @@ class WorkflowConfig:
         for tdef in self.taskdefs.values():
             tdef.tweak_outputs()
 
-        self.xtrigger_collator.report_duplicates()
-
     def check_terminal_outputs(self, terminals: Iterable[str]) -> None:
         """Check that task outputs have been registered with tasks.
 
@@ -2692,15 +2691,23 @@ class WorkflowConfig:
     def get_validated_rsync_includes(self):
         """Validate and return items to be included in the file installation"""
         includes = self.cfg['scheduler']['install']
-        illegal_includes = []
+        illegal_includes = {}
         for include in includes:
-            if include.count("/") > 1:
-                illegal_includes.append(f"{include}")
+            include_path = Path(include)
+            if include_path.is_absolute():
+                illegal_includes[include] = 'Paths cannot be absolute'
+            elif len(include_path.parts) > 1:
+                illegal_includes[include] = (
+                    'Only top-level files/directories can be configured'
+                )
         if len(illegal_includes) > 0:
             raise WorkflowConfigError(
-                "Error in [scheduler] install. "
-                "Directories can only be from the top level, please "
-                "reconfigure:" + str(illegal_includes)[1:-1])
+                'Error in [scheduler]install:\n\t'
+                + '\n\t'.join(
+                    f'"{path}" - {message}.'
+                    for path, message in illegal_includes.items()
+                )
+            )
         return includes
 
     def process_metadata_urls(self):

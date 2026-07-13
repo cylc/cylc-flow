@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,6 +18,7 @@
 """Standard pytest fixtures for unit tests."""
 
 from pathlib import Path
+from textwrap import dedent
 from typing import (
     Any,
     Callable,
@@ -233,7 +235,7 @@ def _tmp_flow_config(tmp_run_dir: Callable):
     def __tmp_flow_config(id_: str, config: str) -> 'Path':
         run_dir: 'Path' = tmp_run_dir(id_)
         flow_file = run_dir / WorkflowFiles.FLOW_FILE
-        flow_file.write_text(config)
+        flow_file.write_text(dedent(config).lstrip())
         return flow_file
     return __tmp_flow_config
 

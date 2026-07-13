@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,7 +27,7 @@ import pkgutil
 import re
 import sys
 import traceback
-import typing as t
+from typing import Any
 
 from jinja2 import (
     BaseLoader,
@@ -35,13 +36,15 @@ from jinja2 import (
     FileSystemLoader,
     StrictUndefined,
     TemplateNotFound,
-    TemplateSyntaxError)
+    TemplateSyntaxError,
+)
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import InputError
 import cylc.flow.flags
 from cylc.flow.parsec.exceptions import Jinja2Error
 from cylc.flow.parsec.fileparse import get_cylc_env_vars
+
 
 TRACEBACK_LINENO = re.compile(
     r'\s+?File "(?P<file>.*)", line (?P<line>\d+), in .*template'
@@ -206,8 +209,8 @@ def jinja2environment(dir_=None):
 
 def get_error_lines(
     base_template_file: str,
-    template_lines: t.List[str],
-) -> t.Dict[str, t.List[str]]:
+    template_lines: list[str],
+) -> dict[str, list[str]]:
     """Extract exception lines from Jinja2 tracebacks.
 
     Returns:
@@ -219,7 +222,7 @@ def get_error_lines(
     ret = {}
     for line in reversed(traceback.format_exc().splitlines()):
         match = TRACEBACK_LINENO.match(line)
-        lines: t.List[str] = []
+        lines: list[str] = []
         if match:
             filename = match.groupdict()['file']
             lineno = int(match.groupdict()['line'])
@@ -246,10 +249,10 @@ def get_error_lines(
 
 def jinja2process(
     fpath: str,
-    flines: t.List[str],
+    flines: list[str],
     dir_: str,
-    template_vars: t.Optional[t.Dict[str, t.Any]] = None,
-) -> t.List[str]:
+    template_vars: dict[str, Any] | None = None,
+) -> list[str]:
     """Pass configure file through Jinja2 processor.
 
     Args:

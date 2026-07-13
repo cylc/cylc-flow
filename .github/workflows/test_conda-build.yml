@@ -6,7 +6,6 @@ on:
       - 'conda-environment.yml'
       - '.github/workflows/test_conda-build.yml'
       - 'pyproject.toml'
-      - 'setup.cfg'
   schedule:
     - cron: '17 22 * * 6'  # Every Saturday at 22:17
   workflow_dispatch:
@@ -37,7 +36,7 @@ jobs:
       PIP_NO_DEPS: True
     steps:
       - name: checkout cylc-flow
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: modify conda env file
         run: |

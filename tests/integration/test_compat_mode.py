@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -56,6 +57,9 @@ async def test_blocked_tasks_in_n0(flow, scheduler, run, complete):
     async with run(schd):
         # the workflow should run for three cycles, then runahead stall
         await complete(schd, *(f'{cycle}/bar' for cycle in range(1, 4)))
+
+        # (complete happens before stall test)
+        await schd._main_loop()
         assert schd.is_stalled
 
         # the "blocked" recover tasks should remain in the pool
@@ -92,6 +96,8 @@ async def test_blocked_tasks_in_n0(flow, scheduler, run, complete):
         for cycle in range(1, 4):
             itask = schd.pool.get_task(IntegerPoint(str(cycle)), 'recover')
             schd.pool.remove(itask, 'suicide-trigger')
+
+        schd.pool.spawn_to_runahead_limit()
         assert schd.pool.get_task_ids() == {
             '4/foo',
             '5/foo',
@@ -102,6 +108,7 @@ async def test_blocked_tasks_in_n0(flow, scheduler, run, complete):
         # the workflow continue into the next three cycles, then stall again
         # (i.e. the runahead limit should move forward after the removes)
         await complete(schd, *(f'{cycle}/bar' for cycle in range(4, 7)))
+        await schd._main_loop()
         assert schd.is_stalled
 
         assert {

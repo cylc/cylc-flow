@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,7 +27,6 @@ from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.taskdef import TaskDef
 from cylc.flow.xtrigger_mgr import (
     RE_STR_TMPL,
-    XTRIG_DUP_WARNING,
     XtriggerCollator
 )
 
@@ -320,43 +320,3 @@ def test_callback(xtrigger_mgr):
     xtrigger_mgr.callback(get_name)
     # this means that the xtrigger was satisfied
     assert xtrigger_mgr.sat_xtrig
-
-
-def test_report_duplicates(
-    caplog: pytest.LogCaptureFixture
-):
-    x1 = SubFuncContext(
-        label="x1",
-        func_name="echo",
-        func_args=[],
-        func_kwargs={"succeed": False}
-    )
-    x2 = SubFuncContext(
-        label="x2",
-        func_name="echo",
-        func_args=[],
-        func_kwargs={"succeed": False}
-    )
-    y = SubFuncContext(
-        label="y",
-        func_name="echo",
-        func_args=["arg1"],
-        func_kwargs={"succeed": False}
-    )
-
-    # x1 and x2 both have the same function signature.
-
-    xtriggers = XtriggerCollator()
-    xtriggers.functx_map = {
-        'x1': x1,
-        'x2': x2,
-        'y': y
-    }
-
-    caplog.set_level(logging.INFO, CYLC_LOG)
-    xtriggers.report_duplicates()
-
-    assert caplog.messages == [
-        "Duplicate xtriggers: x1, x2 = echo(succeed=False)",
-        XTRIG_DUP_WARNING
-    ]

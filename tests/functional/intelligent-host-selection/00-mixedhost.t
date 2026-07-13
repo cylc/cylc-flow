@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -57,7 +58,7 @@ workflow_run_ok "${TEST_NAME_BASE}-run" \
 # produced by Intelligent Host Selection Logic have happened.
 
 named_grep_ok "${TEST_NAME_BASE}-unreachable-host-warning" \
-    'unreachable_host has been added to the list of unreachable hosts' \
+    'Could not connect to unreachable_host' \
     "${WORKFLOW_RUN_DIR}/log/scheduler/log"
 
 # Ensure that retrying in this context doesn't increment try number:

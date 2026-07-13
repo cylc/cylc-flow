@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -123,7 +124,7 @@ run_fail cylc cat-log -f j -m l -s 2 "${WORKFLOW_NAME}//1/a-task"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-task-log-dir-NN
 run_ok "${TEST_NAME}" cylc cat-log -f j -m d "${WORKFLOW_NAME}//1/a-task"
-grep_ok "${WORKFLOW_NAME}/log/job/1/a-task/NN$" "${TEST_NAME}.stdout"
+grep_ok "${WORKFLOW_NAME}/log/job/1/a-task/01$" "${TEST_NAME}.stdout"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-task-log-dir-01
 run_ok "${TEST_NAME}" cylc cat-log -f j -m d -s 1 "${WORKFLOW_NAME}//1/a-task"
@@ -131,7 +132,7 @@ grep_ok "${WORKFLOW_NAME}/log/job/1/a-task/01$" "${TEST_NAME}.stdout"
 #-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-task-job-path
 run_ok "${TEST_NAME}" cylc cat-log -f j -m p "${WORKFLOW_NAME}//1/a-task"
-grep_ok "${WORKFLOW_NAME}/log/job/1/a-task/NN/job$" "${TEST_NAME}.stdout"
+grep_ok "${WORKFLOW_NAME}/log/job/1/a-task/01/job$" "${TEST_NAME}.stdout"
 #-------------------------------------------------------------------------------
 # it shouldn't let you modify the file path to access other resources
 # use the dedicated options

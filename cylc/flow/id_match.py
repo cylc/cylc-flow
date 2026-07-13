@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -176,25 +177,37 @@ def _match(
             })
         else:
             # filter for on-sequence task instances
-            for id__ in list(_matched):
+            # exclude pool IDs from filtering (they're already validated)
+            _invalid = set()
+            for id__ in _matched.difference({
+                pool_task_id.duplicate(task_sel=None)
+                for pool_task_id in pool
+            }):
                 try:
                     taskdef = config.taskdefs[id__['task']]
                     if not taskdef.is_valid_point(get_point(id__['cycle'])):
                         _matched.remove(id__)
                         if (
-                            # was the specified ID a pattern?
+                            # don't warn if the task was provided as a pattern
                             not contains_fnmatch(id_['task'])
+                            # don't warn if the cycle was provided as a pattern
                             and not contains_fnmatch(id_['cycle'])
                         ):
                             # the cycle point is not valid for this task
                             # NOTE: only log this if the user asked for a
                             # specific cycle/task
-                            LOG.warning(
-                                'Invalid cycle point for task:'
-                                f' {id__["task"]}, {id__["cycle"]}'
-                            )
+                            _invalid.add(id__)
+
                 except (ValueError, KeyError):
                     _matched.remove(id__)
+
+            if not _matched and _invalid:
+                # warn if there were no matches for the provided id
+                for id__ in sorted(_invalid):
+                    LOG.warning(
+                        'Invalid cycle point for task:'
+                        f' {id__["task"]}, {id__["cycle"]}'
+                    )
 
         if _matched:
             matched = matched.union(_matched)

@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,23 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import TYPE_CHECKING
 
 import pytest
 
 from cylc.flow import commands
-
-if TYPE_CHECKING:
-    from cylc.flow.scheduler import Scheduler
+from cylc.flow.scheduler import Scheduler
 
 
 @pytest.fixture
 def param_workflow(flow, scheduler):
     def _schd(paused_start, queue_limit):
         id_ = flow({
-            'scheduler': {
-                'allow implicit tasks': True,
-            },
             'task parameters': {
                 'x': '1..10',
             },
@@ -78,7 +73,7 @@ async def test_queue_release(
     expected_submissions = queue_limit if not start_paused else 0
 
     # start the scheduler (but don't set the main loop running)
-    schd = param_workflow(start_paused, queue_limit)
+    schd: Scheduler = param_workflow(start_paused, queue_limit)
     async with start(schd):
         # capture task submissions (prevents real submissions)
         submitted_tasks = capture_submission(schd)

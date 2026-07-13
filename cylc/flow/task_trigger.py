@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -183,7 +184,7 @@ class TaskTrigger:
         return hash(self) == hash(other)
 
     @staticmethod
-    def standardise_name(name):
+    def standardise_name(name: str) -> str:
         """Replace trigger name aliases with standard names.
 
         Arg name should be a valid standard name or alias, otherwise assumed

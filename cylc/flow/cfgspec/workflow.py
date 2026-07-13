@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1415,13 +1416,13 @@ with Conf(
                 Set the execution (:term:`wallclock <wallclock time>`) time
                 limit of a job.
 
-                For ``background`` and ``at`` job runners Cylc runs the
-                job's script using the timeout command. For other job runners
+                For the ``background`` and ``at`` job runners, Cylc runs the
+                job's script using the timeout command. For other job runners,
                 Cylc will convert execution time limit to a :term:`directive`.
 
-                If a job exceeds its execution time limit Cylc can
-                poll the job multiple times. You can set polling
-                intervals using :cylc:conf:`global.cylc[platforms]
+                If a job exceeds its execution time limit, Cylc will
+                poll the job multiple times at the
+                intervals configured in :cylc:conf:`global.cylc[platforms]
                 [<platform name>]execution time limit polling intervals`
 
                 .. versionchanged:: 8.0.0

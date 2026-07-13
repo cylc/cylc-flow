@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +21,7 @@ from pytest import param
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.cycling.iso8601 import ISO8601Point
-from cylc.flow.taskdef import generate_graph_parents
+from cylc.flow.taskdef import TaskTuple, generate_graph_parents
 
 
 def test_generate_graph_parents_1(tmp_flow_config):   # noqa: F811
@@ -50,17 +51,10 @@ def test_generate_graph_parents_1(tmp_flow_config):   # noqa: F811
         ISO8601Point('20230101T03'),
         ISO8601Point('20230101T06')
     ]:
-        parents = generate_graph_parents(
+        assert generate_graph_parents(
             cfg.taskdefs['every_cycle'], point, cfg.taskdefs
-        )
-        assert list(parents.values()) == [
-            [
-                (
-                    "run_once_at_midnight",
-                    ISO8601Point('20230101T0000Z'),
-                    False
-                )
-            ]
+        ) == [
+            ("run_once_at_midnight", ISO8601Point('20230101T0000Z'), False),
         ]
 
 
@@ -81,23 +75,40 @@ def test_generate_graph_parents_2(tmp_flow_config):   # noqa: F811
     cfg = WorkflowConfig(workflow=id_, fpath=flow_file, options=None)
 
     # Each instance of every_cycle should have a parent only at T00.
-    parents = generate_graph_parents(
+    assert generate_graph_parents(
         cfg.taskdefs['foo'], IntegerPoint("1"), cfg.taskdefs
+    ) == []  # No parents at first point.
+
+    assert generate_graph_parents(
+        cfg.taskdefs['foo'], IntegerPoint("2"), cfg.taskdefs
+    ) == [
+        ("foo", IntegerPoint('1'), False),
+    ]
+
+
+def test_generate_graph_parents__sequential(tmp_flow_config):
+    """It chooses the latest previous point when using old-style sequential."""
+    flow_file = tmp_flow_config(
+        id_ := 'gargle-blaster',
+        """
+            [scheduler]
+                allow implicit tasks = True
+            [scheduling]
+                initial cycle point = 2010-01-01
+                [[special tasks]]
+                    sequential = foo
+                [[graph]]
+                    P1D = foo
+                    P1M = foo
+        """
     )
-    assert list(parents.values()) == [[]]  # No parents at first point.
+    cfg = WorkflowConfig(workflow=id_, fpath=flow_file, options=None)
 
     parents = generate_graph_parents(
-        cfg.taskdefs['foo'], IntegerPoint("2"), cfg.taskdefs
+        cfg.taskdefs['foo'], ISO8601Point('2010-02-01'), cfg.taskdefs
     )
-
-    assert list(parents.values()) == [
-        [
-            (
-                "foo",
-                IntegerPoint('1'),
-                False
-            )
-        ]
+    assert list(parents) == [
+        TaskTuple('foo', ISO8601Point('2010-01-31'), False),
     ]
 
 

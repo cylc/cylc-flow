@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -602,7 +603,9 @@ class JobRunnerManager():
         if not self.clean_env:
             # Pass the whole environment to the job submit subprocess.
             # (Note this runs on the job host).
-            env = os.environ
+            # NOTE:: We modify this below so use a copy!
+            # See: https://github.com/cylc/cylc-flow/issues/7333
+            env = dict(os.environ)
         else:
             # $HOME is required by job.sh on the job host.
             env = {'HOME': os.environ.get('HOME', '')}

@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,12 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import hashlib
 import logging
-import re
 from pathlib import Path
+import re
 from shutil import rmtree
-from typing import Callable, List, Optional, Tuple
 import time
+from typing import Callable, List, Optional, Tuple
 
 import pytest
 
@@ -288,3 +290,22 @@ def set_timezone(monkeypatch):
         # Reset to the original time zone after the test
         monkeypatch.undo()
         time.tzset()
+
+
+@pytest.fixture(scope='module')
+def mod_tmp_path(tmp_path_factory: pytest.TempPathFactory):
+    """A module scoped version of tmp_path.
+
+    Yields a temporary directory which will persist for all tests in the same
+    module.
+
+    Note:
+        Each invovation of this fixture yields a different directory, even if
+        they are in the same module.
+
+        I.e, the yielded directory will persist within the scope of the module,
+        rather than the yielded directory is consistent within the scope of the
+        module
+
+    """
+    yield tmp_path_factory.mktemp(hashlib.sha256().hexdigest()[:10])

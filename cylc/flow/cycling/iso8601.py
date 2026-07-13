@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -510,7 +511,7 @@ class ISO8601Sequence(SequenceBase):
                 break
             recurrence_cycle_point = ISO8601Point(str(recurrence_iso_point))
             if self.exclusions and recurrence_cycle_point in self.exclusions:
-                break
+                continue
             prev_cycle_point = recurrence_cycle_point
 
         if prev_cycle_point is None:
@@ -520,9 +521,6 @@ class ISO8601Sequence(SequenceBase):
                 self.recurrence, WorkflowSpecifics.DUMP_FORMAT,
                 prev_cycle_point, point
             )
-        # Check all exclusions
-        if self.exclusions and prev_cycle_point in self.exclusions:
-            return self.get_prev_point(prev_cycle_point)
         return prev_cycle_point
 
     def get_next_point(self, point):

@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -235,7 +236,7 @@ class BroadcastMgr:
     # to:
     #    8.1.x
     # remove at:
-    #    8.x
+    #    8.7
     def post_load_db_coerce(self):
         """Coerce DB loaded values to config objects, i.e. DurationFloat."""
         for namespaces in self.broadcasts.values():

@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -51,7 +52,7 @@ class PluginError(CylcError):
 
     Args:
         entry_point:
-            The plugin entry point as defined in setup.cfg
+            The plugin entry point as defined in pyproject.toml
             (e.g. 'cylc.main_loop')
         plugin_name:
             Name of the plugin

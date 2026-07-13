@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,9 +25,7 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}"
 run_fail "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
-cmp_ok "${TEST_NAME}.stderr" <<__END__
-IllegalItemError: [scheduling]initial cycle time
-__END__
+grep_ok 'IllegalItemError: \[scheduling\]initial cycle time.*' "${TEST_NAME}.stderr"
 #-------------------------------------------------------------------------------
 purge
 exit

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -260,7 +261,9 @@ def test_check_cylc_file_7to8(number):
     """TEST File has one of each manual deprecation;"""
     lint = lint_text(TEST_FILE, ['728'])
     instances = EXPECT_INSTANCES_OF_ERR.get(number, None)
-    assert_contains(lint.messages, f'[U{number:03d}]', instances)
+    # U0008 Has been removed, but we don't want to change the numbering
+    if number != 8:
+        assert_contains(lint.messages, f'[U{number:03d}]', instances)
 
 
 def test_check_cylc_file_7to8_has_shebang():
@@ -386,7 +389,9 @@ def test_check_cylc_file_jinja2_comments_shell_arithmetic_not_warned():
 )
 def test_check_cylc_file_inplace(number):
     lint = lint_text(TEST_FILE, ['728', 'style'], modify=True)
-    assert_contains(lint.outlines, f'[U{number:03d}]')
+    # U0008 Has been removed, but we don't want to change the numbering
+    if number != 8:
+        assert_contains(lint.outlines, f'[U{number:03d}]')
 
 
 def test_get_cylc_files_get_all_rcs(tmp_path):
@@ -576,11 +581,11 @@ def test_get_pyproject_toml__depr(
 
 
 @pytest.mark.parametrize(
-    'input_, error',
+    'input_, output',
     [
         param(
             {'exclude': ['hey', 'there', 'Delilah']},
-            None,
+            True,
             id='it works'
         ),
         param(
@@ -612,16 +617,24 @@ def test_get_pyproject_toml__depr(
             {'ignore': ['R999']},
             'R999 is a not a known linter code.',
             id='it fails with non-existant checks ignored'
-        )
+        ),
+        param(
+            {'ignore': ['U008']},
+            'warn',
+            id='valid, but deprecated linter code'
+        ),
     ]
 )
-def test_validate_toml_items(input_, error):
+def test_validate_toml_items(input_, output, caplog):
     """It chucks out the wrong sort of items."""
-    if error is not None:
-        with pytest.raises(CylcError, match=error):
+    if output not in [True, 'warn']:
+        with pytest.raises(CylcError, match=output):
             validate_toml_items(input_)
-    else:
+    elif output is True:
+        assert validate_toml_items(input_) is output
+    elif output == 'warn':
         assert validate_toml_items(input_) is True
+        assert 'U008 is a deprecated linter code' in caplog.messages
 
 
 @pytest.mark.parametrize(

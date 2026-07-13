@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1040,14 +1041,23 @@ def test_rsync_includes_will_not_accept_sub_directories(tmp_flow_config):
         [[dependencies]]
             graph = "blah => deeblah"
     [scheduler]
-        install = dir/, dir2/subdir2/, file1, file2
+        install = /, /foo, /foo/, foo/bar, foo/bar/
     """)
 
     with pytest.raises(WorkflowConfigError) as exc:
         WorkflowConfig(
             workflow=id_, fpath=flow_file, options=Values()
         )
-    assert "Directories can only be from the top level" in str(exc.value)
+    assert '"/" - Paths cannot be absolute.' in str(exc.value)
+    assert '"/foo" - Paths cannot be absolute.' in str(exc.value)
+    assert (
+        '"foo/bar" - Only top-level files/directories can be configured.'
+        in str(exc.value)
+    )
+    assert (
+        '"foo/bar/" - Only top-level files/directories can be configured.'
+        in str(exc.value)
+    )
 
 
 @pytest.mark.parametrize(
@@ -1821,3 +1831,37 @@ def test_check_task_event_names(item, tmp_flow_config, log_filter):
         f"Invalid event name(s) for [runtime][foo][events]{item}: "
         "badger, horse"
     ))
+
+
+def test_jinja2_lib_python(tmp_flow_config):
+    """Modules in lib/python are available in custom Jinja2."""
+    flow_file: Path = tmp_flow_config((id_ := 'wflow'), r"""
+        #!jinja2
+        {% from 'my_module' import my_const %}
+        [meta]
+            x = {{ my_const }}
+        [scheduler]
+            allow implicit tasks = true
+        [scheduling]
+            [[graph]]
+                R1 = {{ 'foo' | my_filter }}
+    """)
+
+    (lib_dir := flow_file.parent / 'lib' / 'python').mkdir(parents=True)
+    (lib_dir / 'my_module.py').write_text(
+        r"my_const = 'bar'"
+    )
+
+    (filters_dir := flow_file.parent / 'Jinja2Filters').mkdir()
+    (filters_dir / 'my_filter.py').write_text(
+        dedent(r"""
+            from my_module import my_const
+
+            def my_filter(val):
+                return f"{val}_{my_const}"
+        """)
+    )
+
+    conf = WorkflowConfig(id_, str(flow_file), ValidateOptions())
+    assert conf.cfg['meta']['x'] == 'bar'
+    assert conf.cfg['scheduling']['graph']['R1'] == 'foo_bar'

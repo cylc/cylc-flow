@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,10 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from collections import (
-    Counter,
-    defaultdict
-)
 from contextlib import suppress
 from enum import Enum
 from inspect import signature
@@ -53,12 +50,6 @@ if TYPE_CHECKING:
     from cylc.flow.scheduler import Scheduler
     from cylc.flow.subprocctx import SubFuncContext
     from cylc.flow.task_proxy import TaskProxy
-
-
-XTRIG_DUP_WARNING = (
-    "Duplicate xtrigger prerequisites get satisfied naturally at"
-    " once, but they can be satisfied separately with `cylc set`."
-)
 
 
 class TemplateVariables(Enum):
@@ -245,22 +236,6 @@ class XtriggerCollator:
         if fctx.func_name == "wall_clock":
             self.wall_clock_labels.add(label)
 
-    def report_duplicates(self):
-        """Report labels that point to the same xtrigger signature."""
-
-        counts = Counter([v.get_signature() for v in self.functx_map.values()])
-        dups = defaultdict(list)
-        for label, fctx in self.functx_map.items():
-            sig = fctx.get_signature()
-            if counts[sig] < 2:
-                continue
-            dups[sig].append(label)
-
-        for sig, labels in dups.items():
-            LOG.info(f"Duplicate xtriggers: {', '.join(labels)} = {sig}")
-        if dups:
-            LOG.warning(XTRIG_DUP_WARNING)
-
     @classmethod
     def _validate(
         cls,
@@ -412,7 +387,7 @@ class XtriggerCollator:
     # BACK COMPAT: workflow_state_backcompat
     # from: 8.0.0
     # to: 8.3.0
-    # remove at: 8.x
+    # remove at: 8.7
     @classmethod
     def _try_workflow_state_backcompat(
         cls,
@@ -529,10 +504,6 @@ class XtriggerManager:
         self.sat_xtrig: dict = {}
         # Signatures of active functions (waiting on callback).
         self.active: list = []
-
-        # A record of parentless sequential xtriggered tasks
-        # that have had their next occurrance spawned.
-        self.sequential_has_spawned_next: Set[str] = set()
 
         self.workflow_run_dir = workflow_run_dir
 
@@ -685,8 +656,6 @@ class XtriggerManager:
                 if sig in self.sat_xtrig:
                     # Already satisfied, just update the task
                     itask.state.xtriggers[label] = True
-                    if self.all_task_seq_xtriggers_satisfied(itask):
-                        self.schd.pool.check_spawn_psx_task(itask)
                 elif _wall_clock(*ctx.func_args, **ctx.func_kwargs):
                     # Newly satisfied
                     itask.state.xtriggers[label] = True
@@ -694,8 +663,6 @@ class XtriggerManager:
                     self.data_store_mgr.delta_xtrigger(sig, True)
                     self.workflow_db_mgr.put_xtriggers({sig: {}})
                     LOG.info('xtrigger succeeded: %s = %s', label, sig)
-                    if self.all_task_seq_xtriggers_satisfied(itask):
-                        self.schd.pool.check_spawn_psx_task(itask)
                     self.do_housekeeping = True
                 continue
             # General case: potentially slow asynchronous function call.
@@ -715,8 +682,6 @@ class XtriggerManager:
                             [itask.tdef.name],
                             xtrigger_env
                         )
-                    if self.all_task_seq_xtriggers_satisfied(itask):
-                        self.schd.pool.check_spawn_psx_task(itask)
                 continue
 
             # Call the function to check the xtrigger.
@@ -828,6 +793,12 @@ class XtriggerManager:
             if label not in itask.state.xtriggers:
                 continue
 
+            if label not in self.xtriggers.functx_map:
+                # This xtrigger's definition was removed (e.g. by reload).
+                # Just satisfy it directly without context lookup.
+                itask.state.xtriggers[label] = satisfied
+                continue
+
             ctx = self.get_xtrig_ctx(itask, label)
             sig = ctx.get_signature()
 
@@ -844,8 +815,6 @@ class XtriggerManager:
                 continue
 
             itask.state.xtriggers[label] = satisfied
-            if satisfied and self.all_task_seq_xtriggers_satisfied(itask):
-                self.schd.pool.check_spawn_psx_task(itask)
 
             self.data_store_mgr.delta_task_xtrigger(
                 itask, label, sig, satisfied)

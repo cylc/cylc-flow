@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -124,11 +125,11 @@ async def test_run_mode_skip_abides_by_held(flow, scheduler, run):
         # Hold task, check that it's held:
         schd.pool.hold_tasks({TaskTokens('1', 'foo')})
         assert foo.state.is_held
-        await schd._main_loop()
         assert foo.state(TASK_STATUS_WAITING)
 
         schd.pool.release_held_tasks({TaskTokens('1', 'foo')})
         assert not foo.state.is_held
+        await schd._main_loop()
         with pytest.raises(SchedulerStop):
             # Will shut down as foo has run
             await schd._main_loop()

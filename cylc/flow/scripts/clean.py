@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -95,6 +96,7 @@ from cylc.flow.terminal import (
     cli_function,
     is_terminal,
 )
+from cylc.flow.util import natural_sort_key
 
 
 if TYPE_CHECKING:
@@ -203,7 +205,7 @@ def prompt(workflows: Iterable[str]) -> None:
 async def scan(
     workflows: Iterable[str], multi_mode: bool
 ) -> Tuple[List[str], bool]:
-    """Expand tuncated workflow IDs
+    """Expand truncated workflow IDs
 
     For example "one" might expand to "one/run1" & "one/run2"
     or "one/two/run1".
@@ -218,6 +220,7 @@ async def scan(
             multi_mode = True
         else:
             ret.append(workflow)
+    ret.sort(key=natural_sort_key)
     return ret, multi_mode
 
 
@@ -241,7 +244,6 @@ async def run(*ids: str, opts: 'Values') -> None:
             LOG.warning(f"No stopped workflows matching {', '.join(ids)}")
             return
 
-        workflows.sort()
         if multi_mode and not opts.skip_interactive:
             prompt(workflows)  # prompt for approval or exit
 

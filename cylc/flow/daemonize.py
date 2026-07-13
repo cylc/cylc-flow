@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,6 +17,7 @@
 
 """Turn a cylc scheduler into a Unix daemon."""
 
+import atexit
 import json
 import os
 import sys
@@ -129,6 +131,6 @@ def daemonize(schd):
     # Note that simply reassigning the sys streams is not sufficient
     # if we import modules that write to stdin and stdout from C
     # code - evidently the subprocess module is in this category!
-    # TODO: close resource? atexit?
     dvnl = open(os.devnull, 'r')  # noqa: SIM115 (keep devnull open until exit)
     os.dup2(dvnl.fileno(), sys.stdin.fileno())
+    atexit.register(dvnl.close)

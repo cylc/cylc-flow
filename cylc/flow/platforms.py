@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -111,14 +112,6 @@ def get_platform(
     ...
 
 
-# BACK COMPAT: get_platform
-#     At Cylc 8.x remove all Cylc7 upgrade logic.
-# from:
-#     Cylc8
-# to:
-#     Cylc8.x
-# remove at:
-#     Cylc8.x
 def get_platform(
     task_conf: Union[str, dict, 'OrderedDictWithDefaults', None] = None,
     task_name: str = UNKNOWN_TASK,
@@ -606,6 +599,13 @@ def fail_if_platform_and_host_conflict(
             )
 
 
+# BACK COMPAT: get_platform_deprecated_settings
+# from:
+#     Cylc7
+# to:
+#     Cylc8
+# remove at:
+#     Cylc8.x
 def get_platform_deprecated_settings(
     task_conf: Union[dict, 'OrderedDictWithDefaults'],
     task_name: str = UNKNOWN_TASK
