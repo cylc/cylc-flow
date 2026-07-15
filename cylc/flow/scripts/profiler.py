@@ -259,23 +259,14 @@ def main(_parser: COP, options) -> None:
 
 async def _main(options) -> None:
 
-    # list of asyncio tasks
-    tasks: list[asyncio.Task] = []
-
-    # Register the stop_profiler function with the signal library
-    # The signal library doesn't work with asyncio, so we have to use the
-    # loop's add_signal_handler function instead
     loop = asyncio.get_running_loop()
-    for sig in (signal.SIGINT, signal.SIGHUP, signal.SIGTERM):
-        loop.add_signal_handler(sig, lambda: {t.cancel() for t in tasks})
-
     # convert from ISO8601 duration to integer seconds
     delay = int(dp.parse(options.delay).get_seconds())
 
     # get cgroup information
     process = get_cgroup_paths(Path(options.cgroup_location))
     # the profiler will run until one of these coroutines calls `sys.exit`:
-    tasks.extend([
+    tasks = [
         # run the profiler itself
         asyncio.create_task(
             profile(process, delay),
@@ -288,7 +279,13 @@ async def _main(options) -> None:
             watch_and_kill(psutil.Process(os.getpid())),
             name="profiler_watchdog",
         ),
-    ])
+    ]
+
+    # The signal library doesn't work with asyncio, so we have to use the
+    # loop's add_signal_handler function instead
+    loop = asyncio.get_running_loop()
+    for sig in (signal.SIGINT, signal.SIGHUP, signal.SIGTERM):
+        loop.add_signal_handler(sig, lambda: {t.cancel() for t in tasks})
 
     with suppress(asyncio.CancelledError):
         await asyncio.gather(*tasks)
