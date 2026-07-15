@@ -1249,7 +1249,7 @@ class TaskJobManager:
                     msg = '(no platforms available)'
                     # Clear all hosts from all platforms in group from
                     # bad_hosts:
-                    self.bad_hosts -= exc.hosts_consumed
+                    self.bad_hosts -= exc.bad_hosts
                     self._set_retry_timers(itask, rtconfig)
                 # Provide dummy platform otherwise it will incorrectly show as
                 # the default localhost platform in the data store:

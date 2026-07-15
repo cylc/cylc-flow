@@ -17,33 +17,27 @@
 
 """Functionality for workflow removal."""
 
-from collections import deque
+import asyncio
+from asyncio.subprocess import (
+    DEVNULL,
+    PIPE,
+)
 from contextlib import suppress
-from functools import partial
 import glob
 import os
 from pathlib import Path
-from random import shuffle
+import shlex
 import sqlite3
-from subprocess import (
-    DEVNULL,
-    PIPE,
-    Popen,
-)
-from time import sleep
+from textwrap import indent
 from typing import (
     TYPE_CHECKING,
     Any,
     Container,
-    Deque,
-    Dict,
     Iterable,
     List,
-    NamedTuple,
     Optional,
     Set,
     Union,
-    cast,
 )
 
 from cylc.flow import LOG
@@ -51,11 +45,14 @@ from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import (
     CylcError,
     InputError,
+    NoHostsError,
+    NoPlatformsError,
     PlatformError,
     PlatformLookupError,
     SchedulerAlive,
     ServiceFileError,
 )
+import cylc.flow.flags
 from cylc.flow.pathutil import (
     get_workflow_run_dir,
     is_relative_to,
@@ -84,12 +81,6 @@ from cylc.flow.workflow_files import (
 
 if TYPE_CHECKING:
     from optparse import Values
-
-
-class RemoteCleanQueueTuple(NamedTuple):
-    proc: 'Popen[str]'
-    install_target: str
-    platforms: List[Dict[str, Any]]
 
 
 class RemoteTimeoutErr(CylcError):
@@ -146,7 +137,7 @@ def _clean_check(opts: 'Values', id_: str, run_dir: Path) -> None:
         ) from None
 
 
-def init_clean(id_: str, opts: 'Values') -> None:
+async def init_clean(id_: str, opts: 'Values') -> None:
     """Initiate the process of removing a stopped workflow from the local
     scheduler filesystem and remote hosts.
 
@@ -202,8 +193,8 @@ def init_clean(id_: str, opts: 'Values') -> None:
                 )
                 raise ServiceFileError(f"Cannot clean {id_} - {exc}") from exc
 
-        if platform_names and platform_names != {'localhost'}:
-            remote_clean(
+        if platform_names:
+            await remote_clean(
                 id_, platform_names, opts.remote_timeout, opts.rm_dirs
             )
 
@@ -361,7 +352,25 @@ def _clean_using_glob(
         remove_dir_or_file(path)
 
 
-def remote_clean(
+def get_install_targets_map(
+    platform_names: Iterable[str],
+) -> dict[str, list[dict]]:
+    """Map install target name to a list of platform configs for the given
+    platform names."""
+    ret: dict[str, list[dict]] = {}
+    for platform_name in platform_names:
+        try:
+            platform = platform_from_name(platform_name)
+        except PlatformLookupError as exc:
+            LOG.warning(exc)
+            continue
+        target = get_install_target_from_platform(platform)
+        if target != get_localhost_install_target():
+            ret.setdefault(target, []).append(platform)
+    return ret
+
+
+async def remote_clean(
     id_: str,
     platform_names: Iterable[str],
     timeout: str,
@@ -377,105 +386,86 @@ def remote_clean(
         timeout: Number of seconds to wait before cancelling.
         rm_dirs: Sub dirs to remove instead of the whole run dir.
     """
-    install_targets_map: dict[str, list[dict]] = {}
-    for platform_name in platform_names:
-        try:
-            platform = platform_from_name(platform_name)
-        except PlatformLookupError as exc:
-            LOG.warning(exc)
-            continue
-        target = get_install_target_from_platform(platform)
-        if target != get_localhost_install_target():
-            install_targets_map.setdefault(target, []).append(platform)
+    if not (install_targets_map := get_install_targets_map(platform_names)):
+        LOG.debug(f"{id_}: no remote install targets found")
+        return
 
-    queue: Deque[RemoteCleanQueueTuple] = deque()
-    remote_clean_cmd = partial(
-        _remote_clean_cmd, id_=id_, rm_dirs=rm_dirs, timeout=timeout
+    LOG.info(
+        f"Cleaning {id_} on install target(s): "
+        f"{', '.join(install_targets_map.keys())}"
     )
-    for target, platforms in install_targets_map.items():
-        shuffle(platforms)
-        LOG.info(f"Cleaning {id_} on install target: {target}")
-        # Issue ssh command:
-        queue.append(
-            RemoteCleanQueueTuple(
-                remote_clean_cmd(platform=platforms[0]), target, platforms
+
+    tasks_map = {
+        target: asyncio.create_task(
+            _remote_clean_cmd(
+                id_,
+                platforms,
+                bad_hosts={},
+                rm_dirs=rm_dirs,
+                timeout=timeout,
             )
         )
-    failed_targets: dict[str, PlatformError | RemoteTimeoutErr] = {}
-    # Handle subproc pool results almost concurrently:
-    while queue:
-        item = queue.popleft()
-        ret_code = item.proc.poll()
-        if ret_code is None:  # proc still running
-            queue.append(item)
-            continue
-        out, err = item.proc.communicate()
-        if out:
-            LOG.info(f"[{item.install_target}]\n{out}")
-        if ret_code == RemoteTimeoutErr.ret_code:
-            failed_targets[item.install_target] = RemoteTimeoutErr(timeout)
-        elif ret_code:
-            this_platform = item.platforms.pop(0)
-            excp = PlatformError(
-                PlatformError.MSG_TIDY,
-                this_platform['name'],
-                cmd=cast('list[str]', item.proc.args),
-                ret_code=ret_code,
-                out=out,
-                err=err,
-            )
-            if ret_code == 255 and item.platforms:
-                # SSH error; try again using the next platform for this
-                # install target
-                LOG.debug(excp)
-                queue.append(
-                    item._replace(
-                        proc=remote_clean_cmd(platform=item.platforms[0])
-                    )
-                )
-            else:  # Exhausted list of platforms
-                failed_targets[item.install_target] = excp
-        elif err:
-            # Only show stderr from remote host in debug mode if ret code 0
-            # because stderr often contains useless stuff like ssh login
-            # messages
-            LOG.debug(f"[{item.install_target}]\n{err}")
-        sleep(0.2)
+        for target, platforms in install_targets_map.items()
+    }
+    await asyncio.gather(*tasks_map.values(), return_exceptions=True)
 
-    if failed_targets:
+    if failed_targets := {
+        target: excp
+        for target, task in tasks_map.items()
+        if (excp := task.exception())
+    }:
         msg = (
-            f"Remote clean failed for {id_} - could not clean on these "
+            f"Remote clean for {id_} did not complete on these "
             "install target(s):"
         )
-        for target, excep in failed_targets.items():
-            msg += f"\n[{target}]\n{excep}"
+        for target, excp in failed_targets.items():
+            if cylc.flow.flags.verbosity > 1:
+                LOG.exception(excp, exc_info=excp)
+            msg += "\n" + indent(f"{target}: {excp}", 4 * ' ')
         raise CylcError(msg)
 
 
-def _remote_clean_cmd(
+async def _remote_clean_cmd(
     id_: str,
-    platform: Dict[str, Any],
-    rm_dirs: Optional[List[str]],
-    timeout: str
-) -> 'Popen[str]':
+    platforms: list[dict[str, Any]],
+    bad_hosts: dict[str, str],
+    rm_dirs: list[str] | None,
+    timeout: str,
+) -> None:
     """Remove a stopped workflow on a remote host.
 
-    Call "cylc clean --local-only" over ssh and return the subprocess.
+    Call "cylc clean --local-only" over SSH. If the SSH fails, try again with
+    another host from the platform until we run out of hosts, then repeat
+    until we run out of platforms that the workflow submitted jobs to.
 
     Args:
         id_: Workflow name.
-        platform: Config for the platform on which to remove the workflow.
+        platforms: List of platform configs on which to remove the workflow.
+        bad_hosts: Mapping of hosts that have already been tried to the reason
+            they failed.
         rm_dirs: Sub dirs to remove instead of the whole run dir.
         timeout: Number of seconds to wait before cancelling the command.
 
     Raises:
-        NoHostsError: If the platform is not contactable.
-
+        NoPlatformsError: If none of the platforms' hosts are contactable.
+        RemoteTimeoutErr: If the command times out.
+        PlatformError: If the command fails with a non-zero exit code other
+            than 255 (SSH failure).
     """
-    LOG.debug(
-        f"Cleaning {id_} on install target: {platform['install target']} "
-        f"(using platform: {platform['name']})"
-    )
+    platform = platforms[0]
+    try:
+        host = get_host_from_platform(platform, bad_hosts)
+    except NoHostsError as no_hosts_exc:
+        # Out of contactable hosts for this platform, try the next one:
+        if len(platforms) <= 1:
+            raise NoPlatformsError(
+                bad_hosts, install_target=platform['install target']
+            ) from no_hosts_exc
+        return await _remote_clean_cmd(
+            id_, platforms[1:], bad_hosts, rm_dirs, timeout
+        )
+
+    target = platform['install target']
     cmd = ['clean', '--local-only', '--no-scan', id_]
     if rm_dirs is not None:
         for item in rm_dirs:
@@ -483,19 +473,48 @@ def _remote_clean_cmd(
     cmd = construct_ssh_cmd(
         cmd,
         platform,
-        get_host_from_platform(platform),
+        host=host,
         timeout=timeout,
         set_verbosity=True,
     )
-    LOG.debug(" ".join(cmd))
-    return Popen(  # nosec
-        cmd,
+    LOG.debug(cmd_str := shlex.join(cmd))
+    proc = await asyncio.create_subprocess_exec(
+        *cmd,
         stdin=DEVNULL,
         stdout=PIPE,
         stderr=PIPE,
-        text=True,
     )
-    # * command constructed by internal interface
+    out, err = tuple(b.decode().strip() for b in await proc.communicate())
+    if out:
+        LOG.info(f"{target}:\n{out}")
+
+    if proc.returncode == RemoteTimeoutErr.ret_code:
+        raise RemoteTimeoutErr(timeout)
+
+    if proc.returncode:
+        exc = PlatformError(
+            PlatformError.MSG_TIDY,
+            platform['name'],
+            cmd=cmd_str,
+            ret_code=proc.returncode,
+            out=out,
+            err=err,
+        )
+        if proc.returncode == 255:
+            # SSH failed; try again using another host
+            LOG.debug(exc)
+            bad_hosts[host] = err or 'SSH failure'
+            return await _remote_clean_cmd(
+                id_, platforms, bad_hosts, rm_dirs, timeout
+            )
+        else:
+            raise exc
+
+    if err:
+        # Only show stderr from remote host in debug mode if ret code 0
+        # because stderr often contains useless stuff like ssh login
+        # messages
+        LOG.debug(f"{target}:\n{err}")
 
 
 def get_platforms_from_db(run_dir: Path) -> Set[str]:

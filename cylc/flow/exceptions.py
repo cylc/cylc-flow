@@ -17,13 +17,15 @@
 """Exceptions for "expected" errors."""
 
 
-from textwrap import wrap
+from textwrap import (
+    indent,
+    wrap,
+)
 from typing import (
     TYPE_CHECKING,
     Dict,
     Optional,
     Sequence,
-    Set,
     Union,
 )
 
@@ -466,42 +468,57 @@ class NoHostsError(CylcError):
     def __init__(self, platform):
         self.platform_name = platform['name']
 
-    def __str__(self):
-        return f'Unable to find valid host for {self.platform_name}'
+    def __str__(self) -> str:
+        return (
+            "Unable to find contactable host for platform: "
+            f"{self.platform_name}"
+        )
 
 
 class NoPlatformsError(PlatformLookupError):
     """None of the platforms of a given set were reachable.
 
     Args:
-        identity:
-            The name of the platform group or install target.
-        set_type:
-            Whether the set of platforms is a platform group or an install
-            target.
+        bad_hosts:
+            The hosts that were consumed in the attempt to get a platform.
+            If a dict, the keys are the hostnames and the values are the
+            reasons they failed, and this info will be appended to the
+            exception message.
+        group:
+            The name of the platform group, if we tried to select a platform
+            from one.
+        install_target:
+            The name of the install target, if we tried to select a platform
+            for one.
         place:
             Where the attempt to get the platform failed.
     """
     def __init__(
         self,
-        identity: str,
-        hosts_consumed: Set[str],
-        set_type: str = 'group',
+        bad_hosts: set[str] | dict[str, str],
+        *,
+        group: str | None = None,
+        install_target: str | None = None,
         place: str = '',
     ):
-        self.identity = identity
-        self.type = set_type
-        self.hosts_consumed = hosts_consumed
-        if place:
-            self.place = f' during {place}.'
-        else:
-            self.place = '.'
+        self.msg = "Unable to find a contactable platform"
+        if group:
+            self.msg += f" from group {group}"
+        elif install_target:
+            self.msg += f" for install target {install_target}"
 
-    def __str__(self):
-        return (
-            f'Unable to find a platform from {self.type} {self.identity}'
-            f'{self.place}'
-        )
+        if place:
+            self.msg += f" during {place}"
+
+        self.bad_hosts = set(bad_hosts)
+        if bad_hosts and isinstance(bad_hosts, dict):
+            self.msg += ". The following hosts were tried:\n" + "\n".join(
+                indent(f"{host}: {reason}", 4 * ' ')
+                for host, reason in bad_hosts.items()
+            )
+
+    def __str__(self) -> str:
+        return self.msg
 
 
 class CylcVersionError(CylcError):
