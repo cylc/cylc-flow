@@ -30,15 +30,14 @@ async def test_global_template_variables(
     mock_glbl_cfg(
         'cylc.flow.plugins.global_template_variables.glbl_cfg',
         '''
-            [install]
-                [[template variables]]
-                    # NOTE: both sets of quotes should be preserved
-                    STRING = '"answer"'
-                    INT = 40
-                    BOOL = True
-                    LIST = [5, 6]
-                    TUPLE = (1, "7")
-                    DICT = {'a': 0, 1: 'possible'}
+            [template variables]
+                # NOTE: both sets of quotes should be preserved
+                STRING = '"answer"'
+                INT = 40
+                BOOL = True
+                LIST = [5, 6]
+                TUPLE = (1, "7")
+                DICT = {'a': 0, 1: 'possible'}
         ''',
     )
     id_ = flow(

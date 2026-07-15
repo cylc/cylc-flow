@@ -16,7 +16,7 @@
 
 """Plugin which loads global template variables.
 
-This loads variables from ``global.cylc[install][template variables]``,
+This loads variables from ``global.cylc[template variables]``,
 provisioning them for use in ``flow.cylc``.
 """
 
@@ -34,5 +34,5 @@ if TYPE_CHECKING:
 
 def pre_configure(srcdir: 'Path', opts: 'Values') -> dict:
     return {
-        TEMPLATE_VARIABLES: glbl_cfg().get(['install', 'template variables'])
+        TEMPLATE_VARIABLES: glbl_cfg().get(['template variables'])
     }
