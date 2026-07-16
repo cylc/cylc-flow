@@ -20,6 +20,7 @@ Importing code should catch ImportError in case Jinja2 is not installed.
 """
 
 from contextlib import suppress
+from functools import lru_cache, wraps
 from glob import glob
 import importlib
 import os
@@ -74,18 +75,37 @@ def restore_deprecated_interfaces():
     TO: 8.7.0
     REMOVE AT: 8.8.0
     """
+    renamed_interfaces = {
+        'contextfilter': 'pass_context',
+        'contextfunction': 'pass_context',
+        'evalcontextfilter': 'pass_eval_context',
+        'evalcontextfunction': 'pass_eval_context',
+        'environmentfilter': 'pass_environment',
+        'environmentfunction': 'pass_environment',
+    }
+    url = 'https://jinja.palletsprojects.com/en/stable/changes/#version-3-1-0'
+
+    @lru_cache  # suppress duplicate warnings
+    def _log_warning(old, new):
+        LOG.warning(
+            f'The Jinja2 function {old} was renamed to {new}.'
+            f'\nCylc has extended support for {old} until 8.8.0.'
+            f' Please search your workflow for {old} and upgrade any uses.'
+            f'\nSee {url}'
+        )
+
+    def _warn(fcn, old, new):
+        @wraps(fcn)
+        def _inner(*args, **kwargs):
+            _log_warning(old, new)
+            return fcn(*args, **kwargs)
+        return _inner
+
     import jinja2
     import jinja2.filters
-    for old, new in (
-        ('contextfilter', 'pass_context'),
-        ('contextfunction', 'pass_context'),
-        ('evalcontextfilter', 'pass_eval_context'),
-        ('evalcontextfunction', 'pass_eval_context'),
-        ('environmentfilter', 'pass_environment'),
-        ('environmentfunction', 'pass_environment'),
-    ):
-        setattr(jinja2, old, getattr(jinja2, new))
-        setattr(jinja2.filters, old, getattr(jinja2, new))
+    for old, new in renamed_interfaces.items():
+        setattr(jinja2, old, _warn(getattr(jinja2, new), old, new))
+        setattr(jinja2.filters, old, _warn(getattr(jinja2, new), old, new))
 
 
 # BACK COMPAT

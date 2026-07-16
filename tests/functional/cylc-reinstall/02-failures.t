@@ -54,7 +54,7 @@ make_rnd_workflow
 run_ok "${TEST_NAME}-install" cylc install "${RND_WORKFLOW_SOURCE}" --workflow-name="${RND_WORKFLOW_NAME}" --no-run-name
 rm -f "${RND_WORKFLOW_SOURCE}/flow.cylc"
 run_fail "${TEST_NAME}" cylc reinstall "${RND_WORKFLOW_NAME}"
-grep_ok 'No flow.cylc in' "${TEST_NAME}.stderr"
+grep_ok 'No flow.cylc file in' "${TEST_NAME}.stderr"
 purge_rnd_workflow
 
 # Test fail both flow.cylc and suite.rc file
@@ -65,9 +65,9 @@ run_ok "${TEST_NAME}-install" cylc install "${RND_WORKFLOW_SOURCE}" --workflow-n
 touch "${RND_WORKFLOW_SOURCE}/suite.rc"
 run_fail "${TEST_NAME}" cylc reinstall "${RND_WORKFLOW_NAME}"
 cmp_ok "${TEST_NAME}.stderr" <<__ERR__
-WorkflowFilesError: Both flow.cylc and suite.rc files are present in ${RND_WORKFLOW_SOURCE}. \
-Please remove one and try again. For more information visit: \
-https://cylc.github.io/cylc-doc/stable/html/7-to-8/summary.html#backward-compatibility
+WorkflowFilesError: Both flow.cylc and suite.rc are present in ${RND_WORKFLOW_SOURCE}. \
+Please remove suite.rc. For more information visit: \
+https://cylc.github.io/cylc-doc/stable/html/7-to-8/major-changes/compatibility-mode.html
 __ERR__
 purge_rnd_workflow
 

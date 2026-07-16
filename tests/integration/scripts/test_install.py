@@ -25,7 +25,9 @@ async def test_suite_rc(tmp_path, install):
     """It should reject workflows with suite.rc files."""
     # suite.rc present
     (tmp_path / WorkflowFiles.SUITE_RC).touch()
-    with pytest.raises(WorkflowFilesError, match=f'No flow.cylc.*{tmp_path}'):
+    with pytest.raises(
+        WorkflowFilesError, match=f'suite.rc found in {tmp_path}'
+    ):
         await install(tmp_path, run_name='1')
 
     # suite.rc and flow.cylc present

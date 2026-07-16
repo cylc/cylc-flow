@@ -367,7 +367,9 @@ async def test_suite_rc(tmp_path):
     """It should reject workflows with suite.rc files."""
     # suite.rc present
     (tmp_path / WorkflowFiles.SUITE_RC).touch()
-    with pytest.raises(WorkflowFilesError, match=f'No flow.cylc.*{tmp_path}'):
+    with pytest.raises(
+        WorkflowFilesError, match=f'suite.rc found in.*{tmp_path}'
+    ):
         await validate(ValidateOptions(), str(tmp_path))
 
     # suite.rc and flow.cylc present
@@ -379,7 +381,10 @@ async def test_suite_rc(tmp_path):
 
     # flow.cylc present
     (tmp_path / WorkflowFiles.SUITE_RC).unlink()
-    with pytest.raises(WorkflowConfigError):
+    with pytest.raises(
+        # blank flow.cylc -> WorkflowConfigError (not WorkflowFilesError)
+        WorkflowConfigError, match=r'missing \[scheduling\] section'
+    ):
         await validate(ValidateOptions(), str(tmp_path))
 
 

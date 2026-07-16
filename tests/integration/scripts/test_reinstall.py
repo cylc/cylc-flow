@@ -445,5 +445,7 @@ async def test_suite_rc(tmp_path, install):
 
     # suite.rc
     (tmp_path / WorkflowFiles.FLOW_FILE).unlink()
-    with pytest.raises(WorkflowFilesError, match=f'No flow.cylc.*{tmp_path}'):
+    with pytest.raises(
+        WorkflowFilesError, match=f'suite.rc found in {tmp_path}'
+    ):
         await reinstall_cli(opts=ReInstallOptions(), workflow_id=workflow_id)

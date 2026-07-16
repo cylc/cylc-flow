@@ -40,7 +40,10 @@ from cylc.flow.workflow_files import WorkflowFiles
 
 @pytest.fixture
 def mock_exists(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr('pathlib.Path.exists', lambda *a, **k: True)
+    monkeypatch.setattr(
+        'pathlib.Path.exists',
+        lambda path: path.name != WorkflowFiles.SUITE_RC,
+    )
 
 
 @pytest.fixture(scope='module')
@@ -378,7 +381,7 @@ def test_parse_src_path(src_dir, monkeypatch):
     # relative '.' dir (invalid)
     with pytest.raises(WorkflowFilesError) as exc_ctx:
         workflow_id, src_path, src_file_path = _parse_src_path('.')
-    assert 'No flow.cylc or suite.rc in' in str(exc_ctx.value)
+    assert 'No flow.cylc or suite.rc file in' in str(exc_ctx.value)
 
     # relative 'invalid/<flow-file>' (invalid)
     with pytest.raises(InputError) as exc_ctx:
@@ -396,7 +399,7 @@ def test_parse_src_path(src_dir, monkeypatch):
     # Not a src directory (dir)
     with pytest.raises(WorkflowFilesError) as exc_ctx:
         _parse_src_path('./blargh')
-    assert 'No flow.cylc or suite.rc in' in str(exc_ctx.value)
+    assert 'No flow.cylc or suite.rc file in' in str(exc_ctx.value)
 
     # Not a src directory (file)
     with pytest.raises(InputError) as exc_ctx:
@@ -421,7 +424,7 @@ def test_parse_src_path(src_dir, monkeypatch):
     (src_dir / 'suite.rc').touch()
     with pytest.raises(WorkflowFilesError) as exc_ctx:
         _parse_src_path(str(src_dir))
-    assert 'Both flow.cylc and suite.rc files' in str(exc_ctx.value)
+    assert 'Both flow.cylc and suite.rc' in str(exc_ctx.value)
 
 
 async def test_parse_ids_src_path(src_dir):

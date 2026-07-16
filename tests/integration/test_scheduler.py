@@ -467,7 +467,7 @@ async def test_suite_rc(test_dir, run_dir, start):
 
     # suite.rc present
     with pytest.raises(
-        WorkflowFilesError, match=f'No flow.cylc.*{test_dir.name}'
+        WorkflowFilesError, match=f'suite.rc found in .*{test_dir.name}'
     ):
         async with start(schd):
             pass
