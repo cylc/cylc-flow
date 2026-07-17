@@ -429,7 +429,7 @@ class TaskPool:
             )
         else:
             # Find the earliest point with incomplete tasks.
-            base_point = min(self.get_tasks_by_point(), default=None)
+            base_point = min(self.active_tasks, default=None)
 
         if base_point is None:
             return False
@@ -933,13 +933,6 @@ class TaskPool:
     def get_task_ids(self) -> Set[str]:
         """Return a list of task IDs in the task pool."""
         return {itask.identity for itask in self.get_tasks()}
-
-    def get_tasks_by_point(self) -> 'Dict[PointBase, List[TaskProxy]]':
-        """Return a map of task proxies by cycle point."""
-        return {
-            point: list(itask_id_map.values())
-            for point, itask_id_map in self.active_tasks.items()
-        }
 
     def get_task(self, point: 'PointBase', name: str) -> Optional[TaskProxy]:
         """Retrieve a task from the pool."""
