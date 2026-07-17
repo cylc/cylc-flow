@@ -259,7 +259,6 @@ def main(_parser: COP, options) -> None:
 
 async def _main(options) -> None:
 
-    loop = asyncio.get_running_loop()
     # convert from ISO8601 duration to integer seconds
     delay = int(dp.parse(options.delay).get_seconds())
 
