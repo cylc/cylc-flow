@@ -1,13 +1,15 @@
 [scheduler]
+    allow implicit tasks = True
     [[main loop]]
         [[[health check]]]
             interval = PT1S
     [[events]]
+        abort handlers = echo %(event)s "%(message)s" >"${CYLC_WORKFLOW_RUN_DIR}/handler.out"
+        # These settings make the test avoid hanging if something goes wrong (nothing to do with the actual abort test):
         abort on inactivity timeout = true
-        inactivity timeout = PT1M
+        inactivity timeout = PT30S
         abort on stall timeout = true
-        stall timeout = PT1M
-        abort handlers = echo %(event)s %(message)s >"${CYLC_WORKFLOW_RUN_DIR}/handler.out"
+        stall timeout = PT0S
 [scheduling]
     [[graph]]
         R1 = modify => t2
@@ -17,8 +19,6 @@
         script = """
             # Pause the workflow, so it does not shutdown
             cylc pause "${CYLC_WORKFLOW_ID}"
-            # Extra content in workflow contact file should cause health check to fail
+            # Cause abort by making health check fail (contact file modified)
             echo 'TIME=MONEY' >>"${CYLC_WORKFLOW_RUN_DIR}/.service/contact"
         """
-    [[t2]]
-        script = true

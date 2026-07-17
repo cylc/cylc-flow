@@ -740,29 +740,23 @@ def cylc_play(options: 'Values', id_: str, parse_workflow_id=True) -> None:
     """Implement cylc play.
 
     Raises:
-        CylcError:
-            If this function is called whilst an asyncio event loop is running.
+        RuntimeError:
+            If this function is called whilst an asyncio event loop is running
+            (if this happens then there is a bug within Cylc).
 
             Because the scheduler process can be daemonised, this must not be
             called whilst an asyncio event loop is active as memory associated
             with this event loop will also exist in the new fork leading to
             potentially strange problems.
 
+            I.e. don't call this from within an async func or asyncio.run().
+
             See https://github.com/cylc/cylc-flow/issues/6291
 
     """
-    try:
-        # try opening an event loop to make sure there isn't one already open
-        asyncio.get_running_loop()
-    except RuntimeError:
-        # start/restart/resume the workflow
-        scheduler, workflow_id = asyncio.run(
-            _scheduler_cli_1(options, id_, parse_workflow_id=parse_workflow_id)
-        )
-        _scheduler_cli_2(options, scheduler)
-        asyncio.run(_scheduler_cli_3(options, workflow_id, scheduler))
-    else:
-        # if this line every gets hit then there is a bug within Cylc
-        raise CylcError(
-            'cylc_play called whilst asyncio event loop is running'
-        ) from None
+    # start/restart/resume the workflow
+    scheduler, workflow_id = asyncio.run(
+        _scheduler_cli_1(options, id_, parse_workflow_id=parse_workflow_id)
+    )
+    _scheduler_cli_2(options, scheduler)
+    asyncio.run(_scheduler_cli_3(options, workflow_id, scheduler))

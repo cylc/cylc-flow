@@ -18,22 +18,23 @@ from unittest.mock import Mock
 
 import pytest
 
-from cylc.flow.exceptions import CylcError
+from cylc.flow.main_loop import MainLoopPluginException
 from cylc.flow.main_loop.health_check import (
+    HealthCheckFailed,
+    _check_contact_file,
     _check_workflow_run_dir,
-    _check_contact_file
 )
 
 
 def test_check_workflow_run_dir():
-    """Ensure a missing workflow run dir raises an CylcError."""
+    """Ensure a missing workflow run dir raises HealthCheckFailed."""
     sched = Mock(workflow_run_dir='/a/b/c/d/e')
-    with pytest.raises(CylcError):
+    with pytest.raises(HealthCheckFailed):
         _check_workflow_run_dir(sched)
 
 
 def test_check_contact_file_data(monkeypatch):
-    """Ensure differing contact file data raises CylcError."""
+    """Ensure differing contact file data raises HealthCheckFailed."""
     contact_data = {
         'a': 'beef',
         'b': 2
@@ -51,12 +52,13 @@ def test_check_contact_file_data(monkeypatch):
 
     # fail
     contact_data['a'] = 'wellington'
-    with pytest.raises(CylcError):
+    with pytest.raises(HealthCheckFailed):
         _check_contact_file(sched)
 
 
 def test_check_contact_file_io(monkeypatch):
-    """Ensure IOError retrieving the contact file raises CylcError."""
+    """Ensure unexpected IOError retrieving the contact file raises
+    MainLoopPluginException."""
     sched = Mock(workflow='foo')
 
     def whoopsie(*_):
@@ -66,5 +68,5 @@ def test_check_contact_file_io(monkeypatch):
         'cylc.flow.main_loop.health_check.workflow_files.load_contact_file',
         whoopsie
     )
-    with pytest.raises(CylcError):
+    with pytest.raises(MainLoopPluginException):
         _check_contact_file(sched)

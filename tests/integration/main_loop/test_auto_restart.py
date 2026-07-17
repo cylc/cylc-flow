@@ -20,8 +20,10 @@ from unittest.mock import Mock
 
 import pytest
 
-from cylc.flow.main_loop import MainLoopPluginException
-from cylc.flow.scheduler import Scheduler
+from cylc.flow.scheduler import (
+    Scheduler,
+    SchedulerError,
+)
 from cylc.flow.workflow_status import AutoRestartMode
 
 
@@ -45,7 +47,7 @@ async def test_no_detach(
     )
     id_: str = flow(one_conf)
     schd: Scheduler = scheduler(id_, paused_start=True, no_detach=True)
-    with pytest.raises(MainLoopPluginException) as exc:
+    with pytest.raises(SchedulerError) as exc:
         async with run(schd):
             await asyncio.sleep(2)
     assert log_filter(contains=f"Workflow shutting down - {exc.value}")

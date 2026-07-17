@@ -189,12 +189,13 @@ async def _wrapper(fcn, scheduler, state, timings=None):
     start_time = time()
     try:
         await fcn(scheduler, state)
-    except CylcError as exc:
-        # allow CylcErrors through (e.g. SchedulerStop)
-        # NOTE: the `from None` bit gets rid of this gunk:
-        # > During handling of the above exception another exception
-        raise MainLoopPluginException(exc) from None
+    except (CylcError, MainLoopPluginException):
+        # allow expected CylcErrors through to scheduler (e.g. SchedulerStop)
+        # as well as rarely-expected MainLoopPluginExceptions which should
+        # bring down the scheduler (e.g. health check failure)
+        raise
     except Exception as exc:
+        # catch other unexpected errors to avoid scheduler crash
         LOG.error(f'Error in main loop plugin {sig}')
         LOG.exception(exc)
     duration = time() - start_time
