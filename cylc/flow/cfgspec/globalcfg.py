@@ -1503,7 +1503,7 @@ with Conf('global.cylc', desc='''
                      desc='''
                      Configure the profiler polling interval.
 
-                     The interval (in seconds) at which the profiler will
+                     The interval at which the profiler will
                      poll the cgroups filesystem for resource usage data.
                      The default value of 10 seconds should be sufficient for
                      most use cases, but can be adjusted as needed.
