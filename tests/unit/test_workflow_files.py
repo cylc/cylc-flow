@@ -33,12 +33,14 @@ from cylc.flow.exceptions import (
     InputError,
     WorkflowFilesError,
 )
+from cylc.flow.util import sstrip
 from cylc.flow.workflow_files import (
     WorkflowFiles,
     abort_if_flow_file_in_path,
     check_flow_file,
     check_reserved_dir_names,
     get_symlink_dirs,
+    get_workflow_title,
     infer_latest_run,
     is_installed,
     validate_workflow_name,
@@ -570,3 +572,28 @@ def test_validate_abort_if_flow_file_in_path():
     with pytest.raises(InputError) as exc_info:
         abort_if_flow_file_in_path(Path("path/to/wflow/flow.cylc"))
     assert "Not a valid workflow ID or source directory" in str(exc_info.value)
+
+
+def test_get_workflow_title(tmp_run_dir):
+    cylc_run_dir: Path = tmp_run_dir('x', installed=True, named=False)
+    (cylc_run_dir / 'flow.cylc').write_text(sstrip('''
+    [meta]
+        title = foo
+
+    [some junk]
+        whatevs = True
+    '''))
+
+    # it should extract the title from a flow.cylc file
+    assert get_workflow_title('x') == 'foo'
+
+    # it should extract the title from a suite.rc file
+    (cylc_run_dir / 'flow.cylc').rename(cylc_run_dir / 'suite.rc')
+    assert get_workflow_title('x') == 'foo'
+
+    # but it will only work if the [meta] section comes first
+    (cylc_run_dir / 'suite.rc').write_text(
+        '[some other junk]\n    whatevs = False\n'
+        + (cylc_run_dir / 'suite.rc').read_text()
+    )
+    assert get_workflow_title('x') == 'No title provided'
