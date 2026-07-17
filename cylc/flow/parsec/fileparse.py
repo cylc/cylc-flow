@@ -513,6 +513,13 @@ def read_and_proc(
                 flines = jinja2process(
                     fpath, flines, fdir, template_vars
                 )
+            for w in warns:
+                if w.filename.endswith(os.path.join('jinja2', 'lexer.py')):
+                    # Warning originating from lexing of a jinja2 template.
+                    # Unfortunately, we can't know exactly where it originated,
+                    # so just set the config filename and vague line "number":
+                    w.filename = fpath
+                    w.lineno = '<jinja2 template>'  # type: ignore
             if warns:
                 LOG.warning(
                     "The following warnings were raised during Jinja2 "
