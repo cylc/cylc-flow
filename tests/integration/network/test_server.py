@@ -34,6 +34,21 @@ async def myflow(mod_flow, mod_scheduler, mod_run, mod_one_conf):
         yield schd
 
 
+def test_api(myflow):
+    """Test api endpoint."""
+    # method exists and is exposed
+    ret = myflow.server.api(endpoint='api')
+    assert 'Return information about this API.' in ret
+
+    # method does not exist
+    ret = myflow.server.api(endpoint='spaghetti')
+    assert ret == 'No method by name "spaghetti"'
+
+    # method exists but not exposed
+    ret = myflow.server.api(endpoint='operate')
+    assert ret == 'No method by name "operate"'
+
+
 def test_graphql(myflow):
     """Test GraphQL endpoint method."""
     request_string = f'''
@@ -64,12 +79,12 @@ def test_graphql_error(myflow):
         assert "Cannot query field 'alsonotafield'" in excinfo
 
 
-def test_pb_data_elements(myflow):
+def test_pb_delta_elements(myflow):
     """Test Protobuf elements endpoint method."""
     element_type = 'workflow'
-    data = PB_METHOD_MAP['pb_data_elements'][element_type]()
+    data = PB_METHOD_MAP['pb_delta_elements'][element_type]()
     data.ParseFromString(
-        myflow.server.pb_data_elements(element_type)
+        myflow.server.pb_delta_elements(element_type)
     )
     assert data.added.id == myflow.id
 
@@ -81,6 +96,16 @@ def test_pb_entire_workflow(myflow):
         myflow.server.pb_entire_workflow()
     )
     assert data.workflow.id == myflow.id
+
+
+def test_pb_data_elements(myflow):
+    """Test Protobuf elements endpoint method."""
+    element_type = 'workflow'
+    data = PB_METHOD_MAP['pb_data_elements']()
+    data.ParseFromString(
+        myflow.server.pb_data_elements([element_type])
+    )
+    assert getattr(data, element_type).id == myflow.id
 
 
 async def test_stop(one: Scheduler, start):
