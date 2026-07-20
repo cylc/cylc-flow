@@ -1496,7 +1496,7 @@ with Conf('global.cylc', desc='''
                      Configure the path to the cgroups filesystem.
 
                      The default value is the standard
-                     location for cgroups on linux and should work in
+                     location for cgroups on Linux and should work in
                      most circumstances
                      ''')
                 Conf('polling interval', VDR.V_INTERVAL,
