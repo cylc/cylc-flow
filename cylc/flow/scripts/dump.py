@@ -164,6 +164,12 @@ def get_option_parser():
         "-t", "--tasks", help="Task states only.",
         action="store_const", const="tasks", dest="disp_form")
     parser.add_option(
+        "-i", "--full-ids",
+        help="With -t/--tasks (task states only)"
+             " print full workflow//cycle/name IDs"
+             " for easy cut-and-paste to other commands.",
+        action="store_true", default=False, dest="full_ids")
+    parser.add_option(
         "-l", "--legacy", help="Tasks states only; use legacy format.",
         action="store_true", default=False, dest="legacy_format")
     parser.add_option(
@@ -301,6 +307,7 @@ async def dump(workflow_id, options, write=print):
                 else:
                     for item in summary['taskProxies']:
                         result = (
+                            f"{workflow_id + '//' if options.full_ids else ''}"
                             f"{item['cyclePoint']}/{item['name']}"
                             f":{item['state']}"
                         )

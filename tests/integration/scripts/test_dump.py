@@ -59,24 +59,33 @@ async def test_dump_tasks(flow, scheduler, start):
 
 
 @pytest.mark.parametrize(
-    'attributes_bool, flow_nums, dump_str',
+    'attributes_bool, flow_nums, full_ids, dump_str',
     [
         pytest.param(
             True,
             [1, 2],
+            False,
             '1/a:waiting (held,queued,runahead) flows=[1,2]',
             id='1'
         ),
         pytest.param(
             False,
             [1, 2],
+            False,
             '1/a:waiting',
             id='2'
+        ),
+        pytest.param(
+            False,
+            [1, 2],
+            True,
+            '{workflow_id}//1/a:waiting',
+            id='3'
         )
     ]
 )
 async def test_dump_format(
-    flow, scheduler, start, attributes_bool, flow_nums, dump_str
+    flow, scheduler, start, attributes_bool, flow_nums, full_ids, dump_str
 ):
     """Check the new "cylc dump" output format, i.e. task IDs.
 
@@ -112,7 +121,11 @@ async def test_dump_format(
         ret = []
         await dump(
             id_,
-            DumpOptions(disp_form='tasks', show_flows=attributes_bool),
+            DumpOptions(
+                disp_form='tasks',
+                full_ids=full_ids,
+                show_flows=attributes_bool
+            ),
             write=ret.append
         )
-        assert ret == [dump_str]
+        assert ret == [dump_str.format(**{"workflow_id": id_})]
