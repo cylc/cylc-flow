@@ -60,6 +60,7 @@ Any uncommitted changes will also be saved as a diff in
    Git does not include untracked files in the diff.
 """
 
+import os
 import json
 from pathlib import Path
 from subprocess import Popen, DEVNULL, PIPE
@@ -75,6 +76,8 @@ from typing import (
     cast,
     overload,
 )
+
+from cylc.flow.loggingutil import get_next_log_number, get_sorted_logs_by_time
 
 from cylc.flow import LOG as _LOG, LoggerAdaptor
 from cylc.flow.exceptions import CylcError
@@ -127,7 +130,7 @@ SVN_INFO_KEYS: List[str] = [
     'revision', 'url', 'working copy root path', 'repository uuid'
 ]
 
-DIFF_FILENAME = 'uncommitted.diff'
+
 INFO_FILENAME = 'vcs.json'
 JSON_INDENT = 4
 
@@ -342,13 +345,23 @@ def write_diff(
         str(Path().cwd() / repo_path)
     )
 
-    diff_file = Path(
+    diff_location = Path(
         run_dir,
         WorkflowFiles.LogDir.DIRNAME,
         WorkflowFiles.LogDir.VERSION,
-        DIFF_FILENAME
     )
-    diff_file.parent.mkdir(exist_ok=True)
+    diff_location.mkdir(exist_ok=True)
+    try:
+        lowest = get_sorted_logs_by_time(str(diff_location),
+                                         r'uncommitted-*')
+        number = len(lowest) + 1
+    except IndexError:
+        number = 1
+
+    diff_file = Path(
+        diff_location,
+        'uncommitted-' + str(number) + '.diff'
+    )
 
     with open(diff_file, 'a') as f:
         f.write(
@@ -361,6 +374,13 @@ def write_diff(
             _run_cmd(vcs, args, repo_path, stdout=f)
         except VCSMissingBaseError as exc:
             print(f"# No diff - {exc}", file=f)
+
+    try:
+        Path(str(diff_location), "n").symlink_to(diff_file)
+    except FileExistsError:
+        os.remove(str(diff_location) + "/n")
+        Path(str(diff_location), "n").symlink_to(diff_file)
+
     return diff_file
 
 

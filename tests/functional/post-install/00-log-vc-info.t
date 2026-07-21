@@ -22,7 +22,7 @@
 if ! command -v 'git' > /dev/null; then
     skip_all 'git not installed'
 fi
-set_test_number 4
+set_test_number 6
 
 make_rnd_workflow
 cd "${RND_WORKFLOW_SOURCE}" || exit 1
@@ -43,7 +43,12 @@ exists_ok "$VCS_INFO_FILE"
 # Basic check, unit tests cover this in more detail:
 grep_ok '"version control system": "git"' "$VCS_INFO_FILE" -F
 
-DIFF_FILE="${RND_WORKFLOW_RUNDIR}/runN/log/version/uncommitted.diff"
+DIFF_FILE="${RND_WORKFLOW_RUNDIR}/runN/log/version/1-uncommitted.diff"
+exists_ok "$DIFF_FILE"  # Expected to be empty but should exist
+
+run_ok "${TEST_NAME_BASE}-reinstall" cylc reinstall "${RND_WORKFLOW_NAME}/runN"
+
+DIFF_FILE="${RND_WORKFLOW_RUNDIR}/runN/log/version/2-uncommitted.diff"
 exists_ok "$DIFF_FILE"  # Expected to be empty but should exist
 
 purge_rnd_workflow
