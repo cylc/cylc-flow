@@ -77,6 +77,7 @@ from cylc.flow.exceptions import (
     CommandFailedError,
     CylcError,
     InputError,
+    WorkflowConfigError,
 )
 import cylc.flow.flags
 from cylc.flow.flow_mgr import (
@@ -996,7 +997,12 @@ class Scheduler:
         warn = ""
         for tm in unprocessed_messages:
             job_tokens = self.tokens.duplicate(tm.job_id)
-            tdef = self.config.get_taskdef(job_tokens['task'])
+            try:
+                tdef = self.config.get_taskdef(job_tokens['task'])
+            except WorkflowConfigError as exc:
+                LOG.error(exc)
+                warn += f'\n  {tm.job_id}: {tm.severity} - "{tm.message}"'
+                continue
             if not self.task_events_mgr.process_job_message(
                 job_tokens, tdef, tm.message, tm.event_time
             ):

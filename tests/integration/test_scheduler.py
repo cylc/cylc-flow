@@ -38,6 +38,9 @@ from cylc.flow.task_state import (
 from cylc.flow.workflow_status import AutoRestartMode, StopMode
 
 
+from cylc.flow.network.resolvers import TaskMsg
+from cylc.flow.id import Tokens
+
 Fixture = Any
 
 
@@ -454,3 +457,34 @@ async def test_set_stall_interaction(flow, scheduler, start):
             schd.data_store_mgr.data[schd.tokens.id]['workflow'].status_msg
             != 'stalled'
         )
+
+
+async def test_cylc_message(one, start, log_filter, caplog):
+    message = (
+        "20000101T0000Z",  # event_time
+        "INFO",  # severity
+        'some-message',  # message
+    )
+
+    async with start(one):
+        # send a message for an invalid task (task names cannot contain spaces)
+        one.message_queue.put(
+            TaskMsg(
+                Tokens("1/Invalid task", relative=True),
+                *message,
+            )
+        )
+        one.process_queued_task_messages()
+        assert log_filter(contains="Illegal task name: Invalid task")
+
+        # send a message for a valid task
+        caplog.clear()
+        one.message_queue.put(
+            TaskMsg(
+                Tokens("1/one", relative=True),
+                *message,
+            )
+        )
+        one.process_queued_task_messages()
+        assert not log_filter(contains="Illegal task name")
+        assert log_filter(contains='(received)some-message')
