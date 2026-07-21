@@ -644,7 +644,7 @@ class WorkflowConfig:
     def _warn_if_queues_have_implicit_tasks(
         config, taskdefs, max_warning_lines
     ):
-        """Warn if queues contain implict tasks.
+        """Warn if queues contain implicit tasks.
         """
         implicit_q_msg = ''
 
