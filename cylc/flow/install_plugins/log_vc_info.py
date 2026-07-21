@@ -129,7 +129,7 @@ SVN_INFO_KEYS: List[str] = [
     'revision', 'url', 'working copy root path', 'repository uuid'
 ]
 
-DIFF_FILENAME = 'uncommitted.diff'
+
 INFO_FILENAME = 'vcs.json'
 JSON_INDENT = 4
 
@@ -352,14 +352,14 @@ def write_diff(
     diff_location.mkdir(exist_ok=True)
     try:
         lowest = get_sorted_logs_by_time(str(diff_location),
-                                         f"*{DIFF_FILENAME}")
-        number = get_next_log_number(lowest[-1])
+                                         r'uncommitted-*')
+        number = len(lowest) + 1
     except IndexError:
         number = 1
 
     diff_file = Path(
         diff_location,
-        str(number) + "-" + DIFF_FILENAME
+        'uncommitted-' + str(number) + '.diff'
     )
 
     with open(diff_file, 'a') as f:
@@ -375,10 +375,10 @@ def write_diff(
             print(f"# No diff - {exc}", file=f)
 
     try:
-        os.symlink(diff_file, str(diff_location) + "/n")
+        Path(str(diff_location), "n").symlink_to(diff_file)
     except FileExistsError:
         os.remove(str(diff_location) + "/n")
-        os.symlink(diff_file, str(diff_location) + "/n",)
+        Path(str(diff_location), "n").symlink_to(diff_file)
 
     return diff_file
 
