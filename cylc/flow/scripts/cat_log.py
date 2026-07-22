@@ -82,7 +82,6 @@ from typing import (
 from cylc.flow import LOG
 from cylc.flow.exceptions import InputError
 import cylc.flow.flags
-from cylc.flow.hostuserutil import is_remote_platform
 from cylc.flow.id_cli import parse_id_async
 from cylc.flow.log_level import verbosity_to_opts
 from cylc.flow.option_parsers import (
@@ -96,7 +95,11 @@ from cylc.flow.pathutil import (
     get_workflow_run_job_dir,
     get_workflow_run_pub_db_path,
 )
-from cylc.flow.platforms import get_platform
+from cylc.flow.platforms import (
+    get_install_target_from_platform,
+    get_localhost_install_target,
+    get_platform,
+)
 from cylc.flow.remote import (
     remote_cylc_cmd,
     watch_and_kill,
@@ -658,7 +661,8 @@ async def _main(
         )
 
         log_is_remote = (
-            is_remote_platform(platform)
+            get_install_target_from_platform(platform)
+            != get_localhost_install_target()
             # Job activity log is always local
             and (options.filename != JOB_LOG_ACTIVITY)
             # Don't try to get remote logs if submission failed on
