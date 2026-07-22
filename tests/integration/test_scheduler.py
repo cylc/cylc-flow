@@ -17,25 +17,47 @@
 import asyncio
 import logging
 from pathlib import Path
-import pytest
 import re
-from signal import SIGHUP, SIGINT, SIGTERM
-from typing import Any, Callable
+from signal import (
+    SIGHUP,
+    SIGINT,
+    SIGTERM,
+)
+from typing import (
+    Any,
+    Callable,
+)
+from unittest.mock import Mock
+
+import pytest
 
 from cylc.flow import commands
 from cylc.flow.exceptions import CylcError
 from cylc.flow.parsec.exceptions import ParsecError
-from cylc.flow.scheduler import Scheduler, SchedulerStop
+from cylc.flow.scheduler import (
+    Scheduler,
+    SchedulerStop,
+)
+from cylc.flow.task_remote_mgr import (
+    REMOTE_FILE_INSTALL_255,
+    REMOTE_FILE_INSTALL_DONE,
+    REMOTE_FILE_INSTALL_FAILED,
+    REMOTE_INIT_255,
+    REMOTE_INIT_DONE,
+    REMOTE_INIT_FAILED,
+)
 from cylc.flow.task_state import (
-    TASK_STATUS_SUCCEEDED,
-    TASK_STATUS_WAITING,
+    TASK_STATUS_FAILED,
+    TASK_STATUS_RUNNING,
     TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_SUBMITTED,
-    TASK_STATUS_RUNNING,
-    TASK_STATUS_FAILED
+    TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_WAITING,
 )
-
-from cylc.flow.workflow_status import AutoRestartMode, StopMode
+from cylc.flow.workflow_status import (
+    AutoRestartMode,
+    StopMode,
+)
 
 
 Fixture = Any
@@ -454,3 +476,74 @@ async def test_set_stall_interaction(flow, scheduler, start):
             schd.data_store_mgr.data[schd.tokens.id]['workflow'].status_msg
             != 'stalled'
         )
+
+
+async def test_manage_remote_init_retry_on_255(
+    flow, scheduler, start, monkeypatch: pytest.MonkeyPatch
+):
+    """Test that manage_remote_init retries remote init/file install on 255.
+
+    See https://github.com/cylc/cylc-flow/issues/7286
+
+    On restart, if remote-init fails with exit code 255 (SSH connection
+    failure), manage_remote_init should retry rather than silently dropping
+    the install target.
+    """
+    missing_target = 'Alderaan'
+    fake_platform = {'install target': missing_target, 'name': 'test_plat'}
+
+    schd: Scheduler = scheduler(flow('one'), run_mode='live')
+    async with start(schd):
+        remote_mgr = schd.task_job_mgr.task_remote_mgr
+        mock_remote_init = Mock()
+        monkeypatch.setattr(remote_mgr, 'remote_init', mock_remote_init)
+        mock_file_install = Mock()
+        monkeypatch.setattr(remote_mgr, 'file_install', mock_file_install)
+
+        # Simulate restart remote-init has been kicked off and is being
+        # tracked via incomplete_ri_map:
+        schd.incomplete_ri_map[missing_target] = fake_platform
+
+        # REMOTE_INIT_255: retry remote_init, pop from init map, NOT ri map
+        remote_mgr.remote_init_map[missing_target] = REMOTE_INIT_255
+        schd.manage_remote_init()
+        assert missing_target not in remote_mgr.remote_init_map, (
+            "Stale 255 status should be deleted before retry"
+        )
+        mock_remote_init.assert_called_once_with(fake_platform)
+        assert missing_target in schd.incomplete_ri_map, (
+            "Install target should remain in incomplete_ri_map for tracking"
+        )
+        mock_remote_init.reset_mock()
+
+        # REMOTE_INIT_DONE: should trigger file_install
+        remote_mgr.remote_init_map[missing_target] = REMOTE_INIT_DONE
+        schd.manage_remote_init()
+        mock_file_install.assert_called_once_with(fake_platform)
+        assert missing_target in schd.incomplete_ri_map
+        mock_file_install.reset_mock()
+
+        # REMOTE_FILE_INSTALL_255: should retry file_install
+        remote_mgr.remote_init_map[missing_target] = REMOTE_FILE_INSTALL_255
+        schd.manage_remote_init()
+        assert missing_target not in remote_mgr.remote_init_map
+        mock_file_install.assert_called_once_with(fake_platform)
+        assert missing_target in schd.incomplete_ri_map
+        mock_file_install.reset_mock()
+
+        # REMOTE_FILE_INSTALL_DONE: should remove from ri map
+        remote_mgr.remote_init_map[missing_target] = REMOTE_FILE_INSTALL_DONE
+        schd.manage_remote_init()
+        assert missing_target not in schd.incomplete_ri_map
+
+        # REMOTE_INIT_FAILED: should remove from ri map
+        schd.incomplete_ri_map[missing_target] = fake_platform
+        remote_mgr.remote_init_map[missing_target] = REMOTE_INIT_FAILED
+        schd.manage_remote_init()
+        assert missing_target not in schd.incomplete_ri_map
+
+        # REMOTE_FILE_INSTALL_FAILED: should remove from ri map
+        schd.incomplete_ri_map[missing_target] = fake_platform
+        remote_mgr.remote_init_map[missing_target] = REMOTE_FILE_INSTALL_FAILED
+        schd.manage_remote_init()
+        assert missing_target not in schd.incomplete_ri_map
