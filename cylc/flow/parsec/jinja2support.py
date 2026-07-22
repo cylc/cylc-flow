@@ -189,7 +189,14 @@ def jinja2environment(dir_=None):
                 for name in glob(os.path.join(fdir, '*.py')):
                     fname = os.path.splitext(os.path.basename(name))[0]
                     # TODO - EXCEPTION HANDLING FOR LOADING CUSTOM FILTERS
-                    module = __import__(fname)
+                    module = sys.modules.get(fname)
+                    if module is None:
+                        module = importlib.import_module(fname)
+                    elif (
+                        (module_file := getattr(module, '__file__', None))
+                        and os.path.samefile(module_file, name)
+                    ):
+                        module = importlib.reload(module)
                     envnsp = getattr(env, namespace)
                     envnsp[fname] = getattr(module, fname)
 

@@ -81,6 +81,26 @@ def test_jinja2environment(tmp_path: Path, custom_filter_global_and_test):
     assert env.tests['big'](5) is False
 
 
+def test_jinja2environment_reloads_custom_filter(tmp_path: Path):
+    filters_dir = tmp_path / 'Jinja2Filters'
+    filters_dir.mkdir()
+    filter_file = filters_dir / 'reload_filter.py'
+    filter_file.write_text(
+        "def reload_filter(value):\n    return 'old'\n"
+    )
+
+    assert jinja2environment(tmp_path).filters['reload_filter'](None) == 'old'
+
+    filter_file.write_text(
+        "def reload_filter(value):\n    return 'new-value'\n"
+    )
+
+    assert (
+        jinja2environment(tmp_path).filters['reload_filter'](None)
+        == 'new-value'
+    )
+
+
 def test_jinja2process(tmp_path, custom_filter_global_and_test):
     lines = [
         r"skipped",
