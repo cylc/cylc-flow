@@ -74,7 +74,7 @@ main_loop-log_db = [
     "sqlparse",
 ]
 report-timings = [
-    "pandas==2.*",
+    "pandas>=2,<4",
     "matplotlib",
 ]
 tests = [
