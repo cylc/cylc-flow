@@ -108,6 +108,7 @@ from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.task_job_logs import (
     JOB_LOG_ACTIVITY,
     JOB_LOG_ERR,
+    JOB_LOG_JOB,
     JOB_LOG_OPTS,
     JOB_LOG_OUT,
     NN,
@@ -667,8 +668,8 @@ async def _main(
         log_is_remote = (
             get_install_target_from_platform(platform)
             != get_localhost_install_target()
-            # Job activity log is always local
-            and (options.filename != JOB_LOG_ACTIVITY)
+            # Job script & activity log are always local
+            and options.filename not in {JOB_LOG_JOB, JOB_LOG_ACTIVITY}
             # Don't try to get remote logs if submission failed on
             # remote platform - they may not exist.
             and not submit_failed
