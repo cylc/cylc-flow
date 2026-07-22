@@ -329,7 +329,9 @@ async def test_release_held_tasks(
 async def test_hold_point(
     hold_after_point: str,
     expected_held_task_ids: List[str],
-    example_flow: 'Scheduler', db_select: Callable
+    example_flow: 'Scheduler',
+    db_select: Callable,
+    spawn_ahead
 ) -> None:
     """Test TaskPool.set_hold_point() and .release_hold_point()"""
     expected_held_task_ids = sorted(expected_held_task_ids)
@@ -341,6 +343,7 @@ async def test_hold_point(
     assert ('holdcp', str(hold_after_point)) in db_select(
         example_flow, True, 'workflow_params')
 
+    spawn_ahead(example_flow.pool)
     for itask in task_pool.get_tasks():
         hold_expected = itask.identity in expected_held_task_ids
         assert itask.state.is_held is hold_expected
@@ -458,6 +461,7 @@ async def test_runahead_after_remove(
 
     """
     task_pool = example_flow.pool
+    task_pool.compute_runahead()
     assert int(task_pool.runahead_limit_point) == 4
 
     # No change after removing an intermediate cycle.
@@ -560,7 +564,8 @@ def list_tasks(schd):
 async def test_restart_prereqs(
     flow, scheduler, start,
     graph_1, graph_2,
-    expected_1, expected_2, expected_3, expected_4
+    expected_1, expected_2, expected_3, expected_4,
+    spawn_ahead
 ):
     """It should handle graph prerequisites change on restart.
 
@@ -580,13 +585,13 @@ async def test_restart_prereqs(
     schd: Scheduler = scheduler(id_, paused_start=False)
 
     async with start(schd):
-        # Release tasks 1/a and 1/b
-        schd.pool.release_runahead_tasks()
+        # Release tasks 1/a and 1/b to run
+        spawn_ahead(schd.pool)
         schd.release_tasks_to_run()
         assert list_tasks(schd) == expected_1
 
-        # Mark 1/a as succeeded and spawn 1/z
         task_a = schd.pool.get_tasks()[0]
+        # Mark 1/a as succeeded and spawn 1/z
         schd.pool.task_events_mgr.process_message(task_a, 1, 'succeeded')
         assert list_tasks(schd) == expected_2
 
@@ -683,7 +688,8 @@ async def test_restart_prereqs(
 async def test_reload_prereqs(
     flow, scheduler, start,
     graph_1, graph_2,
-    expected_1, expected_2, expected_3, expected_4
+    expected_1, expected_2, expected_3, expected_4,
+    spawn_ahead
 ):
     """It should handle graph prerequisites change on reload.
 
@@ -703,8 +709,8 @@ async def test_reload_prereqs(
     schd: Scheduler = scheduler(id_, paused_start=False)
 
     async with start(schd):
-        # Release tasks 1/a and 1/b
-        schd.pool.release_runahead_tasks()
+        # Release tasks 1/a and 1/b to run
+        spawn_ahead(schd.pool)
         schd.release_tasks_to_run()
         assert list_tasks(schd) == expected_1
 
@@ -734,14 +740,14 @@ async def test_reload_prereqs(
         ) == expected_4
 
 
-async def _test_restart_prereqs_sat():
+async def _test_restart_prereqs_sat(spawn_ahead):
     schd: Scheduler
     # YIELD: the workflow has now started...
     schd = yield
     await schd.update_data_structure()
 
-    # Release tasks 1/a and 1/b
-    schd.pool.release_runahead_tasks()
+    # Release tasks 1/a and 1/b to run
+    spawn_ahead(schd.pool)
     schd.release_tasks_to_run()
     assert list_tasks(schd) == [
         ('1', 'a', 'running'),
@@ -799,7 +805,7 @@ async def _test_restart_prereqs_sat():
 
 @pytest.mark.parametrize('do_restart', [True, False])
 async def test_graph_change_prereq_satisfaction(
-    flow, scheduler, start, do_restart
+    flow, scheduler, start, do_restart, spawn_ahead
 ):
     """It should handle graph prerequisites change on reload/restart.
 
@@ -824,7 +830,7 @@ async def test_graph_change_prereq_satisfaction(
     id_ = flow(conf)
     schd = scheduler(id_, run_mode='simulation', paused_start=False)
 
-    test = _test_restart_prereqs_sat()
+    test = _test_restart_prereqs_sat(spawn_ahead)
     await test.asend(None)
 
     if do_restart:
@@ -843,8 +849,8 @@ async def test_graph_change_prereq_satisfaction(
 
     else:
         async with start(schd):
-            await test.asend(schd)
 
+            await test.asend(schd)
             # Modify flow.cylc to add a new dependency on "b"
             conf['scheduling']['graph']['R1'] += '\nb => c'
             flow(conf, workflow_id=id_)
@@ -880,6 +886,7 @@ async def test_runahead_limit_for_sequence_before_start_cycle(
     })
     schd = scheduler(id_, startcp='2005')
     async with start(schd):
+        schd.pool.compute_runahead()
         assert str(schd.pool.runahead_limit_point) == '20070101T0000Z'
 
 
@@ -1002,7 +1009,7 @@ async def test_no_flow_tasks_dont_spawn(
 
 
 async def test_task_proxy_remove_from_queues(
-    flow, one_conf, scheduler, start,
+    flow, one_conf, scheduler, start, spawn_ahead
 ):
     """TaskPool.remove should delete task proxies from queues.
 
@@ -1015,6 +1022,7 @@ async def test_task_proxy_remove_from_queues(
     }
     schd = scheduler(flow(one_conf))
     async with start(schd):
+        spawn_ahead(schd.pool)
         # Get a list of itasks:
         itasks = schd.pool.get_tasks()
 
@@ -1093,6 +1101,7 @@ async def test_trigger_icp_fcp_syntax(
     scheduler,
     start,
     log_filter,
+    spawn_ahead
 ):
     """It should support the ^/$ syntax for referencing the initial/final cp.
 
@@ -1114,9 +1123,11 @@ async def test_trigger_icp_fcp_syntax(
     id_ = flow(cfg)
     schd = scheduler(id_)
     async with start(schd) as log:
+        spawn_ahead(schd.pool)
         await commands.run_cmd(
             commands.force_trigger_tasks(schd, ['^/start', '$/end'], ['1'])
         )
+
         assert log_filter(contains='[1/start:waiting(queued)] => waiting')
         assert log_filter(contains='[2/end:waiting(queued)] => waiting')
         log.clear()
@@ -1129,6 +1140,7 @@ async def test_trigger_icp_fcp_syntax(
     id_ = flow(cfg)
     schd = scheduler(id_)
     async with start(schd):
+        spawn_ahead(schd.pool)
         await commands.run_cmd(
             commands.force_trigger_tasks(schd, ['^/start', '$/end'], ['1'])
         )
@@ -1181,13 +1193,16 @@ async def test_set_failed_complete(
     start,
     one_conf,
     log_filter,
-    db_select: Callable
+    db_select: Callable,
+    spawn_ahead
 ):
     """Test manual completion of an incomplete failed task."""
     id_ = flow(one_conf)
     schd: Scheduler = scheduler(id_)
     async with start(schd, level=logging.DEBUG):
         one = schd.pool.get_tasks()[0]
+
+        spawn_ahead(schd.pool)
         one.state_reset(is_queued=False)
 
         schd.pool.task_events_mgr.process_message(one, 1, "failed")
@@ -1197,8 +1212,8 @@ async def test_set_failed_complete(
             regex="1/one.* setting implied output: started")
         assert log_filter(
             regex="failed.* did not complete the required outputs")
-
         # Set failed task complete via default "set" args.
+
         schd.pool.set_prereqs_and_outputs({one.tokens}, [], [], [])
 
         assert log_filter(
@@ -1573,8 +1588,8 @@ async def test_set_outputs_from_skip_settings(
     schd: Scheduler = scheduler(id_)
 
     async with start(schd):
-        # it should start up with just tasks a:
-        assert schd.pool.get_task_ids() == {'1/a', '2/a'}
+        # it should start up with just 1/a:
+        assert schd.pool.get_task_ids() == {'1/a'}
 
         # setting 1/a output to skip should set output x, but not
         # y (because y is optional).
@@ -1657,17 +1672,15 @@ async def test_prereq_satisfaction(
         assert b.prereqs_are_satisfied()
 
 
-@pytest.mark.parametrize('compat_mode', ['compat-mode', 'normal-mode'])
 @pytest.mark.parametrize('cycling_mode', ['integer', 'datetime'])
 @pytest.mark.parametrize('runahead_format', ['P3Y', 'P3'])
 async def test_compute_runahead(
     cycling_mode,
-    compat_mode,
     runahead_format,
     flow,
     scheduler,
     start,
-    monkeypatch,
+    spawn_ahead
 ):
     """Test the calculation of the runahead limit.
 
@@ -1675,7 +1688,6 @@ async def test_compute_runahead(
     * Runahead tasks are excluded from computations
       see https://github.com/cylc/cylc-flow/issues/5825
     * Tasks are initiated with the correct is_runahead status on startup.
-    * Behaviour in compat/regular modes is same unless failed tasks are present
     * Behaviour is the same for integer/datetime cycling modes.
 
     """
@@ -1711,48 +1723,37 @@ async def test_compute_runahead(
         }
         point = ISO8601Point
 
-    monkeypatch.setattr(
-        'cylc.flow.flags.cylc7_back_compat',
-        compat_mode == 'compat-mode',
-    )
-
     id_ = flow(config)
     schd = scheduler(id_)
     async with start(schd):
         schd.pool.compute_runahead(force=True)
         assert int(str(schd.pool.runahead_limit_point)) == 4
 
-        # ensure task states are initiated with is_runahead status
-        assert schd.pool.get_task(point('0001'), 'a').state(is_runahead=False)
-        assert schd.pool.get_task(point('0005'), 'a').state(is_runahead=True)
+        # It should start with 1/a runahead
+        tasks = schd.pool.get_tasks()
+        assert len(tasks) == 1
+        assert schd.pool.get_task(point('0001'), 'a').state(is_runahead=True)
 
-        # mark the first three cycles as running
-        for cycle in range(1, 4):
-            schd.pool.get_task(point(f'{cycle:04}'), 'a').state.reset(
-                TASK_STATUS_RUNNING
-            )
+        spawn_ahead(schd.pool)
+
+        assert schd.pool.get_task(point('0005'), 'a').state(is_runahead=True)
 
         schd.pool.compute_runahead(force=True)
         assert int(str(schd.pool.runahead_limit_point)) == 4  # no change
 
-        # In Cylc 8 all incomplete tasks hold back runahead.
+        # All incomplete tasks hold back runahead.
 
-        # In Cylc 7, submit-failed tasks hold back runahead..
         schd.pool.get_task(point('0001'), 'a').state.reset(
             TASK_STATUS_SUBMIT_FAILED
         )
         schd.pool.compute_runahead(force=True)
         assert int(str(schd.pool.runahead_limit_point)) == 4
 
-        # ... but failed ones don't. Go figure.
         schd.pool.get_task(point('0001'), 'a').state.reset(
             TASK_STATUS_FAILED
         )
         schd.pool.compute_runahead(force=True)
-        if compat_mode == 'compat-mode':
-            assert int(str(schd.pool.runahead_limit_point)) == 5
-        else:
-            assert int(str(schd.pool.runahead_limit_point)) == 4  # no change
+        assert int(str(schd.pool.runahead_limit_point)) == 4  # no change
 
         # mark cycle 1 as complete
         # (via task message so the task gets removed before runahead compute)
@@ -1817,14 +1818,12 @@ async def test_compute_runahead_with_no_sequences(
 
 
 @pytest.mark.parametrize('rhlimit', ['P2D', 'P2'])
-@pytest.mark.parametrize('compat_mode', ['compat-mode', 'normal-mode'])
 async def test_runahead_future_trigger(
     flow,
     scheduler,
     start,
     monkeypatch,
     rhlimit,
-    compat_mode,
 ):
     """Equivalent time interval and cycle count runahead limits should yield
     the same limit point, even if there is a future trigger.
@@ -1848,12 +1847,9 @@ async def test_runahead_future_trigger(
         }
     })
 
-    monkeypatch.setattr(
-        'cylc.flow.flags.cylc7_back_compat',
-        compat_mode == 'compat-mode',
-    )
     schd = scheduler(id_,)
     async with start(schd, level=logging.DEBUG):
+        schd.pool.compute_runahead()
         assert str(schd.pool.runahead_limit_point) == '20010103'
         schd.pool.release_runahead_tasks()
         for itask in schd.pool.get_tasks():
@@ -1889,52 +1885,6 @@ async def mod_blah(
     schd: 'Scheduler' = mod_scheduler(id_, paused_start=True)
     async with mod_run(schd):
         yield schd
-
-
-@pytest.mark.parametrize(
-    'status, expected',
-    [
-        # (Status, Are we expecting an update?)
-        (TASK_STATUS_WAITING, False),
-        (TASK_STATUS_EXPIRED, False),
-        (TASK_STATUS_PREPARING, False),
-        (TASK_STATUS_SUBMIT_FAILED, False),
-        (TASK_STATUS_SUBMITTED, False),
-        (TASK_STATUS_RUNNING, False),
-        (TASK_STATUS_FAILED, True),
-        (TASK_STATUS_SUCCEEDED, True)
-    ]
-)
-async def test_runahead_c7_compat_task_state(
-    status,
-    expected,
-    mod_blah,
-    monkeypatch,
-):
-    """For each task status check whether changing the oldest task
-    to that status will cause compute_runahead to make a change.
-
-    Compat mode: Cylc 7 ignored failed tasks but not submit-failed!
-
-    """
-
-    def max_cycle(tasks):
-        return max([int(t.tokens.get("cycle")) for t in tasks])
-
-    monkeypatch.setattr(
-        'cylc.flow.flags.cylc7_back_compat', True)
-    monkeypatch.setattr(
-        'cylc.flow.task_events_mgr.TaskEventsManager._insert_task_job',
-        lambda *_: True)
-
-    mod_blah.pool.compute_runahead()
-    before_pt = max_cycle(mod_blah.pool.get_tasks())
-    before = mod_blah.pool.runahead_limit_point
-    itask = mod_blah.pool.get_task(ISO8601Point(f'{before_pt - 2:04}'), 'a')
-    itask.state_reset(status, is_queued=False)
-    mod_blah.pool.compute_runahead()
-    after = mod_blah.pool.runahead_limit_point
-    assert bool(before != after) == expected
 
 
 async def test_fast_respawn(
@@ -2197,7 +2147,7 @@ async def test_trigger_queue(one, run, db_select, complete):
     async with run(one):
         # the workflow should start up with one task in the original flow
         task = one.pool.get_tasks()[0]
-        assert task.state(TASK_STATUS_WAITING, is_queued=True)
+        assert task.state(TASK_STATUS_WAITING, is_runahead=True)
         assert task.flow_nums == {1}
 
         # trigger this task even though is already queued in flow 1
@@ -2376,8 +2326,8 @@ async def test_expire_dequeue_with_retries(
         schd.task_events_mgr.process_message(foo, 0, 'failed')
         schd.task_events_mgr._retry_task(foo, 0)
 
-        # the task should start as "waiting(queued)"
-        assert foo.state(TASK_STATUS_WAITING, is_queued=True)
+        # the task should start as "waiting(runahead)"
+        assert foo.state(TASK_STATUS_WAITING, is_runahead=True)
 
         # expire the task via whichever method we are testing
         method(schd)
@@ -2527,7 +2477,7 @@ async def test_start_tasks(
     flow,
     scheduler,
     start,
-    capture_submission,
+    capture_submission
 ):
     """Check starting from "start-tasks" with and without clock-triggers.
 
@@ -2565,13 +2515,8 @@ async def test_start_tasks(
         submitted_tasks = capture_submission(schd)
         assert submitted_tasks == set()
 
-        # This test expects tasks to be spawned to the runahead limit for
-        # historical reasons - pre GitHub #7237. We can remove this call
-        # if we change test expectations below.
-        schd.pool.spawn_to_runahead_limit()
-
         # It should start up with:
-        # - 2050/foo and 2051/foo (spawned to runahead limit)
+        # - 2050/foo
         # - 2050/bar waiting on its (unsatisfied) clock-trigger
         # - 2050/baz waiting on its (satisfied) clock-trigger
         # - no qux instances (not listed as a start-task)
@@ -2579,23 +2524,25 @@ async def test_start_tasks(
         assert (
             set(itask.identity for itask in itasks) == {
                 "2050/foo",
-                "2051/foo",
                 "2050/bar",
                 "2050/baz",
             }
         )
 
+        # do all the stuff, including checking xtriggers
         await schd._main_loop()
 
         # It should submit 2050/foo, 2050/baz
         # It should not submit 2050/bar (waiting on clock trigger)
-        # It should not submit 2051/foo (runahead limited)
         assert (
             set(itask.identity for itask in submitted_tasks) == {
                 "2050/foo",
                 "2050/baz",
             }
         )
+        # It should spawn 2051/foo as runahead limited
+        foo = schd.pool._get_task_by_id("2051/foo")
+        assert foo.state(is_runahead=True)
 
 
 async def test_add_new_flow_rows_on_spawn(

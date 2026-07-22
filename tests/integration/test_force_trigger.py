@@ -835,6 +835,7 @@ async def test_pre_warm_start_interraction_with_auto_restart(
     scheduler,
     start,
     log_filter,
+    spawn_ahead
 ):
     """Test interaction between warm-start pre-startcp tasks and auto-restart.
 
@@ -858,6 +859,7 @@ async def test_pre_warm_start_interraction_with_auto_restart(
     async with start(schd):
         # trigger a pre-initial task (pre start-cycle point)
         await run_cmd(force_trigger_tasks(schd, ['^/foo'], []))
+        spawn_ahead(schd.pool)
         assert schd.pool.pre_start_tasks_to_trigger
 
         # configure the workflow to auto-retsart
