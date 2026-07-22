@@ -113,6 +113,7 @@ from cylc.flow.task_job_logs import (
     NN,
 )
 from cylc.flow.terminal import cli_function
+from cylc.flow.util import natural_sort_key
 
 
 if TYPE_CHECKING:
@@ -297,7 +298,7 @@ async def view_log(
         if not os.path.exists(dirname):
             sys.stderr.write(f"Directory not found: {dirname}\n")
             return 1
-        for entry in sorted(os.listdir(dirname)):
+        for entry in sorted(os.listdir(dirname), key=natural_sort_key):
             print(entry)
         return 0
     if not os.path.exists(logpath) and batchview_cmd is None:
@@ -395,7 +396,9 @@ def get_option_parser() -> COP:
     return parser
 
 
-def get_task_job_attrs(workflow_id, point, task, submit_num):
+def get_task_job_attrs(
+    workflow_id: str, point: str, task: str, submit_num: str
+) -> tuple[str, str | None, str | None, bool] | tuple[None, None, None, None]:
     """Retrieve job info from the database.
 
     * live_job_id is the job ID if job is running, else None.
@@ -411,14 +414,10 @@ def get_task_job_attrs(workflow_id, point, task, submit_num):
         task_job_data = dao.select_task_job(point, task, submit_num)
     if task_job_data is None:
         return (None, None, None, None)
-    job_runner_name = task_job_data["job_runner_name"]
-    job_id = task_job_data["job_id"]
-    if (not job_runner_name or not job_id
-            or not task_job_data["time_run"]
-            or task_job_data["time_run_exit"]):
+    job_runner_name: str | None = task_job_data["job_runner_name"]
+    live_job_id: str | None = task_job_data["job_id"]
+    if task_job_data["time_run_exit"]:  # finished
         live_job_id = None
-    else:
-        live_job_id = job_id
     return (
         task_job_data["platform_name"],
         job_runner_name,
@@ -546,32 +545,37 @@ async def _main(
             mode = CAT
 
         if mode == LISTDIR:
+            # set of log/<x> directories to scan for files in
+            subdirs = {
+                subdir
+                for _, _file_name in WORKFLOW_LOG_OPTS.values()
+                # don't try to list directories which aren't there
+                if (subdir := Path(log_dir, _file_name).parent).exists()
+            }
             # list workflow logs
-            print('\n'.join(sorted(
-                str(path.relative_to(log_dir))
-                for dirpath in {
-                    # set of log/<x> directories to scan for files in
-                    Path(log_dir, _file_name).parent
-                    for _, _file_name in WORKFLOW_LOG_OPTS.values()
-                    # don't try to list directories which aren't there
-                    if Path(log_dir, _file_name).parent.exists()
-                }
-                for path in dirpath.iterdir()
-                # strip out file aliases such as scheduler/log
-                if not path.is_symlink()
-            )))
+            print(
+                '\n'.join(
+                    sorted(
+                        (
+                            str(path.relative_to(log_dir))
+                            for subdir in subdirs
+                            for path in subdir.iterdir()
+                            # strip out file aliases such as scheduler/log
+                            if not path.is_symlink()
+                        ),
+                        key=natural_sort_key,
+                    )
+                )
+            )
             return
 
         if file_name in WORKFLOW_LOG_OPTS:
             rotation_number = options.rotation_num or 0
             pattern = WORKFLOW_LOG_OPTS[file_name][1]
-            logs = sorted(
-                glob(
-                    str(Path(log_dir, pattern))
-                ),
-                reverse=True
-            )
-            if logs:
+            if logs := sorted(
+                glob(os.path.join(log_dir, pattern)),
+                reverse=True,
+            ):
                 try:
                     log_file_path = Path(logs[rotation_number])
                 except IndexError:
@@ -685,33 +689,26 @@ async def _main(
                 prepend_path=options.prepend_path,
             )
 
-            # add and missing items to file listing results
+            # add any missing items to file listing results
             if isinstance(proc, Popen):
                 # i.e: if mode == LISTDIR and ctrl+c not pressed
                 out, err = proc.communicate()
-                files = out.splitlines()
+                files = set(out.splitlines())
 
                 # add files which can be accessed via a tailer
                 if live_job_id is not None:
-                    if (
-                        # NOTE: only list the file if it can be viewed in
-                        # both modes
-                        (platform['out tailer'] and platform['out viewer'])
-                        and 'job.out' not in files
-                    ):
-                        files.append('job.out')
-                    if (
-                        (platform['err tailer'] and platform['err viewer'])
-                        and 'job.err' not in files
-                    ):
-                        files.append('job.err')
+                    # NOTE: only list the file if it can be viewed in
+                    # both modes
+                    if platform['out tailer'] and platform['out viewer']:
+                        files.add(JOB_LOG_OUT)
+                    if platform['err tailer'] and platform['err viewer']:
+                        files.add(JOB_LOG_ERR)
 
                 # add the job-activity.log file which is always local
-                if (local_log_dir / 'job-activity.log').exists():
-                    files.append('job-activity.log')
+                if (local_log_dir / JOB_LOG_ACTIVITY).exists():
+                    files.add(JOB_LOG_ACTIVITY)
 
-                files.sort()
-                print('\n'.join(files))
+                print('\n'.join(sorted(files, key=natural_sort_key)))
                 print(err, file=sys.stderr)
                 sys.exit(proc.returncode)
             else:
