@@ -185,9 +185,10 @@ log_tracemalloc = "cylc.flow.main_loop.log_tracemalloc"
 # NOTE: all entry points should be listed here even if Cylc Flow does not
 # provide any implementations, to make entry point scraping easier
 [project.entry-points."cylc.pre_configure"]
+global_template_variables = "cylc.flow.plugins.global_template_variables:pre_configure"
 
 [project.entry-points."cylc.post_install"]
-log_vc_info = "cylc.flow.install_plugins.log_vc_info:main"
+log_vc_info = "cylc.flow.plugins.log_vc_info:main"
 
 [project.entry-points."cylc.xtriggers"]
 # NOTE: Built-in xtrigger modules

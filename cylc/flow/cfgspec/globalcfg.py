@@ -1402,6 +1402,25 @@ with Conf('global.cylc', desc='''
 
                         .. versionadded:: {versionadded}
                     """)
+    with Conf('template variables', desc='''
+        Define template variables for all workflows.
+
+        Any template variables defined here will be made available to all
+        workflows. Use this to define site-specific things.
+        Workflow-specific template variables can be set via ``--set`` and
+        ``--set-file`` options to workflow parsing commands, or in a
+        ``rose-suite.conf`` file via the cylc-rose plugin.
+
+        .. versionadded:: 8.7.0
+    '''):
+        Conf('<key>', VDR.V_TEMPLATE_VARIABLE, 'None', desc='''
+            A template variable in Python syntax.
+
+            .. rubric:: Examples:
+
+            * ``SITE = "my-site"``
+            * ``PLATFORMS = {"hpc": "my-hpc", "cluster": "my-cluster}``
+        ''')
     with Conf('platforms', desc='''
         Platforms allow you to define compute resources available at your
         site.
