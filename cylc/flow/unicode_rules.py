@@ -250,7 +250,7 @@ def not_equals(*strings):
 def disallow_char_if_not_at_end_of_first_word(char):
     """Prevent use of a (non-alphanumeric) character unless it occurs directly
     after first word (in which case there is no limit on subsequent
-    occurances).
+    occurrences).
 
     Example:
         >>> regex, message = disallow_char_if_not_at_end_of_first_word(':')

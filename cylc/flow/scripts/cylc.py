@@ -495,7 +495,7 @@ def list_plugins():
                 [],
             ).append(entry_point)
 
-    # list all the distriutions which provide Cylc entry points
+    # list all the distributions which provide Cylc entry points
     _plugins = []
     for dist in _dists:
         _plugins.append((

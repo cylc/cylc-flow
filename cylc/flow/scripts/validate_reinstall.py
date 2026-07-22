@@ -121,7 +121,7 @@ def check_tvars_and_workflow_stopped(
     """are template variables set and workflow stopped?
 
     Template vars set by --set (options.templatevars) or --set-file
-    (optiions.templatevars_file) are only valid if the workflow is stopped
+    (options.templatevars_file) are only valid if the workflow is stopped
     and vr will play it.
 
     args:

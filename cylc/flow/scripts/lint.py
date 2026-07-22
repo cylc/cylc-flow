@@ -203,7 +203,7 @@ WALLCLOCK_DIRECTIVES = get_wallclock_directives()
 
 def check_wallclock_directives(line: str) -> Dict[str, str]:
     """Check for job runner specific directives
-    equivalent to exection time limit.
+    equivalent to execution time limit.
 
     It's recommended that users prefer execution time limit
     because it gives the Cylc scheduler awareness should communications
@@ -332,7 +332,7 @@ def check_for_obsolete_environment_variables(line: str) -> Dict[str, List]:
         >>> this = check_for_obsolete_environment_variables
         >>> this('script = echo $CYLC_SUITE_DEF_PATH')
         {'vars': ['CYLC_SUITE_DEF_PATH']}
-        >>> this('script = echo "irrelevent"')
+        >>> this('script = echo "irrelevant"')
         {}
     """
     vars_found = [i for i in OBSOLETE_ENV_VARS if i in line]
@@ -973,7 +973,7 @@ def _merge_cli_with_tomldata(
     exclude: No CLI equivalent, return toml if any.
 
     Args:
-        override_cli_default_rules: If user doesn't specifiy a ruleset use the
+        override_cli_default_rules: If user doesn't specify a ruleset use the
             rules from the tomlfile - i.e: if we've set 'rulesets': 'style'
             we probably don't want to get warnings about 728 upgrades by
             default, but only if we ask for it on the CLI.
@@ -1204,11 +1204,11 @@ def no_qa(line: str, index: str):
         >>> no_qa('foo = bar # noqa', 'S001')
         True
 
-        # Comment, no relevent error codes, no checking:
+        # Comment, no relevant error codes, no checking:
         >>> no_qa('foo = bar # noqa: S999, 997', 'S001')
         False
 
-        # Comment, relevent error codes, checking:
+        # Comment, relevant error codes, checking:
         >>> no_qa('foo = bar # noqa: S001 S003', 'S001')
         True
     """
@@ -1313,7 +1313,7 @@ def lint(
             # get the next line
             line = next(lines)
         except StopIteration:
-            # end of interator
+            # end of iterator
             return
         line_no += 1
 

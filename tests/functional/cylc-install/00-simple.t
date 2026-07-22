@@ -41,7 +41,7 @@ popd || exit 1
 purge_rnd_workflow
 
 # -----------------------------------------------------------------------------
-# Test default name: "cylc install WORKFLOW_NAME" (flow in confgured source dir)
+# Test default name: "cylc install WORKFLOW_NAME" (flow in configured source dir)
 make_rnd_workflow
 # Before adding workflow to ~/cylc-src/, check install fails:
 TEST_NAME="${TEST_NAME_BASE}-WORKFLOW_NAME-fail-no-src-dir"

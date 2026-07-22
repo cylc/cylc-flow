@@ -270,7 +270,7 @@ class TuiApp:
         self.stack = 0
         self.tree_walker = None
 
-        # store a reference to the bindings on the app to avoid cicular import
+        # store a reference to the bindings on the app to avoid circular import
         self.bindings = BINDINGS
 
         # create the template

@@ -62,7 +62,7 @@ class CylcWorkflowDBChecker:
         # Cylc 8 (pre-8.3.0) stored [message] only, for all outputs.
         1|foo|[1]|["submitted", "started", "succeeded", "the quick brown"]
 
-        # Cylc 8 (8.3.0+) stores {trigger: message} for all ouputs.
+        # Cylc 8 (8.3.0+) stores {trigger: message} for all outputs.
         1|foo|[1]|{"submitted": "submitted", "started": "started",
                    "succeeded": "succeeded", "x": "the quick brown"}
     """

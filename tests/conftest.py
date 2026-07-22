@@ -61,13 +61,13 @@ def mock_glbl_cfg(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 
     Args:
         pypath (str):
-            The python-like path to the global configuation object you want
+            The python-like path to the global configuration object you want
             to fiddle.
             E.G. if you want to hack the `glbl_cfg` in
             `cylc.flow.scheduler` you would provide
             `cylc.flow.scheduler.glbl_cfg`
         global_config (str):
-            The globlal configuration as a multi-line string.
+            The global configuration as a multi-line string.
 
     Example:
         Change the value of `UTC mode` in the global config as seen from

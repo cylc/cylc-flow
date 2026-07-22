@@ -147,7 +147,7 @@ def get_task_icon(
 
 
 def get_status_str(data):
-    """Return a text represenation of a workflow, cycle, family, task or job.
+    """Return a text representation of a workflow, cycle, family, task or job.
 
     Args:
         data: A data node from the Tui tree (i.e. `value['data']`).

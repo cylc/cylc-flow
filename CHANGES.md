@@ -79,7 +79,7 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 [#7024](https://github.com/cylc/cylc-flow/pull/7024) - Add support for the `next()/previous()` syntax with the `cylc play --startcp` option.
 
-[#7044](https://github.com/cylc/cylc-flow/pull/7044) - Replace use of Met Office Datapoint (Switchoff December 2025) in tutorial with Met Office data via the Amazon Data Sustainability Initative.
+[#7044](https://github.com/cylc/cylc-flow/pull/7044) - Replace use of Met Office Datapoint (Switchoff December 2025) in tutorial with Met Office data via the Amazon Data Sustainability Initiative.
 
 [#7075](https://github.com/cylc/cylc-flow/pull/7075) - State totals shown in GUI/tui now represent the active (n=0) window of tasks.
 
@@ -396,7 +396,7 @@ expiry limit removes the need for the "cylc trigger --on-resume" option.
 
 [#6388](https://github.com/cylc/cylc-flow/pull/6388) - Fix task state filtering in Tui.
 
-[#6414](https://github.com/cylc/cylc-flow/pull/6414) - Broadcast will now reject truncated cycle points to aviod runtime errors.
+[#6414](https://github.com/cylc/cylc-flow/pull/6414) - Broadcast will now reject truncated cycle points to avoid runtime errors.
 
 [#6422](https://github.com/cylc/cylc-flow/pull/6422) - Enabled jumping to the top/bottom of log files in Tui using the "home" and "end" keys.
 
@@ -544,7 +544,7 @@ expiry limit removes the need for the "cylc trigger --on-resume" option.
 [#5890](https://github.com/cylc/cylc-flow/pull/5890) - Lint: Warn users that setting ``CYLC_VERSION``, ``ROSE_VERSION`` or
   ``FCM_VERSION`` in the workflow config is deprecated.
 
-[#5943](https://github.com/cylc/cylc-flow/pull/5943) - The `stop after cycle point` can now be specified as an offset from the inital cycle point.
+[#5943](https://github.com/cylc/cylc-flow/pull/5943) - The `stop after cycle point` can now be specified as an offset from the initial cycle point.
 
 [#5955](https://github.com/cylc/cylc-flow/pull/5955) - Support xtrigger argument validation.
 
@@ -720,7 +720,7 @@ formatting when starting workflows in distributed mode using `run hosts`.
 [#5291](https://github.com/cylc/cylc-flow/pull/5291) - re-implement old-style
 clock triggers as wall_clock xtriggers.
 
-[#5439](https://github.com/cylc/cylc-flow/pull/5439) - Small CLI short option chages:
+[#5439](https://github.com/cylc/cylc-flow/pull/5439) - Small CLI short option changes:
 Add the `-n` short option for `--workflow-name` to `cylc vip`; rename the `-n`
 short option for `--no-detach` to `-N`; add `-r` as a short option for
 `--run-name`.
@@ -733,7 +733,7 @@ period on restarting a completed workflow, to allow for manual triggering.
 Various enhancements to `cylc lint`:
 * `cylc lint` will provide a non-zero return code if any issues are identified.
   This can be overridden using the new `--exit-zero` flag.
-* Fix numbering of lint codes (n.b. lint codes should now be permenantly
+* Fix numbering of lint codes (n.b. lint codes should now be permanently
   unchanging, but may have changed since Cylc 8.1.4, so `pyproject.toml` files
   may need updating).
 * Check for suicide triggers in `.cylc` files.
@@ -1100,7 +1100,7 @@ See the [migration guide](https://cylc.github.io/cylc-doc/stable/html/7-to-8/ind
 
 [#4964](https://github.com/cylc/cylc-flow/pull/4964) -
 `cylc reinstall` now displays the changes it would make when run
-interactively and has improved help / documentaiton.
+interactively and has improved help / documentation.
 
 [#4836](https://github.com/cylc/cylc-flow/pull/4836) - The log directory has
 been tidied. Workflow logs are now found in `log/scheduler` rather than

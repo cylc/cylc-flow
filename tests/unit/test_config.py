@@ -528,7 +528,7 @@ def test_process_startcp(
             '2019',
             '20190101T0000+0530',
             None,
-            id="Overriden by cli option"
+            id="Overridden by cli option"
         ),
         pytest.param(
             ISO8601_CYCLING_TYPE,

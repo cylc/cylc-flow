@@ -2385,7 +2385,7 @@ class GlobalConfig(ParsecConfig):
         print_platform_names: bool = True,
         print_platforms: bool = True
     ) -> None:
-        """Print informations about platforms currently defined.
+        """Print information about platforms currently defined.
         """
         if print_platform_names:
             self.dump_platform_names(self)

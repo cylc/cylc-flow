@@ -450,7 +450,7 @@ class TaskDef:
         Args:
             point: The cycle point to check.
             cutoff: This should be the start cycle point for the startup
-                spawning, or the intial cycle point for manually triggered
+                spawning, or the initial cycle point for manually triggered
                 tasks.
         """
         if not self.graph_parents:

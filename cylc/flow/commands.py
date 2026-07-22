@@ -540,7 +540,7 @@ async def reload_workflow(schd: 'Scheduler', reload_global: bool = False):
         # which is called synchronously in the main loop so this call is
         # blocking to other main loop functions
 
-        # subproc pool - for issueing/tracking remote-init commands
+        # subproc pool - for issuing/tracking remote-init commands
         schd.proc_pool.process()
         # task messages - for tracking task status changes
         schd.process_queued_task_messages()

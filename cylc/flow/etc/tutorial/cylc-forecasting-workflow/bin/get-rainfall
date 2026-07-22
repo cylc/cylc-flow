@@ -19,7 +19,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # -----------------------------------------------------------------------------
 # This is illustrative code developed for tutorial purposes, it is not
-# intended for scientific use and is not guarantied to be accurate or correct.
+# intended for scientific use and is not guaranteed to be accurate or correct.
 """
 Usage:
     get-rainfall
@@ -80,7 +80,7 @@ class Rainfall(object):
 
         Args:
             lng (float): The longitude for this reading.
-            lat (float): The latitude fo this reading.
+            lat (float): The latitude of this reading.
             value (tuple): The value of the reading.
 
         """

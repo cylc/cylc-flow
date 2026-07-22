@@ -2046,7 +2046,7 @@ class TaskPool:
         Transient task proxies are used to spawn the children of outputs. Even
         if the parent was previously spawned in this flow its children might
         not have been. ("Transient" just means not intended for the task pool,
-        just a convient way to use TaskProxy methods).
+        just a convenient way to use TaskProxy methods).
 
         A forced output cannot cause a state change to submitted or running,
         but it can complete a task so that it doesn't need to run.

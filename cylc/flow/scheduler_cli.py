@@ -98,7 +98,7 @@ or "cylc clean" the existing run directory.
 
 By default, new runs begin at the start of the graph (at the "initial cycle
 point") and continue to the end of the graph (the "final cycle point", which
-can be overriden with the --final-cycle-point command option).
+can be overridden with the --final-cycle-point command option).
 
 However you can begin a run part way into the graph (with --start-cycle-point
 or --start-task) and finish before the end of the graph (by configuring
