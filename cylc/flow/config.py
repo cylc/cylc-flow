@@ -590,6 +590,7 @@ class WorkflowConfig:
             self.cfg, self.taskdefs, self.MAX_WARNING_LINES)
 
         self._check_implicit_tasks()
+        self._check_unused_namespaces()
         self._check_sequence_bounds()
         self.validate_namespace_names()
 
@@ -924,6 +925,27 @@ class WorkflowConfig:
                 self.stop_point = None
             stopcp_str = str(self.stop_point) if self.stop_point else None
             self.cfg['scheduling']['stop after cycle point'] = stopcp_str
+
+    def _check_unused_namespaces(self):
+        """Check for runtime namespaces not used by the graph."""
+        not_task_in_graph = [  # unused tasks, and all family names
+            name for name in self.cfg['runtime'] if
+            name not in self.taskdefs
+        ]
+        unused = [
+            name for name in not_task_in_graph
+            # unused tasks:
+            if name not in self.runtime['descendants']
+            # families not inherited by any used tasks:
+            or self.runtime['descendants'][name].isdisjoint(
+                self.taskdefs.keys()
+            )
+        ]
+        if unused:
+            LOG.info(
+                "There are runtime namespaces not used by the workflow:"
+                f"\n* {'\n* '.join(unused)}"
+            )
 
     def _check_implicit_tasks(self) -> None:
         """Raise WorkflowConfigError if implicit tasks are found in graph or
