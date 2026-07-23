@@ -809,6 +809,15 @@ MANUAL_DEPRECATIONS = {
         ),
         FUNCTION: re.compile(r'[&|]\s*\\').findall
     },
+    'U018': {
+        'short': (
+            'clock-trigger is deprecated, please use @wall_clock'
+        ),
+        'url': '''
+            https://cylc.github.io/cylc-doc/stable/html/user-guide/writing-workflows/external-triggers.html#built-in-clock-triggers
+        ''',
+        FUNCTION: re.compile(r'clock-trigger*=*').findall
+    },
 }
 ALL_RULESETS = ['728', 'style', 'all']
 EXTRA_TOML_VALIDATION = {

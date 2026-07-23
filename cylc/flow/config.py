@@ -2820,10 +2820,16 @@ class WorkflowConfig:
         becomes:
 
         [[xtriggers]]
-           _cylc_wall_clock_foo = wallclock(PT1D)
+           _cylc_wall_clock_foo = wall_clock(PT1D)
 
         Not done by parsec upgrade because the graph has to be parsed first.
         """
+        # BACK COMPAT: clock-trigger has been deprecated
+        # from: 8.0.0
+        # remove at: x
+        if len(self.cfg['scheduling']['special tasks']['clock-trigger']) > 0:
+            LOG.warning(r"Clock-trigger is deprecated; "
+                        r"please use @wall_clock")
         for item in self.cfg['scheduling']['special tasks']['clock-trigger']:
             match = RE_CLOCK_OFFSET.match(item)
             # (Already validated during "special tasks" parsing above.)
