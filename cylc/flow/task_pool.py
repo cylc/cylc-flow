@@ -449,8 +449,6 @@ class TaskPool:
         if base_point is None:
             return False
 
-        LOG.debug(f"Runahead: base point {base_point}")
-
         if self._prev_runahead_base_point is None:
             self._prev_runahead_base_point = base_point
 
