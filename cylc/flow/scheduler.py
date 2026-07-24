@@ -702,6 +702,9 @@ class Scheduler:
             # Non-async sleep - yield to other threads rather than event loop
             sleep(0)
             self.profiler.start()
+
+            self.pool.compute_runahead()
+            self.pool.release_runahead_tasks()
             while True:  # MAIN LOOP
                 await self._main_loop()
 
@@ -1615,7 +1618,6 @@ class Scheduler:
 
     async def _main_loop(self) -> None:
         """A single iteration of the main loop."""
-
         tinit = time()
 
         # If applicable, set stop mode or shutdown on task failure:
@@ -1715,10 +1717,12 @@ class Scheduler:
             await self.update_data_structure()
 
         if has_updated or self.pool.tasks_removed:
+            # TODO only some updates matter! (runahead release?)
             self.pool.tasks_removed = False
             self.pool.compute_runahead()
             self.pool.release_runahead_tasks()
 
+        if has_updated:
             if not self.is_reloaded and self.is_stalled:
                 # (A reload cannot un-stall workflow by itself)
                 self.is_stalled = False
