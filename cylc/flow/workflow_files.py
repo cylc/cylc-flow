@@ -47,7 +47,6 @@ from typing import (
     Type,
 )
 
-import cylc.flow.flags
 from cylc.flow import LOG
 from cylc.flow.async_util import make_async
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
@@ -72,6 +71,7 @@ from cylc.flow.pathutil import (
     make_localhost_symlinks,
 )
 from cylc.flow.unicode_rules import WorkflowNameValidator
+from cylc.flow.util import sstrip
 
 
 def handle_rmtree_err(
@@ -187,6 +187,12 @@ class WorkflowFiles:
     FLOW_FILE_PROCESSED = 'flow-processed.cylc'
     """The workflow configuration file after processing."""
 
+    # BACK COMPAT: SUITE_RC
+    #   Remaining uses are for workflow detection which enables the
+    #   GUI / Tui / CLI to list and operate on legacy workflows.
+    # FROM: 1.0(?)
+    # TO: 8.6.x
+    # REMOVE AT: 8.11
     SUITE_RC = 'suite.rc'
     """Deprecated workflow configuration file."""
 
@@ -356,15 +362,9 @@ If you like, you can stop it with one or more of the following commands:
 * ssh -n "%(host)s" kill %(pid)s      # final brute force!
 """
 
-SUITERC_DEPR_MSG = (
-    "Backward compatibility mode ON"
-    " - support for suite.rc files will be removed at 8.7.0"
-)
-
-NO_FLOW_FILE_MSG = (
-    f"No {WorkflowFiles.FLOW_FILE} or {WorkflowFiles.SUITE_RC} "
-    "in {}"
-)
+COMPAT_MODE_URL = sstrip('''
+    https://cylc.github.io/cylc-doc/stable/html/7-to-8/major-changes/compatibility-mode.html
+''')
 
 
 def _is_process_running(
@@ -696,14 +696,14 @@ def register(
     workflow_name: str, source: Optional[str] = None
 ) -> str:
     """Set up workflow.
+
     This completes some of the set up completed by cylc install.
     Called only if running a workflow that has not been installed.
 
-    Validates workflow name.
-    Validates run directory structure.
-    Creates symlinks for localhost symlink dirs.
-    Symlinks flow.cylc -> suite.rc.
-    Creates the .service directory.
+    * Validates workflow name.
+    * Validates run directory structure.
+    * Creates symlinks for localhost symlink dirs.
+    * Creates the .service directory.
 
     Args:
         workflow_name: workflow name.
@@ -714,7 +714,7 @@ def register(
 
     Raise:
         WorkflowFilesError:
-           - No flow.cylc or suite.rc file found in source location.
+           - No flow.cylc file found in source location.
            - Illegal name (can look like a relative path, but not absolute).
            - Nested workflow run directories.
     """
@@ -726,7 +726,7 @@ def register(
         source = os.getcwd()
     # flow.cylc must exist so we can detect accidentally reversed args.
     source = os.path.abspath(source)
-    check_flow_file(source)
+    check_flow_file(source, allow_suite_rc=False)
     if not is_installed(get_workflow_run_dir(workflow_name)):
         symlinks_created = make_localhost_symlinks(
             get_workflow_run_dir(workflow_name), workflow_name)
@@ -845,34 +845,6 @@ def get_workflow_title(id_):
             if match:
                 title = match.groups()[0].strip('"\'')
     return title
-
-
-def check_deprecation(path, warn=True, force_compat_mode=False):
-    """Warn and turn on back-compat flag if Cylc 7 suite.rc detected.
-
-    Path can point to config file or parent directory (i.e. workflow name).
-
-    Args:
-        warn:
-            If True, then a warning will be logged when compatibility
-            mode is activated.
-        force_compat_mode:
-            If True, forces Cylc to use compatibility mode
-            overriding compatibility mode checks.
-            See https://github.com/cylc/cylc-rose/issues/319
-    """
-    if (
-        # Don't want to log if it's already been set True.
-        not cylc.flow.flags.cylc7_back_compat
-        and (
-            path.resolve().name == WorkflowFiles.SUITE_RC
-            or (path / WorkflowFiles.SUITE_RC).is_file()
-            or force_compat_mode
-        )
-    ):
-        cylc.flow.flags.cylc7_back_compat = True
-        if warn:
-            LOG.warning(SUITERC_DEPR_MSG)
 
 
 def validate_workflow_name(
@@ -1028,74 +1000,106 @@ def get_cylc_run_abs_path(path: Union[Path, str]) -> Union[Path, str]:
     return get_workflow_run_dir(path)
 
 
-def detect_both_flow_and_suite(path: Path) -> None:
-    """Detects if both suite.rc and flow.cylc are in directory.
-
-    Permits flow.cylc to be a symlink.
-    Return true if present, raises error if flow.cylc path sent is a forbidden
-    symlink.
-    Raises:
-        WorkflowFilesError: If both flow.cylc and suite.rc are in directory
-    """
-    flow_cylc = None
-    msg = (f"Both {WorkflowFiles.FLOW_FILE} and {WorkflowFiles.SUITE_RC} "
-           f"files are present in {path}. Please remove one and"
-           " try again. For more information visit: https://cylc.github.io/"
-           "cylc-doc/stable/html/7-to-8/summary.html#backward-compatibility")
-    if path.resolve().name == WorkflowFiles.SUITE_RC:
-        flow_cylc = path.parent / WorkflowFiles.FLOW_FILE
-    elif (path / WorkflowFiles.SUITE_RC).is_file():
-        flow_cylc = path / WorkflowFiles.FLOW_FILE
-    if flow_cylc and flow_cylc.is_file() and is_forbidden(flow_cylc):
-        raise WorkflowFilesError(msg)
-
-
-def is_forbidden(flow_file: Path) -> bool:
-    """Returns True for a forbidden file structure scenario.
-
-    Forbidden criteria:
-        A symlink elsewhere on file system but suite.rc also exists in the
-        directory.
-        flow.cylc and suite.rc in same directory but no symlink
-    Args:
-        flow_file : Absolute Path to the flow.cylc file
-    """
-    if not flow_file.is_symlink():
-        if flow_file.parent.joinpath(WorkflowFiles.SUITE_RC).exists():
-            return True
-        return False
-    link = flow_file.resolve()
-    suite_rc = flow_file.parent.resolve() / WorkflowFiles.SUITE_RC
-    if link == suite_rc:
-        # link points within dir to suite.rc (permitted)
-        return False
-    # link points elsewhere, check that suite.rc does not also exist in dir
-    if suite_rc.exists():
-        return True
-    return False
-
-
-def check_flow_file(path: Union[Path, str]) -> Path:
+def check_flow_file(
+    path: Union[Path, str],
+    allow_suite_rc: bool = True,
+) -> Path:
     """Checks the path for a suite.rc or flow.cylc file.
+
+    Args:
+        path:
+            Absolute path to check for a flow.cylc and/or suite.rc file.
+        allow_suite_rc:
+            If True, legacy "suite.rc" files will be accepted, else,
+            WorkflowFilesError will be raised.
+
+    Returns:
+        The path of the flow file if present.
 
     Raises:
         WorkflowFilesError
-            - if no flow file in path sent
-            - both suite.rc and flow.cylc in path sent.
+            - if no flow.cylc file.
+            - both suite.rc and flow.cylc present.
+            - suite.rc present and `allow_suite_rc = False`.
 
-    Args:
-        path: Absolute path to check for a flow.cylc and/or suite.rc file.
-
-    Returns the path of the flow file if present.
     """
+    # BACK COMPAT: suite_rc_path, allow_suite_rc
+    # FROM: Cylc 7
+    # TO: Cylc 8
+    # REMOVE AT: 8.11.0
+    # NOTE: As of Cylc 8.7.0, the suite.rc file is no longer supported by "cylc
+    # play" but remains supported here for the sole purpose of workflow
+    # detection, allowing newer versions of the CLI/Tui/UIS to detect and
+    # communicate with scheduler running under older versions - hence the
+    # standard 4-minor-version compatibility window applies.
+
     flow_file_path = Path(expand_path(path), WorkflowFiles.FLOW_FILE)
     suite_rc_path = Path(expand_path(path), WorkflowFiles.SUITE_RC)
+
+    # BACK COMPAT:
+    #   flow.cylc -> suite.rc symlink for workflow definition ONLY (e.g, "cylc
+    #   play", "cylc validate", etc), this symlink should remain supported for
+    #   workflow DETECTION (e.g, "cylc scan", "cylc client") until 8.11.0.
+    # FROM/TO:
+    #   8.?
+    # REMOVE AT:
+    #   8.8.0
+    if flow_file_path.resolve().name == WorkflowFiles.SUITE_RC:
+        # flow.cylc -> suite.rc (this is permitted for historical reasons)
+        if allow_suite_rc:
+            LOG.warning(
+                f'{WorkflowFiles.FLOW_FILE} is a symlink to'
+                f' {WorkflowFiles.SUITE_RC} which is now deprecated. Please'
+                f' complete the transition to'' {WorkflowFiles.FLOW_FILE}.'
+                f' This will become an error in Cylc 8.8.0.'
+            )
+            if flow_file_path.is_file():
+                return flow_file_path
+            raise WorkflowFilesError(
+                f'No {WorkflowFiles.FLOW_FILE} or {WorkflowFiles.SUITE_RC}'
+                f' file in {path}'
+            )
+        else:
+            raise WorkflowFilesError(sstrip(f'''
+                {WorkflowFiles.SUITE_RC} found in {path}.
+
+                Support for {WorkflowFiles.SUITE_RC} files was removed in
+                Cylc 8.7.0: {COMPAT_MODE_URL}
+            '''))
+
+    if flow_file_path.exists() and suite_rc_path.exists():
+        # flow.cylc & suite.rc -> error
+        raise WorkflowFilesError(
+            f'Both {WorkflowFiles.FLOW_FILE} and {WorkflowFiles.SUITE_RC}'
+            f' are present in in {path}.'
+            f' Please remove {WorkflowFiles.SUITE_RC}.'
+            f' For more information visit: {COMPAT_MODE_URL}'
+        )
+
+    if not allow_suite_rc and suite_rc_path.exists():
+        # suite.rc present -> error
+        raise WorkflowFilesError(sstrip(f'''
+            {WorkflowFiles.SUITE_RC} found in {path}.
+
+            Support for {WorkflowFiles.SUITE_RC} files was removed in
+            Cylc 8.7.0: {COMPAT_MODE_URL}
+        '''))
+
+    # NOTE: is_file excludes directories
     if flow_file_path.is_file():
-        detect_both_flow_and_suite(Path(path))
         return flow_file_path
     if suite_rc_path.is_file():
         return suite_rc_path
-    raise WorkflowFilesError(NO_FLOW_FILE_MSG.format(path))
+
+    if allow_suite_rc:
+        raise WorkflowFilesError(
+            f'No {WorkflowFiles.FLOW_FILE} or {WorkflowFiles.SUITE_RC}'
+            f' file in {path}'
+        )
+    else:
+        raise WorkflowFilesError(
+            f'No {WorkflowFiles.FLOW_FILE} file in {path}'
+        )
 
 
 def abort_if_flow_file_in_path(source: Path) -> None:

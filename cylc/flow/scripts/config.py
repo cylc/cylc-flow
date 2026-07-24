@@ -157,11 +157,10 @@ def main(
     options: 'Values',
     *ids,
 ) -> None:
-    asyncio.run(_main(parser, options, *ids))
+    asyncio.run(_main(options, *ids))
 
 
 async def _main(
-    parser: COP,
     options: 'Values',
     *ids,
 ) -> None:

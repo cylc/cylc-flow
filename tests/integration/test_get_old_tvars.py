@@ -86,8 +86,5 @@ async def test_validate_with_old_tvars(
         opts.reference = True
 
     async with mod_start(_setup):
-        if function in {view, cylclist, graph}:
-            await function(opts, _setup.workflow_name)
-        else:
-            await function(parser, opts, _setup.workflow_name)
+        await function(opts, _setup.workflow_name)
         assert expect in capsys.readouterr().out

@@ -225,7 +225,7 @@ def test_cylc_config_xtriggers(tmp_run_dir, capsys: pytest.CaptureFixture):
     option_parser = get_option_parser()
 
     asyncio.run(
-        _main(option_parser, Options(option_parser)(), 'constellation')
+        _main(Options(option_parser)(), 'constellation')
     )
     assert capsys.readouterr().out == dedent("""\
     [scheduler]

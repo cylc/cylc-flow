@@ -52,6 +52,46 @@ TRACEBACK_LINENO = re.compile(
 CONTEXT_LINES = 3
 
 
+def restore_deprecated_interfaces():
+    """Extend support for some deprecated interfaces in Jinja2 3.1.x.
+
+    Jinja2 renamed a bunch of interfaces. Warnings were added in version 3.0.0,
+    support for the old names was removed in 3.1.0, however, our users did not
+    notice these warnings (you have to manually turn them on) so did not take
+    action.
+
+    https://jinja.palletsprojects.com/en/stable/changes/#version-3-1-0
+
+    In https://github.com/cylc/cylc-flow/pull/7365 (8.6.6) we've captured
+    Jinja2 warnings and turned them into Cylc warnings to ensure they cannot be
+    missed.
+
+    To give users a chance to take action, this patch restores the renamed
+    interfaces just for ONE minor Cylc version.
+
+    BACK COMPAT: restore_deprecated_interfaces
+    FROM: 8.6.x
+    TO: 8.7.0
+    REMOVE AT: 8.8.0
+    """
+    import jinja2
+    import jinja2.filters
+    for old, new in (
+        ('contextfilter', 'pass_context'),
+        ('contextfunction', 'pass_context'),
+        ('evalcontextfilter', 'pass_eval_context'),
+        ('evalcontextfunction', 'pass_eval_context'),
+        ('environmentfilter', 'pass_environment'),
+        ('environmentfunction', 'pass_environment'),
+    ):
+        setattr(jinja2, old, getattr(jinja2, new))
+        setattr(jinja2.filters, old, getattr(jinja2, new))
+
+
+# BACK COMPAT
+restore_deprecated_interfaces()
+
+
 class PyModuleLoader(BaseLoader):
     """Load python module as Jinja2 template.
 

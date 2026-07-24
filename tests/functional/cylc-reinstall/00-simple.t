@@ -19,7 +19,7 @@
 #------------------------------------------------------------------------------
 # Test workflow re-installation
 . "$(dirname "$0")/test_header"
-set_test_number 11
+set_test_number 8
 
 # Test basic cylc reinstall, named run given
 TEST_NAME="${TEST_NAME_BASE}-basic-named-run"
@@ -54,19 +54,5 @@ __OUT__
 popd || exit 1
 purge_rnd_workflow
 rm -rf "${RUN_DIR:?}/${RND_WORKFLOW_NAME}/"
-
-#------------------------------------------------------------------------------
-# Test cylc reinstall succeeds if suite.rc file in source dir
-TEST_NAME="${TEST_NAME_BASE}-no-flow-file"
-make_rnd_workflow
-rm -f "${RND_WORKFLOW_SOURCE}/flow.cylc"
-touch "${RND_WORKFLOW_SOURCE}/suite.rc"
-run_ok "${TEST_NAME}" cylc install "${RND_WORKFLOW_SOURCE}" --workflow-name="${RND_WORKFLOW_NAME}"
-cmp_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE}
-__OUT__
-
-run_ok "${TEST_NAME}-reinstall" cylc reinstall "${RND_WORKFLOW_NAME}/run1"
-purge_rnd_workflow
 
 exit
