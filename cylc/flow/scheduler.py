@@ -702,6 +702,9 @@ class Scheduler:
             # Non-async sleep - yield to other threads rather than event loop
             sleep(0)
             self.profiler.start()
+
+            self.pool.compute_runahead()
+            self.pool.release_runahead_tasks()
             while True:  # MAIN LOOP
                 await self._main_loop()
 
@@ -1615,11 +1618,8 @@ class Scheduler:
 
     async def _main_loop(self) -> None:
         """A single iteration of the main loop."""
-
         tinit = time()
 
-        self.pool.compute_runahead()
-        self.pool.release_runahead_tasks()
         # If applicable, set stop mode or shutdown on task failure:
         await self.workflow_shutdown()
 
@@ -1704,7 +1704,7 @@ class Scheduler:
         # List of task whose states have changed.
         updated_task_list = [
             t for t in self.pool.get_tasks() if t.state.is_updated]
-        has_updated = updated_task_list or self.is_updated
+        has_updated = bool(updated_task_list) or self.is_updated
 
         if updated_task_list and self.is_restart_timeout_wait:
             # Stop restart timeout if action has been triggered.
@@ -1715,6 +1715,12 @@ class Scheduler:
         if has_updated or self.data_store_mgr.updates_pending:
             # Update the datastore.
             await self.update_data_structure()
+
+        if has_updated or self.pool.tasks_removed:
+            # TODO only some updates matter! (runahead release?)
+            self.pool.tasks_removed = False
+            self.pool.compute_runahead()
+            self.pool.release_runahead_tasks()
 
         if has_updated:
             if not self.is_reloaded and self.is_stalled:
