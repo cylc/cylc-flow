@@ -431,19 +431,21 @@ class TaskPool:
             )
         else:
             # Find the earliest point with incomplete tasks.
-            for point, itasks in sorted(self.get_tasks_by_point().items()):
-                # All n=0 tasks are incomplete by definition, but Cylc 7
-                # ignores failed ones (it does not ignore submit-failed!).
-                if (
-                    cylc.flow.flags.cylc7_back_compat and
-                    all(
-                        itask.state(TASK_STATUS_FAILED)
-                        for itask in itasks
-                    )
-                ):
-                    continue
-                base_point = point
-                break
+            if cylc.flow.flags.cylc7_back_compat:
+                for point, itasks in sorted(self.get_tasks_by_point().items()):
+                    # All n=0 tasks are incomplete by definition, but Cylc 7
+                    # ignores failed ones (it does not ignore submit-failed!).
+                    if (
+                        all(
+                            itask.state(TASK_STATUS_FAILED)
+                            for itask in itasks
+                        )
+                    ):
+                        continue
+                    base_point = point
+                    break
+            else:
+                base_point = min(self.active_tasks)
 
         if base_point is None:
             return False
