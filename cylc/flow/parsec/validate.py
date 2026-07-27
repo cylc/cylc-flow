@@ -790,8 +790,7 @@ class CylcConfigValidator(ParsecValidator):
             'xtrigger function signature',
             (
                 'A function signature similar to how it would be written in '
-                'Python.\n'
-                '``<function>(<arg>, <kwarg>=<value>):<interval>``'
+                'Python.\n``<function>(<arg>, <kwarg>=<value>):<interval>``'
             ),
             {
                 'mytrigger(42, cycle_point=%(point)):PT10S':
