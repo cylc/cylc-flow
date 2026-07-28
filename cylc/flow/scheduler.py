@@ -932,11 +932,9 @@ class Scheduler:
                 remote_mgr.file_install(platform)
             elif status == REMOTE_INIT_255:
                 # Remote init failed due to unreachable host, retry.
-                del remote_mgr.remote_init_map[install_target]
                 remote_mgr.remote_init(platform)
             elif status == REMOTE_FILE_INSTALL_255:
                 # File install failed due to unreachable host, retry.
-                del remote_mgr.remote_init_map[install_target]
                 remote_mgr.file_install(platform)
             elif status in [REMOTE_FILE_INSTALL_DONE,
                             REMOTE_INIT_FAILED,

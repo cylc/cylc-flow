@@ -504,12 +504,9 @@ async def test_manage_remote_init_retry_on_255(
         # tracked via incomplete_ri_map:
         schd.incomplete_ri_map[missing_target] = fake_platform
 
-        # REMOTE_INIT_255: retry remote_init, pop from init map, NOT ri map
+        # REMOTE_INIT_255: retry remote_init
         remote_mgr.remote_init_map[missing_target] = REMOTE_INIT_255
         schd.manage_remote_init()
-        assert missing_target not in remote_mgr.remote_init_map, (
-            "Stale 255 status should be deleted before retry"
-        )
         mock_remote_init.assert_called_once_with(fake_platform)
         assert missing_target in schd.incomplete_ri_map, (
             "Install target should remain in incomplete_ri_map for tracking"
@@ -526,7 +523,6 @@ async def test_manage_remote_init_retry_on_255(
         # REMOTE_FILE_INSTALL_255: should retry file_install
         remote_mgr.remote_init_map[missing_target] = REMOTE_FILE_INSTALL_255
         schd.manage_remote_init()
-        assert missing_target not in remote_mgr.remote_init_map
         mock_file_install.assert_called_once_with(fake_platform)
         assert missing_target in schd.incomplete_ri_map
         mock_file_install.reset_mock()
