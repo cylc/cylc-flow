@@ -4,6 +4,11 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    groups:
+      lint:
+        patterns:
+          - *flake*
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
