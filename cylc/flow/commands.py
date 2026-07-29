@@ -622,7 +622,6 @@ async def reload_workflow(schd: 'Scheduler', reload_global: bool = False):
 
         # Reset the remote init map to trigger fresh file installation
         schd.task_job_mgr.task_remote_mgr.remote_init_map.clear()
-        schd.incomplete_ri_map.clear()
         schd.task_job_mgr.task_remote_mgr.is_reload = True
         schd.pool.reload(config)
         schd.data_store_mgr.apply_task_proxy_db_history()
