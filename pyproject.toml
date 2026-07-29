@@ -79,7 +79,6 @@ report-timings = [
 ]
 tests = [
     "aiosmtpd",
-    "async_generator",
     "bandit>=1.7.0",
     "coverage>=7.9.0",
     "flake8-broken-line==1.0.0",
