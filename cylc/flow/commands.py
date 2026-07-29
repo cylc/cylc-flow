@@ -620,10 +620,7 @@ async def reload_workflow(schd: 'Scheduler', reload_global: bool = False):
         # Re-initialise data model on reload
         schd.data_store_mgr.initiate_data_model(schd.is_reloaded)
 
-        # Reset the remote init map to trigger fresh file installation.
-        # Also clear incomplete_ri_map (restart remote-init tracker) to
-        # keep it consistent - the normal submission path will redo
-        # remote-init for any platform no longer in remote_init_map.
+        # Reset the remote init map to trigger fresh file installation
         schd.task_job_mgr.task_remote_mgr.remote_init_map.clear()
         schd.incomplete_ri_map.clear()
         schd.task_job_mgr.task_remote_mgr.is_reload = True
