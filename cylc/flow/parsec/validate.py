@@ -144,9 +144,11 @@ class ParsecValidator:
         ),
         V_ABSOLUTE_HOST_LIST: (
             'absolute host list',
-            'A comma separated list of hostnames which does not contain '
-            'any self references '
-            f'(i.e. does not contain {", ".join(SELF_REFERENCE_PATTERNS)})',
+            (
+                'A comma separated list of hostnames which does not contain '
+                'any self references '
+                f'(i.e. does not contain {", ".join(SELF_REFERENCE_PATTERNS)})'
+            ),
             ['foo', 'bar', 'baz']
         )
     }
@@ -722,9 +724,11 @@ class CylcConfigValidator(ParsecValidator):
         ),
         V_CYCLE_POINT_FORMAT: (
             'cycle point format',
-            'An time format for date-time cycle points in ``isodatetime`` '
-            '"print" or "parse" format. '
-            'See ``isodatetime --help`` for more information.',
+            (
+                'A time format for date-time cycle points in ``isodatetime`` '
+                '"print" or "parse" format. '
+                'See ``isodatetime --help`` for more information.'
+            ),
             {
                 'CCYYMM': '``isodatetime`` print format.',
                 '%Y%m': '``isodatetime`` parse format.'
@@ -770,19 +774,22 @@ class CylcConfigValidator(ParsecValidator):
         ),
         V_INTERVAL_LIST: (
             'time interval list',
-            'A comma separated list of time intervals. '
-            'These can include multipliers.',
+            (
+                'A comma separated list of time intervals. '
+                'These can include multipliers.'
+            ),
             {
                 'P1Y, P2Y, P3Y': 'After 1, 2 and 3 years.',
-                'PT1M, 2*PT1H, P1D': 'After 1 minute, 1 hour, 1 hour and 1 '
-                'day'
+                'PT1M, 2*PT1H, P1D': 'After 1 minute, 1 hour, 1 hour and 1 day'
             },
             [('std:term', 'ISO8601 duration')]
         ),
         V_PARAMETER_LIST: (
             'parameter list',
-            'A comma separated list of Cylc parameter values. '
-            'This can include strings, integers and integer ranges.',
+            (
+                'A comma separated list of Cylc parameter values. '
+                'This can include strings, integers and integer ranges.'
+            ),
             {
                 'foo, bar, baz': 'List of string parameters.',
                 '1, 2, 3': 'List of integer parameters.',
@@ -808,9 +815,10 @@ class CylcConfigValidator(ParsecValidator):
         ),
         V_XTRIGGER: (
             'xtrigger function signature',
-            'A function signature similar to how it would be written in '
-            'Python.\n'
-            '``<function>(<arg>, <kwarg>=<value>):<interval>``',
+            (
+                'A function signature similar to how it would be written in '
+                'Python.\n``<function>(<arg>, <kwarg>=<value>):<interval>``'
+            ),
             {
                 'mytrigger(42, cycle_point=%(point)):PT10S':
                     'Run function ``mytrigger`` every 10 seconds.'
