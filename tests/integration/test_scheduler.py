@@ -33,7 +33,8 @@ from cylc.flow.task_state import (
     TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_RUNNING,
-    TASK_STATUS_FAILED
+    TASK_STATUS_PREPARING,
+    TASK_STATUS_FAILED,
 )
 
 from cylc.flow.workflow_status import AutoRestartMode, StopMode
@@ -232,6 +233,7 @@ async def test_no_poll_waiting_tasks(
         # But these states should be:
         for state in [
             TASK_STATUS_SUBMIT_FAILED,
+            TASK_STATUS_PREPARING,
             TASK_STATUS_SUBMITTED,
             TASK_STATUS_RUNNING
         ]:
