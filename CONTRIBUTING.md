@@ -115,6 +115,7 @@ requests_).
  - Samuel Denton
  - Scott Owen James
  - James Frost
+ - Patrick Mulrooney
 <!-- end-shortlog -->
 
 (All contributors are identifiable with email addresses in the git version
