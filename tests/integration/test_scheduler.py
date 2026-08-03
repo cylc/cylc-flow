@@ -58,6 +58,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_SUCCEEDED,
     TASK_STATUS_WAITING,
+    TASK_STATUS_PREPARING,
 )
 from cylc.flow.workflow_files import WorkflowFiles
 from cylc.flow.workflow_status import (
@@ -220,7 +221,7 @@ async def test_holding_tasks_whilst_scheduler_paused(
         assert len(submitted_tasks) == 1
 
 
-async def test_no_poll_waiting_tasks(
+async def test_no_poll_waiting_or_preparing_tasks(
     capture_polling,
     flow,
     one_conf,
@@ -233,6 +234,9 @@ async def test_no_poll_waiting_tasks(
     job, and polling would erroneously return the state of that job.
 
     See https://github.com/cylc/cylc-flow/issues/4658
+    Preparing tasks should also not be polled as there is no logical reason
+
+    See https://github.com/cylc/cylc-flow/issues/7123
     """
     id_: str = flow(one_conf)
     # start the scheduler in live mode in order to activate regular polling
@@ -267,6 +271,12 @@ async def test_no_poll_waiting_tasks(
             await commands.run_cmd(commands.poll_tasks(one, ['*/*']))
             assert len(polled_tasks) == 1
             polled_tasks.clear()
+
+        # Should also not poll preparing tasks
+        task.state.status = TASK_STATUS_PREPARING
+        await commands.run_cmd(commands.poll_tasks(one, ['*/*']))
+        assert len(polled_tasks) == 0
+        polled_tasks.clear()
 
         # Shut down with a running task.
         task.state.status = TASK_STATUS_RUNNING

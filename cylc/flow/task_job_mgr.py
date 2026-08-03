@@ -243,7 +243,8 @@ class TaskJobManager:
                     # is dangerous because a task waiting to rerun has the
                     # submit number of its previous job, which can be polled).
                     itask for itask in itasks
-                    if itask.state.status != TASK_STATUS_WAITING
+                    if (itask.state.status != TASK_STATUS_WAITING
+                        and itask.state.status != TASK_STATUS_PREPARING)
                 ],
                 self._poll_task_jobs_callback,
                 self._poll_task_jobs_callback_255
