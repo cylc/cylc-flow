@@ -249,6 +249,7 @@ class TaskJobManager:
                     if (itask.state.status != TASK_STATUS_WAITING
                         and itask.state.status != TASK_STATUS_EXPIRED
                         and itask.state.status != TASK_STATUS_FAILED
+                        and itask.state.status != TASK_STATUS_PREPARING
                         and itask.state.status != TASK_STATUS_SUCCEEDED)
                 ],
                 self._poll_task_jobs_callback,
