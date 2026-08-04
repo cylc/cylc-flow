@@ -1882,7 +1882,7 @@ with Conf('global.cylc', desc='''
                    [<system>]job name length maximum``.
             ''')
             Conf('install target', VDR.V_STRING, desc='''
-                :ref:`Label representng a filesystem <Install targets>`.
+                :ref:`Label representing a filesystem <Install targets>`.
 
                 Workflow setup and file installation only needs to be done once
                 for all platforms that share the same install target.
