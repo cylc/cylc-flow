@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,6 +31,7 @@ from cylc.flow.parsec.jinja2support import (
     jinja2process,
     raise_helper,
 )
+from cylc.flow.util import sstrip
 
 
 def test_raise_helper():
@@ -137,3 +139,40 @@ def test_pymoduleloader_invalid_module(tmp_path):
         module_loader = PyModuleLoader()
         with pytest.raises(jinja2.TemplateNotFound):
             module_loader.load(environment=env, name='no way jose')
+
+
+def test_restore_deprecated_interfaces(tmp_path, log_filter):
+    """It should log warnings when back-supported Jinja2 interfaces are used.
+
+    See https://github.com/cylc/cylc-flow/pull/7325
+    """
+    # flow.cylc
+    flow_cylc = tmp_path / 'flow.cylc'
+    flow_cylc.write_text(sstrip('''
+        #!Jinja2
+        # {{ 1 | foo }}
+    '''))
+
+    # Jinja2Filters/foo.py
+    (tmp_path / 'Jinja2Filters').mkdir()
+    ((tmp_path / 'Jinja2Filters') / 'foo.py').write_text(sstrip('''
+        from jinja2 import contextfilter
+
+        @contextfilter  # NOTE: contextfilter is deprecated!
+        def foo(x, y):
+            return y * 2
+    ''' + '\n'))
+
+    # process Jinja2 template
+    assert jinja2process(
+        flow_cylc,
+        flow_cylc.read_text().splitlines(),
+        str(tmp_path),
+    ) == ['# 2']
+
+    # warning should be raised
+    assert log_filter(
+        contains=(
+            'The Jinja2 function contextfilter was renamed to pass_context'
+        )
+    )

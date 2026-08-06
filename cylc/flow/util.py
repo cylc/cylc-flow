@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -187,27 +188,6 @@ def format_cmd(cmd: Sequence[str], maxlen: int = 60) -> str:
     if line:
         ret.append(line)
     return ' \\ \n    '.join(ret)
-
-
-def cli_format(cmd: List[str]):
-    """Format a command list as it would appear on the command line.
-
-    I.E. put spaces between the items in the list.
-
-    BACK_COMPAT: cli_format
-        From:
-            Python 3.7
-        To:
-            Python 3.8
-        Remedy:
-            Can replace with shlex.join
-
-    Examples:
-        >>> cli_format(['sleep', '10'])
-        'sleep 10'
-
-    """
-    return ' '.join(cmd)
 
 
 def serialise_set(flow_nums: Optional[set] = None) -> str:

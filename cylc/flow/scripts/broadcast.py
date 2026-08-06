@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +24,7 @@ Override "[runtime]" configurations in a running workflow.
 Uses for broadcast include making temporary changes to task behaviour, and
 task-to-downstream-task communication via environment variables.
 
-See also "cylc reload" which reads in the flow.cylc (or suite.rc) file.
+See also "cylc reload" which reads in the flow.cylc file.
 
 A broadcast can set/override any "[runtime]" configuration for all cycles or
 for a specific cycle. If a task is affected by specific-cycle and all-cycle
@@ -112,7 +113,7 @@ if TYPE_CHECKING:
 
 
 RAW_DEPR_MSG = (
-    "DEPRECATED: the --raw option will be removed at Cylc 8.7; "
+    "DEPRECATED: the --raw option will be removed at Cylc 8.9; "
     "use --format=raw instead."
 )
 
@@ -347,7 +348,7 @@ def get_option_parser() -> COP:
     # BACK COMPAT: --raw
     # From: < 8.5.1
     # To: 8.5.1
-    # Remove at: 8.7.0
+    # Remove at: 8.9
     parser.add_option(
         "-r", "--raw",
         help=(

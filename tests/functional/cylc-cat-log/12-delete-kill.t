@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,6 +33,7 @@ __EOF__
 
 log_file="${WORKFLOW_RUN_DIR}/log/foo.log"
 echo "Hello, Mr. Thompson" > "$log_file"
+
 
 TEST_NAME="${TEST_NAME_BASE}-delete"
 cylc cat-log --mode=tail "$WORKFLOW_NAME" -f foo.log 2>&1 &

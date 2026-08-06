@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -355,22 +356,19 @@ def merge_template_vars(
         >>> merge_template_vars(a, b)
         {'FOO': 42, 'BAZ': 3.14159, 'BAR': 'Hello World'}
     """
-    if plugin_result[TEMPLATING_DETECTED] is not None:
-        plugin_tvars = plugin_result[TEMPLATE_VARIABLES]
-        will_be_overwritten = (
-            native_tvars.keys() &
-            plugin_tvars.keys()
-        )
-        for key in will_be_overwritten:
-            if plugin_tvars[key] != native_tvars[key]:
-                LOG.warning(
-                    f'Overriding {key}: {plugin_tvars[key]} ->'
-                    f' {native_tvars[key]}'
-                )
-        plugin_tvars.update(native_tvars)
-        return plugin_tvars
-    else:
-        return native_tvars
+    plugin_tvars = plugin_result[TEMPLATE_VARIABLES]
+    will_be_overwritten = (
+        native_tvars.keys() &
+        plugin_tvars.keys()
+    )
+    for key in will_be_overwritten:
+        if plugin_tvars[key] != native_tvars[key]:
+            LOG.warning(
+                f'Overriding {key}: {plugin_tvars[key]} ->'
+                f' {native_tvars[key]}'
+            )
+    plugin_tvars.update(native_tvars)
+    return plugin_tvars
 
 
 def _prepend_old_templatevars(

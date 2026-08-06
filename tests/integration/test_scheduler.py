@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,7 +33,7 @@ from unittest.mock import Mock
 import pytest
 
 from cylc.flow import commands
-from cylc.flow.exceptions import CylcError
+from cylc.flow.exceptions import CylcError, WorkflowFilesError
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.scheduler import (
     Scheduler,
@@ -46,6 +47,7 @@ from cylc.flow.task_remote_mgr import (
     REMOTE_INIT_DONE,
     REMOTE_INIT_FAILED,
 )
+from cylc.flow.scheduler_cli import RunOptions
 from cylc.flow.task_state import (
     TASK_STATUS_FAILED,
     TASK_STATUS_RUNNING,
@@ -58,6 +60,7 @@ from cylc.flow.workflow_status import (
     AutoRestartMode,
     StopMode,
 )
+from cylc.flow.workflow_files import WorkflowFiles
 
 
 Fixture = Any
@@ -552,3 +555,26 @@ async def test_manage_remote_init_retry_on_255(
         mock_remote_init.assert_not_called()
         mock_file_install.assert_not_called()
         assert missing_target not in schd.incomplete_ri_map
+
+
+async def test_suite_rc(test_dir, run_dir, start):
+    """It should reject workflows with suite.rc files."""
+    (test_dir / WorkflowFiles.SUITE_RC).touch()
+    workflow_id = str(test_dir.relative_to(run_dir))
+    schd = Scheduler(workflow_id, RunOptions())
+
+    # suite.rc present
+    with pytest.raises(
+        WorkflowFilesError, match=f'suite.rc found in .*{test_dir.name}'
+    ):
+        async with start(schd):
+            pass
+
+    # suite.rc and flow.cylc present
+    (test_dir / WorkflowFiles.FLOW_FILE).touch()
+    with pytest.raises(
+        WorkflowFilesError,
+        match=f'Both flow.cylc and suite.rc.*{test_dir.name}',
+    ):
+        async with start(schd):
+            pass

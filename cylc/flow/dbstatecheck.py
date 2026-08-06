@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -84,6 +85,8 @@ class CylcWorkflowDBChecker:
             self.c7_back_compat_mode = False
         except sqlite3.OperationalError as exc:
             # BACK COMPAT: Cylc 7 DB (see method below).
+            # FROM: 7.x
+            # REMOVE AT: 8.7
             try:
                 self.db_point_fmt = self._get_db_point_format_compat()
                 self.c7_back_compat_mode = True
@@ -194,7 +197,7 @@ class CylcWorkflowDBChecker:
         # to:
         #    8.1.x
         # remove at:
-        #    8.x
+        #    8.7
         for row in self.conn.execute(
             rf'''
                 SELECT

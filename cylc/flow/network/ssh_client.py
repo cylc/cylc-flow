@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -83,7 +84,7 @@ class WorkflowRuntimeClient(WorkflowRuntimeClientBase):
                 }
                 # NOTE: this can not raise NoHostsError
                 # because we have provided the host
-                proc = remote_cylc_cmd(
+                proc = await remote_cylc_cmd(
                     cmd,
                     platform,
                     host=self.host,
