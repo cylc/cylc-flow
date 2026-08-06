@@ -2217,8 +2217,8 @@ class TaskPool:
             # Can't be runahead limited or queued.
             itask.state_reset(is_runahead=False, is_queued=False)
             self.task_queue_mgr.remove_task(itask)
-            # If we skipped over runahead release and this tasks parentless
-            # it's next parentless instance might need to be spawned.
+            # If we skipped over runahead release (when parentless spawning
+            # happens) the next parentless instance might need to be spawned.
             if itask.flow_nums and not itask.is_xtrigger_sequential:
                 self.spawn_next_parentless(itask)
 
