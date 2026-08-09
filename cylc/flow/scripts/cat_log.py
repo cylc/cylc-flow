@@ -96,7 +96,10 @@ from cylc.flow.pathutil import (
     get_workflow_run_job_dir,
     get_workflow_run_pub_db_path,
 )
-from cylc.flow.platforms import get_platform
+from cylc.flow.platforms import (
+    get_host_from_platform,
+    get_platform,
+)
 from cylc.flow.remote import (
     remote_cylc_cmd,
     watch_and_kill,
@@ -453,20 +456,34 @@ async def _get_remote_log(
     if prepend_path:
         cmd.append('--prepend-path')
     cmd.append(workflow_id)
-    # TODO: Add Intelligent Host selection to this
-    # https://github.com/cylc/cylc-flow/issues/4263
+    bad_hosts = set()
     with suppress(KeyboardInterrupt):
-        # (Ctrl-C while tailing)
-        # NOTE: This will raise NoHostsError if the platform is not
-        # contactable
-        # For testing purposes
-        return await remote_cylc_cmd(
-            cmd,
-            platform,
-            capture_process=(mode == LISTDIR),
-            manage=(mode == TAIL),
-            text=(mode == LISTDIR),
-        )
+        while True:
+            # (Ctrl-C while tailing)
+            # NOTE: This will raise NoHostsError if the platform is not
+            # contactable.
+            host = get_host_from_platform(platform, bad_hosts=bad_hosts)
+            result = await remote_cylc_cmd(
+                cmd,
+                platform,
+                host=host,
+                capture_process=(mode == LISTDIR),
+                manage=(mode == TAIL),
+                text=(mode == LISTDIR),
+            )
+
+            # LISTDIR returns a process so the caller can consume its output.
+            # Wait for this short-lived command here so an SSH failure can be
+            # retried before returning the process to the caller.
+            if isinstance(result, Popen):
+                result.wait()
+                return_code = result.returncode
+            else:
+                return_code = result
+
+            if return_code != 255:
+                return result
+            bad_hosts.add(host)
     return 1
 
 
