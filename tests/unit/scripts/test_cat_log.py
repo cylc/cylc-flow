@@ -23,6 +23,8 @@ import pytest
 
 from cylc.flow.loggingutil import CylcLogFormatter
 from cylc.flow.scripts.cat_log import (
+    CAT,
+    _get_remote_log,
     colorise_cat_log,
 )
 
@@ -88,3 +90,46 @@ def test_colorise_cat_log_colour(log_file):
             ]
         ])
     )
+
+
+@pytest.mark.asyncio
+async def test_get_remote_log_retries_unreachable_host(monkeypatch):
+    """It should try another platform host after an SSH failure."""
+    from cylc.flow.scripts import cat_log
+
+    hosts = []
+
+    def select_host(platform, bad_hosts=None):
+        host = next(
+            item for item in platform['hosts']
+            if item not in (bad_hosts or set())
+        )
+        hosts.append(host)
+        return host
+
+    async def remote_cmd(*args, **kwargs):
+        return 255 if kwargs['host'] == 'foo' else 0
+
+    monkeypatch.setattr(cat_log, 'get_host_from_platform', select_host)
+    monkeypatch.setattr(cat_log, 'remote_cylc_cmd', remote_cmd)
+    monkeypatch.setattr(
+        cat_log,
+        'get_remote_workflow_run_job_dir',
+        lambda *args: '/remote/log/job.out',
+    )
+
+    result = await _get_remote_log(
+        'workflow',
+        {
+            'hosts': ['foo', 'bar'],
+            'tail command template': 'tail -f %(filename)s',
+        },
+        '1',
+        'task',
+        '01',
+        'job.out',
+        CAT,
+    )
+
+    assert result == 0
+    assert hosts == ['foo', 'bar']
