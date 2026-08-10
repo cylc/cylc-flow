@@ -21,31 +21,9 @@
 
 . "$(dirname "$0")/test_header"
 
-set_test_number 4
+set_test_number 2
 
 # integer cycling
-
-cat > suite.rc <<'__FLOW_CONFIG__'
-[scheduler]
-    allow implicit tasks = True
-[scheduling]
-    initial cycle point = 1000
-    [[dependencies]]
-        [[[R1]]]
-            graph = foo
-__FLOW_CONFIG__
-
-WORKFLOW_NAME="${CYLC_TEST_REG_BASE}/${TEST_SOURCE_DIR_BASE}/${TEST_NAME_BASE}"
-
-cylc install --no-run-name --workflow-name="${WORKFLOW_NAME}"
-
-# Pick a deliberately peculier timezone;
-export TZ=Australia/Eucla
-
-run_ok "${TEST_NAME_BASE}" cylc play "${WORKFLOW_NAME}" --no-detach --timestamp
-grep_ok "+08:45 INFO" "${TEST_NAME_BASE}.stderr"
-
-purge
 
 init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 [scheduler]
@@ -57,6 +35,9 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
 __FLOW_CONFIG__
 
 cylc install --no-run-name --workflow-name="${WORKFLOW_NAME}-foo"
+
+# Pick a deliberately peculier timezone;
+export TZ=Australia/Eucla
 
 run_ok "${TEST_NAME_BASE}" cylc play "${WORKFLOW_NAME}-foo" --no-detach --timestamp
 grep_ok "+08:45 INFO" "${TEST_NAME_BASE}.stderr"

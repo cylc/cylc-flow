@@ -58,7 +58,7 @@ from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.templatevars import get_template_vars
 from cylc.flow.terminal import cli_function
 from cylc.flow.run_modes import RunMode
-from cylc.flow.workflow_files import get_workflow_run_dir
+from cylc.flow.workflow_files import check_flow_file, get_workflow_run_dir
 
 if TYPE_CHECKING:
     from cylc.flow.option_parsers import Values
@@ -138,11 +138,11 @@ ValidateOptions = Options(
 
 @cli_function(get_option_parser)
 def main(parser: COP, options: 'Values', workflow_id: str) -> None:
-    asyncio.run(run(parser, options, workflow_id))
+    asyncio.run(run(options, workflow_id))
 
 
 async def run(
-    parser: COP, options: 'Values', workflow_id: str
+    options: 'Values', workflow_id: str
 ) -> None:
     """cylc validate CLI."""
     profiler = Profiler(None, options.profile_mode)
@@ -156,6 +156,10 @@ async def run(
         src=True,
         constraint='workflows',
     )
+
+    # BACK COMPAT: check_flow_file (to disallow suite.rc)
+    # REMOVE AT: 8.11.0
+    check_flow_file(flow_file.parent, allow_suite_rc=False)
 
     # Save the location of the existing workflow run dir in the
     # against source option:

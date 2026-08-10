@@ -21,7 +21,7 @@
 
 . "$(dirname "$0")/test_header"
 
-set_test_number 4
+set_test_number 2
 
 init_workflow "$TEST_NAME_BASE" << __FLOW_CONFIG__
 [scheduling]
@@ -41,11 +41,3 @@ TEST_NAME="${TEST_NAME_BASE}-val"
 run_ok "$TEST_NAME" cylc validate "$WORKFLOW_NAME"
 
 grep_ok "$msg" "${TEST_NAME}.stderr"
-
-# Rename flow.cylc to suite.rc:
-mv "${WORKFLOW_RUN_DIR}/flow.cylc" "${WORKFLOW_RUN_DIR}/suite.rc"
-
-TEST_NAME="${TEST_NAME_BASE}-val-2"
-run_ok "$TEST_NAME" cylc validate "$WORKFLOW_NAME"
-
-grep_fail "$msg" "${TEST_NAME}.stderr"

@@ -102,7 +102,7 @@ def main(parser: COP, options: 'Values', workflow_id: Optional[str] = None):
     orig_source = workflow_id
     source = get_source_location(workflow_id)
     log_subcommand('validate', source)
-    asyncio.run(cylc_validate(parser, options, str(source)))
+    asyncio.run(cylc_validate(options, str(source)))
 
     # Unset is validate after validation.
     del options.is_validate

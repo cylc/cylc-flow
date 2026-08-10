@@ -29,7 +29,6 @@ from typing import (
     Union
 )
 
-import cylc.flow.flags
 from cylc.flow.exceptions import GraphParseError
 from cylc.flow.param_expand import GraphExpander
 from cylc.flow.task_id import TaskID
@@ -817,11 +816,6 @@ class GraphParser:
             fam_member: is this from an expanded family trigger?
 
         """
-        if cylc.flow.flags.cylc7_back_compat:
-            # Set all outputs optional (set :succeed required elsewhere).
-            self.task_output_opt[(name, output)] = (True, True, True)
-            return
-
         # Do not infer output optionality from suicide triggers:
         if suicide:
             return
@@ -900,6 +894,9 @@ class GraphParser:
                 optional, default, oset = (
                     self.task_output_opt[(name, output)]
                 )
+
+                # NOTE: sort for stable error messages
+                output, opposite = sorted((output, opposite))
                 msg = (f"Opposite outputs {name}:{output} and {name}:"
                        f"{opposite} must both be optional if both are used")
                 if fam_member or not opp_fixed:
