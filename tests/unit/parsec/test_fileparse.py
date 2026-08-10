@@ -122,7 +122,7 @@ def test_addict_replace_value():
 
 
 def test_addict_replace_value_1():
-    """"Special case depending on key and parents, for
+    """Special case depending on key and parents, for
 
     - key is 'graph' AND parents['scheduling']['graph'] OR
     - len(parents)==3 AND parents['scheduling']['graph'][?]
