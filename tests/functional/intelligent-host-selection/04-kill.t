@@ -62,7 +62,7 @@ LOGFILE="${WORKFLOW_RUN_DIR}/log/scheduler/log"
 # Check that when a task fail badhosts associated with that task's platform
 # are removed from the badhosts set.
 named_grep_ok "job kill fails" \
-    "unreachable_host has been added to the list of unreachable hosts" \
+    "Could not connect to unreachable_host" \
     "${LOGFILE}"
 
 named_grep_ok "job kill retries & succeeds" \

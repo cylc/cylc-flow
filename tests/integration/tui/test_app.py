@@ -495,6 +495,7 @@ async def test_auto_expansion(flow, scheduler, start, rakiura):
                     flow=[]
                 )
 
+            await schd._main_loop()
             await schd.update_data_structure()
             schd.update_data_store()
 
@@ -542,6 +543,7 @@ async def test_restart_reconnect(one_conf, flow, scheduler, start, rakiura):
         # 3- restart the workflow
         schd = scheduler(flow(one_conf, name='one'))
         async with start(schd):
+            await schd._main_loop()
             await schd.update_data_structure()
             rk.wait_until_loaded(schd.tokens.id)
             rk.compare_screenshot(

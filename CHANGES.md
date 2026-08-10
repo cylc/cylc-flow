@@ -11,6 +11,24 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 <!-- towncrier release notes start -->
 
+## __cylc-8.6.5 (Released 2026-06-17)__
+
+### 🔧 Fixes
+
+[#7293](https://github.com/cylc/cylc-flow/pull/7293) - Fixed validation check for `[scheduler]install` which previously permitted some invalid values.
+  See [the config reference](https://cylc.github.io/cylc-doc/stable/html/reference/config/workflow.html#flow.cylc[scheduler]install)
+  for more information on valid values.
+
+[#7306](https://github.com/cylc/cylc-flow/pull/7306) - Fixed a severe efficiency problem for large workflows.
+
+[#7316](https://github.com/cylc/cylc-flow/pull/7316) - Ensure `cylc remote-init` exits non-zero when it fails.
+
+[#7320](https://github.com/cylc/cylc-flow/pull/7320) - Improved logging for submission failures when no hosts are reachable.
+
+[#7333](https://github.com/cylc/cylc-flow/pull/7333) - Fix an issue where the `$PATH` variable passed to the job submission environment could grow between each submission in a batch when `max batch submit size` > 1 and `clean job submission environment = False`.
+
+[#7342](https://github.com/cylc/cylc-flow/pull/7342) - Fixed bugs relating to incorrect previous instances of `[special tasks]sequential` tasks.
+
 ## __cylc-8.6.4 (Released 2026-05-12)__
 
 ### 🔧 Fixes

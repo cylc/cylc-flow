@@ -341,7 +341,7 @@ async def test_prereqs(
 
         await run_cmd(remove_tasks(schd, ['1/a1'], []))
         assert not schd.pool.is_stalled()
-        assert len(schd.pool.task_queue_mgr.queues['default'].deque)
+
         # `cylc show` should reflect the now-unsatisfied condition:
         assert await cylc_show_prereqs(schd, '1/x') == [
             (True, {'1/a1': False, '1/a2': True, '1/b': True})
@@ -349,7 +349,6 @@ async def test_prereqs(
 
         await run_cmd(remove_tasks(schd, ['1/b'], []))
         # Should cause stall now because 1/c prereq is unsatisfied:
-        assert len(schd.pool.task_queue_mgr.queues['default'].deque) == 0
         assert schd.pool.is_stalled()
         assert log_filter(
             logging.WARNING,
