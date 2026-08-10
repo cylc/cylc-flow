@@ -176,13 +176,13 @@ TASK_STATE_MAP = {
 
 
 def status_leq(status_a, status_b):
-    """"Return True if status_a <= status_b"""
+    """Return True if status_a <= status_b"""
     return (TASK_STATUSES_ORDERED.index(status_a) <=
             TASK_STATUSES_ORDERED.index(status_b))
 
 
 def status_geq(status_a, status_b):
-    """"Return True if status_a >= status_b"""
+    """Return True if status_a >= status_b"""
     return (TASK_STATUSES_ORDERED.index(status_a) >=
             TASK_STATUSES_ORDERED.index(status_b))
 
@@ -436,12 +436,12 @@ class TaskState:
         return True
 
     def is_gt(self, status):
-        """"Return True if self.status > status."""
+        """Return True if self.status > status."""
         return (TASK_STATUSES_ORDERED.index(self.status) >
                 TASK_STATUSES_ORDERED.index(status))
 
     def is_gte(self, status):
-        """"Return True if self.status >= status."""
+        """Return True if self.status >= status."""
         return (TASK_STATUSES_ORDERED.index(self.status) >=
                 TASK_STATUSES_ORDERED.index(status))
 

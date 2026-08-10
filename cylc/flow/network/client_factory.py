@@ -32,7 +32,7 @@ class CommsMeth(Enum):
 
 
 def get_comms_method() -> CommsMeth:
-    """"Return Communication Method from environment variable, default zmq"""
+    """Return Communication Method from environment variable, default zmq"""
     return CommsMeth(
         os.getenv('CYLC_TASK_COMMS_METHOD', CommsMeth.ZMQ.value)
     )
