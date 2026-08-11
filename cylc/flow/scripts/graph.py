@@ -128,6 +128,7 @@ def get_nodes_and_edges(
             stop,
             grouping=opts.grouping,
             show_suicide=opts.show_suicide,
+            flatten_icp_dependence=opts.flatten_icp_dependence,
         )
     return nodes, edges
 
@@ -138,12 +139,14 @@ def _get_graph_nodes_edges(
     stop_point_str=None,
     grouping=None,
     show_suicide=False,
+    flatten_icp_dependence=False,
 ) -> Tuple[List[Node], List[Edge]]:
     """Return nodes and edges for a workflow graph."""
     graph = config.get_graph_raw(
         start_point_str,
         stop_point_str,
-        grouping
+        grouping,
+        flatten_icp_dependence=flatten_icp_dependence,
     )
     if not graph:
         return [], []
@@ -249,7 +252,8 @@ def format_graphviz(
         else:
             indent = '  '
         for cycle, tasks in cycles.items():
-            if opts.cycles:
+            r1 = cycle.startswith('R1')
+            if opts.cycles and not r1:
                 dot_lines.extend(
                     [
                         f'  subgraph "cluster_{cycle}" {{ ',
@@ -257,11 +261,16 @@ def format_graphviz(
                         '    style="dashed"',
                     ]
                 )
+            if r1:
+                cycle_label = 'R1'
+            else:
+                cycle_label = cycle
+
             dot_lines.extend(
-                rf'{indent}"{cycle}/{task}" [label="{task}\n{cycle}"]'
+                rf'{indent}"{cycle}/{task}" [label="{task}\n{cycle_label}"]'
                 for task in tasks
             )
-            if opts.cycles:
+            if opts.cycles and not r1:
                 dot_lines.append('  }')
             dot_lines.append('')
 
@@ -524,6 +533,21 @@ def get_option_parser() -> COP:
         '--show-suicide',
         help='Show suicide triggers. Not shown by default.',
         action='store_true', default=False, dest='show_suicide')
+
+    parser.add_option(
+        '--flatten-icp',
+        help=(
+            'Flatten dependence on tasks at the initial cycle point.'
+            ' Workflows often contain repeated dependencies between the'
+            ' initial cycle point and subsequent cycles.'
+            ' This option "snips" the arrows between the R1 and subsequent'
+            ' cycles for a cleaner graph. The R1 tasks and their dependencies'
+            ' are still shown, but their inter-cycle dependency is omitted.'
+        ),
+        action='store_true',
+        default=False,
+        dest='flatten_icp_dependence',
+    )
 
     parser.add_option(icp_option)
 
