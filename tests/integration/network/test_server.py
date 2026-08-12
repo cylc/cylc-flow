@@ -16,6 +16,7 @@
 
 import asyncio
 import logging
+import pickle
 from typing import Callable
 
 import pytest
@@ -80,6 +81,38 @@ def test_pb_entire_workflow(myflow):
         myflow.server.pb_entire_workflow()
     )
     assert data.workflow.id == myflow.id
+
+
+async def test_reqpub(
+    one: Scheduler, start: Callable
+):
+    """Test the reqpub endpoint."""
+    async with asyncio.timeout(5):
+        async with start(one):
+            # start with a message that works
+            msg = {
+                'command': 'reqpub',
+                'user': 'bono',
+                'args': {
+                    'topic': 'ping',
+                    'payload': 'pong'
+                }
+            }
+            res = one.server.receiver(msg)
+            assert not res.get('error')
+            assert res['data'] == 'ping'
+            assert (
+                [(b'ping', b'pong', None)]
+                in list(one.server.publish_queue.queue)
+            )
+
+            msg['args']['payload'] = 42.0
+            res = one.server.receiver(msg)
+            assert not res.get('error')
+            assert (
+                [(b'ping', pickle.dumps(42.0), None)]
+                in list(one.server.publish_queue.queue)
+            )
 
 
 async def test_stop(one: Scheduler, start):

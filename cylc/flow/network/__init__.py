@@ -317,6 +317,9 @@ class ZMQSocketBase:
         i.e. self.socket.sndhwm
         """
         self.socket.sndhwm = 10000
+        # allow more time for connect/reconnect
+        self.socket.setsockopt(zmq.CONNECT_TIMEOUT, 10 * 1000)
+        self.socket.setsockopt(zmq.RECONNECT_IVL_MAX, 5000)
 
     def _bespoke_start(self):
         """Initiate bespoke items at start."""
