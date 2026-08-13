@@ -576,13 +576,20 @@ async def test_remove_spawn(flow, scheduler, start):
             '2001/c',
         }
 
-        # Removal of parentless runahead and sequential xtrigger (PSX) spawned.
-        await run_cmd(remove_tasks(schd, ['2000/a', '2001/c', '2001/b'], []))
+        # Normal removal of parentless runahead and sequential xtrigger (PSX)
+        # spawned.
+        await run_cmd(remove_tasks(schd, ['2000/a', '2000/b', '2001/b'], []))
         assert schd.pool.get_task_ids() == {
-            '2000/b',
             '2000/c',
+            '2001/a',
+            '2001/c',
+            '2002/b',
         }
 
+        # no spawn removal
+        await run_cmd(remove_tasks(schd, ['2001/a', '2001/c'], [], True))
+        assert schd.pool.get_task_ids() == {'2000/c', '2002/b'}
+
         # empty the workflow
-        await run_cmd(remove_tasks(schd, ['2000/b', '2000/c'], []))
+        await run_cmd(remove_tasks(schd, ['2002/b', '2000/c'], [], True))
         assert schd.pool.get_task_ids() == set()
