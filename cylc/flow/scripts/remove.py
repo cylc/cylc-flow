@@ -27,7 +27,7 @@ The primary use cases for this command are:
  * Erase the flow history of tasks to allow them to rerun without starting a
    new flow. (Note that `cylc trigger` now does this automatically, however).
 
-Tasks will be removed from ALL flows, by defaut.
+Tasks will be removed from ALL flows, by default.
 
 Tasks removed from all flows, and any waiting downstream tasks spawned by
 their outputs, will be recorded with no flow numbers and will not affect
@@ -38,9 +38,8 @@ remaining flows but will not affect the evolution of the removed flows.
 
 Removing a submitted or running task also kills it (see "cylc kill").
 
-Removing parentless xtrigger sequential and/or RH tasks with the flag
-`--no-spawn` prevents the spawning of the next instance, and possibly
-future propagation of associated sub-graph(s).
+If you need to stop parentless tasks from spawning into future cycles, see
+the "--no-spawn" option.
 
 Examples:
   # Remove a task that already ran.
@@ -102,11 +101,15 @@ def get_option_parser() -> COP:
     add_flow_opts_for_remove(parser)
     parser.add_option(
         "--no-spawn",
-        help="""Do not spawn successors before removal.
+        help="""This option only affects the leading instances of parentless
+tasks (i.e. tasks with no upstream task prerequisites): normal parentless tasks
+waiting at the runahead limit, and the leading instances of sequential
+xtriggered parentless tasks. This low-level intervention removes such tasks
+without spawning their next instances (and hence any dependent sub-graphs)
+into the workflow.
 
-                Warning: This is a low-level intervention for targeting the
-spawning of parentless tasks, and may result in emptying the workflow(s) of
-associated sub-graph(s).
+WARNING: this could cause your workflow to shut down
+prematurely as complete.
         """,
         action="store_true", default=False, dest="no_spawn")
     return parser
