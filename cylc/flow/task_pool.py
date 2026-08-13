@@ -836,7 +836,7 @@ class TaskPool:
     def remove(
         self, itask: 'TaskProxy',
         reason: Optional[str] = None,
-        spawn: Optional[bool] = True
+        no_spawn: Optional[bool] = False
     ) -> None:
         """Remove a task from the pool."""
         # the held state is no longer relevant -> remove it
@@ -847,7 +847,7 @@ class TaskPool:
 
         if (
             itask.flow_nums
-            and spawn
+            and not no_spawn
             and (
                 itask.state.is_runahead or itask.is_xtrigger_sequential
             )
