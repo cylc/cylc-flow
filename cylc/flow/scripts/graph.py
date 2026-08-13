@@ -71,9 +71,11 @@ def sort_integer_node(id_):
     Example:
         >>> sort_integer_node('11/foo')
         ('foo', 11)
+        >>> sort_integer_node('R1.1/prep')
+        ('prep', 1)
 
     """
-    tokens = Tokens(id_, relative=True)
+    tokens = Tokens(id_.removeprefix("R1."), relative=True)
     return (tokens['task'], int(tokens['cycle']))
 
 
