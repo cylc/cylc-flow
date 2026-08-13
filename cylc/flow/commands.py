@@ -166,6 +166,7 @@ def _remove_matched_tasks(
     ids: Set[TaskTokens],
     flow_nums: 'FlowNums',
     warn_unremovable: bool = True,
+    no_spawn: bool = False,
 ):
     """Remove matched tasks."""
     # Mapping of *relative* task IDs to removed flow numbers:
@@ -185,7 +186,7 @@ def _remove_matched_tasks(
             removed[itask.tokens.task] = fnums_to_remove
             if fnums_to_remove == itask.flow_nums:
                 # Need to remove the task from the pool.
-                schd.pool.remove(itask, 'request', spawn=False)
+                schd.pool.remove(itask, 'request', no_spawn=no_spawn)
                 to_kill.append(itask)
                 itask.removed = True
             itask.flow_nums.difference_update(fnums_to_remove)
@@ -494,13 +495,17 @@ async def set_verbosity(schd: 'Scheduler', level: 'Enum'):
 
 @_command('remove_tasks')
 async def remove_tasks(
-    schd: 'Scheduler', tasks: Iterable[str], flow: List[str]
+    schd: 'Scheduler',
+    tasks: Iterable[str],
+    flow: List[str],
+    no_spawn: bool = False
 ):
     """Match and remove tasks (`cylc remove` command).
 
     Args:
         tasks: Relative IDs or globs to match.
         flow: flows to remove the tasks from.
+        no_spawn: Do not spawn successors before removal.
     """
     flow = back_compat_flow_all(flow)  # BACK COMPAT (see func def)
     ids = validate.is_tasks(tasks)
@@ -513,7 +518,8 @@ async def remove_tasks(
         _remove_matched_tasks(
             schd,
             matched,
-            schd.pool.flow_mgr.cli_to_flow_nums(flow)
+            schd.pool.flow_mgr.cli_to_flow_nums(flow),
+            no_spawn=no_spawn,
         )
 
 
