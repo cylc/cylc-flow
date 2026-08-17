@@ -583,7 +583,14 @@ class WorkflowConfig:
             self.cfg, self.taskdefs, self.MAX_WARNING_LINES)
 
         self._check_implicit_tasks()
-        self._check_unused_namespaces()
+
+        if getattr(self.options, 'is_validate', False):
+            unused = self._check_unused_namespaces()
+            if unused:
+                LOG.info(
+                    "There are runtime namespaces not used by the workflow:"
+                    f"\n* {'\n* '.join(unused)}"
+                )
         self._check_sequence_bounds()
         self.validate_namespace_names()
 
@@ -922,7 +929,7 @@ class WorkflowConfig:
             name for name in self.cfg['runtime'] if
             name not in self.taskdefs
         ]
-        unused = [
+        return {
             name for name in not_task_in_graph
             # unused tasks:
             if name not in self.runtime['descendants']
@@ -930,12 +937,7 @@ class WorkflowConfig:
             or self.runtime['descendants'][name].isdisjoint(
                 self.taskdefs.keys()
             )
-        ]
-        if unused:
-            LOG.info(
-                "There are runtime namespaces not used by the workflow:"
-                f"\n* {'\n* '.join(unused)}"
-            )
+        }
 
     def _check_implicit_tasks(self) -> None:
         """Raise WorkflowConfigError if implicit tasks are found in graph or
@@ -1705,6 +1707,9 @@ class WorkflowConfig:
                 if ns not in self.runtime['descendants']:
                     # tasks have no descendants
                     names.append(ns)
+        elif which == "unused namespaces":
+            names = self._check_unused_namespaces()
+
         result = {}
         for ns in names:
             result[ns] = self.cfg['runtime'][ns]['meta'].get(
