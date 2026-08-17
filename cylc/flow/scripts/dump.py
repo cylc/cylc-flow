@@ -166,7 +166,7 @@ def get_option_parser():
     parser.add_option(
         "-i", "--full-ids",
         help="With -t/--tasks (task states only)"
-             " print full workflow//cycle/name IDs"
+             " print full workflow//cycle/name IDs without other attributes"
              " for easy cut-and-paste to other commands.",
         action="store_true", default=False, dest="full_ids")
     parser.add_option(
@@ -306,21 +306,22 @@ async def dump(workflow_id, options, write=print):
                         write(', '.join(values))
                 else:
                     for item in summary['taskProxies']:
-                        result = (
-                            f"{workflow_id + '//' if options.full_ids else ''}"
-                            f"{item['cyclePoint']}/{item['name']}"
-                            f":{item['state']}"
-                        )
+                        result = ""
                         attrs = []
-                        if item['isHeld']:
-                            attrs.append("held")
-                        if item['isQueued']:
-                            attrs.append("queued")
-                        if item['isRunahead']:
-                            attrs.append("runahead")
+                        if options.full_ids:
+                            result = f"{workflow_id}//"
+                        result += f"{item['cyclePoint']}/{item['name']}"
+                        if not options.full_ids:
+                            result += f":{item['state']}"
+                            if item['isHeld']:
+                                attrs.append("held")
+                            if item['isQueued']:
+                                attrs.append("queued")
+                            if item['isRunahead']:
+                                attrs.append("runahead")
                         if attrs:
                             result += " (" + ",".join(attrs) + ")"
-                        if options.show_flows:
+                        if options.show_flows and not options.full_ids:
                             result += (
                                 f" flows={item['flowNums'].replace(' ', '')}"
                             )

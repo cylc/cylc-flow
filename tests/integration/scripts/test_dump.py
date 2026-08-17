@@ -76,10 +76,10 @@ async def test_dump_tasks(flow, scheduler, start):
             id='2'
         ),
         pytest.param(
-            False,
+            True,
             [1, 2],
             True,
-            '{workflow_id}//1/a:waiting',
+            '{workflow_id}//1/a',
             id='3'
         )
     ]
