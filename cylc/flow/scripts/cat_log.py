@@ -59,7 +59,7 @@ Examples:
   $ cylc cat-log -f my-log-file foo//2020/bar
 
   # Follow a log file:
-  $ cylc cat-log foo//2020/bar -m t
+  $ cylc cat-log foo//2020/bar -m f
 """
 
 import asyncio
@@ -175,40 +175,27 @@ PRINT = 'print'
 LISTDIR = 'list-dir'
 PRINTDIR = 'print-dir'
 CAT = 'cat'
-# tail-follow the log from the *start* of the file (i.e. show the whole file
-# then follow) - this is the original "tail" behaviour
-TAIL_FROM_START = 'tail-from-start'
-# tail-follow the log from the *end* of the file (i.e. show the last N lines
-# then follow)
+# tail-follow the log from the *start* of the file (show the whole file then
+# follow) - the original "tail" behaviour
 TAIL = 'tail'
-# show the *start* and the *end* of the file (the first N/2 lines, a marker
-# where the middle is omitted, then the last N/2 lines), following the end
-MIXED = 'mixed'
+# tail-follow the log from the *end* of the file (show the last N lines then
+# follow)
+TAIL_END = 'tail-end'
 AUTO = 'auto'
 
-# the tail-follow modes (all follow the file, but from different positions)
-TAIL_MODES = (TAIL, TAIL_FROM_START, MIXED)
+# the tail-follow modes (both follow the file, but from different positions)
+TAIL_MODES = (TAIL, TAIL_END)
 
-# default number of lines to show from the end of the file in tail mode
+# default number of lines to show from the end of the file in tail-end mode
 DEFAULT_TAIL_LINES = 100
-
-# Printed on stdout between the head and tail blocks in "mixed" mode when the
-# middle of the file has been omitted. The uiserver detects the
-# MIXED_TRUNCATION_PREFIX to turn this into a structured message; in a terminal
-# it appears as a human-readable notice.
-MIXED_TRUNCATION_PREFIX = '#!cylc-cat-log-truncated'
-MIXED_TRUNCATION_MARKER = (
-    f'{MIXED_TRUNCATION_PREFIX} file truncated (middle omitted)'
-)
 
 MODES = {
     'p': PRINT,
     'l': LISTDIR,
     'd': PRINTDIR,
     'c': CAT,
-    't': TAIL, # New mode, is an actual tail from end of file, not from start of file
-    'ts': TAIL_FROM_START, # Old mode, previously called "tail", is a tail from start of file
-    'm': MIXED,
+    't': TAIL,
+    'te': TAIL_END,
     'a': AUTO,
 }
 
@@ -289,17 +276,12 @@ def _check_fs_path(path):
 def get_tailer_template(platform: dict, mode: str) -> str:
     """Return the tail command template to use for the given mode.
 
-    The "tail" and "mixed" modes follow the log from the end of the file, all
-    other tail-follow modes follow it from the start.
+    The "tail-end" mode follows the log from the end of the file; all other
+    tail-follow modes follow it from the start.
     """
-    if mode in (TAIL, MIXED):
+    if mode == TAIL_END:
         return platform["tail from end command template"]
     return platform["tail command template"]
-
-
-def get_head_template(platform: dict) -> str:
-    """Return the head command template (used by the "mixed" mode)."""
-    return platform["head command template"]
 
 
 async def view_log(
@@ -311,7 +293,6 @@ async def view_log(
     color=False,
     prepend_path=False,
     tail_lines=DEFAULT_TAIL_LINES,
-    head_tmpl=None,
 ):
     """View (by mode) local log file. This is only called on the file host.
 
@@ -320,7 +301,7 @@ async def view_log(
     write logs to their final locations until after the job completes.
 
     tail_lines is the number of lines from the end of the file to start
-    tailing from (only used by the "tail" mode via the ``%(lines)s``
+    tailing from (only used by the "tail-end" mode via the ``%(lines)s``
     substitution in the tail command template).
 
     If remote is True, we are executing on a remote host for a log file there.
@@ -366,50 +347,6 @@ async def view_log(
         # * batchview command is user configurable
         colorise_cat_log(proc1, color=color)
         return 0
-    if mode == MIXED and batchview_cmd is None:
-        # "mixed" mode: show the head of the file, a marker where the middle
-        # is omitted, then tail-follow the end.
-        # Memory-bounded: we only ever read the first (tail_lines + 1) lines
-        # to decide whether the file needs truncating, and we only buffer the
-        # head block (tail_lines // 2 lines).
-        max_lines = tail_lines
-        head_lines = max_lines // 2
-        head_cmd = head_tmpl % {
-            "filename": shlex.quote(str(logpath)),
-            "lines": max_lines + 1,
-        }
-        head_proc = Popen(  # nosec
-            shlex.split(head_cmd), stdin=DEVNULL, stdout=PIPE, text=True
-        )
-        # * head command is user configurable
-        head_block = []
-        line_count = 0
-        assert head_proc.stdout is not None
-        for line in head_proc.stdout:
-            line_count += 1
-            if len(head_block) < head_lines:
-                head_block.append(line)
-        head_proc.stdout.close()
-        head_proc.wait()
-        if line_count <= max_lines:
-            # the whole file fits within the limit -> show it all and follow
-            # (no truncation, no marker)
-            tail_lines = max_lines
-        else:
-            # the file is longer than the limit -> show the head block, mark
-            # the omitted middle, then follow the last lines
-            sys.stdout.write(''.join(head_block))
-            sys.stdout.write(f'{MIXED_TRUNCATION_MARKER}\n')
-            sys.stdout.flush()
-            tail_lines = max_lines - head_lines
-        cmd = tailer_tmpl % {
-            "filename": shlex.quote(str(logpath)),
-            "lines": tail_lines,
-        }
-        proc = Popen(shlex.split(cmd), stdin=DEVNULL)  # nosec
-        with suppress(asyncio.CancelledError):
-            await watch_and_kill(proc)
-        return proc.wait()
     if mode in TAIL_MODES:
         if batchview_cmd is not None:
             cmd = batchview_cmd
@@ -456,7 +393,7 @@ def get_option_parser() -> COP:
 
     parser.add_option(
         "--tail-lines",
-        help="For tail and mixed modes, the number of lines to show from the"
+        help="For the tail-end mode, the number of lines to show from the"
         f" end of the file (default {DEFAULT_TAIL_LINES}). Has no effect in"
         " other modes.",
         metavar="INT", action="store", dest="tail_lines", type=int,
@@ -548,16 +485,14 @@ async def _get_remote_log(
     logpath = os.path.normpath(get_remote_workflow_run_job_dir(
         workflow_id, point, task, submit_num, filename))
     tail_tmpl = get_tailer_template(platform, mode)
-    # the head template is only needed by "mixed" mode
-    head_tmpl = get_head_template(platform) if mode == MIXED else ''
     cmd = ['cat-log', *verbosity_to_opts(cylc.flow.flags.verbosity)]
-    for item in [logpath, mode, tail_tmpl, head_tmpl]:
+    for item in [logpath, mode, tail_tmpl]:
         cmd.append('--remote-arg=%s' % shlex.quote(item))
     if batchview_cmd:
         cmd.append('--remote-arg=%s' % shlex.quote(batchview_cmd))
     if prepend_path:
         cmd.append('--prepend-path')
-    if mode in (TAIL, MIXED):
+    if mode == TAIL_END:
         cmd.append('--tail-lines=%d' % tail_lines)
     cmd.append(workflow_id)
     # TODO: Add Intelligent Host selection to this
@@ -609,13 +544,12 @@ async def _main(
     if options.remote_args:
         # Invoked on job hosts for job logs only, as a wrapper to view_log().
         # Tail and batchview commands from global config on workflow host).
-        logpath, mode, tail_tmpl, head_tmpl = options.remote_args[0:4]
+        logpath, mode, tail_tmpl = options.remote_args[0:3]
         _check_fs_path(logpath)
         logpath = expand_path(logpath)
         tail_tmpl = expand_path(tail_tmpl)
-        head_tmpl = expand_path(head_tmpl) if head_tmpl else None
         try:
-            batchview_cmd = options.remote_args[4]
+            batchview_cmd = options.remote_args[3]
         except IndexError:
             batchview_cmd = None
         res = await view_log(
@@ -627,7 +561,6 @@ async def _main(
             color=color,
             prepend_path=options.prepend_path,
             tail_lines=options.tail_lines,
-            head_tmpl=head_tmpl,
         )
         if res == 1:
             sys.exit(res)
@@ -695,7 +628,6 @@ async def _main(
         tail_tmpl = os.path.expandvars(
             get_tailer_template(platform, mode)
         )
-        head_tmpl = os.path.expandvars(get_head_template(platform))
         out = await view_log(
             log_file_path,
             mode,
@@ -703,7 +635,6 @@ async def _main(
             color=color,
             prepend_path=options.prepend_path,
             tail_lines=options.tail_lines,
-            head_tmpl=head_tmpl,
         )
         sys.exit(out)
 
@@ -731,7 +662,7 @@ async def _main(
         platform_name, _, live_job_id, submit_failed = get_task_job_attrs(
             workflow_id, point, task, submit_num)
         if mode == AUTO:
-            mode = CAT if live_job_id is None else TAIL_FROM_START
+            mode = CAT if live_job_id is None else TAIL
         platform = get_platform(platform_name)
         batchview_cmd = None
         if live_job_id is not None:
@@ -832,7 +763,6 @@ async def _main(
             # Log available locally.
             tail_tmpl = os.path.expandvars(
                 get_tailer_template(platform, mode))
-            head_tmpl = os.path.expandvars(get_head_template(platform))
             out = await view_log(
                 str(local_log_dir / options.filename),
                 mode,
@@ -841,6 +771,5 @@ async def _main(
                 color=color,
                 prepend_path=options.prepend_path,
                 tail_lines=options.tail_lines,
-                head_tmpl=head_tmpl,
             )
             sys.exit(out)

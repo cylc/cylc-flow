@@ -1842,10 +1842,6 @@ with Conf('global.cylc', desc='''
                 A command template (with ``%(filename)s`` substitution) to
                 tail-follow job logs this platform, by ``cylc cat-log``.
 
-                This template follows the log from the *start* of the file
-                (the ``tail`` view starts from the *end*, see
-                :cylc:conf:`[..]tail from end command template`).
-
                 .. warning::
 
                    You are are unlikely to need to override this. Doing so may
@@ -1884,8 +1880,8 @@ with Conf('global.cylc', desc='''
                 of lines from the *start* of a job log on this platform.
 
                 Unlike :cylc:conf:`[..]tail command template` this does *not*
-                follow the file; it is used for the "mixed" view mode to grab
-                the head of the file before tailing its end.
+                follow the file; it reads a fixed number of lines from the
+                start of the log for the UI log view.
 
                 .. warning::
 
