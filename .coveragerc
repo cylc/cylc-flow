@@ -4,7 +4,7 @@
 [run]
 branch = True
 cover_pylib = False
-concurrency = thread
+concurrency = thread, multiprocessing
 data_file = .coverage
 disable_warnings =
     trace-changed
