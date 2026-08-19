@@ -49,6 +49,7 @@ from cylc.flow.flow_mgr import (
     FLOW_NONE,
     repr_flow_nums,
 )
+from cylc.flow.task_hold_mgr import TaskHoldMgr
 from cylc.flow.id import (
     TaskTokens,
     Tokens,
@@ -195,7 +196,6 @@ class TaskPool:
         self.active_tasks_changed = False
         self.tasks_removed = False
 
-        self.hold_point: Optional['PointBase'] = None
         self.abs_outputs_done: Set[Tuple[str, str, str]] = set()
 
         self.stop_task_id: Optional[str] = None
@@ -210,7 +210,11 @@ class TaskPool:
             self.config.runtime['descendants']
         )
 
-        self.tasks_to_hold: set[tuple[str, 'PointBase']] = set()
+        self.hold_mgr: 'TaskHoldMgr' = TaskHoldMgr(
+            self.workflow_db_mgr,
+            self.data_store_mgr
+        )
+
         self.tasks_to_trigger_now: set['TaskProxy'] = set()
         self.pre_start_tasks_to_trigger: set[tuple[str, 'PointBase']] = set()
 
@@ -261,8 +265,8 @@ class TaskPool:
         """Queue itask if it is ready to run.
 
         Spawn next instance of sequential xtriggered tasks at this time too.
-
         """
+
         if (
             not itask.state.is_queued
             and not itask.state.is_runahead
@@ -794,10 +798,7 @@ class TaskPool:
     def load_db_tasks_to_hold(self):
         """Update the tasks_to_hold set with the tasks stored in the
         database."""
-        self.tasks_to_hold.update(
-            (name, get_point(cycle)) for name, cycle in
-            self.workflow_db_mgr.pri_dao.select_tasks_to_hold()
-        )
+        self.hold_mgr.load_from_db()
 
     def get_or_spawn_task(
         self,
@@ -856,7 +857,9 @@ class TaskPool:
     def remove(self, itask: 'TaskProxy', reason: Optional[str] = None) -> None:
         """Remove a task from the pool."""
         # the held state is no longer relevant -> remove it
-        self.release_held_active_task(itask)
+        # TODO NEEDS TO BE FLOW-SPECIFIC
+        self.hold_mgr.release_active_task(
+            itask, self.queue_task, flow_num=None)
 
         # xtriggers are no longer relevant -> remove them
         self.xtrigger_mgr.force_satisfy_all(itask, log=False)
@@ -1330,54 +1333,51 @@ class TaskPool:
         unsatisfied = self.log_unsatisfied_prereqs()
         return (incomplete or unsatisfied)
 
-    def hold_active_task(self, itask: TaskProxy) -> None:
-        if itask.state_reset(is_held=True):
-            self.data_store_mgr.delta_task_state(itask)
-        self.tasks_to_hold.add((itask.tdef.name, itask.point))
-        self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
+    def set_hold_point(
+        self,
+        point: 'PointBase',
+        flow_num: Optional[int] = None
+    ) -> None:
+        """Set the point after which all tasks must be held.
 
-    def release_held_active_task(self, itask: TaskProxy) -> None:
-        if itask.state_reset(is_held=False):
-            self.data_store_mgr.delta_task_state(itask)
-            if (not itask.state.is_runahead) and itask.is_ready_to_run():
-                self.queue_task(itask)
-        self.tasks_to_hold.discard((itask.tdef.name, itask.point))
-        self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
+        This can be flow-specific (hold flow n after point), but there is only
+        one hold point so flow-specific hold-point release is not needed.
+        TODO: extend to allow multiple flow-specific hold points.
 
-    def set_hold_point(self, point: 'PointBase') -> None:
-        """Set the point after which all tasks must be held."""
-        self.hold_point = point
-        for itask in self.get_tasks():
-            if itask.point > point:
-                self.hold_active_task(itask)
-        self.workflow_db_mgr.put_workflow_hold_cycle_point(point)
+        """
+        self.hold_mgr.set_hold_point(point, self.get_tasks(), flow_num)
 
-    def hold_tasks(self, items: Set[TaskTokens]) -> int:
+    def hold_tasks(
+        self,
+        items: Set[TaskTokens],
+        flow_num: int | None = None
+    ) -> int:
         """Hold tasks with IDs matching the specified items."""
         matched, unmatched = self.id_match(items)
         for id_ in matched:
             itask = self._get_task_by_id(id_.relative_id)
             if itask:
                 # hold active task
-                self.hold_active_task(itask)
+                self.hold_mgr.hold_active_task(itask, flow_num)
             else:
                 # hold inactive task
                 icycle = get_point(id_['cycle'])
-                self.data_store_mgr.delta_task_held(id_['task'], icycle, True)
-                self.tasks_to_hold.add((id_['task'], icycle))
+                self.hold_mgr.flag_future_task(id_['task'], icycle, flow_num)
 
-        self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
-        LOG.debug(f"Tasks to hold: {self.tasks_to_hold}")
         return len(unmatched)
 
-    def release_held_tasks(self, items: Set[TaskTokens]) -> int:
+    def release_held_tasks(
+        self,
+        items: Set[TaskTokens],
+        flow_num: int | None = None
+    ) -> int:
         """Release held tasks with IDs matching any specified items."""
         matched, unmatched = id_match(
             self.config,
             {
                 # only match held tasks
                 TaskTokens(cycle=str(cycle), task=task)
-                for task, cycle in self.tasks_to_hold
+                for task, cycle in self.hold_mgr.hold
             },
             items,
             # only match tasks within the held task list
@@ -1386,28 +1386,27 @@ class TaskPool:
         for id_ in matched:
             itask = self._get_task_by_id(id_.relative_id)
             if itask:
-                # release active task
-                self.release_held_active_task(itask)
+                if not itask.state(is_held=True):
+                    continue
+                if flow_num is None or flow_num in itask.flow_nums:
+                    self.hold_mgr.release_active_task(
+                        itask, self.queue_task, flow_num)
             else:
-                # release inactive task
-                self.data_store_mgr.delta_task_held(
-                    id_['task'], get_point(id_['cycle']), False
-                )
-                self.tasks_to_hold.discard(
-                    (id_['task'], get_point(id_['cycle']))
-                )
-        self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
-        LOG.debug(f"Tasks to hold: {self.tasks_to_hold}")
+                self.hold_mgr.release_future_task(
+                    id_['task'], id_['cycle'], flow_num)
+
         return len(unmatched)
 
-    def release_hold_point(self) -> None:
-        """Unset the workflow hold point and release all held active tasks."""
-        self.hold_point = None
-        for itask in self.get_tasks():
-            self.release_held_active_task(itask)
-        self.tasks_to_hold.clear()
-        self.workflow_db_mgr.put_tasks_to_hold(self.tasks_to_hold)
-        self.workflow_db_mgr.put_workflow_hold_cycle_point(None)
+    def release_hold_point(self, flow_num: int | None = None) -> None:
+        """Release ALL held tasks and unset the hold-after point.
+
+        Note the CLI does not currently have an option to just release tasks
+        after the hold point (there could be held tasks before the hold point).
+
+        TODO: hold-point can be flow-specific, but there is currently only one!
+
+        """
+        self.hold_mgr.release_all(self.get_tasks(), self.queue_task, flow_num)
 
     def check_abort_on_task_fails(self):
         """Check whether workflow should abort on task failure.
@@ -1419,8 +1418,8 @@ class TaskPool:
     def spawn_on_output(self, itask: TaskProxy, output: str) -> None:
         """Spawn child-tasks of given output, into the pool.
 
-        Remove the parent task from the pool if complete.
 
+        Remove the parent task from the pool if complete.
         Called by task event manager on receiving output messages, and after
         forced setting of task outputs (in this case the parent task could
         be transient, i.e. not in the pool).
@@ -1831,16 +1830,8 @@ class TaskPool:
                 return None
 
         if not itask.transient:
-            if (name, point) in self.tasks_to_hold:
-                LOG.info(f"[{itask}] holding (as requested earlier)")
-                self.hold_active_task(itask)
-            elif self.hold_point and itask.point > self.hold_point:
-                # Hold if beyond the workflow hold point
-                LOG.info(
-                    f"[{itask}] holding (beyond workflow "
-                    f"hold point: {self.hold_point})"
-                )
-                self.hold_active_task(itask)
+            if not self.hold_mgr.hold_if_beyond_hold_point(itask):
+                self.hold_mgr.hold_if_flagged(itask)
 
             # Don't add to pool if it depends on a task beyond the stop point.
             #   "foo; foo[+P1] & bar => baz"

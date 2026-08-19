@@ -1072,6 +1072,8 @@ class Scheduler:
 
         Returns number of tasks that could not be killed.
         """
+        # TODO: all task commands need to be flow-specific in general
+        # TODO (especially for globbing: e.g. kill foo* --flow=2)
         jobless = self.get_run_mode() == RunMode.SIMULATION
         to_kill: List[TaskProxy] = []
         unkillable: List[TaskProxy] = []
@@ -1079,7 +1081,7 @@ class Scheduler:
             if not itask.state(TASK_STATUS_PREPARING, *TASK_STATUSES_ACTIVE):
                 unkillable.append(itask)
                 continue
-            self.pool.hold_active_task(itask)
+            self.pool.hold_mgr.hold_active_task(itask)
             if itask.state(TASK_STATUS_PREPARING):
                 self.task_job_mgr.kill_prep_task(itask)
             else:

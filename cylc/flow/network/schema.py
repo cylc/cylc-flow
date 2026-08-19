@@ -1803,6 +1803,9 @@ class SetHoldPoint(Mutation):
             description='Hold all tasks after the specified cycle point.',
             required=True
         )
+        flow_num = Int(
+            description='Number of flow to hold.'
+        )
 
     result = GenericScalar()
 
@@ -1868,6 +1871,9 @@ class ReleaseHoldPoint(Mutation):
 
     class Arguments:
         workflows = graphene.List(WorkflowID, required=True)
+        flow_num = Int(
+            description='Number of flow to release.'
+        )
 
     result = GenericScalar()
 
@@ -2106,6 +2112,11 @@ class Hold(Mutation, TaskMutation):
         ''')
         resolver = mutator
 
+    class Arguments(TaskMutation.Arguments):
+        flow_num = Int(
+            description='Number of flow to hold.'
+        )
+
 
 class Release(Mutation, TaskMutation):
     class Meta:
@@ -2117,6 +2128,11 @@ class Release(Mutation, TaskMutation):
             Valid for: paused, running workflows.
         ''')
         resolver = mutator
+
+    class Arguments(TaskMutation.Arguments):
+        flow_num = Int(
+            description='Number of flow to hold.'
+        )
 
 
 class Kill(Mutation, TaskMutation):
