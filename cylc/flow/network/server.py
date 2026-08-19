@@ -52,6 +52,8 @@ from cylc.flow.network.schema import schema
 
 
 if TYPE_CHECKING:
+    from threading import Thread
+
     from cylc.flow.network import ResponseDict
     from cylc.flow.scheduler import Scheduler
 
@@ -152,7 +154,7 @@ class WorkflowRuntimeServer:
         self.replier = None
         self.publisher = None
         self.loop = None
-        self.thread = None
+        self.thread: Thread | None = None
 
         self.schd: 'Scheduler' = schd
         self.resolvers = Resolvers(
@@ -164,13 +166,16 @@ class WorkflowRuntimeServer:
         ]
 
         self.publish_queue: 'Queue[Iterable[tuple]]' = Queue()
-        self.waiting_to_stop = False
+        self._waiting_to_stop = False
         self.stopped = True
 
         self.register_endpoints()
 
     def start(self, barrier):
-        """Start the TCP servers."""
+        """Start the TCP servers.
+
+        Note: this method is to be run in a separate thread.
+        """
         # set asyncio loop on thread
         try:
             self.loop = asyncio.get_running_loop()
@@ -231,10 +236,10 @@ class WorkflowRuntimeServer:
         server's self.thread in order to interrupt the self.operate() loop
         and wait for self.thread to terminate.
         """
-        self.waiting_to_stop = True
-        if self.thread and self.thread.is_alive():
+        if self.thread:
+            self._waiting_to_stop = True
             # Wait for self.operate() loop to finish:
-            while self.waiting_to_stop:
+            while self.thread.is_alive():
                 # Non-async sleep - yield to other threads rather than
                 # event loop (allows self.operate() running in different
                 # thread to return)
@@ -253,8 +258,6 @@ class WorkflowRuntimeServer:
             self.curve_auth.stop()  # stop the authentication thread
         if self.loop and self.loop.is_running():
             self.loop.stop()
-        if self.thread and self.thread.is_alive():
-            self.thread.join()  # Wait for processes to return
 
         self.stopped = True
 
@@ -263,13 +266,7 @@ class WorkflowRuntimeServer:
         # Note: this cannot be an async method because the response part
         # of the listener runs the event loop synchronously
         # (in graphql schema.execute_async)
-        while True:
-            if self.waiting_to_stop:
-                # The self.stop() method is waiting for us to signal that we
-                # have finished here
-                self.waiting_to_stop = False
-                return
-
+        while not self._waiting_to_stop:
             # Gather and respond to any requests.
             self.replier.listener()
             # Publish all requested/queued.
