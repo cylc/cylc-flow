@@ -144,7 +144,6 @@ class WorkflowRuntimeServer:
     """Client public key directory, used by the ZMQ authenticator."""
 
     OPERATE_SLEEP_INTERVAL = 0.2
-    STOP_SLEEP_INTERVAL = 0.2
 
     def __init__(self, schd):
 
@@ -167,7 +166,6 @@ class WorkflowRuntimeServer:
 
         self.publish_queue: 'Queue[Iterable[tuple]]' = Queue()
         self._waiting_to_stop = False
-        self.stopped = True
 
         self.register_endpoints()
 
@@ -220,8 +218,6 @@ class WorkflowRuntimeServer:
         # wait for threads to setup socket ports before continuing
         barrier.wait()
 
-        self.stopped = False
-
         self.operate()
 
     def configure_curve(self) -> None:
@@ -229,21 +225,18 @@ class WorkflowRuntimeServer:
             domain='*', location=self.client_pub_key_dir
         )
 
-    async def stop(self, reason: Union[BaseException, str]) -> None:
+    async def stop(self, reason: BaseException | str) -> None:
         """Stop the TCP servers, and clean up authentication.
 
         This method must be called/awaited from a different thread to the
         server's self.thread in order to interrupt the self.operate() loop
         and wait for self.thread to terminate.
         """
-        if self.thread:
+        if self.thread and self.thread.is_alive():
+            # Tell self.operate() loop to stop:
             self._waiting_to_stop = True
-            # Wait for self.operate() loop to finish:
-            while self.thread.is_alive():
-                # Non-async sleep - yield to other threads rather than
-                # event loop (allows self.operate() running in different
-                # thread to return)
-                sleep(self.STOP_SLEEP_INTERVAL)
+            # Wait for the thread to terminate once the loop has stopped:
+            self.thread.join()
 
         if self.replier:
             self.replier.stop(stop_loop=False)
@@ -258,8 +251,6 @@ class WorkflowRuntimeServer:
             self.curve_auth.stop()  # stop the authentication thread
         if self.loop and self.loop.is_running():
             self.loop.stop()
-
-        self.stopped = True
 
     def operate(self) -> None:
         """Orchestrate the receive, send, publish of messages."""
