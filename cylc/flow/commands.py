@@ -85,6 +85,7 @@ from cylc.flow.exceptions import (
 import cylc.flow.flags
 from cylc.flow.flow_mgr import FLOW_NONE, repr_flow_nums
 from cylc.flow.id import TaskTokens
+from cylc.flow.id_match import id_match
 from cylc.flow.log_level import log_level_to_verbosity
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.prerequisite import PrereqTuple
@@ -145,16 +146,20 @@ def _command(name: str):
     return _command
 
 
-def _report_unmatched(unmatched: Set[TaskTokens]):
+def _report_unmatched(unmatched: Set[TaskTokens], descriptor=""):
     """Log unmatched IDs."""
+    things = "tasks"
+    if descriptor:
+        things = f"{descriptor} {things}"
+
     if len(unmatched) == 1:
         LOG.warning(
-            'No tasks match'
+            f'No {things} match'
             f' "{next(iter(unmatched)).relative_id_with_selectors}"'
         )
     elif len(unmatched) > 1:
         LOG.warning(
-            'No tasks match the IDs:\n* '
+            f'No {things} match the IDs:\n* '
             + '\n* '.join(
                 sorted([id_.relative_id_with_selectors for id_ in unmatched])
             )
@@ -404,7 +409,20 @@ async def release(
     """Release held tasks."""
     ids = validate.is_tasks(tasks)
     yield
-    yield schd.pool.release_held_tasks(ids, flow_num)
+
+    matched, unmatched = id_match(
+        schd.config,
+        {
+            # only match held tasks
+            TaskTokens(cycle=str(cycle), task=task)
+            for task, cycle, _ in schd.pool.hold_mgr._flatten()
+        },
+        ids,
+        # only match tasks within the held task list
+        only_match_pool=True,
+    )
+    _report_unmatched(unmatched, "held")
+    schd.pool.release_held_tasks(ids, matched, flow_num)
 
 
 @_command('release_hold_point')

@@ -1368,34 +1368,23 @@ class TaskPool:
 
     def release_held_tasks(
         self,
-        items: Set[TaskTokens],
+        ids: Set[TaskTokens],
         flow_num: int | None = None
-    ) -> int:
-        """Release held tasks with IDs matching any specified items."""
-        matched, unmatched = id_match(
-            self.config,
-            {
-                # only match held tasks
-                TaskTokens(cycle=str(cycle), task=task)
-                for task, cycle in self.hold_mgr.hold
-            },
-            items,
-            # only match tasks within the held task list
-            only_match_pool=True,
-        )
-        for id_ in matched:
+    ) -> None:
+        """Release held tasks with valid IDs."""
+        for id_ in ids:
             itask = self._get_task_by_id(id_.relative_id)
             if itask:
+                print(f"ITASK {itask}")
                 if not itask.state(is_held=True):
                     continue
                 if flow_num is None or flow_num in itask.flow_nums:
                     self.hold_mgr.release_active_task(
                         itask, self.queue_task, flow_num)
             else:
+                print(f"FUTURE {id_['cycle']}/{id_['task']}")
                 self.hold_mgr.release_future_task(
                     id_['task'], id_['cycle'], flow_num)
-
-        return len(unmatched)
 
     def release_hold_point(self, flow_num: int | None = None) -> None:
         """Release ALL held tasks and unset the hold-after point.
