@@ -377,11 +377,9 @@ def write_diff(
         except VCSMissingBaseError as exc:
             print(f"# No diff - {exc}", file=f)
 
-    try:
-        Path(str(diff_location), DIFF_FILENAME).symlink_to(diff_file)
-    except FileExistsError:
-        os.remove(str(diff_location) + "/" + DIFF_FILENAME)
-        Path(str(diff_location), DIFF_FILENAME).symlink_to(diff_file)
+    if (symlink_path := diff_location / DIFF_FILENAME).exists():
+        symlink_path.unlink()
+    symlink_path.symlink_to(diff_file)
 
     return diff_file
 
