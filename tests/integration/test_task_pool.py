@@ -2442,20 +2442,13 @@ async def test_clock_expire_with_sequential_xtriggers(
 async def test_downstream_complete_before_upstream(
     flow, scheduler, start, db_select
 ):
-    """It should handle an upstream task completing before a downstream task.
+    """A downstream task that completes - in the same main loop iteration as
+    its upstream task - does not get re-spawned.
 
     See https://github.com/cylc/cylc-flow/issues/6315
     """
-    id_ = flow(
-        {
-            'scheduling': {
-                'graph': {
-                    'R1': 'a => b',
-                },
-            },
-        }
-    )
-    schd = scheduler(id_)
+    id_ = flow('a => b')
+    schd: Scheduler = scheduler(id_)
     async with start(schd):
         # 1/a should be pre-spawned (parentless)
         a_1 = schd.pool.get_task(IntegerPoint('1'), 'a')
@@ -2472,7 +2465,8 @@ async def test_downstream_complete_before_upstream(
         # 1/b should be removed from the pool (completed)
         assert schd.pool.get_tasks() == [a_1]
 
-        # as a side effect the DB should have been updated
+        # as a side effect the DB should have been updated (not waiting for
+        # the main loop to do it)
         assert (
             TASK_OUTPUT_SUCCEEDED
             in db_select(
