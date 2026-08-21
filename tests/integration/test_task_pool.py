@@ -16,6 +16,7 @@
 
 from json import loads
 import logging
+import re
 from typing import (
     TYPE_CHECKING,
     AsyncGenerator,
@@ -29,7 +30,6 @@ from typing import (
 
 import pytest
 from pytest import param
-import re
 
 from cylc.flow import (
     CYLC_LOG,
@@ -41,7 +41,10 @@ from cylc.flow.data_messages_pb2 import PbPrerequisite
 from cylc.flow.data_store_mgr import TASK_PROXIES
 from cylc.flow.exceptions import WorkflowConfigError
 from cylc.flow.flow_mgr import FLOW_NONE
-from cylc.flow.id import TaskTokens, Tokens
+from cylc.flow.id import (
+    TaskTokens,
+    Tokens,
+)
 from cylc.flow.run_modes import RunMode
 from cylc.flow.task_events_mgr import TaskEventsManager
 from cylc.flow.task_outputs import (
@@ -910,25 +913,28 @@ async def test_db_update_on_removal(
     See: https://github.com/cylc/cylc-flow/issues/5598
     """
     id_ = flow({
-        'scheduler': {
-            'allow implicit tasks': 'true',
-        },
         'scheduling': {
             'graph': {
                 'R1': 'a',
             },
         },
+        'runtime': {
+            'root': {
+                'simulation': {
+                    # Avoid instant task success for this test
+                    'default run length': 'PT2S',
+                },
+            },
+        },
     })
-    schd = scheduler(id_)
+    schd: Scheduler = scheduler(id_)
     async with start(schd):
         task_a = schd.pool.get_tasks()[0]
 
         # set the task to running
         schd.pool.task_events_mgr.process_message(task_a, 1, 'started')
 
-        # update the db
-        await schd.update_data_structure()
-        schd.workflow_db_mgr.process_queued_ops()
+        await schd._main_loop()
 
         # the task should appear in the DB
         assert list_pool_from_db(schd) == [
@@ -939,9 +945,7 @@ async def test_db_update_on_removal(
         schd.pool.task_events_mgr.process_message(task_a, 1, 'succeeded')
         schd.pool.remove_if_complete(task_a)
 
-        # update the DB, note no new tasks have been added to the pool
-        await schd.update_data_structure()
-        schd.workflow_db_mgr.process_queued_ops()
+        await schd._main_loop()
 
         # the task should be gone from the DB
         assert list_pool_from_db(schd) == []
