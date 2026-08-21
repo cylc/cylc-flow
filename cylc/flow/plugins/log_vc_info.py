@@ -60,7 +60,6 @@ Any uncommitted changes will also be saved as a diff in
    Git does not include untracked files in the diff.
 """
 
-import os
 import json
 from pathlib import Path
 from subprocess import Popen, DEVNULL, PIPE
