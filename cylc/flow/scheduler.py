@@ -1633,12 +1633,10 @@ class Scheduler:
 
         tinit = time()
 
-        if self.has_updated or self.pool.tasks_removed:
+        if self.has_updated:
             # The runahead limit might need recomputing.
             self.pool.compute_runahead()
             self.pool.release_runahead_tasks()
-            # Reset tasks_removed (this is the only use of this flag).
-            self.pool.tasks_removed = False
 
         # If applicable, set stop mode or shutdown on task failure:
         await self.workflow_shutdown()
@@ -1724,7 +1722,12 @@ class Scheduler:
         # List of task whose states have changed.
         updated_task_list = [
             t for t in self.pool.get_tasks() if t.state.is_updated]
-        self.has_updated = bool(updated_task_list) or self.is_updated
+        self.has_updated = (
+            bool(updated_task_list)
+            or self.is_updated
+            or self.pool.tasks_removed
+        )
+        self.pool.tasks_removed = False
 
         if updated_task_list and self.is_restart_timeout_wait:
             # Stop restart timeout if action has been triggered.
