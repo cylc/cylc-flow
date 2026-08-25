@@ -175,11 +175,9 @@ PRINT = 'print'
 LISTDIR = 'list-dir'
 PRINTDIR = 'print-dir'
 CAT = 'cat'
-# tail-follow the log from the *start* of the file (show the whole file then
-# follow) - the original "tail" behaviour
+# tail-follow the log from the *start* of the file
 TAIL = 'tail'
-# tail-follow the log from the *end* of the file (show the last N lines then
-# follow)
+# tail-follow the log from the *end* of the file
 TAIL_END = 'tail-end'
 AUTO = 'auto'
 
@@ -187,7 +185,7 @@ AUTO = 'auto'
 TAIL_MODES = (TAIL, TAIL_END)
 
 # default number of lines to show from the end of the file in tail-end mode
-DEFAULT_TAIL_LINES = 100
+DEFAULT_TAIL_LINES = 5000
 
 MODES = {
     'p': PRINT,
