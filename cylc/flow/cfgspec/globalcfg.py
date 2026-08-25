@@ -1871,25 +1871,6 @@ with Conf('global.cylc', desc='''
 
                 .. versionadded:: 8.7.0
             ''')
-            Conf('head command template',
-                 VDR.V_STRING,
-                 'head -n %(lines)s %(filename)s',
-                 desc='''
-                A command template (with ``%(lines)s`` and ``%(filename)s``
-                substitutions) used by ``cylc cat-log`` to read a given number
-                of lines from the *start* of a job log on this platform.
-
-                Unlike :cylc:conf:`[..]tail command template` this does *not*
-                follow the file; it reads a fixed number of lines from the
-                start of the log for the UI log view.
-
-                .. warning::
-
-                   You are unlikely to need to override this. Doing so may
-                   adversely affect the UI log view.
-
-                .. versionadded:: 8.7.0
-            ''')
             Conf('err tailer', VDR.V_STRING, desc=f'''
                 A command template (with ``%(job_id)s`` substitution) that can
                 be used to tail-follow the stderr stream of a running job if
