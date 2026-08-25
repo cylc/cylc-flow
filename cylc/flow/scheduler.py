@@ -1724,7 +1724,6 @@ class Scheduler:
                 self.is_restart_timeout_wait = False
 
         if has_updated or self.data_store_mgr.updates_pending:
-            # Update the datastore.
             await self.update_data_structure()
 
         if has_updated:
