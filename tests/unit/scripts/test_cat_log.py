@@ -24,6 +24,11 @@ import pytest
 from cylc.flow.loggingutil import CylcLogFormatter
 from cylc.flow.scripts.cat_log import (
     colorise_cat_log,
+    TAIL,
+    TAIL_END,
+    AUTO,
+    TAIL_MODES,
+    get_tailer_template,
 )
 
 
@@ -88,3 +93,51 @@ def test_colorise_cat_log_colour(log_file):
             ]
         ])
     )
+
+
+class TestGetTailerTemplate:
+    """Tests for the get_tailer_template function."""
+
+    def test_tail_mode(self):
+        """Test that TAIL mode returns the standard tail template."""
+        platform = {
+            'tail command template': 'tail -n +1 --follow=name %(filename)s',
+            'tail from end command template': 'tail -n %(lines)s --follow=name %(filename)s',
+        }
+        result = get_tailer_template(platform, TAIL)
+        assert result == 'tail -n +1 --follow=name %(filename)s'
+
+    def test_tail_end_mode(self):
+        """Test that TAIL_END mode returns the tail-from-end template."""
+        platform = {
+            'tail command template': 'tail -n +1 --follow=name %(filename)s',
+            'tail from end command template': 'tail -n %(lines)s --follow=name %(filename)s',
+        }
+        result = get_tailer_template(platform, TAIL_END)
+        assert result == 'tail -n %(lines)s --follow=name %(filename)s'
+
+    def test_invalid_mode_defaults_to_tail(self):
+        """Test that invalid modes default to the standard tail template."""
+        platform = {
+            'tail command template': 'tail -n +1 --follow=name %(filename)s',
+            'tail from end command template': 'tail -n %(lines)s --follow=name %(filename)s',
+        }
+        # Any mode other than TAIL_END should return the standard template
+        result = get_tailer_template(platform, 'unknown_mode')
+        assert result == 'tail -n +1 --follow=name %(filename)s'
+
+
+class TestConstants:
+    """Tests for cat-log mode constants."""
+
+    def test_tail_modes_tuple(self):
+        """Test that TAIL_MODES contains both TAIL and TAIL_END."""
+        assert TAIL in TAIL_MODES
+        assert TAIL_END in TAIL_MODES
+        assert len(TAIL_MODES) == 2
+
+    def test_mode_values(self):
+        """Test that mode constants have expected string values."""
+        assert TAIL == 'tail'
+        assert TAIL_END == 'tail-end'
+        assert AUTO == 'auto'
