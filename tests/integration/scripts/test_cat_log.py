@@ -127,7 +127,6 @@ async def test_view_log_tail_vs_tail_end(tmp_path, capfd):
     ]
     logpath.write_text('\n'.join(lines) + '\n')
 
-    # Use non-following templates so the command exits immediately.
     await view_log(
         logpath,
         TAIL,
