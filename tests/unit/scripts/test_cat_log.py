@@ -100,7 +100,8 @@ class TestGetTailerTemplate:
         """Test that TAIL mode returns the standard tail template."""
         platform = {
             'tail command template': 'tail -n +1 --follow=name %(filename)s',
-            'tail from end command template': 'tail -n %(lines)s --follow=name %(filename)s',
+            'tail from end command template':
+            'tail -n %(lines)s --follow=name %(filename)s',
         }
         result = get_tailer_template(platform, TAIL)
         assert result == 'tail -n +1 --follow=name %(filename)s'
@@ -109,7 +110,8 @@ class TestGetTailerTemplate:
         """Test that TAIL_END mode returns the tail-from-end template."""
         platform = {
             'tail command template': 'tail -n +1 --follow=name %(filename)s',
-            'tail from end command template': 'tail -n %(lines)s --follow=name %(filename)s',
+            'tail from end command template':
+            'tail -n %(lines)s --follow=name %(filename)s',
         }
         result = get_tailer_template(platform, TAIL_END)
         assert result == 'tail -n %(lines)s --follow=name %(filename)s'
@@ -118,7 +120,8 @@ class TestGetTailerTemplate:
         """Test that invalid modes default to the standard tail template."""
         platform = {
             'tail command template': 'tail -n +1 --follow=name %(filename)s',
-            'tail from end command template': 'tail -n %(lines)s --follow=name %(filename)s',
+            'tail from end command template':
+            'tail -n %(lines)s --follow=name %(filename)s',
         }
         # Any mode other than TAIL_END should return the standard template
         result = get_tailer_template(platform, 'unknown_mode')
