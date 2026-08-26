@@ -26,8 +26,6 @@ from cylc.flow.scripts.cat_log import (
     colorise_cat_log,
     TAIL,
     TAIL_END,
-    AUTO,
-    TAIL_MODES,
     get_tailer_template,
 )
 
