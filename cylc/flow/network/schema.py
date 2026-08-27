@@ -2177,7 +2177,9 @@ class Remove(Mutation, TaskMutation):
                 spawning its next instance.
 
                 This only affects leading instances of parentless sequential
-                xtriggered tasks and parentless tasks waiting at the runahead-limit.
+                xtriggered tasks and parentless tasks waiting at the
+                runahead-limit.
+
                 WARNING: this is a low-level intervention that cuts tasks from
                 the future graph; it could cause your workflow to shut down
                 prematurely as complete.
