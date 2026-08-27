@@ -1860,7 +1860,7 @@ with Conf('global.cylc', desc='''
                 logs on this platform, starting a given number of lines from
                 the *end* of the file.
 
-                This is used for the "tail" view mode;
+                This is used for the "tail-end" view mode;
                 :cylc:conf:`[..]tail command template` is used to follow a
                 log from the start instead.
 
