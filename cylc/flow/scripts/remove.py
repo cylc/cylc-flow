@@ -38,8 +38,8 @@ remaining flows but will not affect the evolution of the removed flows.
 
 Removing a submitted or running task also kills it (see "cylc kill").
 
-If you need to stop parentless tasks from spawning into future cycles, see
-the "--no-spawn" option.
+If you need to cut parentless tasks (and their dependent sub-graphs) from the
+future graph, see the "--no-spawn" option.
 
 Examples:
   # Remove a task that already ran.
@@ -101,14 +101,10 @@ def get_option_parser() -> COP:
     add_flow_opts_for_remove(parser)
     parser.add_option(
         "--no-spawn",
-        help="""This option only affects the leading instances of parentless
-tasks (i.e. tasks with no upstream task prerequisites): normal parentless tasks
-waiting at the runahead limit, and the leading instances of sequential
-xtriggered parentless tasks. This low-level intervention removes such tasks
-without spawning their next instances (and hence any dependent sub-graphs)
-into the workflow.
-
-WARNING: this could cause your workflow to shut down
+        help="""This only affects leading instances of parentless sequential
+xtriggered tasks and parentless tasks waiting at the runahead-limit.
+WARNING: this is a low-level intervention that cuts tasks from
+the future graph; it could cause your workflow to shut down
 prematurely as complete.
         """,
         action="store_true", default=False, dest="no_spawn")
