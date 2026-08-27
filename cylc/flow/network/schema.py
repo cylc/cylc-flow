@@ -2176,14 +2176,10 @@ class Remove(Mutation, TaskMutation):
                 "Remove the leading instance of a parentless task without "
                 "spawning its next instance."
 
-                The --no-spawn option only affects the leading instances of
-                parentless tasks (i.e. tasks with no upstream task
-                prerequisites): normal parentless tasks waiting at the runahead
-                limit, and the leading instances of sequentia xtriggered
-                parentless tasks. This low-level intervention removes such
-                tasks without spawning their next instances (and hence any
-                dependent sub-graphs) into the workflow.
-                WARNING: this could cause your workflow to shut down
+                This only affects leading instances of parentless sequential
+                xtriggered tasks and parentless tasks waiting at the runahead-limit.
+                WARNING: this is a low-level intervention that cuts tasks from
+                the future graph; it could cause your workflow to shut down
                 prematurely as complete.
 
                 If `false` the scheduler will spawn the next task instance
