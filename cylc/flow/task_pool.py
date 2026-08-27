@@ -556,7 +556,7 @@ class TaskPool:
 
         for task_outputs, task_flow_nums in (
             self.workflow_db_mgr.pri_dao.select_task_outputs(task, cycle)
-        ).items():
+        ):
             # loop through matching tasks
             # (if task_flow_nums is empty, it means the 'none' flow)
             if flow_nums.intersection(task_flow_nums):
@@ -1740,14 +1740,17 @@ class TaskPool:
 
         NOTE this creates a task_states/task_outputs DB entry if not present.
         """
-        info = self.workflow_db_mgr.pri_dao.select_task_outputs(
-            itask.tdef.name, str(itask.point))
+        info = list(
+            self.workflow_db_mgr.pri_dao.select_task_outputs(
+                itask.tdef.name, str(itask.point)
+            )
+        )
         if not info:
             # task never ran before
             self.db_add_new_flow_rows(itask)
         else:
             flow_seen = False
-            for outputs_str, fnums in info.items():
+            for outputs_str, fnums in info:
                 # (if fnums is empty, it means the 'none' flow)
                 if itask.flow_nums.intersection(fnums):
                     # DB row has overlap with itask's flows

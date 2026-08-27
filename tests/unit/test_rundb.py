@@ -15,8 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
+import json
 from pathlib import Path
 import sqlite3
+import sys
 from types import SimpleNamespace
 from typing import (
     List,
@@ -25,7 +27,6 @@ from typing import (
 )
 import unittest
 from unittest import mock
-import sys
 
 import pytest
 
@@ -237,3 +238,26 @@ def test_select_latest_flow_nums(
         conn.commit()
 
         assert dao.select_latest_flow_nums() == expected
+
+
+def test_select_task_outputs__identical_outputs():
+    """It yields all entries with different flow nums, even if they have
+    identical outputs.
+    """
+    outputs_str = json.dumps({'f': 'foo', 'g': 'goo'})
+    with CylcWorkflowDAO(':memory:') as dao:
+        dao.create_tables()
+        conn = dao.connect()
+        conn.executemany(
+            "INSERT INTO task_outputs VALUES (?, ?, ?, ?)",
+            [
+                ("1", "task_a", serialise_set({1}), outputs_str),
+                ("1", "task_a", serialise_set(set()), outputs_str),
+            ],
+        )
+        conn.commit()
+
+        assert list(dao.select_task_outputs("task_a", "1")) == [
+            (outputs_str, {1}),
+            (outputs_str, set()),
+        ]
