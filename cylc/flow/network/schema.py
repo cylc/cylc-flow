@@ -2173,8 +2173,8 @@ class Remove(Mutation, TaskMutation):
         no_spawn = Boolean(
             default_value=False,
             description=sstrip('''
-                "Remove the leading instance of a parentless task without "
-                "spawning its next instance."
+                Remove the leading instance of a parentless task without
+                spawning its next instance.
 
                 This only affects leading instances of parentless sequential
                 xtriggered tasks and parentless tasks waiting at the runahead-limit.
