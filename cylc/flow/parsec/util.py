@@ -113,11 +113,29 @@ def listjoin(lst, none_str=''):
     for item in lst:
         if item is None:
             items.append(none_str)
-        elif any(char in str(item) for char in ',#"\''):
-            items.append(repr(item))  # will be quoted
         else:
-            items.append(str(item))
+            string = str(item)
+            if any(char in string for char in ',#"\''):
+                items.append(repr(item))  # will be quoted
+            else:
+                items.append(string)
     return ', '.join(items)
+
+
+def fast_listjoin(lst, none_str=''):
+    """Faster variant of listjoin suitable in select cases.
+
+    Compared to listjoin, this does *not*:
+    * Rationalise and pretty-format integer lists.
+    * Intelligently quote arguments which need quoting.
+
+    Suitable for use in situations where you know the data type of the field
+    being joined and the above is of no concern.
+    """
+    return ', '.join((
+        none_str if item is None else str(item)
+        for item in lst or [None]
+    ))
 
 
 def printcfg(cfg, level=0, indent=0, prefix='', none_str='',

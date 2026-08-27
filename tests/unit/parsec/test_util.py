@@ -22,6 +22,7 @@ from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.util import (
     SECTION_EXPAND_PATTERN,
     expand_many_section,
+    fast_listjoin,
     itemstr,
     listjoin,
     m_override,
@@ -31,15 +32,44 @@ from cylc.flow.parsec.util import (
     replicate,
     un_many,
 )
+from cylc.flow.parsec.validate import DurationFloat
 
 
-def test_listjoin():
-    assert listjoin(None) == ''
-    assert listjoin(None, 'test') == 'test'
-    assert listjoin([], 'test') == 'test'
-    assert listjoin([None], 'test') == 'test'
-    assert listjoin(['test', 'test']) == 'test, test'
-    assert listjoin(['test,', 'test']) == '\'test,\', test'
+@pytest.mark.parametrize('method', (listjoin, fast_listjoin))
+def test_listjoin(method):
+    assert method(None) == ''
+    assert method(None, 'test') == 'test'
+    assert method([]) == ''
+    assert method([], 'test') == 'test'
+    assert method([None], 'test') == 'test'
+    assert method(['test', 'test']) == 'test, test'
+    if method == listjoin:
+        # intelligent quoting
+        assert method(['a#', 'b,', "c'"]) == "'a#', 'b,', \"c'\""
+        assert method(['test,', 'test']) == '\'test,\', test'
+
+        # integer list rationalisation
+        assert method([10, 11, 12]) == '10..12'
+        assert method([10, 10, 10]) == '3*10'
+        assert method([10, 10, 10, 42]) == '3*10, 42'
+
+
+def test_duration_float():
+    """It should prevent the creation of duplicate instances."""
+    # these calls should only create two discrete instances of DurationFloat
+    a = DurationFloat(1.0)
+    b = DurationFloat(1.0)
+    c = DurationFloat(42.0)
+
+    # a and b should be no only equal but also the same instance
+    assert a == b
+    assert id(a) == id(b)
+    assert str(a) == 'PT1S'
+
+    # a and c should be unequal and different instances
+    assert a != c
+    assert id(a) != id(c)
+    assert str(c) == 'PT42S'
 
 
 # --- printcfg
