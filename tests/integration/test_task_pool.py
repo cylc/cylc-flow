@@ -2528,6 +2528,8 @@ async def test_start_tasks(
         )
 
         # do all the stuff, including checking xtriggers
+        # (takes two iterations for the right state changes)
+        await schd._main_loop()
         await schd._main_loop()
 
         # It should submit 2050/foo, 2050/baz
@@ -2659,3 +2661,36 @@ async def test_parentless_spawning(flow, scheduler, run, complete):
         await complete(schd, "2/b")
         # The task pool should not be empty now.
         assert len(schd.pool.get_tasks())
+
+
+async def test_compute_runahead_not_when_idle(flow, scheduler, run, capcall):
+    """It should not compute runahead when nothing is changing.
+
+    https://github.com/cylc/cylc-flow/pull/7400
+
+    """
+    compute_runahead_calls = capcall(
+        'cylc.flow.task_pool.TaskPool.compute_runahead',
+        TaskPool.compute_runahead
+    )
+    cfg = {
+        'scheduling': {
+            'cycling mode': 'integer',
+            'initial cycle point': '1',
+            'runahead limit': 'P0',
+            'graph': {
+                'R1': 'foo',
+            }
+        },
+    }
+    id_ = flow(cfg)
+    schd = scheduler(id_, paused_start=True)
+    async with run(schd):
+        # should not be called before the main loop
+        assert len(compute_runahead_calls) == 0
+        await schd._main_loop()
+        # once: initial; twice: task state changed (runahead release)
+        assert len(compute_runahead_calls) == 2
+        # but no more, because nothing is changing
+        await schd._main_loop()
+        assert len(compute_runahead_calls) == 2
