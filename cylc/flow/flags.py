@@ -27,3 +27,4 @@ DEPRECATED:
 
 # verbosity (<0=quiet, 0=normal, >0=verbose, >1=debug)
 verbosity: int = 0
+cylc7_back_compat = False
