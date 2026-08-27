@@ -365,6 +365,7 @@ class CylcWorkflowDAO:
         TABLE_TASKS_TO_HOLD: [
             ["name"],
             ["cycle"],
+            ["flow"],
         ],
     }
 
@@ -1036,11 +1037,11 @@ class CylcWorkflowDAO:
         stmt_args = [cycle, name, flow_nums]
         return list(self.connect().execute(stmt, stmt_args))
 
-    def select_tasks_to_hold(self) -> List[Tuple[str, str]]:
+    def select_tasks_to_hold(self) -> List[Tuple[str, str, str]]:
         """Return all tasks to hold stored in the DB."""
         stmt = rf'''
             SELECT
-                name, cycle
+                name, cycle, flow
             FROM
                 {self.TABLE_TASKS_TO_HOLD}
         '''  # nosec B608 (table name is code constant)
