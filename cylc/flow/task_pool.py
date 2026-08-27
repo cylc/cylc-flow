@@ -31,7 +31,6 @@ from typing import (
     Set,
     Tuple,
     Type,
-    Union,
 )
 
 from cylc.flow import LOG
@@ -564,9 +563,7 @@ class TaskPool:
                 #   messages were stored in the DB as a list.
                 # from: 8.0.0
                 # to: 8.3.0
-                outputs: Union[
-                    Dict[str, str], List[str]
-                ] = json.loads(task_outputs)
+                outputs: dict[str, str] | list[str] = json.loads(task_outputs)
                 messages = (
                     outputs.values() if isinstance(outputs, dict)
                     else outputs
@@ -1759,9 +1756,9 @@ class TaskPool:
                     #   messages were stored in the DB as a list.
                     # from: 8.0.0
                     # to: 8.3.0
-                    outputs: Union[
-                        Dict[str, str], List[str]
-                    ] = json.loads(outputs_str)
+                    outputs: dict[str, str] | list[str] = json.loads(
+                        outputs_str
+                    )
                     if isinstance(outputs, dict):
                         # {trigger: message} - match triggers, not messages.
                         # DB may record forced completion rather than message.

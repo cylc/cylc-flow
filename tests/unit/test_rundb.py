@@ -36,30 +36,6 @@ from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.util import serialise_set
 
 
-GLOBAL_CONFIG = """
-[platforms]
-    [[desktop[0-9]{2}|laptop[0-9]{2}]]
-        # hosts = platform name (default)
-        # Note: "desktop01" and "desktop02" are both valid and distinct
-        # platforms
-    [[sugar]]
-        hosts = localhost
-        job runner = slurm
-    [[hpc]]
-        hosts = hpcl1, hpcl2
-        retrieve job logs = True
-        job runner = pbs
-    [[hpcl1-bg]]
-        hosts = hpcl1
-        retrieve job logs = True
-        job runner = background
-    [[hpcl2-bg]]
-        hosts = hpcl2
-        retrieve job logs = True
-        job runner = background
-"""
-
-
 class TestRunDb(unittest.TestCase):
 
     def setUp(self):
