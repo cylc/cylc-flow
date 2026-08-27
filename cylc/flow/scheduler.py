@@ -344,10 +344,6 @@ class Scheduler:
         # {install_target: platform}
         self.incomplete_ri_map: Dict[str, Dict] = {}
 
-        # This flag must be initialised to True, to compute the runahead
-        # limit at the start of the first main loop iteration.
-        self.has_updated: bool = True
-
     async def install(self):
         """Get the filesystem in the right state to run the flow.
         * Validate flowfiles
@@ -1633,14 +1629,6 @@ class Scheduler:
 
         tinit = time()
 
-        if self.has_updated:
-            # The runahead limit might need recomputing.
-            self.pool.compute_runahead()
-            self.pool.release_runahead_tasks()
-
-        # If applicable, set stop mode or shutdown on task failure:
-        await self.workflow_shutdown()
-
         # Useful for debugging core scheduler issues:
         # import logging
         # self.pool.log_task_pool(logging.CRITICAL)
@@ -1722,30 +1710,30 @@ class Scheduler:
         # List of task whose states have changed.
         updated_task_list = [
             t for t in self.pool.get_tasks() if t.state.is_updated]
-        self.has_updated = (
-            bool(updated_task_list)
-            or self.is_updated
-            or self.pool.tasks_removed
-        )
-        self.pool.tasks_removed = False
-
         if updated_task_list and self.is_restart_timeout_wait:
             # Stop restart timeout if action has been triggered.
             with suppress(KeyError):
                 self.timers[self.EVENT_RESTART_TIMEOUT].stop()
                 self.is_restart_timeout_wait = False
 
-        if self.has_updated or self.data_store_mgr.updates_pending:
-            # Update the datastore.
-            await self.update_data_structure()
+        has_updated = (
+            bool(updated_task_list)
+            or self.is_updated
+            or self.pool.tasks_removed
+        )
 
-        if self.has_updated:
+        if has_updated:
+            # The runahead limit might need recomputing.
+            self.pool.compute_runahead()
+            self.pool.release_runahead_tasks()
+
             if not self.is_reloaded and self.is_stalled:
                 # (A reload cannot un-stall workflow by itself)
                 self.is_stalled = False
                 self.update_data_store()
-            self.is_reloaded = False
 
+            self.is_reloaded = False
+            self.pool.tasks_removed = False
             # Reset workflow and task updated flags.
             self.is_updated = False
             for itask in updated_task_list:
@@ -1755,7 +1743,14 @@ class Scheduler:
                 # Stop the stalled timer.
                 with suppress(KeyError):
                     self.timers[self.EVENT_STALL_TIMEOUT].stop()
+        elif not self.stop_mode:
+            # Has the workflow stalled?
+            self.check_workflow_stalled()
 
+        if has_updated or self.data_store_mgr.updates_pending:
+            # Update the datastore.
+
+            await self.update_data_structure()
         self.process_workflow_db_queue()
 
         # If public database is stuck, blast it away by copying the content
@@ -1776,11 +1771,6 @@ class Scheduler:
                 self
             )
         )
-
-        if not self.has_updated and not self.stop_mode:
-            # Has the workflow stalled?
-            self.check_workflow_stalled()
-
         # Sleep a bit for things to catch up.
         # Quick sleep if there are items pending in process pool.
         # (Should probably use quick sleep logic for other queues?)
@@ -1798,6 +1788,9 @@ class Scheduler:
         await asyncio.sleep(duration)
         # Record latest main loop interval
         self.main_loop_intervals.append(time() - tinit)
+
+        # If applicable, set stop mode or shutdown on task failure:
+        await self.workflow_shutdown()
         # END MAIN LOOP
 
     def _update_workflow_state(self):
