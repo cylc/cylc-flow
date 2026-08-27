@@ -391,11 +391,17 @@ def get_option_parser() -> COP:
 
     parser.add_option(
         "--tail-lines",
-        help="For the tail-end mode, the number of lines to show from the"
-        f" end of the file (default {DEFAULT_TAIL_LINES}). Has no effect in"
-        " other modes.",
-        metavar="INT", action="store", dest="tail_lines", type=int,
-        default=DEFAULT_TAIL_LINES)
+        help=(
+            "For the tail-end mode, the number of lines to show from the"
+            f" end of the file (default {DEFAULT_TAIL_LINES})."
+            " Has no effect in other modes."
+        ),
+        metavar="INT",
+        action="store",
+        dest="tail_lines",
+        type=int,
+        default=DEFAULT_TAIL_LINES,
+    )
 
     parser.add_option(
         "-r", "--rotation",
