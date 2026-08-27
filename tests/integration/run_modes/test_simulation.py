@@ -90,7 +90,7 @@ def run_simjob(monkeytime):
 
 @pytest.fixture(scope='module')
 async def sim_time_check_setup(
-    mod_flow, mod_scheduler, mod_start, mod_one_conf,
+    mod_flow, mod_scheduler, mod_start, mod_spawn_ahead
 ):
     schd = mod_scheduler(mod_flow({
         'scheduler': {'cycle point format': '%Y'},
@@ -129,6 +129,7 @@ async def sim_time_check_setup(
         }
     }))
     async with mod_start(schd):
+        mod_spawn_ahead(schd.pool)
         itasks = schd.pool.get_tasks()
         [schd.task_job_mgr._set_retry_timers(i) for i in itasks]
         yield schd, itasks
@@ -170,7 +171,7 @@ def test_false_if_not_running(
             id='fail-no-submits'),
     )
 )
-def test_fail_once(sim_time_check_setup, itask, point, results, monkeypatch):
+def test_fail_once(sim_time_check_setup, itask, point, results):
     """A task with a fail cycle point only fails
     at that cycle point, and then only on the first submission.
     """

@@ -236,7 +236,7 @@ async def test__submit_failed_job_id(flow, scheduler, start, db_select):
 
 
 async def test__process_message_failed_with_retry(
-    one: Scheduler, start, log_filter
+    one: Scheduler, start, log_filter, spawn_ahead
 ):
     """Log job failure, even if a retry is scheduled.
 
@@ -252,6 +252,10 @@ async def test__process_message_failed_with_retry(
                 'execution retry delays': [1],
                 'submission retry delays': [1]
             })
+
+        spawn_ahead(one.pool)
+        # Note this won't release queued tasks as schd is paused:
+        one.release_tasks_to_run()
 
         # Process submit failed message with and without retries:
         one.task_events_mgr._process_message_submit_failed(fail_once, None)
