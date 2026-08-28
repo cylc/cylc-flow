@@ -1863,6 +1863,8 @@ with Conf('global.cylc', desc='''
                 This is used for the "tail-end" view mode;
                 :cylc:conf:`[..]tail command template` is used to follow a
                 log from the start instead.
+                This is primarily intended for use by the UI log view, to
+                support viewing very long logs.
 
                 .. warning::
 
