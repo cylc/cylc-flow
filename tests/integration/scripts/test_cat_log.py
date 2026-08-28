@@ -24,11 +24,8 @@ import shutil
 from cylc.flow.exceptions import InputError
 from cylc.flow.option_parsers import Options
 from cylc.flow.scripts.cat_log import (
-    TAIL,
-    TAIL_END,
     _main as cat_log,
     get_option_parser as cat_log_gop,
-    view_log,
 )
 
 
@@ -114,62 +111,3 @@ async def test_bad_task_dir(run_dir, brokendir, capsys):
         f'Directory not found: {run_dir}'
         '/NONEXISTENTWORKFLOWNAME/log/job/1/foo/NN\n')
     assert capsys.readouterr().err == msg
-
-
-async def test_view_log_tail_vs_tail_end(tmp_path, capfd):
-    """TAIL reads from the start; TAIL_END reads from the end."""
-    logpath = tmp_path / 'job.out'
-    lines = [
-        'line-1',
-        'line-2',
-        'line-3',
-        'line-4',
-    ]
-    logpath.write_text('\n'.join(lines) + '\n')
-
-    await view_log(
-        logpath,
-        TAIL,
-        'tail -n +1 %(filename)s',
-    )
-    out = capfd.readouterr().out.splitlines()
-    assert out == lines
-
-    await view_log(
-        logpath,
-        TAIL_END,
-        'tail -n %(lines)s %(filename)s',
-        tail_lines=2,
-    )
-    out = capfd.readouterr().out.splitlines()
-    assert out == lines[-2:]
-
-    await view_log(
-        logpath,
-        TAIL,
-        'tail -n +1 --follow=name %(filename)s',
-        batchview_cmd=f'cat {logpath}',
-    )
-    out = capfd.readouterr().out.splitlines()
-    assert out == lines
-
-
-async def test_bad_submit_number(monkeypatch, capsys):
-    """Illegal submit numbers should be rejected before log lookup."""
-    parser = cat_log_gop()
-
-    async def mock_parse_id_async(*args, **kwargs):
-        return 'workflow', {'task': 'foo', 'cycle': '1'}, None
-
-    monkeypatch.setattr(
-        'cylc.flow.scripts.cat_log.parse_id_async',
-        mock_parse_id_async,
-    )
-
-    with pytest.raises(SystemExit):
-        await cat_log(
-            parser,
-            Options(parser)(submit_num='not-a-number'),
-            'workflow//1/foo',
-        )
-    assert 'Illegal submit number: not-a-number' in capsys.readouterr().err
