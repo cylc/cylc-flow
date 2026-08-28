@@ -221,3 +221,40 @@ async def test_bad_submit_number(monkeypatch, capsys):
     # so its context should be the underlying ValueError.
     assert isinstance(exc_info.value.__context__, ValueError)
     assert 'Illegal submit number: not-a-number' in capsys.readouterr().err
+
+
+async def test_good_submit_number(monkeypatch):
+    """A valid submit number should be zero-padded and passed through."""
+    parser = cat_log_gop()
+
+    async def mock_parse_id_async(*args, **kwargs):
+        return 'workflow', {'task': 'foo', 'cycle': '1'}, None
+
+    monkeypatch.setattr(
+        'cylc.flow.scripts.cat_log.parse_id_async',
+        mock_parse_id_async,
+    )
+
+    captured = {}
+
+    class StopHere(Exception):
+        pass
+
+    def mock_get_task_job_attrs(workflow_id, point, task, submit_num):
+        captured['submit_num'] = submit_num
+        raise StopHere
+
+    monkeypatch.setattr(
+        'cylc.flow.scripts.cat_log.get_task_job_attrs',
+        mock_get_task_job_attrs,
+    )
+
+    # Stop execution once the submit number has been processed.
+    with pytest.raises(StopHere):
+        await cat_log(
+            parser,
+            Options(parser)(submit_num='1'),
+            'workflow//1/foo',
+        )
+    # The submit number should have been zero-padded to two digits.
+    assert captured['submit_num'] == '01'
