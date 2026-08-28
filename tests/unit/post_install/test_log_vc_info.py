@@ -205,8 +205,6 @@ def test_write_diff_git(git_source_repo: Tuple[str, str], tmp_path: Path):
                  "+        R1 = foobar"):
         assert line in diff_lines
 
-    flow_file.write_text(BASIC_FLOW_2)
-
 
 @require_git
 def test_main_git(git_source_repo: Tuple[str, str], tmp_run_dir: Callable):
