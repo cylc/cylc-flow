@@ -26,8 +26,16 @@ from cylc.flow.scripts.cat_log import (
     colorise_cat_log,
     TAIL,
     TAIL_END,
+    _get_remote_log,
     get_tailer_template,
 )
+
+
+TAILER_PLATFORM = {
+    'tail command template': 'tail -n +1 --follow=name %(filename)s',
+    'tail from end command template':
+    'tail -n %(lines)s --follow=name %(filename)s',
+}
 
 
 @pytest.fixture
@@ -96,33 +104,48 @@ def test_colorise_cat_log_colour(log_file):
 class TestGetTailerTemplate:
     """Tests for the get_tailer_template function."""
 
-    def test_tail_mode(self):
-        """Test that TAIL mode returns the standard tail template."""
-        platform = {
-            'tail command template': 'tail -n +1 --follow=name %(filename)s',
-            'tail from end command template':
-            'tail -n %(lines)s --follow=name %(filename)s',
-        }
-        result = get_tailer_template(platform, TAIL)
-        assert result == 'tail -n +1 --follow=name %(filename)s'
+    @pytest.mark.parametrize(
+        'mode, expected',
+        [
+            (TAIL, 'tail -n +1 --follow=name %(filename)s'),
+            (TAIL_END, 'tail -n %(lines)s --follow=name %(filename)s'),
+            ('unknown_mode', 'tail -n +1 --follow=name %(filename)s'),
+        ],
+    )
+    def test_modes(self, mode, expected):
+        """Test the tailer template selection for all supported modes."""
+        result = get_tailer_template(TAILER_PLATFORM, mode)
+        assert result == expected
 
-    def test_tail_end_mode(self):
-        """Test that TAIL_END mode returns the tail-from-end template."""
-        platform = {
-            'tail command template': 'tail -n +1 --follow=name %(filename)s',
-            'tail from end command template':
-            'tail -n %(lines)s --follow=name %(filename)s',
-        }
-        result = get_tailer_template(platform, TAIL_END)
-        assert result == 'tail -n %(lines)s --follow=name %(filename)s'
 
-    def test_invalid_mode_defaults_to_tail(self):
-        """Test that invalid modes default to the standard tail template."""
-        platform = {
-            'tail command template': 'tail -n +1 --follow=name %(filename)s',
-            'tail from end command template':
-            'tail -n %(lines)s --follow=name %(filename)s',
-        }
-        # Any mode other than TAIL_END should return the standard template
-        result = get_tailer_template(platform, 'unknown_mode')
-        assert result == 'tail -n +1 --follow=name %(filename)s'
+async def test_get_remote_log_adds_tail_lines_for_tail_end(monkeypatch):
+    """TAIL_END should pass --tail-lines to the remote cat-log command."""
+    captured = {}
+
+    async def mock_remote_cylc_cmd(cmd, platform, **kwargs):
+        captured['cmd'] = cmd
+        captured['kwargs'] = kwargs
+        return 0
+
+    monkeypatch.setattr('cylc.flow.scripts.cat_log.remote_cylc_cmd', mock_remote_cylc_cmd)
+    monkeypatch.setattr(
+        'cylc.flow.scripts.cat_log.get_remote_workflow_run_job_dir',
+        lambda *args: '/remote/workflow/log/job.out',
+    )
+    monkeypatch.setattr('cylc.flow.scripts.cat_log.verbosity_to_opts', lambda *args: [])
+
+    workflow_id = 'workflow'
+
+    await _get_remote_log(
+        workflow_id,
+        TAILER_PLATFORM,
+        point='1',
+        task='foo',
+        submit_num='NN',
+        filename='job.out',
+        mode=TAIL_END,
+        tail_lines=42,
+    )
+
+    assert '--tail-lines=42' in captured['cmd']
+    assert captured['kwargs']['manage'] is True

@@ -143,3 +143,33 @@ async def test_view_log_tail_vs_tail_end(tmp_path, capfd):
     )
     out = capfd.readouterr().out.splitlines()
     assert out == lines[-2:]
+
+    await view_log(
+        logpath,
+        TAIL,
+        'tail -n +1 --follow=name %(filename)s',
+        batchview_cmd=f'cat {logpath}',
+    )
+    out = capfd.readouterr().out.splitlines()
+    assert out == lines
+
+
+async def test_bad_submit_number(monkeypatch, capsys):
+    """Illegal submit numbers should be rejected before log lookup."""
+    parser = cat_log_gop()
+
+    async def mock_parse_id_async(*args, **kwargs):
+        return 'workflow', {'task': 'foo', 'cycle': '1'}, None
+
+    monkeypatch.setattr(
+        'cylc.flow.scripts.cat_log.parse_id_async',
+        mock_parse_id_async,
+    )
+
+    with pytest.raises(SystemExit):
+        await cat_log(
+            parser,
+            Options(parser)(submit_num='not-a-number'),
+            'workflow//1/foo',
+        )
+    assert 'Illegal submit number: not-a-number' in capsys.readouterr().err
