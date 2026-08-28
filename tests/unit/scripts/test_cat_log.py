@@ -136,12 +136,12 @@ async def test_get_remote_log_adds_tail_lines_for_tail_end(monkeypatch):
         mock_remote_cylc_cmd
     )
     monkeypatch.setattr(
-        'cylc.flow.scripts.cat_log.verbosity_to_opts',
-        lambda *a, **k: []
+        'cylc.flow.scripts.cat_log.get_remote_workflow_run_job_dir',
+        lambda *a, **k: '/remote/workflow/log/job.out',
     )
     monkeypatch.setattr(
         'cylc.flow.scripts.cat_log.verbosity_to_opts',
-        lambda *args: []
+        lambda *a, **k: []
     )
 
     workflow_id = 'workflow'
