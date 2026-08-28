@@ -211,10 +211,13 @@ async def test_bad_submit_number(monkeypatch, capsys):
         mock_parse_id_async,
     )
 
-    with pytest.raises(SystemExit):
+    with pytest.raises(SystemExit) as exc_info:
         await cat_log(
             parser,
             Options(parser)(submit_num='not-a-number'),
             'workflow//1/foo',
         )
+    # The SystemExit is raised from within the `except ValueError` handler,
+    # so its context should be the underlying ValueError.
+    assert isinstance(exc_info.value.__context__, ValueError)
     assert 'Illegal submit number: not-a-number' in capsys.readouterr().err
