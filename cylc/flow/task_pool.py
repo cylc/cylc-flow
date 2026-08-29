@@ -2217,6 +2217,21 @@ class TaskPool:
             # Can't be runahead limited or queued.
             itask.state_reset(is_runahead=False, is_queued=False)
             self.task_queue_mgr.remove_task(itask)
+            # If we skipped over runahead release (when parentless spawning
+            # happens) the next parentless instance might need to be spawned.
+            if itask.flow_nums and not itask.is_xtrigger_sequential:
+                self.spawn_next_parentless(itask)
+
+        if (
+            itask.state(*TASK_STATUSES_FINAL)
+            and not itask.state.outputs.is_complete()
+        ):
+            # Add future final-incomplete tasks to the pool for visibility.
+            # See https://github.com/cylc/cylc-flow/issues/6383.
+            LOG.debug(f"[{itask}] adding future incomplete task to n=0.")
+            self.add_to_pool(itask)
+            # (The transient used for spawning outputs is now not transient.)
+            itask.transient = False
 
         if no_op:
             return False
