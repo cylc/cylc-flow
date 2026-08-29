@@ -16,7 +16,7 @@
             cylc__job__wait_cylc_message_started;
             # issue the stop command
             cylc stop --now "${CYLC_WORKFLOW_ID}"
-            # wait for the stop command to be recieved
+            # wait for the stop command to be received
             cylc__job__poll_grep_workflow_log 'Command "stop" received'
             # send a message telling the started handler to exit
             cylc message -- stopping

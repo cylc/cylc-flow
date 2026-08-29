@@ -110,7 +110,7 @@ JOB_COLOURS = {
 
 
 class Bindings:
-    """Represets key bindings for the Tui app."""
+    """Represents key bindings for the Tui app."""
 
     def __init__(self):
         self.bindings = []

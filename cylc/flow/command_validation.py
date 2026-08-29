@@ -138,7 +138,7 @@ def prereqs(prereqs: Optional[List[str]]):
         >>> prereqs(["1/foo"])
         ['1/foo:succeeded']
 
-        # implicit ":satisifed"
+        # implicit ":satisfied"
         >>> prereqs(["xtrigger/foo"])
         ['xtrigger/foo:succeeded']
 

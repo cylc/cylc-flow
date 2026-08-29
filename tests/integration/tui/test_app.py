@@ -511,7 +511,7 @@ async def test_restart_reconnect(one_conf, flow, scheduler, start, rakiura):
 
     The Cylc client can raise exceptions e.g. WorkflowStopped. Any text written
     to stdout/err will mess with Tui. The purpose of this test is to ensure Tui
-    can handle shutdown / restart without any errors occuring and any spurious
+    can handle shutdown / restart without any errors occurring and any spurious
     text appearing on the screen.
     """
     with rakiura(size='80,20') as rk:

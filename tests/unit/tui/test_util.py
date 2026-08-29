@@ -193,7 +193,7 @@ def test_get_task_icon(
 def test_compute_tree():
     """It computes a tree in the right structure for urwid.
 
-    Note this test doesn't use full data or propper ids because it's
+    Note this test doesn't use full data or proper ids because it's
     purpose is not to test the GraphQL interface but to ensure the
     assumptions made by compute_tree check out.
 

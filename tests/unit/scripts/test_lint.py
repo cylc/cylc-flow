@@ -145,7 +145,7 @@ TEST_FILE = '''
             custom handler = efrgh
             critical handler = fgjdsfs
             retry handler = dfaiuhfrgpa
-            sumbission handler = fas9hrfgaiuph
+            submission handler = fas9hrfgaiuph
 
 # Shouldn't object to a comment, unlike the terrible indents below:
    [[bad indent]]
@@ -616,7 +616,7 @@ def test_get_pyproject_toml__depr(
         param(
             {'ignore': ['R999']},
             'R999 is a not a known linter code.',
-            id='it fails with non-existant checks ignored'
+            id='it fails with non-existent checks ignored'
         ),
         param(
             {'ignore': ['U008']},
@@ -682,7 +682,7 @@ def test_invalid_tomlfile(tmp_path):
     ]
 )
 def test_parse_checks_reference_mode(ref, expect):
-    """Add extra explanation of max line legth setting in reference mode.
+    """Add extra explanation of max line length setting in reference mode.
     """
     result = parse_checks(['style'], reference=ref, max_line_len=42)
     value = result['S012']

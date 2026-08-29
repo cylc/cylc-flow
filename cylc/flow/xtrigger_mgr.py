@@ -613,7 +613,7 @@ class XtriggerManager:
         args = []
         kwargs = {}
         if label in self.xtriggers.wall_clock_labels:
-            if "trigger_time" in ctx.func_kwargs:  # noqa: SIM401 (readabilty)
+            if "trigger_time" in ctx.func_kwargs:  # noqa: SIM401 (readability)
                 # Internal (retry timer): trigger_time already set.
                 kwargs["trigger_time"] = ctx.func_kwargs["trigger_time"]
             else:

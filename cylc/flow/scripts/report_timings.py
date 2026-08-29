@@ -107,7 +107,7 @@ def format_html(row_buf, output):
     summary.write_summary(output)
 
 
-# suported output formats
+# supported output formats
 FORMATS = {
     'raw': format_raw,
     'summary': format_summary,

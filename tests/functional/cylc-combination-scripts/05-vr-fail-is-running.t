@@ -18,7 +18,7 @@
 
 #------------------------------------------------------------------------------
 # Test `cylc vr` (Validate Reinstall)
-# In this case the target workflow is in an abiguous state: We cannot tell
+# In this case the target workflow is in an ambiguous state: We cannot tell
 # Whether it's running, paused or stopped. Cylc VR should validate before
 # reinstall:
 

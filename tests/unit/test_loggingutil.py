@@ -199,7 +199,7 @@ def test_get_reload_number_no_logs(tmp_run_dir: Callable):
 
 
 def test_set_timestamps(capsys):
-    """The enable and disable timstamp methods do what they say"""
+    """The enable and disable timestamp methods do what they say"""
     # Setup log handler
     log_handler = logging.StreamHandler(sys.stderr)
     log_handler.setFormatter(CylcLogFormatter())

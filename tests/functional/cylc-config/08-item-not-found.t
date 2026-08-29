@@ -32,7 +32,7 @@ export CYLC_CONF_PATH="${PWD}"
 # Control Run
 run_ok "${TEST_NAME_BASE}-ok" cylc config -i "[platforms][foo]"
 
-# If item not settable in config (platforms is mis-spelled):
+# If item not settable in config (platforms is misspelled):
 run_fail "${TEST_NAME_BASE}-not-in-config-spec" cylc config -i "[platfroms][foo]"
 cmp_ok "${TEST_NAME_BASE}-not-in-config-spec.stderr" << __HERE__
 InvalidConfigError: "platfroms" is not a valid configuration for global.cylc.

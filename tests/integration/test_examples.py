@@ -229,7 +229,7 @@ async def test_db_select(one, start, db_select):
 async def test_reflog(flow, scheduler, run, reflog, complete):
     """Test the triggering of tasks.
 
-    This is the integration test version of "reftest" in the funtional tests.
+    This is the integration test version of "reftest" in the functional tests.
 
     It works by capturing the triggers which caused each submission so that
     they can be compared with the expected outcome.

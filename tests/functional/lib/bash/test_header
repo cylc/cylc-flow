@@ -1056,7 +1056,7 @@ _get_test_platforms () {
 }
 
 _expand_test_platforms () {
-    # convert sting of space separated platforms to array
+    # convert string of space separated platforms to array
     read -r -a PLATFORMS <<< "${1}"
 
     local ret=()
