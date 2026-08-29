@@ -1168,6 +1168,11 @@ def check_cylc_file(
     modify: bool = False,
 ):
     """Check A Cylc File for Cylc 7 Config"""
+    if file.is_dir():
+        LOG.error(f'{file_rel} is not a file.')
+        counter['E'] += 1
+        return
+
     with open(file, 'r') as cylc_file:
         # generator which reads and lints one line at a time
         linter = lint(
@@ -1249,7 +1254,10 @@ def lint(
     """
     # get the first line
     line_no = 1
-    line = next(lines)
+    try:
+        line = next(lines)
+    except StopIteration:
+        return
     # check if it is a jinja2 shebang
     jinja_shebang = line.strip().lower() == JINJA2_SHEBANG
 
