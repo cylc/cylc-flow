@@ -54,7 +54,7 @@ Examples:
 
 from functools import partial
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, Any
 
 from cylc.flow.flow_mgr import add_flow_opts_for_remove
 from cylc.flow.network.client_factory import get_client
@@ -68,6 +68,33 @@ from cylc.flow.terminal import cli_function
 
 if TYPE_CHECKING:
     from optparse import Values
+
+
+VERSION_QUERY = '''
+query ($wFlows: [ID]) {
+  workflows(ids: $wFlows) {
+    id
+    cylcVersion
+  }
+}
+'''
+
+
+BCOMPAT_MUTATION = '''
+mutation (
+  $wFlows: [WorkflowID]!,
+  $tasks: [NamespaceIDGlob]!,
+  $flow: [Flow!],
+) {
+  remove (
+    workflows: $wFlows,
+    tasks: $tasks,
+    flow: $flow,
+  ) {
+    result
+  }
+}
+'''
 
 
 MUTATION = '''
@@ -114,8 +141,17 @@ prematurely as complete.
 async def run(options: 'Values', workflow_id: str, *tokens_list):
     pclient = get_client(workflow_id, timeout=options.comms_timeout)
 
-    mutation_kwargs = {
-        'request_string': MUTATION,
+    # BACK COMPAT: handle --no-spawn absence in earlier clients
+    # FROM: 8.0
+    # TO: 8.6.*
+    # REMOVE: 8.8
+    version_kwargs: Dict[str, Any] = {
+        'request_string': VERSION_QUERY,
+        'variables': {'wFlows': [workflow_id]}
+    }
+    version_result = await pclient.async_request('graphql', version_kwargs)
+
+    mutation_kwargs: Dict[str, Any] = {
         'variables': {
             'wFlows': [workflow_id],
             'tasks': [
@@ -123,9 +159,13 @@ async def run(options: 'Values', workflow_id: str, *tokens_list):
                 for tokens in tokens_list
             ],
             'flow': options.flow,
-            'noSpawn': options.no_spawn,
         }
     }
+    if version_result["workflows"][0]["cylcVersion"] < '8.7.0':
+        mutation_kwargs['request_string'] = BCOMPAT_MUTATION
+    else:
+        mutation_kwargs['request_string'] = MUTATION
+        mutation_kwargs['variables']['noSpawn'] = options.no_spawn
 
     return await pclient.async_request('graphql', mutation_kwargs)
 
