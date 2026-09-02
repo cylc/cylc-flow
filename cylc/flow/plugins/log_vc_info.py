@@ -378,7 +378,7 @@ def write_diff(
 
     if (symlink_path := diff_location / DIFF_FILENAME).exists():
         symlink_path.unlink()
-    symlink_path.symlink_to(diff_file)
+    symlink_path.symlink_to(diff_file.relative_to(diff_location))
 
     return diff_file
 
