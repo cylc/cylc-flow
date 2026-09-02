@@ -149,6 +149,9 @@ async def _start_flow(
 
     await schd.install()
 
+    # Speed up main loop
+    schd.INTERVAL_MAIN_LOOP = schd.INTERVAL_MAIN_LOOP_QUICK = 1e-4
+
     try:
         # Nested `try...finally` to ensure caplog always yielded even if
         # exception occurs in Scheduler
@@ -178,6 +181,9 @@ async def _run_flow(
         caplog.set_level(level, CYLC_LOG)
 
     await schd.install()
+
+    # Speed up main loop
+    schd.INTERVAL_MAIN_LOOP = schd.INTERVAL_MAIN_LOOP_QUICK = 1e-4
 
     task: Optional[asyncio.Task] = None
     try:
