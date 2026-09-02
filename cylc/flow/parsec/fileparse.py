@@ -523,8 +523,7 @@ def read_and_proc(
             if warns:
                 LOG.warning(
                     "The following warnings were raised during Jinja2 "
-                    "preprocessing (note: any Jinja 3.1 deprecations will "
-                    "break at Cylc 8.7):\n"
+                    "preprocessing:\n"
                     + "\n".join(
                         warnings.formatwarning(
                             w.message, w.category, w.filename, w.lineno
