@@ -1776,7 +1776,7 @@ class Scheduler:
         if (elapsed >= self.INTERVAL_MAIN_LOOP or
                 quick_mode and elapsed >= self.INTERVAL_MAIN_LOOP_QUICK):
             # Main loop has taken quite a bit to get through
-            # Still yield control to other threads by sleep(0.0)
+            # Still yield control to other async tasks by sleep(0)
             duration: float = 0
         elif quick_mode:
             duration = self.INTERVAL_MAIN_LOOP_QUICK - elapsed
