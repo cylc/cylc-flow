@@ -186,7 +186,7 @@ class WorkflowRuntimeServer:
         # And use of concurrent.futures.ThreadPoolExecutor?
         self.zmq_context = zmq.Context()
         # create an authenticator for the ZMQ context
-        self.curve_auth = ThreadAuthenticator(self.zmq_context, log=LOG)
+        self.curve_auth = ThreadAuthenticator(self.zmq_context)
         self.curve_auth.start()  # start the authentication thread
 
         # Setting the location means that the CurveZMQ auth will only
