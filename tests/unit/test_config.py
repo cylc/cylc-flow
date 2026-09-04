@@ -1736,6 +1736,31 @@ def test_check_task_event_names(item, tmp_flow_config, log_filter):
     ))
 
 
+def test_check_unused_namespaces(tmp_flow_config):
+    """"Any invalid task handler events are warned about."""
+    flow_file = tmp_flow_config('foo', """
+        [scheduler]
+            allow implicit tasks = True
+        [scheduling]
+            [[graph]]
+                R1 = "a & FAM_1 & f"
+        [runtime]
+            [[a]]
+            [[e]]
+            [[FAM_1]]
+            [[b, c, d]]
+               inherit = FAM_1
+            [[FAM_2]]
+            [[k]]
+               inherit = FAM_2
+    """)
+    assert (
+        WorkflowConfig(
+            'foo', str(flow_file), ValidateOptions()
+        )._check_unused_namespaces() == {'e', 'FAM_2', 'k'}
+    )
+
+
 def test_jinja2_lib_python(tmp_flow_config):
     """Modules in lib/python are available in custom Jinja2."""
     flow_file: Path = tmp_flow_config((id_ := 'wflow'), r"""
