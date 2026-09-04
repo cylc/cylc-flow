@@ -15,8 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
+import json
 from pathlib import Path
 import sqlite3
+import sys
 from types import SimpleNamespace
 from typing import (
     List,
@@ -25,7 +27,6 @@ from typing import (
 )
 import unittest
 from unittest import mock
-import sys
 
 import pytest
 
@@ -33,30 +34,6 @@ from cylc.flow.exceptions import PlatformLookupError
 from cylc.flow.flow_mgr import FlowNums
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.util import serialise_set
-
-
-GLOBAL_CONFIG = """
-[platforms]
-    [[desktop[0-9]{2}|laptop[0-9]{2}]]
-        # hosts = platform name (default)
-        # Note: "desktop01" and "desktop02" are both valid and distinct
-        # platforms
-    [[sugar]]
-        hosts = localhost
-        job runner = slurm
-    [[hpc]]
-        hosts = hpcl1, hpcl2
-        retrieve job logs = True
-        job runner = pbs
-    [[hpcl1-bg]]
-        hosts = hpcl1
-        retrieve job logs = True
-        job runner = background
-    [[hpcl2-bg]]
-        hosts = hpcl2
-        retrieve job logs = True
-        job runner = background
-"""
 
 
 class TestRunDb(unittest.TestCase):
@@ -237,3 +214,26 @@ def test_select_latest_flow_nums(
         conn.commit()
 
         assert dao.select_latest_flow_nums() == expected
+
+
+def test_select_task_outputs__identical_outputs():
+    """It yields all entries with different flow nums, even if they have
+    identical outputs.
+    """
+    outputs_str = json.dumps({'f': 'foo', 'g': 'goo'})
+    with CylcWorkflowDAO(':memory:') as dao:
+        dao.create_tables()
+        conn = dao.connect()
+        conn.executemany(
+            "INSERT INTO task_outputs VALUES (?, ?, ?, ?)",
+            [
+                ("1", "task_a", serialise_set({1}), outputs_str),
+                ("1", "task_a", serialise_set(set()), outputs_str),
+            ],
+        )
+        conn.commit()
+
+        assert list(dao.select_task_outputs("task_a", "1")) == [
+            (outputs_str, {1}),
+            (outputs_str, set()),
+        ]
