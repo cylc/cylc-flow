@@ -139,7 +139,7 @@ def mod_test_dir(request, ses_test_dir):
         # Shorten path by dropping `integration.` prefix:
         re.sub(r'^integration\.', '', request.module.__name__)
     )
-    path.mkdir(exist_ok=True)
+    path.mkdir(parents=True, exist_ok=True)
     yield path
     if _pytest_passed(request):
         # test passed -> remove all files
