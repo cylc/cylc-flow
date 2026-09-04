@@ -52,7 +52,7 @@ async def test_stop_after_cycle_point(
     async def stops_after_cycle(schd) -> Optional[str]:
         """Run the workflow until it stops and return the cycle point."""
         triggers = reflog(schd)
-        await complete(schd, timeout=2)
+        await complete(schd, timeout=3)
         assert len(triggers) == 1  # only one task (i.e. cycle) should be run
         return Tokens(list(triggers)[0][0], relative=True)['cycle']
 

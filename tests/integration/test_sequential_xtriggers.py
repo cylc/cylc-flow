@@ -126,6 +126,7 @@ async def test_set_prereqs(sequential, start):
         sequential.pool.set_prereqs_and_outputs(
             {TaskTokens('2000', 'foo')}, [], ['xtrigger/all:succeeded'], [])
         await sequential._main_loop()
+        await sequential._main_loop()
 
         assert list_cycles(sequential) == ['2000', '2001']
 

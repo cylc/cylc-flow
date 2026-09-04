@@ -1682,11 +1682,12 @@ class Scheduler:
             self.reset_inactivity_timer()
 
         # auto expire broadcasts
-        if not self.is_paused:
+        if not self.is_paused and not self.config.non_cycling:
             # NOTE: Don't auto-expire broadcasts whilst the scheduler is
             # paused. This allows broadcast-and-trigger beyond the expiry
             # limit, by pausing before doing it (after which the expiry
             # limit moves back).
+            # Also, don't expire broadcasts in a non-cycling workflow.
             with suppress(TimePointDumperBoundsError):
                 # NOTE: TimePointDumperBoundsError will be raised for negative
                 # cycle points, we skip broadcast expiry in this circumstance

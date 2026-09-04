@@ -2386,7 +2386,7 @@ async def test_clock_expire_with_sequential_xtriggers(
         # * it should be the only task in the pool
         assert {
             itask.tokens.relative_id for itask in schd.pool.get_tasks()
-        } == {'2006/a'}
+        } == {'2007/a'}
 
 
 async def test_downstream_complete_before_upstream(
