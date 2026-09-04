@@ -102,6 +102,7 @@ requests_).
  - Christopher Bennett
  - Ryan Boult
  - Samuel Denton
+ - Matt Van Horn
 <!-- end-shortlog -->
 
 (All contributors are identifiable with email addresses in the git version

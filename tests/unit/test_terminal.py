@@ -30,6 +30,7 @@ from cylc.flow.terminal import (
 # this puts Exception in globals() where we can easily find it later
 Exception = Exception
 SystemExit = SystemExit
+BrokenPipeError = BrokenPipeError
 
 
 def get_option_parser():
@@ -156,6 +157,31 @@ def test_cli(
 
     if stderr is not None:
         assert capsys.readouterr()[1] == stderr
+
+
+@pytest.mark.parametrize('verbosity', [0, 2])
+def test_cli_broken_pipe(verbosity, monkeypatch, capsys):
+    """A BrokenPipeError should exit quietly without a traceback.
+
+    A broken pipe is raised when the consumer of a piped command closes the
+    pipe early, e.g. ``cylc config <flow> | less`` (then quit) or
+    ``cylc config <flow> | grep -q '\\w'``. This is never user-actionable so
+    the CLI wrapper should suppress the traceback at all verbosity levels and
+    exit with a non-zero return code, rather than dumping a Python traceback to
+    stderr.
+    """
+    monkeypatch.setattr('cylc.flow.flags.verbosity', verbosity)
+    monkeypatch.setattr('cylc.flow.terminal.supports_color', lambda: False)
+    # Under capsys, stdout is not backed by a real file descriptor, so the
+    # handler's stdout->/dev/null redirect is a no-op (handled gracefully).
+
+    with pytest.raises(SystemExit) as exc_ctx:
+        cli(BrokenPipeError.__name__)
+
+    # exits non-zero, not via a propagated traceback
+    assert exc_ctx.value.args[0] == 1
+    # no Python traceback dumped to stderr
+    assert 'Traceback' not in capsys.readouterr()[1]
 
 
 @pytest.fixture
