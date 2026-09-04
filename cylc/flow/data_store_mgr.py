@@ -58,6 +58,7 @@ Packaging methods are included for dissemination of protobuf messages.
 
 """
 
+from abc import ABC
 from collections import (
     Counter,
     deque,
@@ -150,11 +151,20 @@ from cylc.flow.workflow_status import (
 
 
 if TYPE_CHECKING:
+    import queue
+    from uuid import UUID
+
     from cylc.flow.cycling import PointBase
     from cylc.flow.flow_mgr import FlowNums
     from cylc.flow.prerequisite import Prerequisite
     from cylc.flow.scheduler import Scheduler
     from cylc.flow.taskdef import TaskDef
+
+    DeltaStore = dict[str, Any]
+
+    DeltaQueue = queue.Queue[tuple[str, str, DeltaStore]]
+    """Queue of (workflow_id, topic, delta_store)."""
+
 
 EDGES = 'edges'
 FAMILIES = 'families'
@@ -530,22 +540,20 @@ def apply_delta(key, delta, data):
             del data[key][del_id]
 
 
-def create_delta_store(delta=None, workflow_id=None):
+def create_delta_store(
+    delta: AllDeltas | None = None, workflow_id: str | None = None
+) -> 'DeltaStore':
     """Create a mini data-store out of the all deltas message.
 
     Args:
-        delta (cylc.flow.data_messages_pb2.AllDeltas):
+        delta:
             The message of accumulated deltas for publish/push.
-        workflow_id (str):
+        workflow_id:
             The workflow ID.
-
-    Returns:
-        dict
-
     """
     if not isinstance(delta, AllDeltas):
         delta = AllDeltas()
-    delta_store = {
+    delta_store: dict[str, Any] = {
         DELTA_ADDED: deepcopy(DATA_TEMPLATE),
         DELTA_UPDATED: deepcopy(DATA_TEMPLATE),
         DELTA_PRUNED: {
@@ -574,7 +582,19 @@ def create_delta_store(delta=None, workflow_id=None):
     return delta_store
 
 
-class DataStoreMgr:
+class DataStoreBase(ABC):  # noqa: B024
+    """Define the common interface for the data store managers in cylc-flow
+    and cylc-uiserver.
+    """
+    def __init__(self):
+        self.data: dict[str, dict] = {}
+        """Mapping of workflow ID to data store dictionaries."""
+        self.delta_queues: dict[str, dict[UUID, DeltaQueue]] = {}
+        """Mapping of workflow ID to mapping of
+        subscription ID to delta queues."""
+
+
+class DataStoreMgr(DataStoreBase):
     """Manage the workflow data store.
 
     Attributes:
@@ -617,6 +637,7 @@ class DataStoreMgr:
     ERR_PREFIX_JOB_NOT_ON_SEQUENCE = 'Invalid cycle point for job: '
 
     def __init__(self, schd, n_edge_distance=1):
+        super().__init__()
         self.schd: Scheduler = schd
         self.id_ = Tokens(
             user=self.schd.owner,
@@ -636,11 +657,9 @@ class DataStoreMgr:
             state: deque(maxlen=LATEST_STATE_TASKS_QUEUE_SIZE)
             for state in TASK_STATUSES_ORDERED
         }
-        self.xtrigger_tasks: Dict[str, Set[Tuple[str, str]]] = {}
+        self.xtrigger_tasks: dict[str, set[tuple[str, str]]] = {}
         # Managed data types
-        self.data = {
-            self.workflow_id: deepcopy(DATA_TEMPLATE)
-        }
+        self.data[self.workflow_id] = deepcopy(DATA_TEMPLATE)
         self.added = deepcopy(DATA_TEMPLATE)
         self.updated = deepcopy(DATA_TEMPLATE)
         self.deltas = {
@@ -653,7 +672,7 @@ class DataStoreMgr:
             WORKFLOW: WDeltas(),
         }
         # internal delta
-        self.delta_queues = {self.workflow_id: {}}
+        self.delta_queues[self.workflow_id] = {}
         self.publish_deltas = []
 
         # internal n-window
