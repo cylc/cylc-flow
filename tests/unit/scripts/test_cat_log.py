@@ -21,10 +21,25 @@ from ansimarkup import parse as cparse
 from colorama import Style
 import pytest
 
+from cylc.flow.option_parsers import Options
 from cylc.flow.loggingutil import CylcLogFormatter
 from cylc.flow.scripts.cat_log import (
     colorise_cat_log,
+    TAIL,
+    TAIL_END,
+    _main as cat_log,
+    _get_remote_log,
+    get_option_parser as cat_log_gop,
+    get_tailer_template,
+    view_log,
 )
+
+
+TAILER_PLATFORM = {
+    'tail command template': 'tail -n +1 --follow=name %(filename)s',
+    'tail from end command template':
+    'tail -n %(lines)s --follow=name %(filename)s',
+}
 
 
 @pytest.fixture
@@ -88,3 +103,158 @@ def test_colorise_cat_log_colour(log_file):
             ]
         ])
     )
+
+
+class TestGetTailerTemplate:
+    """Tests for the get_tailer_template function."""
+
+    @pytest.mark.parametrize(
+        'mode, expected',
+        [
+            (TAIL, 'tail -n +1 --follow=name %(filename)s'),
+            (TAIL_END, 'tail -n %(lines)s --follow=name %(filename)s'),
+            ('unknown_mode', 'tail -n +1 --follow=name %(filename)s'),
+        ],
+    )
+    def test_modes(self, mode, expected):
+        """Test the tailer template selection for all supported modes."""
+        result = get_tailer_template(TAILER_PLATFORM, mode)
+        assert result == expected
+
+
+async def test_get_remote_log_adds_tail_lines_for_tail_end(monkeypatch):
+    """TAIL_END should pass --tail-lines to the remote cat-log command."""
+    captured = {}
+
+    async def mock_remote_cylc_cmd(cmd, platform, **kwargs):
+        captured['cmd'] = cmd
+        captured['kwargs'] = kwargs
+        return 0
+
+    monkeypatch.setattr(
+        'cylc.flow.scripts.cat_log.remote_cylc_cmd',
+        mock_remote_cylc_cmd
+    )
+    monkeypatch.setattr(
+        'cylc.flow.scripts.cat_log.get_remote_workflow_run_job_dir',
+        lambda *a, **k: '/remote/workflow/log/job.out',
+    )
+    monkeypatch.setattr(
+        'cylc.flow.scripts.cat_log.verbosity_to_opts',
+        lambda *a, **k: []
+    )
+
+    workflow_id = 'workflow'
+
+    await _get_remote_log(
+        workflow_id,
+        TAILER_PLATFORM,
+        point='1',
+        task='foo',
+        submit_num='NN',
+        filename='job.out',
+        mode=TAIL_END,
+        tail_lines=42,
+    )
+
+    assert '--tail-lines=42' in captured['cmd']
+    assert captured['kwargs']['manage'] is True
+
+
+async def test_view_log_tail_vs_tail_end(tmp_path, capfd):
+    """TAIL reads from the start; TAIL_END reads from the end."""
+    logpath = tmp_path / 'job.out'
+    lines = [
+        'line-1',
+        'line-2',
+        'line-3',
+        'line-4',
+    ]
+    logpath.write_text('\n'.join(lines) + '\n')
+
+    await view_log(
+        logpath,
+        TAIL,
+        'tail -n +1 %(filename)s',
+    )
+    out = capfd.readouterr().out.splitlines()
+    assert out == lines
+
+    await view_log(
+        logpath,
+        TAIL_END,
+        'tail -n %(lines)s %(filename)s',
+        tail_lines=2,
+    )
+    out = capfd.readouterr().out.splitlines()
+    assert out == lines[-2:]
+
+    await view_log(
+        logpath,
+        TAIL,
+        'tail -n +1 --follow=name %(filename)s',
+        batchview_cmd=f'cat {logpath}',
+    )
+    out = capfd.readouterr().out.splitlines()
+    assert out == lines
+
+
+async def test_bad_submit_number(monkeypatch, capsys):
+    """Illegal submit numbers should be rejected before log lookup."""
+    parser = cat_log_gop()
+
+    async def mock_parse_id_async(*args, **kwargs):
+        return 'workflow', {'task': 'foo', 'cycle': '1'}, None
+
+    monkeypatch.setattr(
+        'cylc.flow.scripts.cat_log.parse_id_async',
+        mock_parse_id_async,
+    )
+
+    with pytest.raises(SystemExit) as exc_info:
+        await cat_log(
+            parser,
+            Options(parser)(submit_num='not-a-number'),
+            'workflow//1/foo',
+        )
+    # The SystemExit is raised from within the `except ValueError` handler,
+    # so its context should be the underlying ValueError.
+    assert isinstance(exc_info.value.__context__, ValueError)
+    assert 'Illegal submit number: not-a-number' in capsys.readouterr().err
+
+
+async def test_good_submit_number(monkeypatch):
+    """A valid submit number should be zero-padded and passed through."""
+    parser = cat_log_gop()
+
+    async def mock_parse_id_async(*args, **kwargs):
+        return 'workflow', {'task': 'foo', 'cycle': '1'}, None
+
+    monkeypatch.setattr(
+        'cylc.flow.scripts.cat_log.parse_id_async',
+        mock_parse_id_async,
+    )
+
+    captured = {}
+
+    class StopHere(Exception):
+        pass
+
+    def mock_get_task_job_attrs(workflow_id, point, task, submit_num):
+        captured['submit_num'] = submit_num
+        raise StopHere
+
+    monkeypatch.setattr(
+        'cylc.flow.scripts.cat_log.get_task_job_attrs',
+        mock_get_task_job_attrs,
+    )
+
+    # Stop execution once the submit number has been processed.
+    with pytest.raises(StopHere):
+        await cat_log(
+            parser,
+            Options(parser)(submit_num='1'),
+            'workflow//1/foo',
+        )
+    # The submit number should have been zero-padded to two digits.
+    assert captured['submit_num'] == '01'

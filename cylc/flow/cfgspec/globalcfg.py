@@ -1854,6 +1854,28 @@ with Conf('global.cylc', desc='''
 
                    {REPLACES}``global.rc[hosts][<host>]tail command template``.
             ''')
+            Conf('tail from end command template',
+                 VDR.V_STRING,
+                 'tail -n %(lines)s --follow=name %(filename)s',
+                 desc='''
+                A command template (with ``%(lines)s`` and ``%(filename)s``
+                substitutions) used by ``cylc cat-log`` to tail-follow job
+                logs on this platform, starting a given number of lines from
+                the *end* of the file.
+
+                This is used for the "tail-end" view mode;
+                :cylc:conf:`[..]tail command template` is used to follow a
+                log from the start instead.
+                This is primarily intended for use by the UI log view, to
+                support viewing very long logs.
+
+                .. warning::
+
+                   You are unlikely to need to override this. Doing so may
+                   adversely affect the UI log view.
+
+                .. versionadded:: 8.7.0
+            ''')
             Conf('err tailer', VDR.V_STRING, desc=f'''
                 A command template (with ``%(job_id)s`` substitution) that can
                 be used to tail-follow the stderr stream of a running job if

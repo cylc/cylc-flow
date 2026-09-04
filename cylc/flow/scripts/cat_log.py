@@ -180,8 +180,17 @@ PRINT = 'print'
 LISTDIR = 'list-dir'
 PRINTDIR = 'print-dir'
 CAT = 'cat'
+# tail-follow the log from the *start* of the file
 TAIL = 'tail'
+# tail-follow the log from the *end* of the file
+TAIL_END = 'tail-end'
 AUTO = 'auto'
+
+# the tail-follow modes (both follow the file, but from different positions)
+TAIL_MODES = (TAIL, TAIL_END)
+
+# default number of lines to show from the end of the file in tail-end mode
+DEFAULT_TAIL_LINES = 5000
 
 MODES = {
     'p': PRINT,
@@ -189,6 +198,7 @@ MODES = {
     'd': PRINTDIR,
     'c': CAT,
     't': TAIL,
+    'te': TAIL_END,
     'a': AUTO,
 }
 
@@ -266,6 +276,17 @@ def _check_fs_path(path):
         )
 
 
+def get_tailer_template(platform: dict, mode: str) -> str:
+    """Return the tail command template to use for the given mode.
+
+    The "tail-end" mode follows the log from the end of the file; all other
+    tail-follow modes follow it from the start.
+    """
+    if mode == TAIL_END:
+        return platform["tail from end command template"]
+    return platform["tail command template"]
+
+
 async def view_log(
     logpath,
     mode,
@@ -274,12 +295,17 @@ async def view_log(
     remote=False,
     color=False,
     prepend_path=False,
+    tail_lines=DEFAULT_TAIL_LINES,
 ):
     """View (by mode) local log file. This is only called on the file host.
 
     batchview_cmd is a job-runner-specific job stdout or stderr cat or tail
     command (e.g. 'qcat') that may be implemented for job runners that don't
     write logs to their final locations until after the job completes.
+
+    tail_lines is the number of lines from the end of the file to start
+    tailing from (only used by the "tail-end" mode via the ``%(lines)s``
+    substitution in the tail command template).
 
     If remote is True, we are executing on a remote host for a log file there.
 
@@ -324,11 +350,14 @@ async def view_log(
         # * batchview command is user configurable
         colorise_cat_log(proc1, color=color)
         return 0
-    if mode == TAIL:
+    if mode in TAIL_MODES:
         if batchview_cmd is not None:
             cmd = batchview_cmd
         else:
-            cmd = tailer_tmpl % {"filename": shlex.quote(str(logpath))}
+            cmd = tailer_tmpl % {
+                "filename": shlex.quote(str(logpath)),
+                "lines": tail_lines,
+            }
         proc = Popen(shlex.split(cmd), stdin=DEVNULL)  # nosec
         # * batchview command is user configurable
         with suppress(asyncio.CancelledError):
@@ -364,6 +393,20 @@ def get_option_parser() -> COP:
             ', '.join(['%s(%s)' % (i, j) for i, j in MODES.items()])),
         action="store", choices=list(MODES.keys()) + list(MODES.values()),
         default='c', dest="mode")
+
+    parser.add_option(
+        "--tail-lines",
+        help=(
+            "For the tail-end mode, the number of lines to show from the"
+            f" end of the file (default {DEFAULT_TAIL_LINES})."
+            " Has no effect in other modes."
+        ),
+        metavar="INT",
+        action="store",
+        dest="tail_lines",
+        type=int,
+        default=DEFAULT_TAIL_LINES,
+    )
 
     parser.add_option(
         "-r", "--rotation",
@@ -437,6 +480,7 @@ async def _get_remote_log(
     mode: str,
     batchview_cmd: str | None = None,
     prepend_path: bool = False,
+    tail_lines: int = DEFAULT_TAIL_LINES,
 ) -> Popen[str] | int:
     """Fetch a log file from the remote job host.
 
@@ -447,7 +491,7 @@ async def _get_remote_log(
     """
     logpath = os.path.normpath(get_remote_workflow_run_job_dir(
         workflow_id, point, task, submit_num, filename))
-    tail_tmpl = platform["tail command template"]
+    tail_tmpl = get_tailer_template(platform, mode)
     cmd = ['cat-log', *verbosity_to_opts(cylc.flow.flags.verbosity)]
     for item in [logpath, mode, tail_tmpl]:
         cmd.append('--remote-arg=%s' % shlex.quote(item))
@@ -455,6 +499,8 @@ async def _get_remote_log(
         cmd.append('--remote-arg=%s' % shlex.quote(batchview_cmd))
     if prepend_path:
         cmd.append('--prepend-path')
+    if mode == TAIL_END:
+        cmd.append('--tail-lines=%d' % tail_lines)
     cmd.append(workflow_id)
     # TODO: Add Intelligent Host selection to this
     # https://github.com/cylc/cylc-flow/issues/4263
@@ -467,7 +513,7 @@ async def _get_remote_log(
             cmd,
             platform,
             capture_process=(mode == LISTDIR),
-            manage=(mode == TAIL),
+            manage=(mode in TAIL_MODES),
             text=(mode == LISTDIR),
         )
     return 1
@@ -521,6 +567,7 @@ async def _main(
             remote=True,
             color=color,
             prepend_path=options.prepend_path,
+            tail_lines=options.tail_lines,
         )
         if res == 1:
             sys.exit(res)
@@ -590,8 +637,9 @@ async def _main(
         else:
             log_file_path = Path(log_dir, file_name)
 
+        platform = get_platform()
         tail_tmpl = os.path.expandvars(
-            get_platform()["tail command template"]
+            get_tailer_template(platform, mode)
         )
         out = await view_log(
             log_file_path,
@@ -599,6 +647,7 @@ async def _main(
             tail_tmpl,
             color=color,
             prepend_path=options.prepend_path,
+            tail_lines=options.tail_lines,
         )
         sys.exit(out)
 
@@ -636,12 +685,12 @@ async def _main(
             if options.filename == JOB_LOG_OUT:
                 if mode == CAT:
                     conf_key = "out viewer"
-                elif mode == TAIL:
+                elif mode in TAIL_MODES:
                     conf_key = "out tailer"
             elif options.filename == JOB_LOG_ERR:
                 if mode == CAT:
                     conf_key = "err viewer"
-                elif mode == TAIL:
+                elif mode in TAIL_MODES:
                     conf_key = "err tailer"
             if conf_key is not None:
                 batchview_cmd_tmpl = None
@@ -689,6 +738,7 @@ async def _main(
                 workflow_id, platform, point, task, submit_num,
                 options.filename, mode, batchview_cmd,
                 prepend_path=options.prepend_path,
+                tail_lines=options.tail_lines,
             )
 
             # add any missing items to file listing results
@@ -719,7 +769,7 @@ async def _main(
         else:
             # Log available locally.
             tail_tmpl = os.path.expandvars(
-                platform["tail command template"])
+                get_tailer_template(platform, mode))
             out = await view_log(
                 str(local_log_dir / options.filename),
                 mode,
@@ -727,5 +777,6 @@ async def _main(
                 batchview_cmd,
                 color=color,
                 prepend_path=options.prepend_path,
+                tail_lines=options.tail_lines,
             )
             sys.exit(out)
