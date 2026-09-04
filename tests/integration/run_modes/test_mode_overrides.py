@@ -128,14 +128,13 @@ async def test_run_mode_skip_abides_by_held(flow, scheduler, run):
 
         schd.pool.release_held_tasks({TaskTokens('1', 'foo')})
         assert not foo.state.is_held
-        await schd._main_loop()
         with pytest.raises(SchedulerStop):
             # Will shut down as foo has run
             await schd._main_loop()
 
 
 async def test_run_mode_override_from_broadcast(
-    flow, scheduler, start, complete, log_filter, capture_live_submissions
+    flow, scheduler, start, capture_live_submissions, spawn_ahead
 ):
     """Test that run_mode modifications only apply to one task.
     """
@@ -154,6 +153,8 @@ async def test_run_mode_override_from_broadcast(
     async with start(schd):
         schd.broadcast_mgr.put_broadcast(
             ['1000'], ['foo'], [{'run mode': 'skip'}])
+
+        spawn_ahead(schd.pool)
 
         foo_1000 = schd.pool.get_task(ISO8601Point('1000'), 'foo')
         foo_1001 = schd.pool.get_task(ISO8601Point('1001'), 'foo')

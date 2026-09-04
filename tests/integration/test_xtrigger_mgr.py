@@ -502,7 +502,7 @@ async def test_1_seq_clock_trigger_2_tasks(flow, start, scheduler):
         start_task_pool = schd.pool.get_task_ids()
         assert start_task_pool == {'1990/foo', '1990/bar'}
 
-        for _ in range(3):
+        for _ in range(4):
             await schd._main_loop()
 
         assert schd.pool.get_task_ids() == start_task_pool.union(

@@ -309,6 +309,7 @@ class WorkflowConfig:
         self.share_dir = share_dir
         self.work_dir = work_dir
         self.options = options
+        self.non_cycling = False  # is this a non-cycling workflow?
         self.implicit_tasks: Set[str] = set()
         self.edges: Dict[
             'SequenceBase', Set[Tuple[str, str, bool, bool]]
@@ -2385,12 +2386,13 @@ class WorkflowConfig:
             self.check_terminal_outputs(parser.terminals)
 
         # set of all cycling intervals containined within the workflow
+        null_interval = get_interval_cls().get_null()
         cycling_intervals = {
             sequence.get_interval()
             for sequence in self.sequences
         } | {
             # add a null interval to handle async workflows
-            get_interval_cls().get_null()
+            null_interval
         }
 
         # determine the longest cycling interval in the workflow
@@ -2400,6 +2402,10 @@ class WorkflowConfig:
             # historical reasons so must be filtered out
             if interval is not None
         })
+        if self.interval_of_longest_sequence == null_interval:
+            # This is a non-cycling workflow
+            # (once known as an async workflow)
+            self.non_cycling = True
 
         self.set_required_outputs(task_output_opt)
 
