@@ -27,7 +27,7 @@ The primary use cases for this command are:
  * Erase the flow history of tasks to allow them to rerun without starting a
    new flow. (Note that `cylc trigger` now does this automatically, however).
 
-Tasks will be removed from ALL flows, by defaut.
+Tasks will be removed from ALL flows, by default.
 
 Tasks removed from all flows, and any waiting downstream tasks spawned by
 their outputs, will be recorded with no flow numbers and will not affect
@@ -37,6 +37,9 @@ If you remove a task from some of its flows, it will still exist in the
 remaining flows but will not affect the evolution of the removed flows.
 
 Removing a submitted or running task also kills it (see "cylc kill").
+
+If you need to cut parentless tasks (and their dependent sub-graphs) from the
+future graph, see the "--no-spawn" option.
 
 Examples:
   # Remove a task that already ran.
@@ -51,7 +54,7 @@ Examples:
 
 from functools import partial
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, Any
 
 from cylc.flow.flow_mgr import add_flow_opts_for_remove
 from cylc.flow.network.client_factory import get_client
@@ -67,7 +70,17 @@ if TYPE_CHECKING:
     from optparse import Values
 
 
-MUTATION = '''
+VERSION_QUERY = '''
+query ($wFlows: [ID]) {
+  workflows(ids: $wFlows) {
+    id
+    cylcVersion
+  }
+}
+'''
+
+
+BCOMPAT_MUTATION = '''
 mutation (
   $wFlows: [WorkflowID]!,
   $tasks: [NamespaceIDGlob]!,
@@ -76,7 +89,26 @@ mutation (
   remove (
     workflows: $wFlows,
     tasks: $tasks,
-    flow: $flow
+    flow: $flow,
+  ) {
+    result
+  }
+}
+'''
+
+
+MUTATION = '''
+mutation (
+  $wFlows: [WorkflowID]!,
+  $tasks: [NamespaceIDGlob]!,
+  $flow: [Flow!],
+  $noSpawn: Boolean,
+) {
+  remove (
+    workflows: $wFlows,
+    tasks: $tasks,
+    flow: $flow,
+    noSpawn: $noSpawn
   ) {
     result
   }
@@ -92,15 +124,34 @@ def get_option_parser() -> COP:
         multiworkflow=True,
         argdoc=[FULL_ID_MULTI_ARG_DOC],
     )
+
     add_flow_opts_for_remove(parser)
+    parser.add_option(
+        "--no-spawn",
+        help="""This only affects leading instances of parentless sequential
+xtriggered tasks and parentless tasks waiting at the runahead-limit.
+WARNING: this is a low-level intervention that cuts tasks from
+the future graph; it could cause your workflow to shut down
+prematurely as complete.
+        """,
+        action="store_true", default=False, dest="no_spawn")
     return parser
 
 
 async def run(options: 'Values', workflow_id: str, *tokens_list):
     pclient = get_client(workflow_id, timeout=options.comms_timeout)
 
-    mutation_kwargs = {
-        'request_string': MUTATION,
+    # BACK COMPAT: handle --no-spawn absence in earlier clients
+    # FROM: 8.0
+    # TO: 8.6.*
+    # REMOVE: 8.8
+    version_kwargs: Dict[str, Any] = {
+        'request_string': VERSION_QUERY,
+        'variables': {'wFlows': [workflow_id]}
+    }
+    version_result = await pclient.async_request('graphql', version_kwargs)
+
+    mutation_kwargs: Dict[str, Any] = {
         'variables': {
             'wFlows': [workflow_id],
             'tasks': [
@@ -110,6 +161,11 @@ async def run(options: 'Values', workflow_id: str, *tokens_list):
             'flow': options.flow,
         }
     }
+    if version_result["workflows"][0]["cylcVersion"] < '8.7.0':
+        mutation_kwargs['request_string'] = BCOMPAT_MUTATION
+    else:
+        mutation_kwargs['request_string'] = MUTATION
+        mutation_kwargs['variables']['noSpawn'] = options.no_spawn
 
     return await pclient.async_request('graphql', mutation_kwargs)
 

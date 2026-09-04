@@ -2170,6 +2170,27 @@ class Remove(Mutation, TaskMutation):
                 By default, tasks will be removed from all flows.
             ''')
         )
+        no_spawn = Boolean(
+            default_value=False,
+            description=sstrip('''
+                Remove the leading instance of a parentless task without
+                spawning its next instance.
+
+                This only affects leading instances of parentless sequential
+                xtriggered tasks and parentless tasks waiting at the
+                runahead-limit.
+
+                WARNING: this is a low-level intervention that cuts tasks from
+                the future graph; it could cause your workflow to shut down
+                prematurely as complete.
+
+                If `false` the scheduler will spawn the next task instance
+                as normal (default).
+
+                If `true` the scheduler will not spawn the next task instance.
+
+            ''')
+        )
 
 
 class SetPrereqsAndOutputs(Mutation, TaskMutation):
