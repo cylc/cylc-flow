@@ -190,8 +190,8 @@ class JobFileWriter:
         )
         env_vars = (
             (job_conf['platform']['copyable environment variables'] or [])
-            # pass CYLC_COVERAGE into the job execution environment
-            + ['CYLC_COVERAGE']
+            # pass core Cylc variables into the job execution environment
+            + ['CYLC_COVERAGE', 'CYLC_RUN_DIR']
         )
         for key in env_vars:
             if key in os.environ:
