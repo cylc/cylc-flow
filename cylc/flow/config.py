@@ -925,19 +925,20 @@ class WorkflowConfig:
 
     def _check_unused_namespaces(self):
         """Check for runtime namespaces not used by the graph."""
-        not_task_in_graph = [  # unused tasks, and all family names
-            name for name in self.cfg['runtime'] if
-            name not in self.taskdefs
-        ]
         return {
-            name for name in not_task_in_graph
-            # unused tasks:
-            if name not in self.runtime['descendants']
-            # families not inherited by any used tasks:
-            or self.runtime['descendants'][name].isdisjoint(
-                self.taskdefs.keys()
+            name
+            for name in self.cfg['runtime']
+            if name not in self.taskdefs
+            and (
+                # unused tasks:
+                name not in self.runtime['descendants']
+                # families not inherited by any used tasks:
+                or self.runtime['descendants'][name].isdisjoint(
+                    self.taskdefs.keys()
+                )
             )
         }
+
 
     def _check_implicit_tasks(self) -> None:
         """Raise WorkflowConfigError if implicit tasks are found in graph or
