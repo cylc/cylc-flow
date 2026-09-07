@@ -29,7 +29,7 @@ from cylc.flow.scripts.dump import (
 DumpOptions = Options(get_option_parser())
 
 
-async def test_dump_tasks(flow, scheduler, start):
+async def test_dump_tasks(flow, scheduler, start, spawn_ahead):
     """It should show n=0 tasks.
 
     See: https://github.com/cylc/cylc-flow/pull/5600
@@ -46,7 +46,8 @@ async def test_dump_tasks(flow, scheduler, start):
     })
     schd = scheduler(id_)
     async with start(schd):
-        # schd.release_tasks_to_run()
+        spawn_ahead(schd.pool)
+        schd.release_tasks_to_run()
         await schd.update_data_structure()
         ret = []
         await dump(
