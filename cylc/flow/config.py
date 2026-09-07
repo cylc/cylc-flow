@@ -927,7 +927,9 @@ class WorkflowConfig:
         """Check for runtime namespaces not used by the graph."""
         return {
             name
+            # all runtime namespaces:
             for name in self.cfg['runtime']
+            # that are not used in the graph:
             if name not in self.taskdefs
             and (
                 # unused tasks:
@@ -938,7 +940,6 @@ class WorkflowConfig:
                 )
             )
         }
-
 
     def _check_implicit_tasks(self) -> None:
         """Raise WorkflowConfigError if implicit tasks are found in graph or
