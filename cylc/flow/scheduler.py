@@ -1470,6 +1470,33 @@ class Scheduler:
         if self.get_run_mode() != RunMode.SIMULATION:
             self.task_job_mgr.check_task_jobs(self.pool)
 
+    def can_stop(self) -> bool:
+        """Return True if workflow can stop."""
+        if self.stop_mode is None:
+            return False
+        if self.stop_mode == StopMode.REQUEST_NOW_NOW:
+            # Can stop irrespective of all other conditions
+            return True
+        if self.task_events_mgr._event_timers:
+            return False
+        if self.stop_mode in {
+            StopMode.REQUEST_NOW,
+            StopMode.AUTO,
+            StopMode.AUTO_ON_TASK_FAILURE,
+        }:
+            # Can stop as no pending event handlers
+            return True
+        # Else cannot stop if there are active tasks (unless they're
+        # ones we tried & failed to kill).
+        # NB preparing tasks get reset to waiting on restart.
+        return not any(
+            (
+                itask.state(*TASK_STATUSES_ACTIVE)
+                and not itask.state.kill_failed
+            )
+            for itask in self.pool.get_tasks()
+        )
+
     async def workflow_shutdown(self):
         """Determines if the workflow can be shutdown yet."""
         if self.pool.check_abort_on_task_fails():
@@ -1484,7 +1511,7 @@ class Scheduler:
             self._set_stop(StopMode.AUTO)
 
         # Is the workflow ready to shut down now?
-        if self.pool.can_stop(self.stop_mode):
+        if self.can_stop():
             await self.update_data_structure()
             self.proc_pool.close()
             if self.stop_mode != StopMode.REQUEST_NOW_NOW:
@@ -2008,10 +2035,10 @@ class Scheduler:
         self.workflow_db_mgr.put_workflow_stop_clock_time(self.stop_clock_time)
         self.update_data_store()
 
-    def stop_clock_done(self):
+    def stop_clock_done(self) -> bool:
         """Return True if wall clock stop time reached."""
         if self.stop_clock_time is None:
-            return
+            return False
         now = time()
         if now > self.stop_clock_time:
             LOG.info("Wall clock stop time reached: %s", time2str(
@@ -2023,7 +2050,7 @@ class Scheduler:
         LOG.debug("stop time=%d; current time=%d", self.stop_clock_time, now)
         return False
 
-    def check_auto_shutdown(self):
+    def check_auto_shutdown(self) -> bool:
         """Check if we should shut down now."""
         if (
             self.is_paused or
