@@ -320,7 +320,8 @@ def process_plugins(fpath: 'str | Path', opts: 'Values'):
                 extra_vars[TEMPLATING_DETECTED] is not None
                 and extra_vars[TEMPLATING_DETECTED] != templating_detected
             ):
-                # Don't allow subsequent plugins with different templating_detected
+                # Don't allow subsequent plugins with different
+                # templating_detected
                 raise ParsecError(
                     "Can't merge templating languages "
                     f"{extra_vars[TEMPLATING_DETECTED]} and "
