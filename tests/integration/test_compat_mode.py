@@ -96,12 +96,8 @@ async def test_blocked_tasks_in_n0(flow, scheduler, run, complete):
             itask = schd.pool.get_task(IntegerPoint(str(cycle)), 'recover')
             schd.pool.remove(itask, 'suicide-trigger')
 
-        schd.pool.spawn_to_runahead_limit()
         assert schd.pool.get_task_ids() == {
             '4/foo',
-            '5/foo',
-            '6/foo',
-            '7/foo',
         }
 
         # the workflow continue into the next three cycles, then stall again

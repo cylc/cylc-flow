@@ -123,12 +123,11 @@ async def test_run_mode_skip_abides_by_held(flow, scheduler, run):
 
         # Hold task, check that it's held:
         schd.pool.hold_tasks({TaskTokens('1', 'foo')})
-        assert foo.state.is_held
-        assert foo.state(TASK_STATUS_WAITING)
+        await schd._main_loop()
+        assert foo.state(TASK_STATUS_WAITING, is_held=True)
 
         schd.pool.release_held_tasks({TaskTokens('1', 'foo')})
         assert not foo.state.is_held
-        await schd._main_loop()
         with pytest.raises(SchedulerStop):
             # Will shut down as foo has run
             await schd._main_loop()
