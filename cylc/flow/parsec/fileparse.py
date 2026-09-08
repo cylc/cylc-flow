@@ -315,18 +315,17 @@ def process_plugins(fpath: 'str | Path', opts: 'Values'):
                 extra_vars[section].update(section_update)
 
         templating_detected = plugin_result.get(TEMPLATING_DETECTED, None)
-        if (
-            templating_detected is not None
-            and extra_vars[TEMPLATING_DETECTED] is not None
-            and extra_vars[TEMPLATING_DETECTED] != templating_detected
-        ):
-            # Don't allow subsequent plugins with different templating_detected
-            raise ParsecError(
-                "Can't merge templating languages "
-                f"{extra_vars[TEMPLATING_DETECTED]} and "
-                f"{templating_detected}"
-            )
-        else:
+        if templating_detected is not None:
+            if (
+                extra_vars[TEMPLATING_DETECTED] is not None
+                and extra_vars[TEMPLATING_DETECTED] != templating_detected
+            ):
+                # Don't allow subsequent plugins with different templating_detected
+                raise ParsecError(
+                    "Can't merge templating languages "
+                    f"{extra_vars[TEMPLATING_DETECTED]} and "
+                    f"{templating_detected}"
+                )
             extra_vars[TEMPLATING_DETECTED] = templating_detected
 
     return extra_vars
