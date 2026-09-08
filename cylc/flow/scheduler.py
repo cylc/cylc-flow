@@ -1764,9 +1764,8 @@ class Scheduler:
             self.check_workflow_stalled()
 
         if has_updated or self.data_store_mgr.updates_pending:
-            # Update the datastore.
-
             await self.update_data_structure()
+
         self.process_workflow_db_queue()
 
         # If public database is stuck, blast it away by copying the content
