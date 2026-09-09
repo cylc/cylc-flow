@@ -33,7 +33,7 @@ jobs:
       ENV_FILE: conda-environment.yml
     steps:
       - name: checkout cylc-flow
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: modify conda env file
         run: |
@@ -44,7 +44,7 @@ jobs:
           cat "$ENV_FILE"
 
       - name: build conda env
-        uses: conda-incubator/setup-miniconda@v3
+        uses: conda-incubator/setup-miniconda@v4
         with:
           python-version: ${{ matrix.python-version }}
           environment-file: ${{ env.ENV_FILE }}
