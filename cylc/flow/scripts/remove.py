@@ -56,6 +56,9 @@ from functools import partial
 import sys
 from typing import TYPE_CHECKING, Dict, Any
 
+from packaging.specifiers import SpecifierSet
+
+from cylc.flow.exceptions import InputError
 from cylc.flow.flow_mgr import add_flow_opts_for_remove
 from cylc.flow.network.client_factory import get_client
 from cylc.flow.network.multi import call_multi
@@ -162,7 +165,13 @@ async def run(options: 'Values', workflow_id: str, *tokens_list):
             'flow': options.flow,
         }
     }
-    if version_result["workflows"][0]["cylcVersion"] < '8.7.0':
+    target_version = version_result["workflows"][0]["cylcVersion"]
+    if f'{target_version}' in SpecifierSet('>=8, <8.7', prereleases=True):
+        if options.no_spawn:
+            raise InputError(
+                f"Option --no-spawn is not available ({workflow_id}: Cylc "
+                f"{target_version} < 8.7.0)."
+            )
         mutation_kwargs['request_string'] = BCOMPAT_MUTATION
     else:
         mutation_kwargs['request_string'] = MUTATION
