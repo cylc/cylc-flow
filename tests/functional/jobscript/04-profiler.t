@@ -80,8 +80,8 @@ log_scan "${TEST_NAME_BASE}-task-failed" \
 # Verify the profiler data matches the mocked cgroup values:
 
 grep_workflow_log_ok "${TEST_NAME_BASE}-the_good-data" \
-    '1/the_good.*(received)_cylc_profiler.*"max_rss": 12345678.*"cpu_time": 56781.*"memory_allocated": 123456789'
+    '1/the_good.*(received)_cylc_profiler.*"max_rss": 11.*"cpu_time": 56781.*"memory_allocated": 117'
 grep_workflow_log_ok "${TEST_NAME_BASE}-the_bad-data" \
-    '1/the_bad.*(received)_cylc_profiler.*"max_rss": 12345678.*"cpu_time": 56781.*"memory_allocated": 123456789'
+    '1/the_bad.*(received)_cylc_profiler.*"max_rss": 11.*"cpu_time": 56781.*"memory_allocated": 117'
 
 purge
