@@ -100,12 +100,18 @@ def parse_memory_file(process: Process):
             with open(process.cgroup_memory_path, 'r') as f:
                 for line in f:
                     if "anon" in line:
-                        return int(''.join(filter(str.isdigit, line)))
+                        # convert bytes to megabytes
+                        return int(''.join(filter(str.isdigit, line))) // (
+                            1024 * 1024
+                        )
         else:
             with open(process.cgroup_memory_path, 'r') as f:
                 for line in f:
                     if "total_rss" in line:
-                        return int(''.join(filter(str.isdigit, line)))
+                        # convert bytes to megabytes
+                        return int(''.join(filter(str.isdigit, line))) // (
+                            1024 * 1024
+                        )
     except Exception as err:
         raise CylcProfilerError(
             err, "Unable to find memory usage data") from err
@@ -120,7 +126,8 @@ def parse_memory_allocated(process: Process) -> int:
             with open(memory_max_file, 'r') as f:
                 line = f.readline()
                 if "max" not in line:
-                    return int(line)
+                    # convert bytes to megabytes
+                    return int(line) // (1024 * 1024)
                 cgroup_memory_path = cgroup_memory_path.parent
         return 0
     else:  # Memory limit not tracked for cgroups v1

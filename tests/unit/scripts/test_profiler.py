@@ -102,9 +102,9 @@ def test_get_resource_usage():
 def test_parse_memory_file(tmpdir):
     """It should return the memory usage of the process."""
     mem_file_v1 = tmpdir.join("memory_file_v1.txt")
-    mem_file_v1.write('total_rss=1024')
+    mem_file_v1.write('total_rss=3145728')
     mem_file_v2 = tmpdir.join("memory_file_v2.txt")
-    mem_file_v2.write('anon=666')
+    mem_file_v2.write('anon=2097152')
     cpu_file = tmpdir.join("cpu_file.txt")
     cpu_file.write('5678')
     mem_allocated_file = tmpdir.join("memory_allocated.txt")
@@ -134,8 +134,8 @@ def test_parse_memory_file(tmpdir):
     assert "Unable to find memory usage data" in str(excinfo.value)
 
     # Test the parse_memory_file function
-    assert parse_memory_file(good_process_object_v1) == 1024
-    assert parse_memory_file(good_process_object_v2) == 666
+    assert parse_memory_file(good_process_object_v1) == 3
+    assert parse_memory_file(good_process_object_v2) == 2
 
 
 def test_parse_cpu_file(tmpdir):
@@ -217,7 +217,7 @@ def test_parse_memory_allocated(tmp_path_factory):
     """It should return the memory allocated to the process."""
     good_mem_dir = tmp_path_factory.mktemp("mem_dir")
     mem_allocated_file = good_mem_dir / "memory.max"
-    mem_allocated_file.write_text('99999')
+    mem_allocated_file.write_text('4194304')
 
     # We currently do not track memory allocated for cgroups v1
     good_process_object_v1 = Process(
@@ -242,7 +242,7 @@ def test_parse_memory_allocated(tmp_path_factory):
         max_rss=0)
 
     assert parse_memory_allocated(good_process_object_v1) == 0
-    assert parse_memory_allocated(good_process_object_v2) == 99999
+    assert parse_memory_allocated(good_process_object_v2) == 4
     with pytest.raises(CylcProfilerError) as excinfo:
         parse_memory_file(bad_process_object_v2_1)
     assert "Unable to find memory usage data" in str(excinfo.value)
@@ -287,8 +287,8 @@ def test_parse_memory_allocated(tmp_path_factory):
 
     # Add a memory.max file with a value to the top level directory
     # and check it is read
-    mem_file_1.write_text("99999")
-    assert parse_memory_allocated(bad_process_object_v2_2) == 99999
+    mem_file_1.write_text("5242880")
+    assert parse_memory_allocated(bad_process_object_v2_2) == 5
 
 
 def test_get_cgroup_name_file_not_found(mocker):
