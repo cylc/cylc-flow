@@ -74,10 +74,15 @@ def test_check_output(
     db_flow_nums: set,
     expected: SatisfiedState,
 ):
+    """It checks DB for matching output msg and intersection of flow_nums."""
+
+    def select_task_outputs(*a, **k):
+        yield ('{"f": "foo", "g": "goo"}', db_flow_nums)
+
     mock_task_pool = Mock()
-    mock_task_pool.workflow_db_mgr.pri_dao.select_task_outputs.return_value = {
-        '{"f": "foo", "g": "goo"}': db_flow_nums,
-    }
+    mock_task_pool.workflow_db_mgr.pri_dao.select_task_outputs = (
+        select_task_outputs
+    )
 
     assert TaskPool.check_task_output(
         mock_task_pool, '2000', 'haddock', output_msg, flow_nums
