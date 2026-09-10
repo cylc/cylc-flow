@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from functools import partial
 import logging
 
 import pytest
@@ -26,8 +27,11 @@ from cylc.flow.commands import (
     run_cmd,
 )
 from cylc.flow.cycling.integer import IntegerPoint
+from cylc.flow.data_store_mgr import WORKFLOW
 from cylc.flow.id import TaskTokens
+from cylc.flow.network.multi import call_multi_async
 from cylc.flow.scheduler import Scheduler
+from cylc.flow.scripts import remove
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import TASK_STATUS_FAILED
@@ -593,3 +597,61 @@ async def test_remove_spawn(flow, scheduler, start):
         # empty the workflow
         await run_cmd(remove_tasks(schd, ['2002/b', '2000/c'], [], True))
         assert schd.pool.get_task_ids() == set()
+
+
+async def test_remove_script(flow, scheduler, start):
+    """Test script and back-compat handling."""
+
+    parser = remove.get_option_parser()
+
+    conf = {
+        'scheduling': {
+            'graph': {
+                'R1': 'a & b'
+            },
+        },
+    }
+    schd: Scheduler = scheduler(flow(conf))
+    async with start(schd):
+        a, b = schd.pool.get_tasks()
+
+        # test script works
+        opts, args = parser.parse_args(
+            ['--no-spawn', a.tokens.id]
+        )
+        rets = await call_multi_async(
+            partial(remove.run, opts),
+            *args,
+        )
+        assert True in rets.values()
+        await schd._main_loop()
+        assert a not in schd.pool.get_tasks()
+
+        # test back-compat
+        schd.data_store_mgr.data[
+            b.tokens.workflow_id
+        ][WORKFLOW].cylc_version = '8.6.6'
+
+        # test old version with --no-spawn
+        opts, args = parser.parse_args(
+            ['--no-spawn', b.tokens.id]
+        )
+        rets = await call_multi_async(
+            partial(remove.run, opts),
+            *args,
+        )
+        assert False in rets.values()
+        await schd._main_loop()
+        assert b in schd.pool.get_tasks()
+
+        # test old version without --no-spawn
+        opts, args = parser.parse_args(
+            [b.tokens.id]
+        )
+        rets = await call_multi_async(
+            partial(remove.run, opts),
+            *args,
+        )
+        assert True in rets.values()
+        await schd._main_loop()
+        assert not schd.pool.get_tasks()
