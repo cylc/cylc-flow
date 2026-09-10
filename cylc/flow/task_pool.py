@@ -91,7 +91,6 @@ from cylc.flow.task_state import (
 )
 from cylc.flow.task_trigger import TaskTrigger
 from cylc.flow.util import deserialise_set
-from cylc.flow.workflow_status import StopMode
 from cylc.flow.scripts.set import XTRIGGER_PREREQ_PREFIX
 
 if TYPE_CHECKING:
@@ -227,7 +226,7 @@ class TaskPool:
         else:
             LOG.warning("Requested stop task name does not exist: %s" % name)
 
-    def stop_task_done(self):
+    def stop_task_done(self) -> bool:
         """Return True if stop task has succeeded."""
         if self.stop_task_id is not None and self.stop_task_finished:
             LOG.info("Stop task %s finished" % self.stop_task_id)
@@ -1169,30 +1168,6 @@ class TaskPool:
                 ):
                     self.data_store_mgr.delta_task_state(itask)
         return True
-
-    def can_stop(self, stop_mode):
-        """Return True if workflow can stop.
-
-        A task is considered active if:
-        * It is in the active state and not marked with a kill failure.
-        * It has pending event handlers.
-        """
-        if stop_mode is None:
-            return False
-        if stop_mode == StopMode.REQUEST_NOW_NOW:
-            return True
-        if self.task_events_mgr._event_timers:
-            return False
-
-        return not any(
-            (
-                stop_mode in [StopMode.REQUEST_CLEAN, StopMode.REQUEST_KILL]
-                and itask.state(*TASK_STATUSES_ACTIVE)
-                and not itask.state.kill_failed
-            )
-            # preparing tasks get reset to waiting on restart
-            for itask in self.get_tasks()
-        )
 
     def warn_stop_orphans(self) -> None:
         """Log (warning) orphaned tasks on workflow stop."""
