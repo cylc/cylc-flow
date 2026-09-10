@@ -100,7 +100,7 @@ def parse_memory_file(process: Process):
             with open(process.cgroup_memory_path, 'r') as f:
                 for line in f:
                     if "anon" in line:
-                        # convert bytes to megabytes
+                        # convert bytes to MiB
                         return int(''.join(filter(str.isdigit, line))) // (
                             1024 * 1024
                         )
