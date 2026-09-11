@@ -846,7 +846,7 @@ class CylcConfigValidator(ParsecValidator):
             for i in range(1, 101):
                 try:
                     TimePointParser(num_expanded_year_digits=i).parse(value)
-                except IsodatetimeError:
+                except (IsodatetimeError, ValueError):
                     continue
                 return value
             raise IllegalValueError('cycle point', keys, value)
@@ -874,6 +874,10 @@ class CylcConfigValidator(ParsecValidator):
                 details = {'exc': exc}
             raise IllegalValueError(
                 'cycle point', keys, value, **details
+            ) from None
+        except ValueError:
+            raise IllegalValueError(
+                'cycle point', keys, value, msg="Invalid cycle point"
             ) from None
         return value
 
