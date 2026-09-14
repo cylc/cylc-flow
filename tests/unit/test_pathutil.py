@@ -28,6 +28,7 @@ from cylc.flow.exceptions import InputError, WorkflowFilesError
 from cylc.flow.pathutil import (
     EXPLICIT_RELATIVE_PATH_REGEX,
     expand_path,
+    get_cylc_run_dir,
     get_dirs_to_symlink,
     get_next_rundir_number,
     get_remote_workflow_run_dir,
@@ -120,6 +121,30 @@ def test_get_remote_workflow_run_dirs(
     else:
         result = func('foo')
     assert result == expected
+
+
+def test_cylc_run_dir_env(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """CYLC_RUN_DIR overrides the standard $HOME/cylc-run location."""
+    cylc_run_dir = tmp_path / 'custom-cylc-run'
+    monkeypatch.setenv('CYLC_RUN_DIR', str(cylc_run_dir))
+
+    assert get_cylc_run_dir() == str(cylc_run_dir)
+    assert get_workflow_run_dir('foo') == str(cylc_run_dir / 'foo')
+    assert get_remote_workflow_run_dir('foo') == str(
+        cylc_run_dir / 'foo'
+    )
+
+
+def test_alt_run_dir_overrides_env(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """An explicit alternate run dir takes priority over CYLC_RUN_DIR."""
+    monkeypatch.setenv('CYLC_RUN_DIR', str(tmp_path / 'from-env'))
+    alt_run_dir = tmp_path / 'explicit'
+
+    assert get_cylc_run_dir(str(alt_run_dir)) == str(alt_run_dir)
 
 
 @pytest.mark.parametrize(

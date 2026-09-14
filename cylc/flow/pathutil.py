@@ -65,6 +65,15 @@ SYMLINKABLE_LOCATIONS: Dict[str, str] = {
 }
 
 
+def _get_cylc_run_dir() -> str:
+    """Return the unexpanded Cylc run directory.
+
+    ``CYLC_RUN_DIR`` can be used to override the standard
+    ``$HOME/cylc-run`` location.
+    """
+    return os.getenv('CYLC_RUN_DIR') or _CYLC_RUN_DIR
+
+
 def expand_path(*args: Union[Path, str]) -> str:
     """Expand both vars and user in path and normalise it, joining any
     extra args."""
@@ -78,7 +87,7 @@ def get_remote_workflow_run_dir(
 ) -> str:
     """Return remote workflow run directory, joining any extra args,
     NOT expanding vars or user."""
-    return os.path.join(_CYLC_RUN_DIR, workflow_id, *args)
+    return os.path.join(_get_cylc_run_dir(), workflow_id, *args)
 
 
 def get_remote_workflow_run_job_dir(
@@ -91,7 +100,7 @@ def get_remote_workflow_run_job_dir(
 
 def get_cylc_run_dir(alt_run_dir: Optional[str] = None) -> str:
     """Return the cylc-run dir, or alt path, with vars/user expanded."""
-    return expand_path(alt_run_dir or _CYLC_RUN_DIR)
+    return expand_path(alt_run_dir or _get_cylc_run_dir())
 
 
 def get_alt_workflow_run_dir(
@@ -115,7 +124,7 @@ def get_workflow_run_dir(
     Join any extra args, and expand vars and user.
     Does not check that the directory exists.
     """
-    return expand_path(_CYLC_RUN_DIR, workflow_id, *args)
+    return expand_path(_get_cylc_run_dir(), workflow_id, *args)
 
 
 def get_workflow_run_job_dir(workflow, *args):
