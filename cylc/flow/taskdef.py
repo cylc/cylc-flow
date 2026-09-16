@@ -28,6 +28,7 @@ from typing import (
 
 from cylc.flow.exceptions import TaskDefError
 import cylc.flow.flags
+from cylc.flow.prerequisite import Prerequisite
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_outputs import (
     SORT_ORDERS,
@@ -35,6 +36,7 @@ from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUCCEEDED,
 )
+
 
 if TYPE_CHECKING:
     from cylc.flow.cycling import (
@@ -338,6 +340,16 @@ class TaskDef:
                     if dep.suicide:
                         continue
                     prereqs.add(dep.get_prerequisite(point, self))
+            if self.sequential:
+                # Add implicit previous-instance prerequisite if it exists.
+                prev_point = seq.get_prev_point(point)
+                if prev_point is not None:
+                    # We need a pre-requisite on the previous cylc of this task.
+                    # ? Is it alright to not specify the output and
+                    # ? set it as satisfied without checking?
+                    sequential_prereq = Prerequisite(prev_point)
+                    sequential_prereq[(prev_point, self.name, "")] = True
+                    prereqs.add(sequential_prereq)
         return prereqs
 
     def get_xtrigs(self, point):
