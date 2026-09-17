@@ -406,6 +406,7 @@ class Tokens(dict):
         Can be used to change the values of the new object at the same time.
 
         Examples:
+
             Duplicate tokens:
             >>> tokens1 = Tokens('~u/w')
             >>> tokens2 = tokens1.duplicate()

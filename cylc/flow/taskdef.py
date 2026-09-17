@@ -28,6 +28,7 @@ from typing import (
 
 from cylc.flow.exceptions import TaskDefError
 import cylc.flow.flags
+from cylc.flow.prerequisite import Prerequisite
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_outputs import (
     SORT_ORDERS,
@@ -35,16 +36,15 @@ from cylc.flow.task_outputs import (
     TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUCCEEDED,
 )
+from cylc.flow.task_trigger import TaskTrigger
+
 
 if TYPE_CHECKING:
     from cylc.flow.cycling import (
         PointBase,
         SequenceBase,
     )
-    from cylc.flow.task_trigger import (
-        Dependency,
-        TaskTrigger,
-    )
+    from cylc.flow.task_trigger import Dependency
 
 
 class TaskTuple(NamedTuple):
@@ -338,6 +338,14 @@ class TaskDef:
                     if dep.suicide:
                         continue
                     prereqs.add(dep.get_prerequisite(point, self))
+            if self.sequential:
+                # Add implicit previous-instance prerequisite if it exists.
+                prev_point = seq.get_prev_point(point)
+                if prev_point is not None:
+                    # We need a prerequisite on the previous cylc of this task.
+                    sequential_prereq = Prerequisite(prev_point)
+                    sequential_prereq[(prev_point, self.name, "succeeded")] = True
+                    prereqs.add(sequential_prereq)
         return prereqs
 
     def get_xtrigs(self, point):
@@ -364,6 +372,19 @@ class TaskDef:
                         continue
                     for trig in dep.task_triggers:
                         triggers.add(trig)
+            # ? This is not needed to fix issue #7346,
+            # ? but it does feel like it should be present.
+            if self.sequential:
+                # Add implicit previous-instance prerequisite if it exists.
+                prev_point = seq.get_prev_point(point)
+                if prev_point is not None:
+                    offset_interval = prev_point - point
+                    sequential_trigger = TaskTrigger(
+                        task_name=self.name,
+                        cycle_point_offset=str(offset_interval),
+                        output="succeeded",
+                    )
+                    triggers.add(sequential_trigger)
         return triggers
 
     def has_only_abs_triggers(self, point):
