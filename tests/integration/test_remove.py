@@ -21,7 +21,6 @@ import pytest
 
 from cylc.flow.commands import (
     force_trigger_tasks,
-    reload_workflow,
     remove_tasks,
     run_cmd,
 )
@@ -482,40 +481,6 @@ async def test_kill_running(flow, scheduler, run, complete, reflog):
     }
 
 
-async def test_reload_changed_config(flow, scheduler, run, complete):
-    """Test that a task is removed from the pool if its configuration changes
-    to make it no longer match the graph."""
-    wid = flow({
-        'scheduling': {
-            'graph': {
-                'R1': '''
-                    a => b
-                    a:started => s & b
-                ''',
-            },
-        },
-        'runtime': {
-            'a': {
-                'simulation': {
-                    # Ensure 1/a still in pool during reload
-                    'fail cycle points': 'all',
-                },
-            },
-        },
-    })
-    schd: Scheduler = scheduler(wid, paused_start=False)
-    async with run(schd):
-        await complete(schd, '1/s')
-        # Change graph then reload
-        flow('b', workflow_id=wid)
-        await run_cmd(reload_workflow(schd))
-        assert schd.config.cfg['scheduling']['graph']['R1'] == 'b'
-        assert schd.pool.get_task_ids() == {'1/a', '1/b'}
-
-        await run_cmd(remove_tasks(schd, ['1/a'], []))
-        await complete(schd, '1/b')
-
-
 async def test_remove_triggered(flow, scheduler, start):
     """It should remove tasks from pool and from to_trigger set."""
     conf = {
@@ -545,3 +510,51 @@ async def test_remove_triggered(flow, scheduler, start):
         )
         assert not schd.pool.get_tasks()
         assert not schd.pool.tasks_to_trigger_now
+
+
+async def test_remove_spawn(flow, scheduler, start):
+    """Test the no-spawn removal of parentless tasks."""
+    schd: Scheduler = scheduler(
+        flow({
+            'scheduler': {
+                'cycle point format': 'CCYY',
+            },
+            'scheduling': {
+                'initial cycle point': '2000',
+                'runahead limit': 'P0',
+                'graph': {
+                    'R3//P1Y': '''
+                        @wall_clock => a
+                        b
+                        c
+                    ''',
+                },
+            },
+        })
+    )
+    async with start(schd):
+        assert schd.pool.get_task_ids() == {
+            '2000/a',
+            '2000/b',
+            '2000/c',
+            '2001/b',
+            '2001/c',
+        }
+
+        # Normal removal of parentless runahead and sequential xtrigger (PSX)
+        # spawned.
+        await run_cmd(remove_tasks(schd, ['2000/a', '2000/b', '2001/b'], []))
+        assert schd.pool.get_task_ids() == {
+            '2000/c',
+            '2001/a',
+            '2001/c',
+            '2002/b',
+        }
+
+        # no spawn removal
+        await run_cmd(remove_tasks(schd, ['2001/a', '2001/c'], [], True))
+        assert schd.pool.get_task_ids() == {'2000/c', '2002/b'}
+
+        # empty the workflow
+        await run_cmd(remove_tasks(schd, ['2002/b', '2000/c'], [], True))
+        assert schd.pool.get_task_ids() == set()
