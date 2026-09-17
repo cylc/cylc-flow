@@ -127,7 +127,7 @@ REINSTALL_CYLC_ROSE_OPTIONS = [
 
 REINSTALL_OPTIONS = [
     OptionSettings(
-        ["--yes"],
+        ["--yes", "-y"],
         help='Skip interactive prompts.',
         action="store_true",
         default=False,
