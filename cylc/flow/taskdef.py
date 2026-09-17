@@ -372,6 +372,8 @@ class TaskDef:
                         continue
                     for trig in dep.task_triggers:
                         triggers.add(trig)
+            # ? This is not needed to fix issue #7346,
+            # ? but it does feel like it should be present.
             if self.sequential:
                 # Add implicit previous-instance prerequisite if it exists.
                 prev_point = seq.get_prev_point(point)
