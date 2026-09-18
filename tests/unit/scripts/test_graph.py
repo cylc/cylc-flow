@@ -294,13 +294,15 @@ def test_null(null_config):
     opts = SimpleNamespace(
         namespaces=False,
         grouping=False,
-        show_suicide=False
+        show_suicide=False,
+        flatten_icp_dependence=False,
     )
     assert get_nodes_and_edges(opts, None, 1, 2, '') == ([], [])
 
     opts = SimpleNamespace(
         namespaces=True,
         grouping=False,
-        show_suicide=False
+        show_suicide=False,
+        flatten_icp_dependence=False,
     )
     assert get_nodes_and_edges(opts, None, 1, 2, '') == ([], [])
