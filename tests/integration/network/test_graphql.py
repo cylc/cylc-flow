@@ -538,6 +538,48 @@ async def test_subscription_edges(harness):
             await subscription.aclose()
     assert has_item
 
+    # Basic delta edges
+    res_comp = {
+        'deltas': {
+            'added': {
+                'edges': [
+                    {'id': id_}
+                    for id_ in e_ids
+                ],
+            },
+        },
+    }
+
+    document, kwargs = gather_subscription_args(
+        schd,
+        '''
+            subscription {
+                deltas {
+                    added {
+                        edges (deltaStore: true) {
+                            id
+                        }
+                    }
+                }
+            }
+        '''
+    )
+    subscription = await subscribe(
+        schema.graphql_schema,
+        document,
+        **kwargs
+    )
+    has_item = False
+    with suppress(GeneratorExit):
+        async for response in subscription:
+            response.data['deltas']['added']['edges'].sort(
+                key=lambda x: x['id']
+            )
+            has_item = True
+            assert response.data == res_comp
+            await subscription.aclose()
+    assert has_item
+
     # basic nodesEdges
     res_comp = {
         'nodesEdges': {

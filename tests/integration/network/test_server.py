@@ -108,6 +108,13 @@ def test_pb_data_elements(myflow):
     )
     assert getattr(data, element_type).id == myflow.id
 
+    # Test BACK COMPAT:
+    data = PB_METHOD_MAP['pb_delta_elements'][element_type]()
+    data.ParseFromString(
+        myflow.server.pb_data_elements(element_type=element_type)
+    )
+    assert data.added.id == myflow.id
+
 
 async def test_stop(one: Scheduler, start):
     """Test stop."""
