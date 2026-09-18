@@ -17,12 +17,13 @@
 
 import asyncio
 import logging
+from threading import BrokenBarrierError
 from typing import Callable
 
 import pytest
 
 from cylc.flow import __version__ as CYLC_VERSION
-from cylc.flow.network.server import PB_METHOD_MAP
+from cylc.flow.network.server import PB_METHOD_MAP, WorkflowRuntimeServer
 from cylc.flow.scheduler import Scheduler
 
 
@@ -86,11 +87,42 @@ def test_pb_entire_workflow(myflow):
 async def test_stop(one: Scheduler, start):
     """Test stop."""
     async with start(one):
+        assert one.server.thread.is_alive()
+        assert one.server.publisher
+        assert one.server.curve_auth.is_alive()
         async with asyncio.timeout(2):
             # Wait for the server to consume the STOP signal.
             # If it doesn't, the test will fail with a asyncio.timeout error.
             await one.server.stop('TESTING')
-            assert one.server.stopped
+        assert not one.server.thread.is_alive()
+        assert not one.server.publisher
+        assert not one.server.curve_auth.is_alive()
+        assert not one.server.loop.is_running()
+
+
+@pytest.mark.filterwarnings(
+    r"ignore:.*:pytest.PytestUnhandledThreadExceptionWarning"
+)
+async def test_broken_barrier_shutdown(
+    one: Scheduler, start, monkeypatch: pytest.MonkeyPatch
+):
+    """Test that the server shuts down if the barrier is broken on startup.
+
+    Broken barrier has been observed to happen if the scheduler host is sickly
+    https://github.com/cylc/cylc-flow/issues/7425
+    """
+    class MockServer(WorkflowRuntimeServer):
+        def start(self, barrier):
+            barrier.abort()
+            super().start(barrier)
+
+    monkeypatch.setattr(
+        'cylc.flow.scheduler.WorkflowRuntimeServer', MockServer
+    )
+    with pytest.raises(BrokenBarrierError):
+        async with start(one):
+            pass
+    assert not one.server.thread.is_alive()
 
 
 async def test_receiver_basic(one: Scheduler, start, log_filter):

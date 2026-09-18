@@ -19,7 +19,7 @@
 #------------------------------------------------------------------------------
 # Test workflow installation
 . "$(dirname "$0")/test_header"
-set_test_number 22
+set_test_number 21
 
 create_test_global_config "" "
 [install]
@@ -59,22 +59,14 @@ popd || exit 1
 purge_rnd_workflow
 
 # -----------------------------------------------------------------------------
-# Test cylc install succeeds if suite.rc file in source dir
+# Test cylc install fails if suite.rc file in source dir
 # (also tests installing from absolute path)
 TEST_NAME="${TEST_NAME_BASE}-suite.rc"
 make_rnd_workflow
 rm -f "${RND_WORKFLOW_SOURCE}/flow.cylc"
 touch "${RND_WORKFLOW_SOURCE}/suite.rc"
-run_ok "${TEST_NAME}" cylc install "${RND_WORKFLOW_SOURCE}" --workflow-name="${RND_WORKFLOW_NAME}"
-contains_ok "${TEST_NAME}.stdout" <<__OUT__
-INSTALLED $RND_WORKFLOW_NAME/run1 from ${RND_WORKFLOW_SOURCE}
-__OUT__
-
-# Test deprecation message is displayed on installing a suite.rc file
-MSG=$(python -c 'from cylc.flow.workflow_files import SUITERC_DEPR_MSG;
-print(SUITERC_DEPR_MSG)')
-grep_ok "$MSG" "${TEST_NAME}.stderr"
-
+run_fail "${TEST_NAME}" cylc install "${RND_WORKFLOW_SOURCE}" --workflow-name="${RND_WORKFLOW_NAME}"
+grep_ok 'Support for suite.rc files was removed' "${TEST_NAME}.stderr"
 purge_rnd_workflow
 
 # -----------------------------------------------------------------------------

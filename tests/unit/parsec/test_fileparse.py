@@ -21,6 +21,7 @@ from pathlib import Path
 import re
 import sqlite3
 from tempfile import NamedTemporaryFile
+from textwrap import dedent
 from types import SimpleNamespace
 import warnings
 
@@ -122,7 +123,7 @@ def test_addict_replace_value():
 
 
 def test_addict_replace_value_1():
-    """"Special case depending on key and parents, for
+    """Special case depending on key and parents, for
 
     - key is 'graph' AND parents['scheduling']['graph'] OR
     - len(parents)==3 AND parents['scheduling']['graph'][?]
@@ -475,12 +476,35 @@ def test_read_and_proc_jinja2_warnings(
     assert len(caplog.records) == 1
     rec = caplog.records[0]
     assert rec.levelname == 'WARNING'
+
     assert re.match(
         (
-            r"The following warnings .* during Jinja2 preprocessing.*\s+"
+            rf"The following warnings .* during Jinja2 preprocessing.*\s+"
             rf"{__file__}:\d+: DeprecationWarning: {msg}"
         ),
         rec.message,
+    )
+
+
+def test_read_and_proc_jinja2_warnings_invalid_escape(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+):
+    """When a warning comes from a j2 template expression, it should be logged
+    with the cylc config filepath."""
+    (fpath := tmp_path / 'flow.cylc').write_text(
+        dedent(r"""
+            #!jinja2
+            {% from 'warnings' import warn %}
+            {% do warn('Mock warning') %}
+        """).lstrip()
+    )
+    read_and_proc(
+        fpath=str(fpath),
+        viewcfg={'jinja2': True, 'contin': False, 'inline': False},
+    )
+
+    assert (
+        f"{fpath}:<jinja2 template>: UserWarning: Mock warning" in caplog.text
     )
 
 

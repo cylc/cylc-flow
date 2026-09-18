@@ -126,6 +126,8 @@ EXTRA_VARS_TEMPLATE: dict[str, Any] = {
     TEMPLATING_DETECTED: None
 }
 
+_J2_WARN_LOCS = re.compile(rf'jinja2{re.escape(os.sep)}(lexer|runtime)\.py$')
+
 
 def get_cylc_env_vars() -> dict[str, str]:
     """Return a restricted dict of CYLC_ environment variables for templating.
@@ -511,11 +513,17 @@ def read_and_proc(
                 flines = jinja2process(
                     fpath, flines, fdir, template_vars
                 )
+            for w in warns:
+                if _J2_WARN_LOCS.search(w.filename):
+                    # Warning originating from processing of a jinja2 template.
+                    # Unfortunately, we can't know exactly where it originated,
+                    # so just set the config filename and vague line "number":
+                    w.filename = fpath
+                    w.lineno = '<jinja2 template>'  # type: ignore
             if warns:
                 LOG.warning(
                     "The following warnings were raised during Jinja2 "
-                    "preprocessing (note: any Jinja 3.1 deprecations will "
-                    "break at Cylc 8.7):\n"
+                    "preprocessing:\n"
                     + "\n".join(
                         warnings.formatwarning(
                             w.message, w.category, w.filename, w.lineno

@@ -28,12 +28,10 @@ from typing import (
 )
 
 from cylc.flow.exceptions import TaskDefError
-import cylc.flow.flags
 from cylc.flow.task_id import TaskID
 from cylc.flow.task_outputs import (
     SORT_ORDERS,
     TASK_OUTPUT_FAILED,
-    TASK_OUTPUT_SUBMITTED,
     TASK_OUTPUT_SUCCEEDED,
 )
 
@@ -230,14 +228,6 @@ class TaskDef:
             and self.outputs[TASK_OUTPUT_FAILED][1] is None
         ):
             self.set_required_output(TASK_OUTPUT_SUCCEEDED, True)
-
-        # In Cylc 7 back compat mode, make all success outputs required.
-        if cylc.flow.flags.cylc7_back_compat:
-            for output in [
-                TASK_OUTPUT_SUBMITTED,
-                TASK_OUTPUT_SUCCEEDED
-            ]:
-                self.set_required_output(output, True)
 
     def add_graph_child(
         self, trigger: 'TaskTrigger', taskname: str, sequence: 'SequenceBase'

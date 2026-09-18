@@ -20,6 +20,7 @@ Importing code should catch ImportError in case Jinja2 is not installed.
 """
 
 from contextlib import suppress
+from functools import lru_cache, wraps
 from glob import glob
 import importlib
 import os
@@ -50,6 +51,65 @@ TRACEBACK_LINENO = re.compile(
     r'\s+?File "(?P<file>.*)", line (?P<line>\d+), in .*template'
 )
 CONTEXT_LINES = 3
+
+
+def restore_deprecated_interfaces():
+    """Extend support for some deprecated interfaces in Jinja2 3.1.x.
+
+    Jinja2 renamed a bunch of interfaces. Warnings were added in version 3.0.0,
+    support for the old names was removed in 3.1.0, however, our users did not
+    notice these warnings (you have to manually turn them on) so did not take
+    action.
+
+    https://jinja.palletsprojects.com/en/stable/changes/#version-3-1-0
+
+    In https://github.com/cylc/cylc-flow/pull/7365 (8.6.6) we've captured
+    Jinja2 warnings and turned them into Cylc warnings to ensure they cannot be
+    missed.
+
+    To give users a chance to take action, this patch restores the renamed
+    interfaces just for ONE minor Cylc version.
+
+    BACK COMPAT: restore_deprecated_interfaces
+    FROM: 8.6.x
+    TO: 8.7.0
+    REMOVE AT: 8.8.0
+    """
+    renamed_interfaces = {
+        'contextfilter': 'pass_context',
+        'contextfunction': 'pass_context',
+        'evalcontextfilter': 'pass_eval_context',
+        'evalcontextfunction': 'pass_eval_context',
+        'environmentfilter': 'pass_environment',
+        'environmentfunction': 'pass_environment',
+    }
+    url = 'https://jinja.palletsprojects.com/en/stable/changes/#version-3-1-0'
+
+    @lru_cache  # suppress duplicate warnings
+    def _log_warning(old, new):
+        LOG.warning(
+            f'The Jinja2 function {old} was renamed to {new}.'
+            f'\nCylc has extended support for {old} until 8.8.0.'
+            f' Please search your workflow for {old} and upgrade any uses.'
+            f'\nSee {url}'
+        )
+
+    def _warn(fcn, old, new):
+        @wraps(fcn)
+        def _inner(*args, **kwargs):
+            _log_warning(old, new)
+            return fcn(*args, **kwargs)
+        return _inner
+
+    import jinja2
+    import jinja2.filters
+    for old, new in renamed_interfaces.items():
+        setattr(jinja2, old, _warn(getattr(jinja2, new), old, new))
+        setattr(jinja2.filters, old, _warn(getattr(jinja2, new), old, new))
+
+
+# BACK COMPAT
+restore_deprecated_interfaces()
 
 
 class PyModuleLoader(BaseLoader):

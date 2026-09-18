@@ -259,7 +259,7 @@ DEAD_ENDS = {
     'conditions':
         'cylc conditions has been replaced by cylc help license',
     'documentation':
-        'Cylc documentation is now at http://cylc.org',
+        'Cylc documentation is now at https://cylc.org',
     'edit':
         'Command removed, please edit the workflow in source directory',
     'get-directory':
@@ -495,7 +495,7 @@ def list_plugins():
                 [],
             ).append(entry_point)
 
-    # list all the distriutions which provide Cylc entry points
+    # list all the distributions which provide Cylc entry points
     _plugins = []
     for dist in _dists:
         _plugins.append((
@@ -654,7 +654,7 @@ def main() -> None:  # pragma: no cover
 
 
 def _main(opts, cmd_args: list[str]) -> int:
-    """Implemnent the Cylc CLI.
+    """Implement the Cylc CLI.
 
     Returns the exit code as an integer.
     """

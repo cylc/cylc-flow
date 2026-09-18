@@ -18,26 +18,53 @@
 import asyncio
 import logging
 from pathlib import Path
-import pytest
 import re
-from signal import SIGHUP, SIGINT, SIGTERM
-from typing import Any, Callable
+from signal import (
+    SIGHUP,
+    SIGINT,
+    SIGTERM,
+)
+from typing import (
+    Any,
+    Callable,
+)
+from unittest.mock import Mock
+
+import pytest
 
 from cylc.flow import commands
-from cylc.flow.exceptions import CylcError
+from cylc.flow.exceptions import CylcError, WorkflowFilesError
 from cylc.flow.parsec.exceptions import ParsecError
-from cylc.flow.scheduler import Scheduler, SchedulerStop
+from cylc.flow.scheduler import (
+    Scheduler,
+    SchedulerStop,
+)
+from cylc.flow.task_remote_mgr import (
+    REMOTE_FILE_INSTALL_255,
+    REMOTE_FILE_INSTALL_DONE,
+    REMOTE_FILE_INSTALL_FAILED,
+    REMOTE_INIT_255,
+    REMOTE_INIT_DONE,
+    REMOTE_INIT_FAILED,
+)
+from cylc.flow.scheduler_cli import RunOptions
 from cylc.flow.task_state import (
-    TASK_STATUS_SUCCEEDED,
-    TASK_STATUS_WAITING,
+    TASK_STATUS_FAILED,
+    TASK_STATUS_RUNNING,
     TASK_STATUS_SUBMIT_FAILED,
     TASK_STATUS_SUBMITTED,
-    TASK_STATUS_RUNNING,
-    TASK_STATUS_FAILED
+    TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_WAITING,
 )
+from cylc.flow.workflow_status import (
+    AutoRestartMode,
+    StopMode,
+)
+from cylc.flow.workflow_files import WorkflowFiles
 
-from cylc.flow.workflow_status import AutoRestartMode, StopMode
 
+from cylc.flow.network.resolvers import TaskMsg
+from cylc.flow.id import Tokens
 
 Fixture = Any
 
@@ -455,3 +482,133 @@ async def test_set_stall_interaction(flow, scheduler, start):
             schd.data_store_mgr.data[schd.tokens.id]['workflow'].status_msg
             != 'stalled'
         )
+
+
+async def test_cylc_message(one, start, log_filter, caplog):
+    message = (
+        "20000101T0000Z",  # event_time
+        "INFO",  # severity
+        'some-message',  # message
+    )
+
+    async with start(one):
+        # send a message for an invalid task (task names cannot contain spaces)
+        one.message_queue.put(
+            TaskMsg(
+                Tokens("1/Invalid task", relative=True),
+                *message,
+            )
+        )
+        one.process_queued_task_messages()
+        assert log_filter(contains="Illegal task name: Invalid task")
+
+        # send a message for a valid task
+        caplog.clear()
+        one.message_queue.put(
+            TaskMsg(
+                Tokens("1/one", relative=True),
+                *message,
+            )
+        )
+        one.process_queued_task_messages()
+        assert not log_filter(contains="Illegal task name")
+        assert log_filter(contains='(received)some-message')
+
+
+async def test_manage_remote_init_retry_on_255(
+    flow, scheduler, start, monkeypatch: pytest.MonkeyPatch
+):
+    """Test that manage_remote_init retries remote init/file install on 255.
+
+    See https://github.com/cylc/cylc-flow/issues/7286
+
+    On restart, if remote-init fails with exit code 255 (SSH connection
+    failure), manage_remote_init should retry rather than silently dropping
+    the install target.
+    """
+    missing_target = 'Alderaan'
+    fake_platform = {'install target': missing_target, 'name': 'test_plat'}
+
+    schd: Scheduler = scheduler(flow('one'), run_mode='live')
+    async with start(schd):
+        remote_mgr = schd.task_job_mgr.task_remote_mgr
+        mock_remote_init = Mock()
+        monkeypatch.setattr(remote_mgr, 'remote_init', mock_remote_init)
+        mock_file_install = Mock()
+        monkeypatch.setattr(remote_mgr, 'file_install', mock_file_install)
+
+        # Simulate restart remote-init has been kicked off and is being
+        # tracked via incomplete_ri_map:
+        schd.incomplete_ri_map[missing_target] = fake_platform
+
+        # REMOTE_INIT_255: retry remote_init (not file_install)
+        remote_mgr.remote_init_map[missing_target] = REMOTE_INIT_255
+        schd.manage_remote_init()
+        mock_remote_init.assert_called_once_with(fake_platform)
+        mock_file_install.assert_not_called()
+        assert missing_target in schd.incomplete_ri_map, (
+            "Install target should remain in incomplete_ri_map for tracking"
+        )
+        mock_remote_init.reset_mock()
+
+        # REMOTE_INIT_DONE: should trigger file_install (not remote_init)
+        remote_mgr.remote_init_map[missing_target] = REMOTE_INIT_DONE
+        schd.manage_remote_init()
+        mock_file_install.assert_called_once_with(fake_platform)
+        mock_remote_init.assert_not_called()
+        assert missing_target in schd.incomplete_ri_map
+        mock_file_install.reset_mock()
+
+        # REMOTE_FILE_INSTALL_255: should retry file_install (not remote_init)
+        remote_mgr.remote_init_map[missing_target] = REMOTE_FILE_INSTALL_255
+        schd.manage_remote_init()
+        mock_file_install.assert_called_once_with(fake_platform)
+        mock_remote_init.assert_not_called()
+        assert missing_target in schd.incomplete_ri_map
+        mock_file_install.reset_mock()
+
+        # REMOTE_FILE_INSTALL_DONE: should remove from ri map
+        remote_mgr.remote_init_map[missing_target] = REMOTE_FILE_INSTALL_DONE
+        schd.manage_remote_init()
+        mock_remote_init.assert_not_called()
+        mock_file_install.assert_not_called()
+        assert missing_target not in schd.incomplete_ri_map
+
+        # REMOTE_INIT_FAILED: should remove from ri map
+        schd.incomplete_ri_map[missing_target] = fake_platform
+        remote_mgr.remote_init_map[missing_target] = REMOTE_INIT_FAILED
+        schd.manage_remote_init()
+        mock_remote_init.assert_not_called()
+        mock_file_install.assert_not_called()
+        assert missing_target not in schd.incomplete_ri_map
+
+        # REMOTE_FILE_INSTALL_FAILED: should remove from ri map
+        schd.incomplete_ri_map[missing_target] = fake_platform
+        remote_mgr.remote_init_map[missing_target] = REMOTE_FILE_INSTALL_FAILED
+        schd.manage_remote_init()
+        mock_remote_init.assert_not_called()
+        mock_file_install.assert_not_called()
+        assert missing_target not in schd.incomplete_ri_map
+
+
+async def test_suite_rc(test_dir, run_dir, start):
+    """It should reject workflows with suite.rc files."""
+    (test_dir / WorkflowFiles.SUITE_RC).touch()
+    workflow_id = str(test_dir.relative_to(run_dir))
+    schd = Scheduler(workflow_id, RunOptions())
+
+    # suite.rc present
+    with pytest.raises(
+        WorkflowFilesError, match=f'suite.rc found in .*{test_dir.name}'
+    ):
+        async with start(schd):
+            pass
+
+    # suite.rc and flow.cylc present
+    (test_dir / WorkflowFiles.FLOW_FILE).touch()
+    with pytest.raises(
+        WorkflowFilesError,
+        match=f'Both flow.cylc and suite.rc.*{test_dir.name}',
+    ):
+        async with start(schd):
+            pass
