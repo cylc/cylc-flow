@@ -785,3 +785,9 @@ def test_type_help_examples():
 )
 def test_broadcast_coerce_str(value: str, expected: str):
     assert BroadcastConfigValidator.coerce_str(value, ['whatever']) == expected
+
+
+@pytest.mark.parametrize('value', ['T, T', 'T00, T18', '+123456-01-01T00T00'])
+def test_malformed_cycle_point_reports_config_error(value):
+    with pytest.raises(IllegalValueError):
+        VDR.coerce_cycle_point(value, ['scheduling', 'initial cycle point'])

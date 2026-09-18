@@ -23,6 +23,7 @@ from cylc.flow.cycling.iso8601 import (
     ISO8601Interval,
     ISO8601Point,
     ISO8601Sequence,
+    ISO8601SyntaxError,
     ingest_time,
 )
 from cylc.flow.cycling.loader import ISO8601_CYCLING_TYPE
@@ -963,3 +964,17 @@ def test_validate_fails_comma_sep_offset_list(
     set_cycling_type(ISO8601_CYCLING_TYPE, "Z")
     with pytest.raises(Exception, match=errortext):
         ingest_time(_input)
+
+
+@pytest.mark.parametrize("_input", ("T, T", "T00, T18", "T00,T18"))
+def test_ingest_time_bad_syntax_raises_iso8601_error(_input, set_cycling_type):
+    """It raises ISO8601SyntaxError, not a bare ValueError, on bad syntax.
+
+    The isodatetime parser fails with an unhelpful "too many values to
+    unpack" ValueError on some malformed input, which reached the user as a
+    traceback rather than a clean error message. See
+    https://github.com/cylc/cylc-flow/issues/7390
+    """
+    set_cycling_type(ISO8601_CYCLING_TYPE, "Z")
+    with pytest.raises(ISO8601SyntaxError, match="Invalid ISO 8601"):
+        ingest_time(_input, "2010-08-08T15:41Z")
