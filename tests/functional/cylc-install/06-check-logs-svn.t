@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -58,7 +59,7 @@ echo "Outside workflow" > test_file_outside_workflow
 run_ok "${TEST_NAME_BASE}-install" \
     cylc install "./${WORKFLOW}" --no-run-name --workflow-name "${WORKFLOW_NAME}"
 
-DIFF_FILE="${WORKFLOW_RUN_DIR}/log/version/uncommitted.diff"
+DIFF_FILE="${WORKFLOW_RUN_DIR}/log/version/01-uncommitted.diff"
 grep_ok "Inside workflow" "$DIFF_FILE"
 grep_fail "Outside workflow" "$DIFF_FILE"
 

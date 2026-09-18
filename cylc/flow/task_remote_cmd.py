@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -113,6 +114,8 @@ def remote_init(
             print(f'Error occurred when symlinking.'
                   f' {target} contains an invalid environment variable.')
             return 1
+        if cylc.flow.flags.verbosity > 1:
+            print(f'$ ln -s "{target}" "{path}"')
         make_symlink_dir(path, target)
     srvd = os.path.join(rund, WorkflowFiles.Service.DIRNAME)
     os.makedirs(srvd, exist_ok=True)

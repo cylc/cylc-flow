@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -160,6 +161,12 @@ LOG_RETR_SETTINGS = {
         logs appearing in their final location (due to the job runner)
         you can configure time intervals here to delay the first and
         subsequent retrieval attempts.
+
+        Job log retrieval will be retried until the expected job files have
+        been retried, see
+        :cylc:conf:`
+        global.cylc[platforms][<platform name>]retrieve job log expected files`
+        for details
     ''')
 }
 
@@ -542,8 +549,8 @@ Cylc can automatically resubmit jobs after submission failures.
 Submission retry delays is a list of ISO 8601 durations which tell Cylc
 how long to wait before the next try.
 
-The job environment variable ``$CYLC_TASK_SUBMIT_NUMBER`` increments with each
-job submission attempt.
+The job environment variable :envvar:`CYLC_TASK_SUBMIT_NUMBER` increments
+with each job submission attempt.
 
 Tasks only go to the ``submit-failed`` state if job submission fails with no
 retries left.
@@ -1092,8 +1099,8 @@ with Conf('global.cylc', desc='''
             How Cylc determines and shares the identity of the workflow host.
 
             The workflow host's identity must be determined locally by cylc and
-            passed to running tasks (via ``$CYLC_WORKFLOW_HOST``) so that task
-            messages can target the right workflow on the right host.
+            passed to running tasks (via :envvar:`CYLC_WORKFLOW_HOST`) so that
+            task messages can target the right workflow on the right host.
 
             .. versionchanged:: 8.0.0
 
@@ -1395,6 +1402,25 @@ with Conf('global.cylc', desc='''
 
                         .. versionadded:: {versionadded}
                     """)
+    with Conf('template variables', desc='''
+        Define template variables for all workflows.
+
+        Any template variables defined here will be made available to all
+        workflows. Use this to define site-specific things.
+        Workflow-specific template variables can be set via ``--set`` and
+        ``--set-file`` options to workflow parsing commands, or in a
+        ``rose-suite.conf`` file via the cylc-rose plugin.
+
+        .. versionadded:: 8.7.0
+    '''):
+        Conf('<key>', VDR.V_TEMPLATE_VARIABLE, 'None', desc='''
+            A template variable in Python syntax.
+
+            .. rubric:: Examples:
+
+            * ``SITE = "my-site"``
+            * ``PLATFORMS = {"hpc": "my-hpc", "cluster": "my-cluster}``
+        ''')
     with Conf('platforms', desc='''
         Platforms allow you to define compute resources available at your
         site.
@@ -1411,10 +1437,6 @@ with Conf('global.cylc', desc='''
             '<platform name>',
             desc=dedent('''
             Configuration defining a platform.
-
-            Many of these settings have replaced those of the same name from
-            the old Cylc 7 ``suite.rc[runtime][<namespace>][job]/[remote]``
-            and ``global.rc[hosts][<host>]`` sections.
 
             Platform names can be regular expressions: If you have a set of
             compute resources such as ``bigmachine1, bigmachine2`` or
@@ -1447,6 +1469,13 @@ with Conf('global.cylc', desc='''
                       [[localhost|cylc-server-..]]  # error
                       [[localhost, cylc-server-..]]  # ok
 
+            .. versionchanged:: 8.0.0
+
+               Many of these settings have replaced those of the same name
+               from the old Cylc 7
+               ``suite.rc[runtime][<namespace>][job]/[remote]``
+               and ``global.rc[hosts][<host>]`` sections.
+
             .. seealso::
 
                - :ref:`MajorChangesPlatforms` in the Cylc 8 migration guide.
@@ -1471,6 +1500,38 @@ with Conf('global.cylc', desc='''
 
                 .. versionadded:: 8.0.0
             ''')
+
+            with Conf('profiler', desc='''
+                Configure the Cylc job profiler.
+
+                This tool can capture CPU and memory information from
+                job runners which use cgroups such as PBS and Slurm.
+
+                .. versionadded:: 8.7.0
+            '''):
+                Conf('activate', VDR.V_BOOLEAN, False, desc='''
+                    Enable the Cylc profiler for this platform.
+                ''')
+                Conf('cgroups path', VDR.V_STRING,
+                     default='/sys/fs/cgroup',
+                     desc='''
+                     Configure the path to the cgroups filesystem.
+
+                     The default value is the standard
+                     location for cgroups on Linux and should work in
+                     most circumstances
+                     ''')
+                Conf('polling interval', VDR.V_INTERVAL,
+                     default="PT10S",
+                     desc='''
+                     Configure the profiler polling interval.
+
+                     The interval at which the profiler will
+                     poll the cgroups filesystem for resource usage data.
+                     The default value of 10 seconds should be sufficient for
+                     most use cases, but can be adjusted as needed.
+                ''')
+
             Conf('job runner', VDR.V_STRING, 'background', desc=f'''
                 The system used to run jobs on the platform.
 
@@ -1751,6 +1812,33 @@ with Conf('global.cylc', desc='''
                    retry delays``.
                    {replaces}
             ''')
+            Conf(
+                'retrieve job log expected files',
+                VDR.V_STRING_LIST,
+                '',
+                desc='''
+                Configure the log files that job log retrieval is expected to
+                return.
+
+                By default, job log retrieval is considered successful once
+                it has retrieved the "job.out" file, and additionally the
+                "job.err" file if the job failed.
+
+                Cylc will repeat job log retrieval according to the configured
+                :cylc:conf:`[..]retrieve job logs retry delays` until the
+                expected file(s) have been retrieved.
+
+                This configuration allows you to configure additional files
+                to add to this success condition.
+
+                The purpose of this configuration is to facilitate working with
+                files written asynchronously by job runners which may not be
+                created until after the job has succeeded. E.g, job report
+                or accounting files.
+
+                .. versionadded:: 8.7.0
+            ''',
+            )
             Conf('tail command template',
                  VDR.V_STRING, 'tail -n +1 --follow=name %(filename)s',
                  desc=f'''

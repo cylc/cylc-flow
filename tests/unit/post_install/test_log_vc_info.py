@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,7 +26,7 @@ import subprocess
 from typing import Any, Callable, Tuple
 from unittest.mock import Mock
 
-from cylc.flow.install_plugins.log_vc_info import (
+from cylc.flow.plugins.log_vc_info import (
     INFO_FILENAME,
     VCSNotInstalledError,
     _get_git_commit,
@@ -52,6 +53,11 @@ BASIC_FLOW_2 = """
         R1 = bar
 """
 
+BASIC_FLOW_3 = """
+[scheduling]
+    [[graph]]
+        R1 = foobar
+"""
 
 require_git = pytest.mark.skipif(
     shutil.which('git') is None,
@@ -170,12 +176,33 @@ def test_write_diff_git(git_source_repo: Tuple[str, str], tmp_path: Path):
     source_dir, _ = git_source_repo
     run_dir = tmp_path / 'run_dir'
     (run_dir / WorkflowFiles.LogDir.DIRNAME).mkdir(parents=True)
+    (run_dir / WorkflowFiles.LogDir.DIRNAME /
+     WorkflowFiles.LogDir.INSTALL).mkdir(exist_ok=True)
+    with open(run_dir / WorkflowFiles.LogDir.DIRNAME /
+              WorkflowFiles.LogDir.INSTALL / "01-install.log", "w") as _:
+        pass
     diff_file = write_diff('git', source_dir, run_dir)
+    assert diff_file.parts[-1] == "01-uncommitted.diff"
     diff_lines = diff_file.read_text().splitlines()
     assert diff_lines[0].startswith("# Auto-generated diff")
     for line in ("diff --git a/flow.cylc b/flow.cylc",
                  "-        R1 = foo",
                  "+        R1 = bar"):
+        assert line in diff_lines
+
+    flow_file = Path(source_dir) / 'flow.cylc'
+    flow_file.write_text(BASIC_FLOW_3)
+
+    with open(run_dir / WorkflowFiles.LogDir.DIRNAME /
+              WorkflowFiles.LogDir.INSTALL / "02-reinstall.log", "w") as _:
+        pass
+    diff_file = write_diff('git', source_dir, run_dir)
+    assert diff_file.parts[-1] == "02-uncommitted.diff"
+    diff_lines = diff_file.read_text().splitlines()
+    assert diff_lines[0].startswith("# Auto-generated diff")
+    for line in ("diff --git a/flow.cylc b/flow.cylc",
+                 "-        R1 = foo",
+                 "+        R1 = foobar"):
         assert line in diff_lines
 
 
@@ -238,10 +265,10 @@ def test_not_repo(tmp_path: Path, monkeypatch: MonkeyPatch):
     flow_file = source_dir.joinpath('flow.cylc')
     flow_file.write_text(BASIC_FLOW_1)
     mock_write_vc_info = Mock()
-    monkeypatch.setattr('cylc.flow.install_plugins.log_vc_info.write_vc_info',
+    monkeypatch.setattr('cylc.flow.plugins.log_vc_info.write_vc_info',
                         mock_write_vc_info)
     mock_write_diff = Mock()
-    monkeypatch.setattr('cylc.flow.install_plugins.log_vc_info.write_diff',
+    monkeypatch.setattr('cylc.flow.plugins.log_vc_info.write_diff',
                         mock_write_diff)
 
     assert get_vc_info(source_dir) is None
@@ -300,7 +327,7 @@ def test_not_installed(
         _run_cmd(fake_vcs, [], cwd=tmp_path)
 
     monkeypatch.setattr(
-        'cylc.flow.install_plugins.log_vc_info.INFO_COMMANDS',
+        'cylc.flow.plugins.log_vc_info.INFO_COMMANDS',
         {fake_vcs: []}
     )
     caplog.set_level(logging.DEBUG)

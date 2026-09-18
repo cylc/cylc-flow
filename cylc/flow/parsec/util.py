@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,12 +20,40 @@ The copy and override functions below assume values are either dicts
 (nesting) or shallow collections of simple types.
 """
 
-from copy import copy
-from collections import deque
+from collections import Counter, deque
+from copy import copy, deepcopy
 import re
 import sys
 
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
+
+
+class ParsecDictConfig(dict):
+    """A parsec configuration value that is a dictionary.
+
+    Parsec uses dictionaries for sections which means that configuration values
+    cannot be dictionaries themselves. This dict subclass is excluded from
+    such logic allowing it to be used as a configuration value.
+    """
+
+
+def is_section(config):
+    """Return True if the config is a section.
+
+    Examples:
+        >>> is_section(True)
+        False
+        >>> is_section([])
+        False
+        >>> is_section({'a': []})
+        True
+        >>> is_section(ParsecDictConfig(a=[]))
+        False
+
+    """
+    return isinstance(config, dict) and not isinstance(
+        config, ParsecDictConfig
+    )
 
 
 def intlistjoin(lst):
@@ -147,7 +176,7 @@ def printcfg(cfg, level=0, indent=0, prefix='', none_str='',
     while stack:
         key_i, cfg_i, level_i, indent_i = stack.pop()
         spacer = " " * 4 * (indent_i - 1)
-        if isinstance(cfg_i, dict):
+        if is_section(cfg_i):
             if not cfg_i and none_str is None:
                 # Don't print empty sections if none_str is None. This does not
                 # handle sections with no items printed because the values of
@@ -165,7 +194,7 @@ def printcfg(cfg, level=0, indent=0, prefix='', none_str='',
             subsections = []
             values = []
             for key, item in cfg_i.items():
-                if isinstance(item, dict):
+                if is_section(item):
                     subsections.append((key, item, level_i + 1, indent_i + 1))
                 else:
                     values.append((key, item, level_i + 1, indent_i + 1))
@@ -205,7 +234,9 @@ def replicate(target, source):
     if hasattr(source, "defaults_"):
         target.defaults_ = pdeepcopy(source.defaults_)
     for key, val in source.items():
-        if isinstance(val, dict):
+        if isinstance(val, ParsecDictConfig):  # value is a dictionary
+            target[key] = deepcopy(val)
+        elif isinstance(val, dict):  # value is a parsec section
             if key not in target:
                 target[key] = OrderedDictWithDefaults()
             if hasattr(val, 'defaults_'):
@@ -237,7 +268,7 @@ def poverride(target, sparse, prepend=False):
     if not sparse:
         return
     for key, val in sparse.items():
-        if isinstance(val, dict):
+        if is_section(val):
             poverride(target[key], val, prepend)
         else:
             if prepend and (key not in target):
@@ -267,7 +298,7 @@ def m_override(target, sparse):
         if many_defaults:
             defaults_list.append((dest, many_defaults))
         for key, val in source.items():
-            if isinstance(val, dict):
+            if is_section(val):
                 child_many_defaults = many_defaults.get(
                     key, OrderedDictWithDefaults())
                 if key not in dest:
@@ -331,7 +362,7 @@ def un_many(cfig):
                     raise
                 del cfig.defaults_[key]
 
-        elif isinstance(val, dict):
+        elif is_section(val):
             un_many(cfig[key])
 
 
@@ -410,3 +441,64 @@ def expand_many_section(config):
             name = dequote(name.strip()).strip()
             replicate(ret.setdefault(name, {}), section)
     return ret
+
+
+def filter_keys(possible_keys: list[str], key: str) -> list[str]:
+    """Filters possible keys into most likely key based off current key
+
+    Finds likelihood bases on ratio of correct letters to total letters,
+    returns the two highest.
+
+    Functions by using the Counter class to get a list of number
+    counts for the entered key, finds the intersection between it and
+    the current possible key, totals the count, doubles it and divides
+    by the total number of letters in both entered and possible key
+    to get a ratio where 1 is an exact match. Sorts the keys by ratio,
+    accepts the highest match if more than 20% similar and accepts
+    the second highest if it's also high.
+
+    Args:
+        possible_keys:
+            The list of all possible keys
+        key:
+            Key value being validated
+
+    Returns:
+        A list of filtered keys
+    """
+    filtered_keys: list[tuple[str, float]] = []
+    key_counter = Counter(key)
+    for possible_key in possible_keys:
+        possible_key_counter = Counter(possible_key)
+
+        # simple ratio for whole key
+        similarity = key_counter & possible_key_counter
+        ratio = (similarity.total() * 2) / (len(key) + len(possible_key))
+
+        # possible more accurate ratios for individual words
+        parsed_possible_key = possible_key.split(" ")
+        for possible_word in parsed_possible_key:
+            possible_word_counter = Counter(possible_word)
+            similarity = key_counter & possible_word_counter
+            word_ratio = (similarity.total() * 2)
+            word_ratio = word_ratio / (len(key) + len(possible_word_counter))
+            if word_ratio > ratio:
+                ratio = word_ratio
+        filtered_keys.append((possible_key, ratio))
+
+    filtered_keys.sort(key=lambda x: x[1], reverse=True)
+    # no keys similar enough to suggest
+    if filtered_keys[0][1] < min(len(filtered_keys[0][0]) / 10, 0.5):
+        return []
+
+    # pick the most likely suggestion, and any others
+    # within a 90% of the similarity score of it
+    final_keys = [filtered_keys[0]]
+    for i in range(1, min(4, len(filtered_keys))):
+        if filtered_keys[i][1] > final_keys[0][1] * .9:
+            final_keys.append(filtered_keys[i])
+
+    return [
+        final_keys[i][0]
+        for i in range(0, len(final_keys))
+    ]

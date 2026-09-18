@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -70,7 +71,7 @@ __EOF__
 cmp_ok "${FOO_WORK_DIR}/raw2.stdout" "${FOO_WORK_DIR}/raw1.stdout"
 
 cmp_ok "${FOO_WORK_DIR}/raw2.stderr" << __EOF__
-DEPRECATED: the --raw option will be removed at Cylc 8.7; use --format=raw instead.
+DEPRECATED: the --raw option will be removed at Cylc 8.9; use --format=raw instead.
 __EOF__
 
 purge

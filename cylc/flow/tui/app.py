@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -196,7 +197,7 @@ class TuiNode(urwid.ParentNode):
 
 
 @contextmanager
-def updater_subproc(filters, client_timeout):
+def updater_subproc(updater: 'Updater', filters):
     """Runs the Updater in its own process.
 
     The updater provides the data for Tui to render. Running the updater
@@ -204,12 +205,10 @@ def updater_subproc(filters, client_timeout):
     it to remain responsive whilst updates are being gathered as well as
     decoupling the application update logic from the data update logic.
     """
-    # start the updater
-    updater = Updater(client_timeout=client_timeout)
     p = Process(target=updater.start, args=(filters,))
     try:
         p.start()
-        yield updater
+        yield
     finally:
         updater.terminate()
         p.join(4)  # timeout of 4 seconds
@@ -291,6 +290,8 @@ class TuiApp:
         id_filter=None,
         interactive=True,
         client_timeout=3,
+        *,
+        _is_tests=False,
     ):
         """Start the Tui app.
 
@@ -305,9 +306,17 @@ class TuiApp:
         """
         self.set_initial_filters(w_id, id_filter)
 
-        with updater_subproc(self.filters, client_timeout) as updater:
-            self.updater = updater
+        self.updater = Updater(client_timeout=client_timeout)
 
+        if _is_tests:
+            # make the update and scan intervals match (more reliable)
+            # and speed things up a little whilst we're at it
+            # (Have to do this in source code because monkeypatching doesn't
+            # work with multiprocessing)
+            self.updater.BASE_UPDATE_INTERVAL = 0.1
+            self.updater.BASE_SCAN_INTERVAL = 0.1
+
+        with updater_subproc(self.updater, self.filters):
             # pre-subscribe to the provided workflow if requested
             self.expand_on_load = {w_id or 'root'}
             if w_id:

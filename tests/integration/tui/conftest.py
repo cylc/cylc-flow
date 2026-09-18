@@ -253,17 +253,6 @@ def mod_rakiura(test_dir, request, monkeypatch):
 
 
 def _rakiura(test_dir, request, monkeypatch):
-    # make the workflow and scan update intervals match (more reliable)
-    # and speed things up a little whilst we're at it
-    monkeypatch.setattr(
-        'cylc.flow.tui.updater.Updater.BASE_UPDATE_INTERVAL',
-        0.1,
-    )
-    monkeypatch.setattr(
-        'cylc.flow.tui.updater.Updater.BASE_SCAN_INTERVAL',
-        0.1,
-    )
-
     # the user name and the prefix of workflow IDs are both variable
     # so we patch the render functions to make test output stable
     def get_display_id(id_):
@@ -302,6 +291,7 @@ def _rakiura(test_dir, request, monkeypatch):
             workflow_id,
             id_filter=workflow_filter,
             interactive=False,
+            _is_tests=True,
         ):
             yield RakiuraSession(
                 app,

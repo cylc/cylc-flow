@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,6 +29,7 @@ from collections import deque
 from textwrap import dedent
 from typing import List, Dict, Any, Optional, Tuple
 
+from cylc.flow.parsec.util import ParsecDictConfig
 from metomi.isodatetime.data import Duration, TimePoint
 from metomi.isodatetime.dumpers import TimePointDumper
 from metomi.isodatetime.parsers import TimePointParser, DurationParser
@@ -37,6 +39,8 @@ from cylc.flow import LOG
 from cylc.flow.parsec.exceptions import (
     ListValueError, IllegalValueError, IllegalItemError)
 from cylc.flow.subprocctx import SubFuncContext
+
+from cylc.flow.parsec.util import filter_keys
 
 
 class ParsecValidator:
@@ -183,7 +187,15 @@ class ParsecValidator:
             for key, value in cfg.items():
                 if key not in spec:
                     if '__MANY__' not in spec:
-                        raise IllegalItemError(keys, key)
+                        possible_keys = [x.name for x in spec]
+                        likely_keys = filter_keys(possible_keys, key)
+                        if likely_keys == []:
+                            raise IllegalItemError(keys, key)
+                        msg = (
+                            f'{key} is not a valid configuration,'
+                            f' did you mean {", ".join(likely_keys)}'
+                        )
+                        raise IllegalItemError(keys, key, msg=msg)
                     else:
                         # only accept the item if its value is of the same type
                         # as that of the __MANY__  item, i.e. dict or not-dict.
@@ -689,6 +701,7 @@ class CylcConfigValidator(ParsecValidator):
     V_INTERVAL = 'V_INTERVAL'
     V_INTERVAL_LIST = 'V_INTERVAL_LIST'
     V_PARAMETER_LIST = 'V_PARAMETER_LIST'
+    V_TEMPLATE_VARIABLE = 'V_TEMPLATE_VARIABLE'
     V_XTRIGGER = 'V_XTRIGGER'
 
     V_TYPE_HELP: dict = {
@@ -786,6 +799,20 @@ class CylcConfigValidator(ParsecValidator):
             },
             [('ref', 'User Guide Param')]
         ),
+        V_TEMPLATE_VARIABLE: (
+            'template variable',
+            'A variable for use by Jinja2.',
+            {
+                '"Hello World!"': 'String',
+                '42': 'Integer',
+                '12.34': 'Float',
+                'True': 'Boolean',
+                '[1, 2]': 'List',
+                '(1, 2)': 'Tuple',
+                '{"a": 1, "b": 2}': 'Dictionary',
+            },
+            [('ref', 'jinja2-template-variables')],
+        ),
         V_XTRIGGER: (
             'xtrigger function signature',
             (
@@ -812,6 +839,7 @@ class CylcConfigValidator(ParsecValidator):
             self.V_INTERVAL: self.coerce_interval,
             self.V_INTERVAL_LIST: self.coerce_interval_list,
             self.V_PARAMETER_LIST: self.coerce_parameter_list,
+            self.V_TEMPLATE_VARIABLE: self.coerce_template_variable,
             self.V_XTRIGGER: self.coerce_xtrigger,
         })
 
@@ -1219,6 +1247,18 @@ class CylcConfigValidator(ParsecValidator):
                     val = cls.strip_and_unquote([], value)
         return val
 
+    @classmethod
+    def coerce_template_variable(cls, value, keys):
+        # bypass circular import problem
+        from cylc.flow.templatevars import eval_var
+        ret = eval_var(value.strip())
+        if isinstance(ret, dict):
+            # NOTE: Parsec interprets dictionaries as configuration sections,
+            # so we must cast any dict values to a special type to allow them
+            # through.
+            ret = ParsecDictConfig(ret)
+        return ret
+
 
 class BroadcastConfigValidator(CylcConfigValidator):
     """Validate and Coerce DB loaded broadcast config to internal objects."""
@@ -1274,7 +1314,7 @@ class BroadcastConfigValidator(CylcConfigValidator):
     # to:
     #    8.1.x
     # remove at:
-    #    8.x
+    #    8.7
     @classmethod
     def coerce_interval(cls, value, keys):
         """Coerce an ISO 8601 interval into seconds.
