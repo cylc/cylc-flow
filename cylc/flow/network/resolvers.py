@@ -338,22 +338,35 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
              for flow in await self.get_workflows_data(args)],
             args)
 
-    async def get_flow_data_from_ids(self, data_store, native_ids, is_sub):
+    async def get_flow_data_from_ids(self, native_ids, args=None):
         """Return workflow data by id."""
         w_ids = []
         for native_id in native_ids:
             w_ids.append(
                 Tokens(native_id).workflow_id
             )
-        if not is_sub:
-            await self.data_store_mgr.set_query_sync_levels(
-                set(w_ids)
-            )
-        return [
-            data_store[w_id]
-            for w_id in iter_uniq(w_ids)
-            if w_id in data_store
-        ]
+
+        if args is None:
+            args = {}
+
+        sub_id = args.get('sub_id')
+        if sub_id and args.get('delta_store'):
+            return [
+                delta[args['delta_type']]
+                for delta in [
+                    self.delta_store[sub_id][w_id]
+                    for w_id in iter_uniq(w_ids)
+                    if w_id in self.delta_store[sub_id]
+                ]
+            ]
+        else:
+            if not sub_id:
+                await self.data_store_mgr.set_query_sync_levels(set(w_ids))
+            return [
+                self.data_store_mgr.data[w_id]
+                for w_id in iter_uniq(w_ids)
+                if w_id in self.data_store_mgr.data
+            ]
 
     # nodes
     def get_node_state(self, node, node_type):
@@ -393,17 +406,8 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
     async def get_nodes_by_ids(self, node_type, args):
         """Return protobuf node objects for given id."""
         nat_ids = uniq(args.get('native_ids', []))
-        # Both cases just as common so 'if' not 'try'
-        is_sub = 'sub_id' in args
-        if is_sub and args['delta_store']:
-            flow_data = [
-                delta[args['delta_type']]
-                for delta in await self.get_flow_data_from_ids(
-                    self.delta_store[args['sub_id']], nat_ids, is_sub)
-            ]
-        else:
-            flow_data = await self.get_flow_data_from_ids(
-                self.data_store_mgr.data, nat_ids, is_sub)
+        flow_data = await self.get_flow_data_from_ids(nat_ids, args)
+
         return sort_elements(
             [
                 node
@@ -452,22 +456,16 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
     async def get_edges_by_ids(self, args):
         """Return protobuf edge objects for given id."""
         nat_ids = uniq(args.get('native_ids', []))
-        is_sub = 'sub_id' in args
-        if is_sub and args['delta_store']:
-            flow_data = [
-                delta[args['delta_type']]
-                for delta in await self.get_flow_data_from_ids(
-                    self.delta_store[args['sub_id']], nat_ids, is_sub)
-            ]
-        else:
-            flow_data = await self.get_flow_data_from_ids(
-                self.data_store_mgr.data, nat_ids, is_sub)
+        flow_data = await self.get_flow_data_from_ids(nat_ids, args)
 
         return sort_elements(
-            [edge
-             for flow in flow_data
-             for edge in get_data_elements(flow, nat_ids, EDGES)],
-            args)
+            [
+                edge
+                for flow in flow_data
+                for edge in get_data_elements(flow, nat_ids, EDGES)
+            ],
+            args
+        )
 
     async def get_nodes_edges(self, root_nodes, args):
         """Return nodes and edges within a specified distance of root nodes."""
@@ -480,7 +478,8 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
         edge_ids = set()
         # Setup for edgewise search.
         new_nodes = root_nodes
-        is_sub = 'sub_id' in args
+        # Do not use delta-store for window about root nodes
+        args['delta_store'] = False
         for _ in range(args['distance']):
             # Gather edges.
             # Edges should be unique (graph not circular),
@@ -491,11 +490,7 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
                 for e_id in n.edges
             }.difference(edge_ids)
             edge_ids.update(new_edge_ids)
-            flow_data = await self.get_flow_data_from_ids(
-                self.data_store_mgr.data,
-                new_edge_ids,
-                is_sub
-            )
+            flow_data = await self.get_flow_data_from_ids(new_edge_ids, args)
             new_edges = [
                 edge
                 for flow in flow_data
@@ -513,11 +508,7 @@ class BaseResolvers(metaclass=ABCMeta):  # noqa: SIM119
             if not new_node_ids:
                 break
             node_ids.update(new_node_ids)
-            flow_data = await self.get_flow_data_from_ids(
-                self.data_store_mgr.data,
-                new_node_ids,
-                is_sub
-            )
+            flow_data = await self.get_flow_data_from_ids(new_node_ids, args)
             new_nodes = [
                 node
                 for flow in flow_data
