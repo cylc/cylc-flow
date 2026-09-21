@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -457,13 +458,11 @@ __ERR__
 
 named_grep_ok() {
     # (Put extra grep options like '-E' at end of the command line)
-    local NAME="$1"
+    local TEST_NAME="$1"
     local BRE="$2"
     local FILE="$3"
     shift 3
     local OPTS="$*"
-    local TEST_NAME
-    TEST_NAME="grep-ok: ${NAME}"
     # shellcheck disable=SC2086
     if grep ${OPTS} -q -e "${BRE}" "${FILE}"; then
         ok "${TEST_NAME}"

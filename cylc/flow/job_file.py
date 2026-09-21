@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -224,8 +225,16 @@ class JobFileWriter:
             '\n    export CYLC_TASK_TRY_NUMBER=%s' % job_conf['try_num'])
         handle.write(
             "\n    export CYLC_TASK_FLOW_NUMBERS="
-            f"{','.join(str(f) for f in job_conf['flow_nums'])}"
-        )
+            f"{','.join(str(f) for f in job_conf['flow_nums'])}")
+        handle.write(
+            "\n    export CYLC_PROFILER="
+            f"{job_conf['platform']['profiler']['activate']}")
+        handle.write(
+            "\n    export CYLC_PROFILER_CGROUPS="
+            f"{job_conf['platform']['profiler']['cgroups path']}")
+        handle.write(
+            "\n    export CYLC_PROFILER_POLL_INTERVAL="
+            f"{job_conf['platform']['profiler']['polling interval']}")
         # Standard parameter environment variables
         for var, val in job_conf['param_var'].items():
             handle.write('\n    export CYLC_TASK_PARAM_%s="%s"' % (var, val))

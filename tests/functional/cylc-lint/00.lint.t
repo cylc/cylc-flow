@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,15 +31,15 @@ rm etc/global.cylc
 
 TEST_NAME="${TEST_NAME_BASE}.vanilla"
 run_fail "${TEST_NAME}" cylc lint .
-named_grep_ok "check-for-error-code" "S004" "${TEST_NAME}.stdout"
+named_grep_ok "${TEST_NAME_BASE}-check-for-error-code" "S004" "${TEST_NAME}.stdout"
 
 TEST_NAME="${TEST_NAME_BASE}.pick-a-ruleset"
 run_fail "${TEST_NAME}" cylc lint . -r 728
-named_grep_ok "check-for-error-code" "U998" "${TEST_NAME}.stdout"
+named_grep_ok "${TEST_NAME_BASE}-check-for-error-code" "U998" "${TEST_NAME}.stdout"
 
 TEST_NAME="${TEST_NAME_BASE}.inplace"
 run_fail "${TEST_NAME}" cylc lint . -i
-named_grep_ok "check-for-error-code-in-file" "U998" flow.cylc
+named_grep_ok "${TEST_NAME_BASE}-check-for-error-code-in-file" "U998" flow.cylc
 
 rm flow.cylc
 
@@ -49,7 +50,7 @@ __HERE__
 
 TEST_NAME="${TEST_NAME_BASE}.pick-a-ruleset-728"
 run_fail "${TEST_NAME}" cylc lint . -r 728
-named_grep_ok "do-not-upgrade-check-if-compat-mode" "Lint after renaming" "${TEST_NAME}.stderr"
+named_grep_ok "${TEST_NAME_BASE}-do-not-upgrade-check-if-compat-mode" "Lint after renaming" "${TEST_NAME}.stderr"
 
 TEST_NAME="${TEST_NAME_BASE}.pick-a-ruleset-728-exit-zero"
 run_ok "${TEST_NAME}" cylc lint . -r 728 --exit-zero
@@ -69,15 +70,15 @@ __HERE__
 
 TEST_NAME="${TEST_NAME_BASE}.zero-issues"
 run_ok "${TEST_NAME}" cylc lint .
-named_grep_ok "message on no errors" "found no issues" "${TEST_NAME}.stdout"
+named_grep_ok "${TEST_NAME_BASE}-message-on-no-errors" "found no issues" "${TEST_NAME}.stdout"
 
 # It returns an error message if you attempt to lint a non-existant location
 TEST_NAME="it-fails-if-not-target"
-run_fail ${TEST_NAME} cylc lint "a-$(uuidgen)"
+run_fail "${TEST_NAME}" cylc lint "a-$(uuidgen)"
 grep_ok "Workflow ID not found" "${TEST_NAME}.stderr"
 
 # It returns a reference in reference mode
-TEST_NAME="it-returns-a-reference"
+TEST_NAME="${TEST_NAME_BASE}-it-returns-a-reference"
 run_ok "${TEST_NAME}" cylc lint --list-codes
 named_grep_ok "${TEST_NAME}-contains-style-codes" "^S001:" "${TEST_NAME}.stdout"
 TEST_NAME="it-returns-a-reference-style"

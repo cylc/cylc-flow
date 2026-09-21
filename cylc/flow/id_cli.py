@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,7 +38,6 @@ from cylc.flow.id import (
 from cylc.flow.pathutil import EXPLICIT_RELATIVE_PATH_REGEX
 from cylc.flow.workflow_files import (
     check_flow_file,
-    detect_both_flow_and_suite,
     get_flow_file,
     get_workflow_run_dir,
     infer_latest_run_from_id,
@@ -446,7 +446,6 @@ def _validate_workflow_ids(*tokens_list, src_path):
                 task=tokens['job'],
             )
             LOG.warning(f'Did you mean: {suggested.id}')
-        detect_both_flow_and_suite(src_path)
 
 
 def _infer_latest_runs(tokens_list, src_path, alt_run_dir=None):

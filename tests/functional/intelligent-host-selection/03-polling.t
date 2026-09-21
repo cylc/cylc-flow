@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -75,11 +76,12 @@ LOGFILE="${WORKFLOW_RUN_DIR}/log/scheduler/log"
 # Check that when a task fail badhosts associated with that task's platform
 # are removed from the badhosts set.
 named_grep_ok \
-    "job poll fails" \
+    "${TEST_NAME_BASE}-job-poll-fails" \
     "Could not connect to unreachable_host" \
     "${LOGFILE}"
 
-named_grep_ok "job poll retries & succeeds" \
+named_grep_ok \
+    "${TEST_NAME_BASE}-job-poll-retries-and-succeeds" \
     "\[jobs-poll out\] \[TASK JOB SUMMARY\].*1/mixedhosttask/01" \
     "${LOGFILE}"
 

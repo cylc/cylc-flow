@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -156,11 +157,10 @@ def main(
     options: 'Values',
     *ids,
 ) -> None:
-    asyncio.run(_main(parser, options, *ids))
+    asyncio.run(_main(options, *ids))
 
 
 async def _main(
-    parser: COP,
     options: 'Values',
     *ids,
 ) -> None:

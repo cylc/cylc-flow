@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,20 +35,12 @@ from cylc.flow.workflow_status import WorkflowStatus
 
 
 @pytest.fixture
-def updater(monkeypatch, test_dir):
+def updater(test_dir):
     """Return an updater ready for testing."""
-    # patch the update intervals so that everything runs for every update
-    monkeypatch.setattr(
-        'cylc.flow.tui.updater.Updater.BASE_UPDATE_INTERVAL',
-        0,
-    )
-    monkeypatch.setattr(
-        'cylc.flow.tui.updater.Updater.BASE_SCAN_INTERVAL',
-        0,
-    )
 
-    # create the updater
     updater = Updater()
+    # patch the update intervals so that everything runs for every update
+    updater.BASE_UPDATE_INTERVAL = updater.BASE_SCAN_INTERVAL = 0
 
     # swap multiprocessing.Queue for queue.Queue
     # (this means queued operations are instant making tests more stable)

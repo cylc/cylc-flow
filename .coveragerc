@@ -4,7 +4,7 @@
 [run]
 branch = True
 cover_pylib = False
-concurrency = thread
+concurrency = thread, multiprocessing
 data_file = .coverage
 disable_warnings =
     trace-changed
@@ -16,7 +16,6 @@ omit =
     tests/*
     */cylc/flow/*_pb2.py
     cylc/flow/etc/*
-    cylc/flow/scripts/report_timings.py
 parallel = True
 source = ./cylc
 # https://github.com/coveragepy/coveragepy/issues/2082:

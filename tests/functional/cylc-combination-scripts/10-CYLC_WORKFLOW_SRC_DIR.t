@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,7 +37,7 @@ __HERE__
 
 run_ok "${TEST_NAME_BASE}-view" cylc view -p .
 
-named_grep_ok "src-path-in-view-p" "TEST: $PWD" \
+named_grep_ok "${TEST_NAME_BASE}-src-path-in-view-p" "TEST: $PWD" \
     "${TEST_NAME_BASE}-view.stdout"
 
 # It starts playing:
@@ -47,7 +48,7 @@ run_ok "${TEST_NAME_BASE}-vip" \
         --workflow-name "${WORKFLOW_NAME}"
 
 # It can get CYLC_WORKFLOW_SRC_DIR
-named_grep_ok "src-path-available" \
+named_grep_ok "${TEST_NAME_BASE}-src-path-available" \
     "TEST: $PWD" "${RUN_DIR}/${WORKFLOW_NAME}/log/config/flow-processed.cylc"
 
 # It can be updated with Cylc VR
@@ -57,7 +58,7 @@ run_ok "${TEST_NAME_BASE}-vr" \
 poll_grep "meta" "${RUN_DIR}/${WORKFLOW_NAME}/log/config/flow-processed.cylc"
 
 # It can get CYLC_WORKFLOW_SRC_DIR
-named_grep_ok "src-path-available" \
+named_grep_ok "${TEST_NAME_BASE}-src-path-available" \
     "TEST: $PWD" "${RUN_DIR}/${WORKFLOW_NAME}/log/config/flow-processed.cylc"
 
 cylc stop "${WORKFLOW_NAME}"

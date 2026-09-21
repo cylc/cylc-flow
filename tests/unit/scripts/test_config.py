@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -224,7 +225,7 @@ def test_cylc_config_xtriggers(tmp_run_dir, capsys: pytest.CaptureFixture):
     option_parser = get_option_parser()
 
     asyncio.run(
-        _main(option_parser, Options(option_parser)(), 'constellation')
+        _main(Options(option_parser)(), 'constellation')
     )
     assert capsys.readouterr().out == dedent("""\
     [scheduler]

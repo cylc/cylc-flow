@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -151,7 +152,6 @@ from cylc.flow.workflow_events import WorkflowEventHandler
 from cylc.flow.workflow_files import (
     NO_TITLE,
     WorkflowFiles,
-    check_deprecation,
 )
 from cylc.flow.xtrigger_mgr import XtriggerCollator
 
@@ -280,7 +280,6 @@ class WorkflowConfig:
         log_dir: Optional[str] = None,
         work_dir: Optional[str] = None,
         share_dir: Optional[str] = None,
-        force_compat_mode: bool = False,
     ) -> None:
         """
         Initialize the workflow config object.
@@ -289,13 +288,8 @@ class WorkflowConfig:
             workflow: workflow ID
             fpath: workflow config file path
             options: CLI options
-            force_compat_mode:
-                If True, forces Cylc to use compatibility mode
-                overriding compatibility mode checks.
-                See https://github.com/cylc/cylc-rose/issues/319
 
         """
-        check_deprecation(Path(fpath), force_compat_mode=force_compat_mode)
         self.mem_log = mem_log_func
         if self.mem_log is None:
             self.mem_log = lambda x: None
@@ -729,10 +723,7 @@ class WorkflowConfig:
         """
 
         cfg_cp_tz = self.cfg['scheduler'].get('cycle point time zone')
-        if (
-            not cylc.flow.flags.cylc7_back_compat
-            and not cfg_cp_tz
-        ):
+        if not cfg_cp_tz:
             cfg_cp_tz = 'Z'
         # Get the original workflow run time zone if restart:
         orig_cp_tz = getattr(self.options, 'cycle_point_tz', None)
@@ -953,17 +944,10 @@ class WorkflowConfig:
             raise WorkflowConfigError(msg)
         # Otherwise "[scheduler]allow implicit tasks" is not set
 
-        if not cylc.flow.flags.cylc7_back_compat:
-            msg += (
-                "\nTo allow implicit tasks, use "
-                f"'{WorkflowFiles.FLOW_FILE}[scheduler]allow implicit tasks'"
-            )
-        # Allow implicit tasks in back-compat mode unless rose-suite.conf
-        # present (to maintain compat with Rose 2019)
-        elif not (self.fpath.parent / "rose-suite.conf").is_file():
-            LOG.debug(msg)
-            return
-
+        msg += (
+            "\nTo allow implicit tasks, use "
+            f"'{WorkflowFiles.FLOW_FILE}[scheduler]allow implicit tasks'"
+        )
         raise WorkflowConfigError(msg)
 
     def _check_circular(self):
@@ -1118,13 +1102,6 @@ class WorkflowConfig:
                 Does this task have any suicide triggers
 
         """
-        # check completion expressions are not being used in compat mode
-        if cylc.flow.flags.cylc7_back_compat:
-            raise WorkflowConfigError(
-                '[runtime][<namespace>]completion cannot be used'
-                ' in Cylc 7 compatibility mode.'
-            )
-
         # check for invalid triggers in the expression
         if 'submit-failed' in expr:
             raise WorkflowConfigError(
@@ -2497,7 +2474,7 @@ class WorkflowConfig:
                 if suicide:
                     suicides += 1
 
-        if suicides and not cylc.flow.flags.cylc7_back_compat:
+        if suicides:
             LOG.info(
                 f"{suicides} suicide trigger(s) detected. These are rarely "
                 "needed in Cylc 8 - see https://cylc.github.io/cylc-doc/"
@@ -2819,10 +2796,16 @@ class WorkflowConfig:
         becomes:
 
         [[xtriggers]]
-           _cylc_wall_clock_foo = wallclock(PT1D)
+           _cylc_wall_clock_foo = wall_clock(PT1D)
 
         Not done by parsec upgrade because the graph has to be parsed first.
         """
+        # BACK COMPAT: clock-trigger has been deprecated
+        # from: 8.0.0
+        # remove at: x
+        if len(self.cfg['scheduling']['special tasks']['clock-trigger']) > 0:
+            LOG.warning(r"Clock-trigger is deprecated; "
+                        r"please use @wall_clock")
         for item in self.cfg['scheduling']['special tasks']['clock-trigger']:
             match = RE_CLOCK_OFFSET.match(item)
             # (Already validated during "special tasks" parsing above.)
@@ -2852,7 +2835,7 @@ class WorkflowConfig:
                     event_names[i] = upgraded[event] = (
                         WorkflowEventHandler.EVENTS_DEPRECATED[event]
                     )
-            if upgraded and not cylc.flow.flags.cylc7_back_compat:
+            if upgraded:
                 LOG.warning(
                     f"{upgrader.depr_msg}\n"
                     f" * (8.0.0) [scheduler][events][{setting}] "

@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -124,6 +125,8 @@ _COMPAT_QUERIES = (
     (
         # BACK COMPAT
         # isRetry, isWallclock and isXtriggered fields added at 8.5.0
+        # FROM 8.4
+        # REMOVE AT: 8.8
         SpecifierSet('>=8, <8.5'),
         _QUERY
         .replace('isRetry', '')
@@ -147,6 +150,8 @@ MUTATIONS = {
         'kill',
         'trigger',
         'poll',
+        'set',
+        'remove',
     ],
     'task': [
         'hold',
