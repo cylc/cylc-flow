@@ -276,15 +276,16 @@ def _check_fs_path(path):
         )
 
 
-def get_tailer_template(platform: dict, mode: str) -> str:
-    """Return the tail command template to use for the given mode.
+def get_tail_lines(mode: str, tail_lines: int) -> str:
+    """Return the ``%(lines)s`` value for a tail command template.
 
-    The "tail-end" mode follows the log from the end of the file; all other
-    tail-follow modes follow it from the start.
+    In "tail-end" mode, tail-follow the log starting ``tail_lines`` lines
+    from the *end* of the file. In all other tail-follow modes, start from
+    the beginning of the file.
     """
     if mode == TAIL_END:
-        return platform["tail from end command template"]
-    return platform["tail command template"]
+        return str(tail_lines)
+    return '+1'
 
 
 async def view_log(
@@ -356,7 +357,7 @@ async def view_log(
         else:
             cmd = tailer_tmpl % {
                 "filename": shlex.quote(str(logpath)),
-                "lines": tail_lines,
+                "lines": get_tail_lines(mode, tail_lines),
             }
         proc = Popen(shlex.split(cmd), stdin=DEVNULL)  # nosec
         # * batchview command is user configurable
@@ -491,7 +492,7 @@ async def _get_remote_log(
     """
     logpath = os.path.normpath(get_remote_workflow_run_job_dir(
         workflow_id, point, task, submit_num, filename))
-    tail_tmpl = get_tailer_template(platform, mode)
+    tail_tmpl = platform["tail command template"]
     cmd = ['cat-log', *verbosity_to_opts(cylc.flow.flags.verbosity)]
     for item in [logpath, mode, tail_tmpl]:
         cmd.append('--remote-arg=%s' % shlex.quote(item))
@@ -639,7 +640,7 @@ async def _main(
 
         platform = get_platform()
         tail_tmpl = os.path.expandvars(
-            get_tailer_template(platform, mode)
+            platform["tail command template"]
         )
         out = await view_log(
             log_file_path,
@@ -698,7 +699,9 @@ async def _main(
                     batchview_cmd_tmpl = platform[conf_key]
                 if batchview_cmd_tmpl is not None:
                     batchview_cmd = batchview_cmd_tmpl % {
-                        "job_id": str(live_job_id)}
+                        "job_id": str(live_job_id),
+                        "lines": get_tail_lines(mode, options.tail_lines),
+                    }
 
         local_log_dir = Path(
             get_workflow_run_job_dir(workflow_id, point, task, submit_num)
@@ -769,7 +772,7 @@ async def _main(
         else:
             # Log available locally.
             tail_tmpl = os.path.expandvars(
-                get_tailer_template(platform, mode))
+                platform["tail command template"])
             out = await view_log(
                 str(local_log_dir / options.filename),
                 mode,

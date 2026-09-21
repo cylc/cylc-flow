@@ -30,15 +30,13 @@ from cylc.flow.scripts.cat_log import (
     _main as cat_log,
     _get_remote_log,
     get_option_parser as cat_log_gop,
-    get_tailer_template,
+    get_tail_lines,
     view_log,
 )
 
 
 TAILER_PLATFORM = {
-    'tail command template': 'tail -n +1 --follow=name %(filename)s',
-    'tail from end command template':
-    'tail -n %(lines)s --follow=name %(filename)s',
+    'tail command template': 'tail -n %(lines)s --follow=name %(filename)s',
 }
 
 
@@ -105,21 +103,20 @@ def test_colorise_cat_log_colour(log_file):
     )
 
 
-class TestGetTailerTemplate:
-    """Tests for the get_tailer_template function."""
+class TestGetTailLines:
+    """Tests for the get_tail_lines function."""
 
     @pytest.mark.parametrize(
         'mode, expected',
         [
-            (TAIL, 'tail -n +1 --follow=name %(filename)s'),
-            (TAIL_END, 'tail -n %(lines)s --follow=name %(filename)s'),
-            ('unknown_mode', 'tail -n +1 --follow=name %(filename)s'),
+            (TAIL, '+1'),
+            (TAIL_END, '100'),
+            ('unknown_mode', '+1'),
         ],
     )
     def test_modes(self, mode, expected):
-        """Test the tailer template selection for all supported modes."""
-        result = get_tailer_template(TAILER_PLATFORM, mode)
-        assert result == expected
+        """tail-end starts from the end; all other modes from the start."""
+        assert get_tail_lines(mode, 100) == expected
 
 
 async def test_get_remote_log_adds_tail_lines_for_tail_end(monkeypatch):
@@ -175,7 +172,7 @@ async def test_view_log_tail_vs_tail_end(tmp_path, capfd):
     await view_log(
         logpath,
         TAIL,
-        'tail -n +1 %(filename)s',
+        'tail -n %(lines)s %(filename)s',
     )
     out = capfd.readouterr().out.splitlines()
     assert out == lines
