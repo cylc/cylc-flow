@@ -293,7 +293,6 @@ async def view_log(
     mode,
     tailer_tmpl,
     batchview_cmd=None,
-    remote=False,
     color=False,
     prepend_path=False,
     tail_lines=DEFAULT_TAIL_LINES,
@@ -307,9 +306,6 @@ async def view_log(
     tail_lines is the number of lines from the end of the file to start
     tailing from (only used by the "tail-end" mode via the ``%(lines)s``
     substitution in the tail command template).
-
-    If remote is True, we are executing on a remote host for a log file there.
-
     """
     # Resolve NN symlinks etc.
     logpath = os.path.realpath(logpath)
