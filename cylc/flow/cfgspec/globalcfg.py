@@ -1859,8 +1859,7 @@ with Conf('global.cylc', desc='''
                 .. versionchanged:: 8.7.0
 
                    Added the ``%(lines)s`` substitution to support the
-                   "tail-end" view mode (replacing the separate
-                   ``tail from end command template`` setting).
+                   "tail-end" view mode.
 
                 .. versionchanged:: 8.0.0
 
