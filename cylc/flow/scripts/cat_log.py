@@ -280,7 +280,7 @@ def get_tail_lines(mode: str, tail_lines: int) -> str:
     """Return the ``%(lines)s`` value for a tail command template.
 
     In "tail-end" mode, tail-follow the log starting ``tail_lines`` lines
-    from the *end* of the file. In all other tail-follow modes, start from
+    from the *end* of the file. In tail (from start) mode, start from
     the beginning of the file.
     """
     if mode == TAIL_END:
@@ -493,10 +493,7 @@ async def _get_remote_log(
     if mode in TAIL_MODES:
         # Substitute the line count into the tail command here (on the
         # workflow host) so that the remote end does not need to know about
-        # the number of lines. "tail-end" is forwarded as plain "tail" for
-        # the same reason: the only difference between the two modes is the
-        # number of lines to show, which is now baked into the command. This
-        # keeps the remote cat-log compatible with older Cylc versions.
+        # the number of lines.
         tail_tmpl = tail_tmpl.replace(
             '%(lines)s', get_tail_lines(mode, tail_lines)
         )

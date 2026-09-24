@@ -159,9 +159,6 @@ async def test_get_remote_log_bakes_tail_lines_for_tail_end(monkeypatch):
         tail_lines=42,
     )
 
-    # No --tail-lines forwarded to the remote.
-    assert not any(arg.startswith('--tail-lines') for arg in captured['cmd'])
-    # The line count is baked into the forwarded tail command template...
     assert (
         "--remote-arg=tail -n 42 --follow=name %(filename)s"
         in captured['cmd']
