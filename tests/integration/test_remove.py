@@ -27,9 +27,9 @@ from cylc.flow.commands import (
     run_cmd,
 )
 from cylc.flow.cycling.integer import IntegerPoint
-from cylc.flow.data_store_mgr import WORKFLOW
 from cylc.flow.id import TaskTokens
 from cylc.flow.network.multi import call_multi_async
+from cylc.flow.network.client_factory import get_client as org_get_client
 from cylc.flow.scheduler import Scheduler
 from cylc.flow.scripts import remove
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
@@ -599,7 +599,7 @@ async def test_remove_spawn(flow, scheduler, start):
         assert schd.pool.get_task_ids() == set()
 
 
-async def test_remove_script(flow, scheduler, start):
+async def test_remove_script(monkeypatch, flow, scheduler, start):
     """Test script and back-compat handling."""
 
     parser = remove.get_option_parser()
@@ -628,9 +628,15 @@ async def test_remove_script(flow, scheduler, start):
         assert a not in schd.pool.get_tasks()
 
         # test back-compat
-        schd.data_store_mgr.data[
-            b.tokens.workflow_id
-        ][WORKFLOW].cylc_version = '8.6.6'
+        def mod_get_client(*args, **kwargs):
+            client = org_get_client(*args, **kwargs)
+            client.scheduler_version = '8.6.6'
+            return client
+
+        monkeypatch.setattr(
+            'cylc.flow.scripts.remove.get_client',
+            mod_get_client
+        )
 
         # test old version with --no-spawn
         opts, args = parser.parse_args(

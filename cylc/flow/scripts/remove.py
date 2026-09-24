@@ -73,16 +73,6 @@ if TYPE_CHECKING:
     from optparse import Values
 
 
-VERSION_QUERY = '''
-query ($wFlows: [ID]) {
-  workflows(ids: $wFlows) {
-    id
-    cylcVersion
-  }
-}
-'''
-
-
 BCOMPAT_MUTATION = '''
 mutation (
   $wFlows: [WorkflowID]!,
@@ -145,16 +135,6 @@ down prematurely as complete.
 async def run(options: 'Values', workflow_id: str, *tokens_list):
     pclient = get_client(workflow_id, timeout=options.comms_timeout)
 
-    # BACK COMPAT: handle --no-spawn absence in earlier clients
-    # FROM: 8.0
-    # TO: 8.6.*
-    # REMOVE: 8.8
-    version_kwargs: Dict[str, Any] = {
-        'request_string': VERSION_QUERY,
-        'variables': {'wFlows': [workflow_id]}
-    }
-    version_result = await pclient.async_request('graphql', version_kwargs)
-
     mutation_kwargs: Dict[str, Any] = {
         'variables': {
             'wFlows': [workflow_id],
@@ -165,12 +145,19 @@ async def run(options: 'Values', workflow_id: str, *tokens_list):
             'flow': options.flow,
         }
     }
-    target_version = version_result["workflows"][0]["cylcVersion"]
-    if f'{target_version}' in SpecifierSet('>=8, <8.7', prereleases=True):
+
+    # BACK COMPAT: handle --no-spawn absence in earlier clients
+    # FROM: 8.0
+    # TO: 8.6.*
+    # REMOVE: 8.8
+    if (
+        f'{pclient.scheduler_version}'
+        in SpecifierSet('>=8, <8.7', prereleases=True)
+    ):
         if options.no_spawn:
             raise InputError(
                 f"Option --no-spawn is not available ({workflow_id}: Cylc "
-                f"{target_version} < 8.7.0)."
+                f"{pclient.scheduler_version} < 8.7.0)."
             )
         mutation_kwargs['request_string'] = BCOMPAT_MUTATION
     else:
