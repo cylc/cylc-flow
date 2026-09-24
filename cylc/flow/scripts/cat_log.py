@@ -489,15 +489,25 @@ async def _get_remote_log(
     logpath = os.path.normpath(get_remote_workflow_run_job_dir(
         workflow_id, point, task, submit_num, filename))
     tail_tmpl = platform["tail command template"]
+    remote_mode = mode
+    if mode in TAIL_MODES:
+        # Substitute the line count into the tail command here (on the
+        # workflow host) so that the remote end does not need to know about
+        # the number of lines. "tail-end" is forwarded as plain "tail" for
+        # the same reason: the only difference between the two modes is the
+        # number of lines to show, which is now baked into the command. This
+        # keeps the remote cat-log compatible with older Cylc versions.
+        tail_tmpl = tail_tmpl.replace(
+            '%(lines)s', get_tail_lines(mode, tail_lines)
+        )
+        remote_mode = TAIL
     cmd = ['cat-log', *verbosity_to_opts(cylc.flow.flags.verbosity)]
-    for item in [logpath, mode, tail_tmpl]:
+    for item in [logpath, remote_mode, tail_tmpl]:
         cmd.append('--remote-arg=%s' % shlex.quote(item))
     if batchview_cmd:
         cmd.append('--remote-arg=%s' % shlex.quote(batchview_cmd))
     if prepend_path:
         cmd.append('--prepend-path')
-    if mode == TAIL_END:
-        cmd.append('--tail-lines=%d' % tail_lines)
     cmd.append(workflow_id)
     # TODO: Add Intelligent Host selection to this
     # https://github.com/cylc/cylc-flow/issues/4263
@@ -561,10 +571,8 @@ async def _main(
             mode,
             tail_tmpl,
             batchview_cmd,
-            remote=True,
             color=color,
             prepend_path=options.prepend_path,
-            tail_lines=options.tail_lines,
         )
         if res == 1:
             sys.exit(res)
@@ -695,9 +703,9 @@ async def _main(
                     batchview_cmd_tmpl = platform[conf_key]
                 if batchview_cmd_tmpl is not None:
                     batchview_cmd = batchview_cmd_tmpl % {
-                        "job_id": str(live_job_id),
-                        "lines": get_tail_lines(mode, options.tail_lines),
-                    }
+                        "job_id": str(live_job_id)}
+                    if mode == TAIL_END:
+                        batchview_cmd += f' -n {options.tail_lines}'
 
         local_log_dir = Path(
             get_workflow_run_job_dir(workflow_id, point, task, submit_num)

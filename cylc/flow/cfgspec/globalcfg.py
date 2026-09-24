@@ -1873,10 +1873,10 @@ with Conf('global.cylc', desc='''
                 is running.  This setting overrides
                 :cylc:conf:`[..]tail command template`.
 
-                The template may also include a ``%(lines)s`` substitution
-                (see :cylc:conf:`[..]tail command template`) to support the
-                UI "tail-end" view mode; without it, tail-end falls back to
-                the job runner's normal tail-follow behaviour.
+                For the UI "tail-end" view mode, ``cylc cat-log`` appends a
+                ``-n <lines>`` option to limit the output to the last few
+                lines. The command template should therefore not set its own
+                line count.
 
                 Examples::
 
@@ -1895,10 +1895,10 @@ with Conf('global.cylc', desc='''
                 is running.  This setting overrides
                 :cylc:conf:`[..]tail command template`.
 
-                The template may also include a ``%(lines)s`` substitution
-                (see :cylc:conf:`[..]tail command template`) to support the
-                UI "tail-end" view mode; without it, tail-end falls back to
-                the job runner's normal tail-follow behaviour.
+                For the UI "tail-end" view mode, ``cylc cat-log`` appends a
+                ``-n <lines>`` option to limit the output to the last few
+                lines. The command template should therefore not set its own
+                line count.
 
                 Examples::
 

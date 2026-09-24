@@ -119,8 +119,13 @@ class TestGetTailLines:
         assert get_tail_lines(mode, 100) == expected
 
 
-async def test_get_remote_log_adds_tail_lines_for_tail_end(monkeypatch):
-    """TAIL_END should pass --tail-lines to the remote cat-log command."""
+async def test_get_remote_log_bakes_tail_lines_for_tail_end(monkeypatch):
+    """TAIL_END bakes the line count into the forwarded tail command.
+
+    The line count is substituted locally and the mode is forwarded as
+    plain "tail", so the remote cat-log needs no knowledge of --tail-lines
+    (keeping it compatible with older Cylc versions).
+    """
     captured = {}
 
     async def mock_remote_cylc_cmd(cmd, platform, **kwargs):
@@ -154,7 +159,16 @@ async def test_get_remote_log_adds_tail_lines_for_tail_end(monkeypatch):
         tail_lines=42,
     )
 
-    assert '--tail-lines=42' in captured['cmd']
+    # No --tail-lines forwarded to the remote.
+    assert not any(arg.startswith('--tail-lines') for arg in captured['cmd'])
+    # The line count is baked into the forwarded tail command template...
+    assert (
+        "--remote-arg=tail -n 42 --follow=name %(filename)s"
+        in captured['cmd']
+    )
+    # ...and tail-end is forwarded as plain "tail".
+    assert f'--remote-arg={TAIL}' in captured['cmd']
+    assert f'--remote-arg={TAIL_END}' not in captured['cmd']
     assert captured['kwargs']['manage'] is True
 
 
