@@ -197,9 +197,11 @@ class CylcWorkflowDBChecker:
             selector:
                 task status, trigger name, or message
             is_trigger:
-                intpret the selector as a trigger
+                interpret the selector as a trigger
             is_message:
                 interpret the selector as a task message
+            flow_num:
+                flow number of the target task
 
         Return:
             A list of results for all tasks that match the query.
