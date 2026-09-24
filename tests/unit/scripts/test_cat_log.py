@@ -163,7 +163,6 @@ async def test_get_remote_log_bakes_tail_lines_for_tail_end(monkeypatch):
         "--remote-arg=tail -n 42 --follow=name %(filename)s"
         in captured['cmd']
     )
-    # ...and tail-end is forwarded as plain "tail".
     assert f'--remote-arg={TAIL}' in captured['cmd']
     assert f'--remote-arg={TAIL_END}' not in captured['cmd']
     assert captured['kwargs']['manage'] is True
