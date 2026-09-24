@@ -453,9 +453,7 @@ def capture_polling():
     def _disable_polling(schd: 'Scheduler') -> 'Set[TaskProxy]':
         polled_tasks: 'Set[TaskProxy]' = set()
 
-        def run_job_cmd(
-            _1, itasks, _3, _4=None
-        ):
+        def run_job_cmd(_, itasks, *__, **___):
             polled_tasks.update(itasks)
             return itasks
 
