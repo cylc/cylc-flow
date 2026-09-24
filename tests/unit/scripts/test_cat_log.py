@@ -20,6 +20,7 @@ from subprocess import Popen, PIPE
 from ansimarkup import parse as cparse
 from colorama import Style
 import pytest
+import shlex
 
 from cylc.flow.option_parsers import Options
 from cylc.flow.loggingutil import CylcLogFormatter
@@ -160,7 +161,7 @@ async def test_get_remote_log_bakes_tail_lines_for_tail_end(monkeypatch):
     )
 
     assert (
-        "--remote-arg=tail -n 42 --follow=name %(filename)s"
+        f"--remote-arg={shlex.quote('tail -n 42 --follow=name %(filename)s')}"
         in captured['cmd']
     )
     assert f'--remote-arg={TAIL}' in captured['cmd']
