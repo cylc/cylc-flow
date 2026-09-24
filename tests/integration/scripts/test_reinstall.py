@@ -172,7 +172,6 @@ async def test_non_prompt_yes(
 ):
     """It should not perform a dry-run or prompt in non-interactive mode."""
     # capture reinstall calls
-    answer_prompt('blarg')  # shouldn't be used
     (one_src.path / 'b').touch()
     async with asyncio.timeout(2):
         assert await reinstall_cli(
