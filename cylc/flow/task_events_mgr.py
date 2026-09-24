@@ -120,6 +120,7 @@ from cylc.flow.task_state import (
     TASK_STATUS_SUCCEEDED,
     TASK_STATUS_WAITING,
     TASK_STATUSES_ACTIVE,
+    TASK_STATUSES_FINAL,
 )
 from cylc.flow.wallclock import (
     get_current_time_string,
@@ -786,9 +787,7 @@ class TaskEventsManager():
             )
 
         if message == self.EVENT_STARTED:
-            if flag == self.FLAG_RECEIVED and itask.state.is_gt(
-                TASK_STATUS_RUNNING
-            ):
+            if itask.state.is_gt(TASK_STATUS_RUNNING):
                 # Already running.
                 return True
             self._process_message_started(itask, event_time, forced)
@@ -803,10 +802,8 @@ class TaskEventsManager():
             self.spawn_children(itask, TASK_OUTPUT_EXPIRED, forced)
 
         elif task_output == self.EVENT_FAILED:
-            if flag == self.FLAG_RECEIVED and itask.state.is_gt(
-                TASK_STATUS_FAILED
-            ):
-                # Already failed.
+            if itask.state(*TASK_STATUSES_FINAL):
+                # Already in a final state
                 return True
             msg = self.JOB_FAILED
             if run_signal is not None:
@@ -829,10 +826,8 @@ class TaskEventsManager():
                 self.spawn_children(itask, TASK_OUTPUT_FAILED, forced)
 
         elif message == self.EVENT_SUBMIT_FAILED:
-            if flag == self.FLAG_RECEIVED and itask.state.is_gt(
-                TASK_STATUS_SUBMIT_FAILED
-            ):
-                # Already submit-failed
+            if itask.state(*TASK_STATUSES_FINAL):
+                # Already in a final state
                 return True
             if forced or self._process_message_submit_failed(
                 itask, event_time
@@ -840,9 +835,7 @@ class TaskEventsManager():
                 self.spawn_children(itask, TASK_OUTPUT_SUBMIT_FAILED, forced)
 
         elif message == self.EVENT_SUBMITTED:
-            if flag == self.FLAG_RECEIVED and itask.state.is_gte(
-                TASK_STATUS_SUBMITTED
-            ):
+            if itask.state.is_gte(TASK_STATUS_SUBMITTED):
                 # Already submitted.
                 return True
             if not forced:
