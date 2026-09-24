@@ -170,7 +170,7 @@ async def test_non_prompt_yes(
     interactive,
     answer_prompt
 ):
-    """It should not perform a dry-run or prompt in non-interactive mode."""
+    """It should not prompt in interactive shell if --yes is supplied."""
     # capture reinstall calls
     (one_src.path / 'b').touch()
     async with asyncio.timeout(2):
