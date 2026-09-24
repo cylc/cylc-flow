@@ -162,6 +162,26 @@ async def test_non_interactive(
     assert 'Successfully reinstalled' in capsys.readouterr().out
 
 
+async def test_non_prompt_yes(
+    one_src,
+    one_run,
+    capsys,
+    capcall,
+    interactive,
+    answer_prompt
+):
+    """It should not perform a dry-run or prompt in non-interactive mode."""
+    # capture reinstall calls
+    answer_prompt('blarg')  # shouldn't be used
+    (one_src.path / 'b').touch()
+    async with asyncio.timeout(2):
+        assert await reinstall_cli(
+            opts=ReInstallOptions(skip_interactive=True),
+            workflow_id=one_run.id,
+        )
+    assert 'Successfully reinstalled' in capsys.readouterr().out
+
+
 async def test_interactive(
     one_src,
     one_run,
