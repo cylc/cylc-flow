@@ -1872,15 +1872,18 @@ with Conf('global.cylc', desc='''
                 is running.  This setting overrides
                 :cylc:conf:`[..]tail command template`.
 
-                For the UI "tail-end" view mode, ``cylc cat-log`` appends a
-                ``-n <lines>`` option to limit the output to the last few
-                lines. The command template should therefore not set its own
-                line count.
+                Include a ``%(lines)s`` substitution to support the UI
+                "tail-end" view mode: it expands to the number of lines to
+                show from the *end* of the file, or ``0`` (whole file from
+                the start) otherwise. ``0`` is used rather than ``tail``'s
+                ``+1`` because job-runner viewers such as qcat treat ``0`` as
+                "no limit". Omit ``%(lines)s`` if the viewer cannot limit its
+                output.
 
                 Examples::
 
                    # for PBS
-                   qcat -f -e %(job_id)s
+                   qcat -f -e %(job_id)s -n %(lines)s
 
                 .. versionchanged:: 8.0.0
 
@@ -1894,15 +1897,18 @@ with Conf('global.cylc', desc='''
                 is running.  This setting overrides
                 :cylc:conf:`[..]tail command template`.
 
-                For the UI "tail-end" view mode, ``cylc cat-log`` appends a
-                ``-n <lines>`` option to limit the output to the last few
-                lines. The command template should therefore not set its own
-                line count.
+                Include a ``%(lines)s`` substitution to support the UI
+                "tail-end" view mode: it expands to the number of lines to
+                show from the *end* of the file, or ``0`` (whole file from
+                the start) otherwise. ``0`` is used rather than ``tail``'s
+                ``+1`` because job-runner viewers such as qcat treat ``0`` as
+                "no limit". Omit ``%(lines)s`` if the viewer cannot limit its
+                output.
 
                 Examples::
 
                    # for PBS
-                   qcat -f -o %(job_id)s
+                   qcat -f -o %(job_id)s -n %(lines)s
 
                 .. versionchanged:: 8.0.0
 

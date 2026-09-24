@@ -276,16 +276,17 @@ def _check_fs_path(path):
         )
 
 
-def get_tail_lines(mode: str, tail_lines: int) -> str:
+def get_tail_lines(
+    mode: str, tail_lines: int, batchview: bool = False
+) -> str:
     """Return the ``%(lines)s`` value for a tail command template.
 
-    In "tail-end" mode, tail-follow the log starting ``tail_lines`` lines
-    from the *end* of the file. In tail (from start) mode, start from
-    the beginning of the file.
+    In "tail-end" mode, show ``tail_lines`` lines from the *end* of the
+    file. Otherwise (tail from start) show the whole file from the start.
     """
     if mode == TAIL_END:
         return str(tail_lines)
-    return '+1'
+    return '0' if batchview else '+1'
 
 
 async def view_log(
@@ -700,9 +701,11 @@ async def _main(
                     batchview_cmd_tmpl = platform[conf_key]
                 if batchview_cmd_tmpl is not None:
                     batchview_cmd = batchview_cmd_tmpl % {
-                        "job_id": str(live_job_id)}
-                    if mode == TAIL_END:
-                        batchview_cmd += f' -n {options.tail_lines}'
+                        "job_id": str(live_job_id),
+                        "lines": get_tail_lines(
+                            mode, options.tail_lines, batchview=True
+                        ),
+                    }
 
         local_log_dir = Path(
             get_workflow_run_job_dir(workflow_id, point, task, submit_num)
