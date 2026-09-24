@@ -276,17 +276,16 @@ def _check_fs_path(path):
         )
 
 
-def get_tail_lines(
-    mode: str, tail_lines: int, batchview: bool = False
-) -> str:
+def get_tail_lines(mode: str, tail_lines: int) -> str:
     """Return the ``%(lines)s`` value for a tail command template.
 
-    In "tail-end" mode, show ``tail_lines`` lines from the *end* of the
-    file. Otherwise (tail from start) show the whole file from the start.
+    Follows GNU ``tail`` ``-n`` semantics: in "tail-end" mode, show
+    ``tail_lines`` lines from the *end* of the file; otherwise (tail from
+    start) return ``+1`` (start at the first line).
     """
     if mode == TAIL_END:
         return str(tail_lines)
-    return '0' if batchview else '+1'
+    return '+1'
 
 
 async def view_log(
@@ -702,9 +701,7 @@ async def _main(
                 if batchview_cmd_tmpl is not None:
                     batchview_cmd = batchview_cmd_tmpl % {
                         "job_id": str(live_job_id),
-                        "lines": get_tail_lines(
-                            mode, options.tail_lines, batchview=True
-                        ),
+                        "lines": get_tail_lines(mode, options.tail_lines),
                     }
 
         local_log_dir = Path(

@@ -108,23 +108,16 @@ class TestGetTailLines:
     """Tests for the get_tail_lines function."""
 
     @pytest.mark.parametrize(
-        'mode, batchview, expected',
+        'mode, expected',
         [
-            (TAIL, False, '+1'),
-            (TAIL, True, '0'),
-            (TAIL_END, False, '100'),
-            (TAIL_END, True, '100'),
-            ('unknown_mode', False, '+1'),
-            ('unknown_mode', True, '0'),
+            (TAIL, '+1'),
+            (TAIL_END, '100'),
+            ('unknown_mode', '+1'),
         ],
     )
-    def test_modes(self, mode, batchview, expected):
-        """tail-end shows lines from the end; other modes from the start.
-
-        The "from start" value differs for batchview tailers (qcat: 0) and
-        the generic tail template (+1).
-        """
-        assert get_tail_lines(mode, 100, batchview=batchview) == expected
+    def test_modes(self, mode, expected):
+        """tail-end starts from the end; all other modes from the start."""
+        assert get_tail_lines(mode, 100) == expected
 
 
 async def test_get_remote_log_bakes_tail_lines_for_tail_end(monkeypatch):

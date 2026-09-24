@@ -1873,12 +1873,12 @@ with Conf('global.cylc', desc='''
                 :cylc:conf:`[..]tail command template`.
 
                 Include a ``%(lines)s`` substitution to support the UI
-                "tail-end" view mode: it expands to the number of lines to
-                show from the *end* of the file, or ``0`` (whole file from
-                the start) otherwise. ``0`` is used rather than ``tail``'s
-                ``+1`` because job-runner viewers such as qcat treat ``0`` as
-                "no limit". Omit ``%(lines)s`` if the viewer cannot limit its
-                output.
+                "tail-end" view mode. Following GNU ``tail`` ``-n``
+                semantics, it expands to the line to start tailing from: a
+                number of lines back from the *end* of the file in the
+                "tail-end" view mode, or ``+1`` (the start of the file)
+                otherwise. Omit ``%(lines)s`` if the command cannot limit
+                its output.
 
                 Examples::
 
@@ -1898,12 +1898,12 @@ with Conf('global.cylc', desc='''
                 :cylc:conf:`[..]tail command template`.
 
                 Include a ``%(lines)s`` substitution to support the UI
-                "tail-end" view mode: it expands to the number of lines to
-                show from the *end* of the file, or ``0`` (whole file from
-                the start) otherwise. ``0`` is used rather than ``tail``'s
-                ``+1`` because job-runner viewers such as qcat treat ``0`` as
-                "no limit". Omit ``%(lines)s`` if the viewer cannot limit its
-                output.
+                "tail-end" view mode. Following GNU ``tail`` ``-n``
+                semantics, it expands to the line to start tailing from: a
+                number of lines back from the *end* of the file in the
+                "tail-end" view mode, or ``+1`` (the start of the file)
+                otherwise. Omit ``%(lines)s`` if the command cannot limit
+                its output.
 
                 Examples::
 
