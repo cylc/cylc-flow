@@ -16,14 +16,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Cycling utility functions."""
 
-from metomi.isodatetime.parsers import TimePointParser, DurationParser
+from metomi.isodatetime.data import TimePoint
+from metomi.isodatetime.parsers import DurationParser, TimePointParser
 
 
-def add_offset(cycle_point, offset, dmp_fmt=None):
+def add_offset(
+    cycle_point: str, offset: str, dmp_fmt: str | None = None
+) -> TimePoint:
     """Add a (positive or negative) offset to a cycle point.
 
     Return the result.
-
     """
     my_parser = TimePointParser()
     if dmp_fmt is None:
@@ -39,7 +41,7 @@ def add_offset(cycle_point, offset, dmp_fmt=None):
 
     if not offset.startswith("P"):
         # TODO - raise appropriate exception
-        raise ValueError("ERROR, bad offset format: %s" % offset)
+        raise ValueError(f"ERROR, bad offset format: {offset}")
 
     my_shift = my_offset_parser.parse(offset)
     if oper == "-":
