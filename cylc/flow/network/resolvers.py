@@ -21,6 +21,7 @@ import asyncio
 from contextlib import suppress
 from fnmatch import fnmatchcase
 import logging
+import os
 import queue
 from time import time
 from typing import (
@@ -700,8 +701,8 @@ class Resolvers(BaseResolvers):
 
         """
         user = meta.get('auth_user', self.schd.owner)
-        if user == self.schd.owner:
-            log_user = ""  # don't log user name if owner
+        if user == self.schd.owner or not user:
+            log_user = f" from {os.getuser()}"
         else:
             log_user = f" from {user}"
 
