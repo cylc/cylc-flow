@@ -1499,8 +1499,11 @@ async def test_set_outputs_future(
     id_ = flow(
         {
             'scheduling': {
+                'cycling mode': 'integer',
+                'initial cycle point': '1',
+                'runahead limit': 'P0',
                 'graph': {
-                    'R1': """
+                    'P1': """
                         a:x & a:y => b => c
                         a:y => f
                     """
@@ -1520,19 +1523,31 @@ async def test_set_outputs_future(
 
     async with start(schd):
 
-        # it should start up with just 1/a
-        assert schd.pool.get_task_ids() == {"1/a"}
+        # It should start up with just 1/a and 2/a.
+        assert schd.pool.get_task_ids() == {"1/a", "2/a"}
 
-        # setting inactive task b succeeded should spawn c but not b
+        # Setting inactive future task b succeeded should
+        # spawn c but not b.
         schd.pool.set_prereqs_and_outputs(
             {TaskTokens('1', 'b')}, ["succeeded"], [], [])
-        assert schd.pool.get_task_ids() == {"1/a", "1/c"}
+        assert schd.pool.get_task_ids() == {"1/a", "2/a", "1/c"}
 
-        # setting inactive task f failed should add it to n=0 as final
-        # incomplete - see https://github.com/cylc/cylc-flow/pull/7248
+        # Setting inactive future task f failed should
+        # add it to n=0 as final incomplete.
+        # See https://github.com/cylc/cylc-flow/pull/7248
         schd.pool.set_prereqs_and_outputs(
             {TaskTokens('1', 'f')}, ["failed"], [], [])
-        assert schd.pool.get_task_ids() == {"1/a", "1/c", "1/f"}
+        assert schd.pool.get_task_ids() == {"1/a", "2/a", "1/c", "1/f"}
+
+        # Setting inactive future parentless task a failed should
+        # add it to n=0 as final, and spawn its next instance.
+        # (A failed task has passed runahead release, which is when next
+        # instances are spawned).
+        # See https://github.com/cylc/cylc-flow/pull/7248
+        schd.pool.set_prereqs_and_outputs(
+            {TaskTokens('5', 'a')}, ["failed"], [], [])
+        assert schd.pool.get_task_ids() == {
+            "1/a", "2/a", "1/c", "1/f", "5/a", "6/a"}
 
         schd.pool.set_prereqs_and_outputs(
             items={TaskTokens('1', 'a')},
