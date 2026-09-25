@@ -106,7 +106,7 @@ from cylc.flow.exceptions import WorkflowConfigError
 from cylc.flow.id import Tokens
 from cylc.flow.network import API
 from cylc.flow.parsec.util import (
-    listjoin,
+    fast_listjoin as listjoin,
     pdeepcopy,
     poverride,
 )
