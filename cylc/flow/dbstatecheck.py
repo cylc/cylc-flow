@@ -15,35 +15,33 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from collections.abc import Iterable
+from contextlib import suppress
 import errno
 import json
 import os
 import sqlite3
 import sys
-from contextlib import suppress
-from typing import Dict, Iterable, Optional, List, Union
 
-from cylc.flow.exceptions import InputError
+from metomi.isodatetime.exceptions import ISO8601SyntaxError
+from metomi.isodatetime.parsers import TimePointParser
+
+from cylc.flow.cycling.integer import IntegerInterval, IntegerPoint
 from cylc.flow.cycling.util import add_offset
-from cylc.flow.cycling.integer import (
-    IntegerPoint,
-    IntegerInterval
-)
+from cylc.flow.exceptions import InputError
 from cylc.flow.flow_mgr import repr_flow_nums
 from cylc.flow.pathutil import expand_path
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.task_outputs import (
-    TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED,
     TASK_OUTPUT_FINISHED,
+    TASK_OUTPUT_SUCCEEDED,
 )
 from cylc.flow.task_state import (
     TASK_STATE_MAP,
     TASK_STATUSES_FINAL,
 )
 from cylc.flow.util import deserialise_set
-from metomi.isodatetime.parsers import TimePointParser
-from metomi.isodatetime.exceptions import ISO8601SyntaxError
 
 
 output_fallback_msg = (
@@ -56,13 +54,10 @@ class CylcWorkflowDBChecker:
     """Object for querying task status or outputs from a workflow database.
 
     Back-compat and task outputs:
-        # Cylc 7 stored {trigger: message} for custom outputs only.
-        1|foo|{"x": "the quick brown"}
-
         # Cylc 8 (pre-8.3.0) stored [message] only, for all outputs.
         1|foo|[1]|["submitted", "started", "succeeded", "the quick brown"]
 
-        # Cylc 8 (8.3.0+) stores {trigger: message} for all ouputs.
+        # Cylc 8 (8.3.0+) stores {trigger: message} for all outputs.
         1|foo|[1]|{"submitted": "submitted", "started": "started",
                    "succeeded": "succeeded", "x": "the quick brown"}
     """
@@ -82,18 +77,10 @@ class CylcWorkflowDBChecker:
         # Get workflow point format.
         try:
             self.db_point_fmt = self._get_db_point_format()
-            self.c7_back_compat_mode = False
-        except sqlite3.OperationalError as exc:
-            # BACK COMPAT: Cylc 7 DB (see method below).
-            # FROM: 7.x
-            # REMOVE AT: 8.7
-            try:
-                self.db_point_fmt = self._get_db_point_format_compat()
-                self.c7_back_compat_mode = True
-            except sqlite3.OperationalError:
-                with suppress(Exception):
-                    self.conn.close()
-                raise exc from None  # original error
+        except sqlite3.OperationalError:
+            with suppress(Exception):
+                self.conn.close()
+            raise
 
     def __enter__(self):
         return self
@@ -188,39 +175,16 @@ class CylcWorkflowDBChecker:
         ):
             return row[0]
 
-    def _get_db_point_format_compat(self):
-        """Query a Cylc 7 suite database for 'cycle point format'."""
-        # BACK COMPAT: Cylc 7 DB
-        # Workflows parameters table name change.
-        # from:
-        #    8.0.x
-        # to:
-        #    8.1.x
-        # remove at:
-        #    8.7
-        for row in self.conn.execute(
-            rf'''
-                SELECT
-                    value
-                FROM
-                    {CylcWorkflowDAO.TABLE_SUITE_PARAMS}
-                WHERE
-                    key==?
-            ''',  # nosec (table name is code constant)
-            ['cycle_point_format']
-        ):
-            return row[0]
-
     def workflow_state_query(
         self,
-        task: Optional[str] = None,
-        cycle: Optional[str] = None,
-        selector: Optional[str] = None,
-        is_trigger: Optional[bool] = False,
-        is_message: Optional[bool] = False,
-        flow_num: Optional[int] = None,
+        task: str | None = None,
+        cycle: str | None = None,
+        selector: str | None = None,
+        is_trigger: bool | None = False,
+        is_message: bool | None = False,
+        flow_num: int | None = None,
         print_outputs: bool = False
-    ) -> List[List[str]]:
+    ) -> list[list[str]]:
         """Query task status or outputs (by trigger or message) in a database.
 
         Args:
@@ -231,9 +195,11 @@ class CylcWorkflowDBChecker:
             selector:
                 task status, trigger name, or message
             is_trigger:
-                intpret the selector as a trigger
+                interpret the selector as a trigger
             is_message:
                 interpret the selector as a task message
+            flow_num:
+                flow number of the target task
 
         Return:
             A list of results for all tasks that match the query.
@@ -259,10 +225,7 @@ class CylcWorkflowDBChecker:
         else:
             target_table = CylcWorkflowDAO.TABLE_TASK_STATES
             mask = "name, cycle, status"
-
-        if not self.c7_back_compat_mode:
-            # Cylc 8 DBs only
-            mask += ", flow_nums"
+        mask += ", flow_nums"
 
         stmt = rf'''
             SELECT
@@ -313,17 +276,13 @@ class CylcWorkflowDBChecker:
         for row in self.conn.execute(stmt, stmt_args):
             # name, cycle, status_or_outputs, [flow_nums]
             res = list(row[:3])
-            if row[2] is None:
-                # status can be None in Cylc 7 DBs
+            flow_nums = deserialise_set(row[3])
+            if flow_num is not None and flow_num not in flow_nums:
+                # skip result, wrong flow
                 continue
-            if not self.c7_back_compat_mode:
-                flow_nums = deserialise_set(row[3])
-                if flow_num is not None and flow_num not in flow_nums:
-                    # skip result, wrong flow
-                    continue
-                fstr = repr_flow_nums(flow_nums)
-                if fstr:
-                    res.append(fstr)
+            fstr = repr_flow_nums(flow_nums)
+            if fstr:
+                res.append(fstr)
             db_res.append(res)
 
         if target_table == CylcWorkflowDAO.TABLE_TASK_STATES:
@@ -332,7 +291,7 @@ class CylcWorkflowDBChecker:
         warn_output_fallback = is_trigger
         results = []
         for row in db_res:
-            outputs: Union[Dict[str, str], List[str]] = json.loads(row[2])
+            outputs: dict[str, str] | list[str] = json.loads(row[2])
             if isinstance(outputs, dict):
                 messages: Iterable[str] = outputs.values()
             else:
