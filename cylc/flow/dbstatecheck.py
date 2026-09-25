@@ -179,14 +179,14 @@ class CylcWorkflowDBChecker:
 
     def workflow_state_query(
         self,
-        task: Optional[str] = None,
-        cycle: Optional[str] = None,
-        selector: Optional[str] = None,
-        is_trigger: Optional[bool] = False,
-        is_message: Optional[bool] = False,
-        flow_num: Optional[int] = None,
+        task: str | None = None,
+        cycle: str | None = None,
+        selector: str | None = None,
+        is_trigger: bool | None = False,
+        is_message: bool | None = False,
+        flow_num: int | None = None,
         print_outputs: bool = False
-    ) -> List[List[str]]:
+    ) -> list[list[str]]:
         """Query task status or outputs (by trigger or message) in a database.
 
         Args:
@@ -293,7 +293,7 @@ class CylcWorkflowDBChecker:
         warn_output_fallback = is_trigger
         results = []
         for row in db_res:
-            outputs: Union[Dict[str, str], List[str]] = json.loads(row[2])
+            outputs: dict[str, str] | list[str] = json.loads(row[2])
             if isinstance(outputs, dict):
                 messages: Iterable[str] = outputs.values()
             else:
