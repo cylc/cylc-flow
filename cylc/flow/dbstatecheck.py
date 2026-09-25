@@ -15,35 +15,33 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from collections.abc import Iterable
+from contextlib import suppress
 import errno
 import json
 import os
 import sqlite3
 import sys
-from contextlib import suppress
-from typing import Dict, Iterable, Optional, List, Union
 
-from cylc.flow.exceptions import InputError
+from metomi.isodatetime.exceptions import ISO8601SyntaxError
+from metomi.isodatetime.parsers import TimePointParser
+
+from cylc.flow.cycling.integer import IntegerInterval, IntegerPoint
 from cylc.flow.cycling.util import add_offset
-from cylc.flow.cycling.integer import (
-    IntegerPoint,
-    IntegerInterval
-)
+from cylc.flow.exceptions import InputError
 from cylc.flow.flow_mgr import repr_flow_nums
 from cylc.flow.pathutil import expand_path
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.task_outputs import (
-    TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED,
     TASK_OUTPUT_FINISHED,
+    TASK_OUTPUT_SUCCEEDED,
 )
 from cylc.flow.task_state import (
     TASK_STATE_MAP,
     TASK_STATUSES_FINAL,
 )
 from cylc.flow.util import deserialise_set
-from metomi.isodatetime.parsers import TimePointParser
-from metomi.isodatetime.exceptions import ISO8601SyntaxError
 
 
 output_fallback_msg = (
