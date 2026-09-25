@@ -34,7 +34,7 @@ async def test_restart_mode(
 ):
     """Restarting a workflow in live mode leads to workflow in live mode.
 
-    N.B - we need use run becuase the check in question only happens
+    N.B - we need use run because the check in question only happens
     on start.
     """
     schd: Scheduler

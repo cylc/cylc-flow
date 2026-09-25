@@ -134,7 +134,7 @@ class GraphParser:
 
     How the graph parser determines output optionality:
        In chained triggers every node appears on the right of a pair, so we
-       only need rights to set (and check consitency of) optional outputs.
+       only need rights to set (and check consistency of) optional outputs.
           x                # [None, x] ... x is end-of-chain
           a => b => c      # [None, a], [a, b], [b, c] ... c is end-of-chain
 

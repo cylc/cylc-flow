@@ -69,11 +69,11 @@ async def test_prompt_for_running_workflow_with_no_changes(
     See: https://github.com/cylc/cylc-flow/issues/6261
 
     We hope to get users into the habit of "cylc vip" to create a new run,
-    and "cylc vr" to contine an old one (picking up any new changes in the
+    and "cylc vr" to continue an old one (picking up any new changes in the
     process).
 
     If there are no changes to reinstall (or if the user chooses not to
-    resintall) the "cylc vr" prompts whether to continue or do nothing.
+    reinstall) the "cylc vr" prompts whether to continue or do nothing.
 
     The "nothing to reinstall" situation can be interpreted two ways:
     1. Unexpected error, the user expected there to be something to reinstall,

@@ -6,7 +6,7 @@
 
         Bad
         ---
-        Fails on all hosts on all plaforms
+        Fails on all hosts on all platforms
     """
 
 [scheduler]

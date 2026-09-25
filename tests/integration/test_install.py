@@ -102,7 +102,7 @@ async def test_install_scan_no_ping(
     capsys: pytest.CaptureFixture,
     caplog: pytest.LogCaptureFixture
 ) -> None:
-    """At install, running intances should be reported.
+    """At install, running instances should be reported.
 
     Ping = False case: don't query schedulers.
     """
@@ -129,7 +129,7 @@ async def test_install_scan_ping(
     caplog: pytest.LogCaptureFixture,
     patch_graphql_query: Callable
 ) -> None:
-    """At install, running intances should be reported.
+    """At install, running instances should be reported.
 
     Ping = True case: but mock scan's scheduler query method.
     """

@@ -18,7 +18,7 @@
 #-------------------------------------------------------------------------------
 # Test intelligent host selection for job polling.
 #
-# Set the peridic clearance of unreachable hosts by
+# Set the periodic clearance of unreachable hosts by
 # `[scheduler][main loop][reset bad hosts]interval = PT1S` so that between
 # Submission of a job and execution polling the list of bad hosts will have
 # cleared. Having cleared bad hosts we can then test that polling goes through

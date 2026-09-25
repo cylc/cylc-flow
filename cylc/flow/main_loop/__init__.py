@@ -170,7 +170,7 @@ class MainLoopPluginException(Exception):
     """Raised in-place of CylcError exceptions.
 
     Note:
-        * Not an instace of CylcError as that is used for controlled
+        * Not an instance of CylcError as that is used for controlled
           shutdown e.g. SchedulerStop.
 
     """

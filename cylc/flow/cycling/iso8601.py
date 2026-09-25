@@ -72,13 +72,13 @@ WARNING_PARSE_EXPANDED_YEAR_DIGITS = (
 
 
 # NOTE: We cache some datetime cycling operations to improve compute
-# perforance. For profiling, this can be disabled by setting the environment
+# performance. For profiling, this can be disabled by setting the environment
 # variable CYLC_CYCLER_LRU_CACHE_SIZE=0.
 
 # The number of cycling operations to cache:
 _LRU_CACHE_SIZE = int(os.environ.get('CYLC_CYCLER_LRU_CACHE_SIZE', '10000'))
 
-# A smaller cache for use with larger objecs (to reduce memory impact):
+# A smaller cache for use with larger objects (to reduce memory impact):
 _LARGE_LRU_CACHE_SIZE = int(_LRU_CACHE_SIZE / 100) if _LRU_CACHE_SIZE else 0
 
 

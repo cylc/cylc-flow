@@ -587,7 +587,7 @@ async def test_replay_outputs(flow, scheduler, start, complete, log_filter):
         cylc trigger workflow //1/a //1/b //1/k //1/l
 
     Then I should expect outputs `k:kustom` and `a:started` to be re-used
-    to satify b and l in the triggered flow, but NOT off-group task offg.
+    to satisfy b and l in the triggered flow, but NOT off-group task offg.
     """
     msg_prereq = '[1/{}:waiting(runahead)] prerequisite force-satisfied: 1/{}'
     msg_spawned = "[1/{}:waiting(runahead)] => waiting"

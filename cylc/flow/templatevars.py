@@ -185,7 +185,7 @@ def load_template_vars(
 
 
 def get_template_vars(options: 'Values') -> Dict[str, Any]:
-    """Convienence wrapper for ``load_template_vars``.
+    """Convenience wrapper for ``load_template_vars``.
 
     Args:
         options: Options passed to the Cylc script which is using this

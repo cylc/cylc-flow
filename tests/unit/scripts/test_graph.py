@@ -194,7 +194,7 @@ def test_format_graphviz_cycles(example_graph):
 
     Note: There is no difference between iso8601 and integer cycle points here,
     the graph logic is cycle point format agnostic. Sorting is not performed
-    in this funtion.
+    in this function.
     """
     nodes, edges = example_graph
 
@@ -235,7 +235,7 @@ def test_format_cylc_reference_normal(example_graph):
 
     Note: There is no difference between iso8601 and integer cycle points here,
     the graph logic is cycle point format agnostic. Sorting is not performed
-    in this funtion.
+    in this function.
 
     Note: There is no transpose mode for reference graphs.
     """

@@ -255,7 +255,7 @@ def test_state(basic_plugins):
     """It should pass the same state object with each function call.
 
     * Run the same plugin function twice.
-    * Ensure that the state object recieved by each call is the same object.
+    * Ensure that the state object received by each call is the same object.
 
     """
     plugins, calls, capture = basic_plugins
