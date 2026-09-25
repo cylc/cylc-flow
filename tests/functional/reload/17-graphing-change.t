@@ -19,7 +19,7 @@
 # Test that removing a task from the graph works OK.
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 12
+set_test_number 11
 
 # shellcheck disable=SC2317 disable=SC2329
 grep_workflow_log_n_times() {
@@ -46,7 +46,7 @@ run_ok "${TEST_NAME_BASE}-add-reload" cylc reload "${WORKFLOW_NAME}"
 poll grep_workflow_log_n_times 'Reload completed' 1
 
 # check workflow log
-grep_ok "Added task: 'one'" "${LOG_FILE}"
+grep_ok 'Added task definitions:\n.*one' "${LOG_FILE}" -Pzo
 #-------------------------------------------------------------------------------
 # test reporting or removed tasks
 
@@ -54,12 +54,15 @@ grep_ok "Added task: 'one'" "${LOG_FILE}"
 cp "${TEST_SOURCE_DIR}/graphing-change/flow.cylc" \
     "${RUN_DIR}/${WORKFLOW_NAME}/flow.cylc"
 
+# ensure 1/one is in the pool (so will be removed on reload)
+cylc set "${WORKFLOW_NAME}//1/start"
+
 # reload workflow
 run_ok "${TEST_NAME_BASE}-remove-reload" cylc reload "${WORKFLOW_NAME}"
 poll grep_workflow_log_n_times 'Reload completed' 2
 
 # check workflow log
-grep_ok "Removed task: 'one'" "${LOG_FILE}"
+grep_ok 'Removed tasks:\n.*1\/one' "${LOG_FILE}" -Pzo
 #-------------------------------------------------------------------------------
 # test reporting of adding / removing / swapping tasks
 
@@ -75,11 +78,11 @@ run_ok "${TEST_NAME_BASE}-swap-reload" cylc reload "${WORKFLOW_NAME}"
 poll grep_workflow_log_n_times 'Reload completed' 3
 
 # check workflow log
-grep_ok "Added task: 'one'" "${LOG_FILE}"
-grep_ok "Added task: 'add'" "${LOG_FILE}"
-grep_ok "Added task: 'boo'" "${LOG_FILE}"
-grep_ok "\\[1/bar.*\\].*task definition removed" "${LOG_FILE}"
-grep_ok "\\[1/bol.*\\].*task definition removed" "${LOG_FILE}"
+grep_ok 'Added task definitions:\n.*add\n.*boo\n.*one' "${LOG_FILE}" -Pzo
+grep_ok "\\[1/bar.*\\].*removed by reload" "${LOG_FILE}"
+grep_ok "\\[1/bol.*\\].*removed by reload" "${LOG_FILE}"
+grep_ok 'Removed tasks:\n.*1/bar:waiting\(queued\)\n.*1/bol:waiting' \
+    "${LOG_FILE}" -Pzo
 
 run_ok "${TEST_NAME_BASE}-stop" \
     cylc stop --max-polls=10 --interval=2 "${WORKFLOW_NAME}"
