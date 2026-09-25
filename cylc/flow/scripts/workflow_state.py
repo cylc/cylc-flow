@@ -100,7 +100,7 @@ import asyncio
 import os
 import sqlite3
 import sys
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING
 
 from cylc.flow.pathutil import get_cylc_run_dir
 from cylc.flow.id import Tokens
@@ -161,10 +161,10 @@ class WorkflowPoller(Poller):
     def __init__(
         self,
         id_: str,
-        offset: Optional[str],
-        flow_num: Optional[int],
-        alt_cylc_run_dir: Optional[str],
-        default_status: Optional[str],
+        offset: str | None,
+        flow_num: int | None,
+        alt_cylc_run_dir: str | None,
+        default_status: str | None,
         is_trigger: bool,
         is_message: bool,
         old_format: bool = False,
@@ -196,10 +196,10 @@ class WorkflowPoller(Poller):
         self.cycle_raw = tokens["cycle"]
         self.task = tokens["task"]
 
-        self.workflow_id: Optional[str] = None
-        self.cycle: Optional[str] = None
-        self.result: Optional[List[List[str]]] = None
-        self._db_checker: Optional[CylcWorkflowDBChecker] = None
+        self.workflow_id: str | None = None
+        self.cycle: str | None = None
+        self.result: list[list[str]] | None = None
+        self._db_checker: CylcWorkflowDBChecker | None = None
 
         super().__init__(**kwargs)
 
@@ -220,7 +220,7 @@ class WorkflowPoller(Poller):
         return True
 
     @property
-    def db_checker(self) -> Optional[CylcWorkflowDBChecker]:
+    def db_checker(self) -> CylcWorkflowDBChecker | None:
         """Connect to workflow DB if not already connected.
 
         Returns DB checker if connected.
