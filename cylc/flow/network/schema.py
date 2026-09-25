@@ -1931,7 +1931,7 @@ class SetVerbosity(Mutation):
             For example, if you choose `WARNING`, only warning, error and
             critical level messages will be logged.
 
-            Valid for: paused, running workflows.
+            Valid for: paused, running, stopping workflows.
         ''')
         resolver = mutator
 
