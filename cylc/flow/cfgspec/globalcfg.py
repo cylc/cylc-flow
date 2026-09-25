@@ -1840,15 +1840,26 @@ with Conf('global.cylc', desc='''
             ''',
             )
             Conf('tail command template',
-                 VDR.V_STRING, 'tail -n +1 --follow=name %(filename)s',
+                 VDR.V_STRING,
+                 'tail -n %(lines)s --follow=name %(filename)s',
                  desc=f'''
-                A command template (with ``%(filename)s`` substitution) to
-                tail-follow job logs this platform, by ``cylc cat-log``.
+                A command template (with ``%(filename)s`` and ``%(lines)s``
+                substitutions) to tail-follow job logs on this platform, by
+                ``cylc cat-log``.
+
+                ``%(lines)s`` is the line to start tailing from: a number of
+                lines back from the *end* of the file in the UI "tail-end"
+                view mode, or ``+1`` (the start of the file) otherwise.
 
                 .. warning::
 
-                   You are are unlikely to need to override this. Doing so may
+                   You are unlikely to need to override this. Doing so may
                    adversely affect the UI log view.
+
+                .. versionchanged:: 8.7.0
+
+                   Added the ``%(lines)s`` substitution to support the
+                   "tail-end" view mode.
 
                 .. versionchanged:: 8.0.0
 
@@ -1861,10 +1872,18 @@ with Conf('global.cylc', desc='''
                 is running.  This setting overrides
                 :cylc:conf:`[..]tail command template`.
 
+                Include a ``%(lines)s`` substitution to support the UI
+                "tail-end" view mode. Following GNU ``tail`` ``-n``
+                semantics, it expands to the line to start tailing from: a
+                number of lines back from the *end* of the file in the
+                "tail-end" view mode, or ``+1`` (the start of the file)
+                otherwise. Omit ``%(lines)s`` if the command cannot limit
+                its output.
+
                 Examples::
 
                    # for PBS
-                   qcat -f -e %(job_id)s
+                   qcat -f -e %(job_id)s -n %(lines)s
 
                 .. versionchanged:: 8.0.0
 
@@ -1878,10 +1897,18 @@ with Conf('global.cylc', desc='''
                 is running.  This setting overrides
                 :cylc:conf:`[..]tail command template`.
 
+                Include a ``%(lines)s`` substitution to support the UI
+                "tail-end" view mode. Following GNU ``tail`` ``-n``
+                semantics, it expands to the line to start tailing from: a
+                number of lines back from the *end* of the file in the
+                "tail-end" view mode, or ``+1`` (the start of the file)
+                otherwise. Omit ``%(lines)s`` if the command cannot limit
+                its output.
+
                 Examples::
 
                    # for PBS
-                   qcat -f -o %(job_id)s
+                   qcat -f -o %(job_id)s -n %(lines)s
 
                 .. versionchanged:: 8.0.0
 
