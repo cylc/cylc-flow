@@ -304,7 +304,7 @@ async def test_scan_fail_well_when_client_unreachable(
     caplog,
 ):
     """It handles WorkflowRuntimeClient.async_request raising a WorkflowStopped
-    elegently.
+    elegantly.
     """
     # create a flow
     id_ = flow(one_conf, name='-crashed-')
