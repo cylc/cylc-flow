@@ -16,21 +16,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from contextlib import suppress
+from copy import deepcopy
 from enum import Enum
 from inspect import signature
 import json
 import re
-from copy import deepcopy
 from time import time
-from typing import (
-    Any,
-    Dict,
-    Optional,
-    Set,
-    Tuple,
-    List,
-    TYPE_CHECKING
-)
+from typing import TYPE_CHECKING, Any
 
 from cylc.flow import LOG
 from cylc.flow.exceptions import WorkflowConfigError, XtriggerConfigError
@@ -169,13 +161,13 @@ class XtriggerCollator:
 
     def __init__(self):
         # Map xtrig label to function context.
-        self.functx_map: 'Dict[str, SubFuncContext]' = {}
+        self.functx_map: 'dict[str, SubFuncContext]' = {}
         # Clock labels, to avoid repeated string comparisons
-        self.wall_clock_labels: Set[str] = set()
+        self.wall_clock_labels: set[str] = set()
         # Workflow-wide default, used when not specified in xtrigger kwargs.
         self.sequential_xtriggers_default = False
         # Labels whose xtriggers are sequentially checked.
-        self.sequential_xtrigger_labels: Set[str] = set()
+        self.sequential_xtrigger_labels: set[str] = set()
 
     def update(self, xtriggers: 'XtriggerCollator'):
         self.functx_map.update(xtriggers.functx_map)
@@ -437,8 +429,8 @@ class XtriggerManager:
     def __init__(
         self,
         schd: 'Scheduler',
-        workflow_run_dir: Optional[str] = None,
-        workflow_share_dir: Optional[str] = None,
+        workflow_run_dir: str | None = None,
+        workflow_share_dir: str | None = None,
     ):
         self.schd = schd
         workflow = schd.workflow
@@ -455,7 +447,7 @@ class XtriggerManager:
         # For function arg templating.
         if not user:
             user = get_user()
-        self.farg_templ: Dict[str, Any] = {
+        self.farg_templ: dict[str, Any] = {
             TemplateVariables.Workflow.value: workflow,
             TemplateVariables.UserName.value: user,
             TemplateVariables.RunDir.value: workflow_run_dir,
@@ -487,7 +479,7 @@ class XtriggerManager:
     def mutate_trig(self, label, kwargs):
         self.xtriggers.functx_map[label].func_kwargs.update(kwargs)
 
-    def load_xtrigger_for_restart(self, row_idx: int, row: Tuple[str, str]):
+    def load_xtrigger_for_restart(self, row_idx: int, row: tuple[str, str]):
         """Load succeeded xtrigger results from workflow DB.
 
         Note this is succeeded xtriggers, not task xtrigger prerequisites
@@ -495,7 +487,7 @@ class XtriggerManager:
 
         Args:
             row_idx (int): row index (used for logging)
-            row (Tuple[str, str]): tuple with the signature and results (json)
+            row (tuple[str, str]): tuple with the signature and results (json)
         Raises:
             ValueError: if the row cannot be parsed as JSON
         """
@@ -509,7 +501,7 @@ class XtriggerManager:
     def _get_xtrigs(
         self, itask: 'TaskProxy', unsat_only: bool = False,
         sigs_only: bool = False
-    ) -> 'List[Any]':
+    ) -> list[Any]:
         """(Internal helper method.)
 
         Args:
@@ -518,11 +510,11 @@ class XtriggerManager:
             sigs_only: append only the xtrigger function signature
 
         Returns:
-            List[Union[str, Tuple[str, str, SubFuncContext, bool]]]: a list
+            list[Union[str, tuple[str, str, SubFuncContext, bool]]]: a list
                 with either signature (if sigs_only True) or with tuples of
                 label, signature, function context, and flag for satisfied.
         """
-        res: 'List[Any]' = []
+        res: list[Any] = []
         for label, satisfied in itask.state.xtriggers.items():
             if unsat_only and satisfied:
                 continue
@@ -714,7 +706,7 @@ class XtriggerManager:
     def force_satisfy(
         self,
         itask: 'TaskProxy',
-        xtriggers: 'Dict[str, bool]',
+        xtriggers: 'dict[str, bool]',
         log: bool = True,
     ) -> None:
         """Force un/satisfy one or all xtrigger prerequisites of itask.
