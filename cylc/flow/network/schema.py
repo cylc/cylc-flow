@@ -2251,13 +2251,7 @@ class Trigger(Mutation, TaskMutation):
     # From: 8.6
     # Remove at: 8.7
     class Arguments(TaskMutation.Arguments, FlowMutationArguments):
-        on_resume = Boolean(
-            default_value=False,
-            description=sstrip('''
-                DEPRECATED: this option is no longer needed and will be
-                ignored by the scheduler.
-            ''')
-        )
+        pass
 
 
 def _mut_field(cls):
