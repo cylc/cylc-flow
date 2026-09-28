@@ -39,14 +39,11 @@ from cylc.flow.hostuserutil import get_user
 from cylc.flow.subprocctx import add_kwarg_to_sig
 from cylc.flow.subprocpool import get_xtrig_func
 from cylc.flow.xtriggers.wall_clock import _wall_clock
-from cylc.flow.xtriggers.workflow_state import (
-    workflow_state,
-    _workflow_state_backcompat,
-    _upgrade_workflow_state_sig,
-)
+
 
 if TYPE_CHECKING:
     from inspect import BoundArguments, Signature
+
     from cylc.flow.scheduler import Scheduler
     from cylc.flow.subprocctx import SubFuncContext
     from cylc.flow.task_proxy import TaskProxy
@@ -282,12 +279,7 @@ class XtriggerCollator:
             bound_args = sig.bind(*fctx.func_args, **fctx.func_kwargs)
         except TypeError as exc:
             err = XtriggerConfigError(label, sig_str, exc)
-            if func is workflow_state:
-                bound_args = cls._try_workflow_state_backcompat(
-                    label, fctx, err
-                )
-            else:
-                raise err from None
+            raise err from None
 
         # Specific xtrigger.validate(), if available.
         # Note arg string templating has not been done at this point.
@@ -368,12 +360,8 @@ class XtriggerCollator:
         Raise XtriggerConfigError if validation fails.
 
         """
-        vname = "validate"
-        if fctx.func_name == _workflow_state_backcompat.__name__:
-            vname = "_validate_backcompat"
-
         try:
-            xtrig_validate_func = get_xtrig_func(fctx.mod_name, vname, fdir)
+            xtrig_validate_func = get_xtrig_func(fctx.mod_name, "validate", fdir)
         except (AttributeError, ImportError):
             return
         bound_args.apply_defaults()
@@ -383,49 +371,6 @@ class XtriggerCollator:
             if not isinstance(exc, WorkflowConfigError):
                 LOG.exception(exc)
             raise XtriggerConfigError(label, signature_str, exc) from None
-
-    # BACK COMPAT: workflow_state_backcompat
-    # from: 8.0.0
-    # to: 8.3.0
-    # remove at: 8.7
-    @classmethod
-    def _try_workflow_state_backcompat(
-        cls,
-        label: str,
-        fctx: 'SubFuncContext',
-        err: XtriggerConfigError,
-    ) -> 'BoundArguments':
-        """Try to validate args against the old workflow_state signature.
-
-        Raise the original signature check error if this signature check fails.
-
-        Returns the bound arguments for the old signature.
-        """
-        sig = cls._handle_sequential_kwarg(
-            label, fctx, signature(_workflow_state_backcompat)
-        )
-        try:
-            bound_args = sig.bind(*fctx.func_args, **fctx.func_kwargs)
-        except TypeError:
-            # failed signature check for backcompat function
-            raise err from None  # original signature check error
-
-        old_sig_str = fctx.get_signature()
-        upg_sig_str = "workflow_state({})".format(
-            ", ".join(
-                f'{k}={v}' for k, v in
-                _upgrade_workflow_state_sig(bound_args.arguments).items()
-                if v is not None
-            )
-        )
-        LOG.warning(
-            "(8.3.0) Deprecated function signature used for "
-            "workflow_state xtrigger was automatically upgraded. Please "
-            "alter your workflow to use the new syntax:\n"
-            f"    {old_sig_str} --> {upg_sig_str}"
-        )
-        fctx.func_name = _workflow_state_backcompat.__name__
-        return bound_args
 
 
 class XtriggerManager:
