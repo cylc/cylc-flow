@@ -15,15 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Dict, Optional, Tuple, Any
 import asyncio
-from inspect import signature
+from typing import Any
 
-from cylc.flow.scripts.workflow_state import WorkflowPoller
-from cylc.flow.id import tokenise
-from cylc.flow.exceptions import WorkflowConfigError, InputError
-from cylc.flow.task_state import TASK_STATUS_SUCCEEDED
 from cylc.flow.dbstatecheck import check_polling_config
+from cylc.flow.exceptions import InputError, WorkflowConfigError
+from cylc.flow.id import tokenise
+from cylc.flow.scripts.workflow_state import WorkflowPoller
+from cylc.flow.task_state import TASK_STATUS_SUCCEEDED
 
 
 DEFAULT_STATUS = TASK_STATUS_SUCCEEDED
@@ -31,12 +30,12 @@ DEFAULT_STATUS = TASK_STATUS_SUCCEEDED
 
 def workflow_state(
     workflow_task_id: str,
-    offset: Optional[str] = None,
-    flow_num: Optional[int] = None,
+    offset: str | None = None,
+    flow_num: int | None = None,
     is_trigger: bool = False,
     is_message: bool = False,
-    alt_cylc_run_dir: Optional[str] = None,
-) -> Tuple[bool, Dict[str, Any]]:
+    alt_cylc_run_dir: str | None = None,
+) -> tuple[bool, dict[str, Any]]:
     """Connect to a workflow DB and check a task status or output.
 
     If the status or output has been achieved, return {True, result}.
@@ -127,7 +126,7 @@ def workflow_state(
         return (False, {})
 
 
-def validate(args: Dict[str, Any]):
+def validate(args: dict[str, Any]):
     """Validate workflow_state xtrigger function args.
 
     Arguments:
