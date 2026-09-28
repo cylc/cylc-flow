@@ -58,6 +58,10 @@ dynamic = ["version"]
 graph = [
     "pillow",
 ]
+report-timings = [
+    "pandas>=2,<4",
+    "matplotlib",
+]
 main_loop-log_data_store = [
     "pympler",
     "matplotlib",
@@ -72,15 +76,10 @@ main_loop-log_memory = [
 main_loop-log_db = [
     "sqlparse",
 ]
-report-timings = [
-    "pandas>=2,<4",
-    "matplotlib",
-]
-tests = [
-    "aiosmtpd",
-    "async_generator",
-    "bandit>=1.7.0",
-    "coverage>=7.9.0",
+
+[dependency-groups]
+lint = [
+    "black",
     "flake8-broken-line>=0.3.0",
     "flake8-bugbear>=21.0.0",
     "flake8-builtins>=1.5.0",
@@ -92,25 +91,44 @@ tests = [
     "flake8-simplify>=0.14.0; python_version<'3.14'",
     "flake8-type-checking",
     "flake8>=3.0.0",
+    "isort",
     "mypy>=0.910",
+    "ruff",
+]
+tests = [
+    "aiosmtpd",
+    "async_generator",
+    "bandit>=1.7.0",
+    "coverage>=7.9.0",
+    "pytest>=6",
     # https://github.com/pytest-dev/pytest-asyncio/issues/706
     "pytest-asyncio>=0.21.2,!=0.23.*",
     "pytest-cov>=2.8.0",
     "pytest-xdist>=2",
     "pytest-mock>=3.7",
-    "pytest>=6",
     "testfixtures>=6.11.0",
-    "towncrier>=24.7.0",
+]
+typing = [
     # Type annotation stubs
     # http://mypy-lang.blogspot.com/2021/05/the-upcoming-switch-to-modular-typeshed.html
     "types-Jinja2>=0.1.3",
     "types-protobuf>=0.1.10,!=5.29.1.20250402",
 ]
+dev = [
+    "pandas>=2,<4",
+    "pympler",
+    "matplotlib",
+    "sqlparse",
+    "towncrier>=24.7.0",
+    {include-group = "lint"},
+    {include-group = "tests"},
+    {include-group = "typing"},
+]
 tutorials = [
     "h5py",
     "requests",
+    {include-group = "dev"},
 ]
-all = ["cylc-flow[graph,main_loop-log_data_store,main_loop-log_db,main_loop-log_main_loop,main_loop-log_memory,tests,tutorials,report-timings]"]
 
 [project.scripts]
 # top level shell commands

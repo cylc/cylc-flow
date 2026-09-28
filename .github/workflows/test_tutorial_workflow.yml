@@ -50,7 +50,7 @@ jobs:
         uses: cylc/cylc-doc/.github/actions/install-dependencies@master
 
       - name: install cylc-flow
-        run: pip install .[all]
+        run: pip install . --group tutorials
 
       - name: run tutorial workflow
         run: |

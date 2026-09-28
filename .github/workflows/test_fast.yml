@@ -59,7 +59,7 @@ jobs:
 
       - name: Install Python Dependencies
         run: |
-          pip install -e ."[all]"
+          pip install -e . --group dev
 
       - name: Patch DNS
         uses: cylc/release-actions/patch-dns@v1
@@ -133,7 +133,7 @@ jobs:
 
       - name: Install Python Dependencies
         run: |
-          pip install -e ."[tests]"
+          pip install -e . --group tests
 
       - name: Flake8
         run: flake8
