@@ -348,7 +348,7 @@ class TaskState:
         }
 
     def prerequisites_eval_all(self) -> None:
-        """Evaluate satisifaction of all prerequisites and
+        """Evaluate satisfaction of all prerequisites and
         suicide prerequisites.
 
         Provides validation - will abort on illegal trigger expressions.
@@ -364,7 +364,7 @@ class TaskState:
 
     def get_resolved_dependencies(self):
         """Return a list of dependencies which have been met for this task
-        (ignoring the specific output in the depedency).
+        (ignoring the specific output in the dependency).
 
         E.G: ['1/foo', '2/bar']
 

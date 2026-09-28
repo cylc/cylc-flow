@@ -83,7 +83,7 @@ class TaskProxy:
         .is_manual_submit:
             Is the latest job submission due to a manual trigger?
         .job_vacated:
-            Is the latest job pre-empted (or vacated)?
+            Is the latest job preempted (or vacated)?
         .jobs:
             A list of job ids associated with the task proxy.
         .local_job_file_path:
