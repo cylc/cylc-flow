@@ -15,8 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Encapsulates polling activity for CLI commands."""
 
+from asyncio import sleep
 import sys
-from time import sleep
+
 from cylc.flow import LOG
 
 
@@ -76,7 +77,7 @@ class Poller:
                     sys.stderr.write("\n")
                     sys.stderr.flush()
                 break
-            sleep(self.interval)
+            await sleep(self.interval)
 
         if result:
             return True
