@@ -74,18 +74,18 @@ jobs:
       - name: Unit Tests
         timeout-minutes: 5
         run: |
-          pytest cylc/flow tests/unit
+          pytest -n auto cylc/flow tests/unit
 
       - name: Integration Tests
         timeout-minutes: 5
         run: |
-          pytest tests/integration --ignore tests/integration/tui/
+          pytest -n auto tests/integration --ignore tests/integration/tui/
 
       - name: Tui Integration Tests
         timeout-minutes: 5
         # Re-run failed Tui tests as they can be flaky
         run: |
-          pytest tests/integration/tui || pytest tests/integration/tui --last-failed
+          pytest -n auto tests/integration/tui || pytest tests/integration/tui --last-failed
 
       - name: Upload failed tests artifact
         if: failure()
