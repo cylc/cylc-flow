@@ -156,6 +156,7 @@ jobs:
         run: pytest -m linkcheck -ra --dist=load --color=yes -n 10 tests/unit/test_links.py
 
   codecov:
+    if: github.repository_owner == 'cylc'  # Don't run on forks.
     needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 2
