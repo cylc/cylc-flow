@@ -363,7 +363,7 @@ def main(parser: COP, options: 'Values', *ids: str) -> None:
     # the poller. TODO: consider using id_cli.parse_ids inside the poller.
     # (Note this applies to polling tasks, which use the CLI, not xtriggers).
 
-    id_ = ids[0].rstrip('/')  # might get 'id/' due to autcomplete
+    id_ = ids[0].rstrip('/')  # might get 'id/' due to autocomplete
 
     if any(
         [
