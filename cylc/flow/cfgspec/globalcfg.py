@@ -1518,38 +1518,6 @@ with Conf('global.cylc', desc='''
                      Configure the path to the cgroups filesystem.
 
                      The default value is the standard
-                     location for cgroups on linux and should work in
-                     most circumstances
-                     ''')
-                Conf('polling interval', VDR.V_INTERVAL,
-                     default="PT10S",
-                     desc='''
-                     Configure the profiler polling interval.
-
-                     The interval at which the profiler will
-                     poll the cgroups filesystem for resource usage data.
-                     The default value of 10 seconds should be sufficient for
-                     most use cases, but can be adjusted as needed.
-                ''')
-
-
-            with Conf('profiler', desc='''
-                Configure the Cylc job profiler.
-
-                This tool can capture CPU and memory information from
-                job runners which use cgroups such as PBS and Slurm.
-
-                .. versionadded:: 8.7.0
-            '''):
-                Conf('activate', VDR.V_BOOLEAN, False, desc='''
-                    Enable the Cylc profiler for this platform.
-                ''')
-                Conf('cgroups path', VDR.V_STRING,
-                     default='/sys/fs/cgroup',
-                     desc='''
-                     Configure the path to the cgroups filesystem.
-
-                     The default value is the standard
                      location for cgroups on Linux and should work in
                      most circumstances
                      ''')

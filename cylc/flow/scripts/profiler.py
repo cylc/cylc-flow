@@ -46,6 +46,15 @@ dp = DurationParser()
 INTERNAL = True
 PID_REGEX = re.compile(r"([^:]*\d{6,}.*)")
 RE_CPU_USAGE = re.compile(r'usage_usec\s*(\d+)')
+# Any cgroups v1 memory limit at or above this is the kernel's "no limit"
+# value (PAGE_COUNTER_MAX * PAGE_SIZE, which depends on the page size).
+CGROUP_V1_UNLIMITED = 2 ** 62
+# cgroups v1 mounts each controller separately, and the mount point is not
+# always named after the controller (cpu and cpuacct are usually co-mounted)
+V1_MOUNTS = {
+    'memory': ('memory',),
+    'cpu': ('cpu', 'cpu,cpuacct', 'cpuacct'),
+}
 
 
 @dataclass
@@ -55,7 +64,11 @@ class Process:
     max_rss: int
     cgroup_cpu_path: Path
     memory_allocated_path: Path
-    cgroup_version: int
+    # the cgroup version is tracked separately for each controller, a node
+    # running cgroups in "hybrid" mode can provide v2 data for one and only
+    # v1 data for the other
+    memory_version: int
+    cpu_version: int
 
 
 async def report_to_scheduler(process: Process, comms_timeout: int):
@@ -80,11 +93,16 @@ def get_profiler_data(process: Process):
     ):
         # If a task fails instantly, or finishes very quickly (< 1 second),
         # the get config function doesn't have time to run
-        max_rss = cpu_time = memory_allocated = 0
+        max_rss = cpu_time = memory_allocated = None
     else:
         max_rss = process.max_rss
         cpu_time = parse_cpu_file(process)
         memory_allocated = parse_memory_allocated(process)
+        print({
+            'max_rss': max_rss,
+            'cpu_time': cpu_time,
+            'memory_allocated': memory_allocated,
+        })
     return {
         'max_rss': max_rss,
         'cpu_time': cpu_time,
@@ -96,7 +114,7 @@ def parse_memory_file(process: Process):
     """Open the memory stat file and copy the appropriate data"""
 
     try:
-        if process.cgroup_version == 2:
+        if process.memory_version == 2:
             with open(process.cgroup_memory_path, 'r') as f:
                 for line in f:
                     if "anon" in line:
@@ -111,33 +129,61 @@ def parse_memory_file(process: Process):
             err, "Unable to find memory usage data") from err
 
 
-def parse_memory_allocated(process: Process) -> int:
+def parse_memory_allocated(process: Process) -> int | None:
     """Open the memory stat file and copy the appropriate data"""
-    if process.cgroup_version == 2:
-        cgroup_memory_path = process.memory_allocated_path
-        for _ in range(5):
-            memory_max_file = cgroup_memory_path / "memory.max"
-            with open(memory_max_file, 'r') as f:
-                line = f.readline()
-                if "max" not in line:
-                    return int(line)
-                cgroup_memory_path = cgroup_memory_path.parent
-        return 0
-    else:  # Memory limit not tracked for cgroups v1
-        return 0
+    if process.memory_version == 2:
+        try:
+            cgroup_memory_path = process.memory_allocated_path
+            for _ in range(10):
+                memory_max_file = cgroup_memory_path / "memory.max"
+                if not os.path.isfile(memory_max_file):
+                    # we have walked off the top of the cgroup filesystem
+                    break
+                with open(memory_max_file, 'r') as f:
+                    line = f.readline()
+                    if "max" not in line:
+                        return int(line)
+                    cgroup_memory_path = cgroup_memory_path.parent
+        except Exception as err:
+            raise CylcProfilerError(
+                err, "Unable to find memory allocation") from err
+    if process.memory_version == 1:
+        try:
+            cgroup_memory_path = process.memory_allocated_path
+            for _ in range(10):
+                memory_limit_file = (cgroup_memory_path /
+                                     "memory.limit_in_bytes")
+                if not os.path.isfile(memory_limit_file):
+                    # we have walked off the top of the cgroup filesystem
+                    break
+                with open(memory_limit_file, 'r') as f:
+                    line = f.readline()
+                    # cgroups v1 uses a huge number, rather than "max", to
+                    # mean "no limit". The exact value is
+                    # PAGE_COUNTER_MAX * PAGE_SIZE, so it varies with the
+                    # page size of the node (9223372036854771712 with the
+                    # usual 4K pages) - test a threshold, not equality.
+                    if int(line) < CGROUP_V1_UNLIMITED:
+                        return int(line)
+                    cgroup_memory_path = cgroup_memory_path.parent
+        except Exception as err:
+            raise CylcProfilerError(
+                err, "Unable to find memory allocation") from err
+    # no limit is set anywhere in this cgroup's ancestry
+    return 0
 
 
 def parse_cpu_file(process: Process) -> int:
     """Open the CPU stat file and return the appropriate data"""
     try:
-        if process.cgroup_version == 2:
+        if process.cpu_version == 2:
             with open(process.cgroup_cpu_path, 'r') as f:
                 for line in f:
                     if match := RE_CPU_USAGE.search(line):
                         return round(int(match.group(1)) / 1000)
             raise FileNotFoundError(process.cgroup_cpu_path)
 
-        elif process.cgroup_version == 1:
+        elif process.cpu_version == 1:
             with open(process.cgroup_cpu_path, 'r') as f:
                 for line in f:
                     # Cgroups v1 uses nanoseconds
@@ -148,6 +194,85 @@ def parse_cpu_file(process: Process) -> int:
         raise CylcProfilerError(
             err, "Unable to find cpu usage data") from err
     return 0
+
+
+def get_cgroup_names() -> dict:
+    """Return the cgroup path of this process for each controller.
+
+    On a node running cgroups in "hybrid" mode each controller can be in a
+    different place, e.g:
+
+        5:cpu,cpuacct:/pbspro.service/jobid/2397344.ehz100
+        4:memory:/pbspro.service/jobid/2397344.ehz100
+        0::/system.slice/pbs.service
+
+    gives {'cpu': 'pbspro.service/...', 'cpuacct': 'pbspro.service/...',
+           'memory': 'pbspro.service/...', 'v2': 'system.slice/pbs.service'}
+
+    The v2 (unified) hierarchy is stored under the key "v2".
+    """
+    # fugly hack to allow functional tests to use test data
+    if 'profiler_test_env_var' in os.environ:
+        name = os.environ['profiler_test_env_var'].lstrip('/')
+        return {'v2': name, 'memory': name, 'cpu': name, 'cpuacct': name}
+
+    pid = os.getpid()
+    cgroup_path = Path('/proc') / str(pid) / 'cgroup'
+    try:
+        result = cgroup_path.read_text()
+    except Exception as err:
+        raise CylcProfilerError(
+            err, f'{cgroup_path} not found') from err
+
+    names = {}
+    for line in result.splitlines():
+        fields = line.split(':', 2)
+        if len(fields) != 3:
+            continue
+        hierarchy_id, controllers, path = fields
+        path = path.lstrip('/')
+        if hierarchy_id == '0' and not controllers:
+            # the unified (v2) hierarchy
+            names['v2'] = path
+        else:
+            for controller in controllers.split(','):
+                # "name=systemd" is a named v1 hierarchy, not a controller
+                if not controller.startswith('name='):
+                    names[controller] = path
+    return names
+
+
+def get_controller_paths(
+    location: Path, names: dict, controller: str, v2_file: str, v1_file: str
+):
+    """Locate the cgroup directory holding a controller's data.
+
+    Prefers cgroups v2, falling back to v1 if the v2 hierarchy does not
+    provide this controller (as happens in "hybrid" mode).
+
+    Returns (version, directory).
+    """
+    # cgroups v2: everything lives in the one unified hierarchy
+    if 'v2' in names:
+        directory = location / names['v2']
+        if os.path.isfile(directory / v2_file):
+            return 2, directory
+
+    # cgroups v1: each controller is mounted separately, and the mount
+    # point does not always match the controller name (e.g. the cpu and
+    # cpuacct controllers are usually co-mounted as "cpu,cpuacct")
+    for mount in V1_MOUNTS[controller]:
+        for name in (names.get(mount), names.get(controller)):
+            if name is None:
+                continue
+            directory = location / mount / name
+            if os.path.isfile(directory / v1_file):
+                return 1, directory
+
+    raise CylcProfilerError(
+        FileNotFoundError(location),
+        f"Cgroup not found for the {controller} controller under {location}"
+    )
 
 
 def get_cgroup_version(cgroup_location: Path, cgroup_name: str) -> int:
@@ -186,34 +311,35 @@ def get_cgroup_name():
 
 
 def get_cgroup_paths(location: Path) -> Process:
+    """Work out where this process's cgroup data lives.
 
-    cgroup_name = get_cgroup_name().lstrip('/')
-    cgroup_version = get_cgroup_version(location, cgroup_name)
+    The memory and cpu controllers are resolved independently: in "hybrid"
+    mode a node can serve v2 data for one and only v1 data for the other.
+    """
+    names = get_cgroup_names()
 
-    if cgroup_version == 2:
-        return Process(
-            cgroup_memory_path=location / cgroup_name / "memory.stat",
-            cgroup_cpu_path=location / cgroup_name / "cpu.stat",
-            memory_allocated_path=location / cgroup_name,
-            cgroup_version=cgroup_version,
-            max_rss=0,
-        )
+    # RSS and the memory limit both come from the memory controller
+    memory_version, memory_dir = get_controller_paths(
+        location, names, 'memory', 'memory.stat', 'memory.stat'
+    )
+    cpu_version, cpu_dir = get_controller_paths(
+        location, names, 'cpu', 'cpu.stat', 'cpuacct.usage'
+    )
+    LOG.debug(
+        f'profiler: memory=cgroups v{memory_version} ({memory_dir}), '
+        f'cpu=cgroups v{cpu_version} ({cpu_dir})'
+    )
 
-    elif cgroup_version == 1:
-        return Process(
-            cgroup_memory_path=(
-                location / "memory" / cgroup_name / "memory.stat"
-            ),
-            cgroup_cpu_path=(
-                location / "cpu" / cgroup_name / "cpuacct.usage"
-            ),
-            memory_allocated_path=Path(),
-            cgroup_version=cgroup_version,
-            max_rss=0,
-        )
-
-    raise CylcProfilerError(FileNotFoundError(),
-                            "Unable to determine cgroup version")
+    return Process(
+        cgroup_memory_path=memory_dir / "memory.stat",
+        cgroup_cpu_path=(
+            cpu_dir / ("cpu.stat" if cpu_version == 2 else "cpuacct.usage")
+        ),
+        memory_allocated_path=memory_dir,
+        memory_version=memory_version,
+        cpu_version=cpu_version,
+        max_rss=0,
+    )
 
 
 async def profile(process: Process, delay, keep_looping=lambda: True):
