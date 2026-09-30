@@ -242,6 +242,26 @@ def get_cgroup_names() -> dict:
     return names
 
 
+def v2_controllers_enabled(directory: Path) -> bool:
+    """Is this cgroup v2 directory backed by real resource controllers?
+
+    In systemd's "hybrid" mode a cgroup2 hierarchy is mounted purely to
+    track processes, with no controllers enabled - its cgroup.controllers
+    files are empty and the resource controllers stay on v1.
+
+    This matters because the kernel exposes cpu.stat in every v2 cgroup
+    whether or not the cpu controller is enabled. In hybrid mode that file
+    is readable but describes the wrong cgroup (e.g. the batch system's
+    service cgroup, shared by every job on the node), so its presence alone
+    is not enough to tell us v2 is usable.
+    """
+    controllers = Path(directory) / 'cgroup.controllers'
+    try:
+        return bool(controllers.read_text().split())
+    except OSError:
+        return False
+
+
 def get_controller_paths(
     location: Path, names: dict, controller: str, v2_file: str, v1_file: str
 ):
@@ -255,7 +275,10 @@ def get_controller_paths(
     # cgroups v2: everything lives in the one unified hierarchy
     if 'v2' in names:
         directory = location / names['v2']
-        if os.path.isfile(directory / v2_file):
+        if (
+            os.path.isfile(directory / v2_file)
+            and v2_controllers_enabled(directory)
+        ):
             return 2, directory
 
     # cgroups v1: each controller is mounted separately, and the mount

@@ -15,10 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Cylc profile test for a node running cgroups in "hybrid" mode, where the
-# cpu controller is served by the unified (v2) hierarchy but the memory
-# controller is only available from the v1 hierarchy. The profiler must pick
-# the version for each controller independently.
+# Cylc profiler test for a node running cgroups in systemd "hybrid" mode: a
+# cgroup2 hierarchy is mounted for process tracking only (cgroup.controllers
+# is empty) so the profiler must ignore its readable-but-wrong cpu.stat and
+# use the v1 data for both controllers.
 
 . "$(dirname "$0")/test_header"
 
@@ -29,16 +29,23 @@ fi
 set_test_number 8
 
 CGROUP_NAME='pbspro.service/jobid/2397344.ehz100'
+SERVICE_CGROUP='system.slice/pbs.service'
 ROOT="${PWD}/cgroups_test_data"
 
-# v2 (unified) hierarchy: provides cpu.stat but NO memory files
-mkdir -p "${ROOT}/${CGROUP_NAME}"
-printf "blah blah 123456\nusage_usec 56781234" > "${ROOT}/${CGROUP_NAME}/cpu.stat"
+# v2 (unified) hierarchy: process tracking only. cgroup.controllers is
+# empty (no resource controllers), but the kernel still exposes cpu.stat -
+# for the batch system's service cgroup, shared by every job on the node.
+mkdir -p "${ROOT}/${SERVICE_CGROUP}"
+printf "" > "${ROOT}/${SERVICE_CGROUP}/cgroup.controllers"
+printf "usage_usec 81514978331" > "${ROOT}/${SERVICE_CGROUP}/cpu.stat"
 
-# v1 hierarchy: provides the memory controller only
-mkdir -p "${ROOT}/memory/${CGROUP_NAME}"
+# v1 hierarchies: the real per-job data. The cpu and cpuacct controllers
+# are co-mounted as "cpu,cpuacct".
+mkdir -p "${ROOT}/memory/${CGROUP_NAME}" "${ROOT}/cpu,cpuacct/${CGROUP_NAME}"
 echo 'total_rss 12345678' > "${ROOT}/memory/${CGROUP_NAME}/memory.stat"
 echo '123456789' > "${ROOT}/memory/${CGROUP_NAME}/memory.limit_in_bytes"
+# cgroups v1 reports CPU usage in nanoseconds
+echo '56781234000' > "${ROOT}/cpu,cpuacct/${CGROUP_NAME}/cpuacct.usage"
 
 export profiler_test_env_var="/${CGROUP_NAME}"
 create_test_global_config "
@@ -84,8 +91,9 @@ log_scan "${TEST_NAME_BASE}-task-failed" \
     '1/the_bad.*(received)_cylc_profiler.*cpu_time' \
     '1/the_bad.*failed'
 
-# cpu_time must come from the v2 cpu.stat (usage_usec, microseconds) and
-# max_rss / memory_allocated from the v1 memory files
+# All three values must come from the v1 files. In particular cpu_time must
+# be 56781 (the job's cpuacct.usage) and NOT 81514978 (the whole PBS
+# service, from the v2 cpu.stat).
 grep_workflow_log_ok "${TEST_NAME_BASE}-the_good-data" \
     '1/the_good.*(received)_cylc_profiler.*"max_rss": 12345678.*"cpu_time": 56781.*"memory_allocated": 123456789'
 grep_workflow_log_ok "${TEST_NAME_BASE}-the_bad-data" \

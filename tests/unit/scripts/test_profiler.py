@@ -85,7 +85,7 @@ async def test_report_to_scheduler(monkeypatch, tmpdir):
 
 
 def test_get_resource_usage():
-    """It should return 0 if cGroup information is not provided."""
+    """It should return None if cGroup information is not provided."""
     process_object = Process(
         cgroup_memory_path=None,
         cgroup_cpu_path=None,
@@ -95,9 +95,9 @@ def test_get_resource_usage():
         max_rss=0)
 
     assert get_profiler_data(process_object) == {
-        'max_rss': 0,
-        'cpu_time': 0,
-        'memory_allocated': 0,
+        'max_rss': None,
+        'cpu_time': None,
+        'memory_allocated': None,
     }
 
 
@@ -380,6 +380,8 @@ def test_get_cgroup_paths(mocker, tmp_path):
     (v2_loc / 'test_name').mkdir(parents=True)
     (v2_loc / 'test_name' / 'memory.stat').write_text('anon 1')
     (v2_loc / 'test_name' / 'cpu.stat').write_text('usage_usec 1')
+    # a real v2 hierarchy has resource controllers enabled
+    (v2_loc / 'test_name' / 'cgroup.controllers').write_text('memory pids')
 
     mocker.patch("cylc.flow.scripts.profiler.get_cgroup_names",
                  return_value=v2_names)
@@ -409,26 +411,37 @@ def test_get_cgroup_paths(mocker, tmp_path):
     assert (process.cgroup_cpu_path ==
             v1_loc / "cpu" / "test_name" / "cpuacct.usage")
 
-    # hybrid: the unified hierarchy provides cpu but not memory, so the
-    # memory data must fall back to v1 while cpu stays on v2
-    job = 'pbspro.service/jobid/2397344.ehz100'
+    # systemd "hybrid" mode: a cgroup2 hierarchy is mounted for process
+    # tracking only (cgroup.controllers is empty) and the resource
+    # controllers stay on v1. The kernel still exposes cpu.stat in the v2
+    # cgroup, but it describes the batch system's service cgroup - shared
+    # by every job on the node - so it must NOT be preferred over v1.
+    job = 'pbspro.service/jobid/2761065.ehz100'
     hybrid_names = {
-        'v2': 'system.slice/pbs.service', 'memory': job, 'cpu': job
+        'v2': 'system.slice/pbs.service',
+        'memory': job,
+        'cpu': job,
+        'cpuacct': job,
     }
     hy_loc = tmp_path / 'hybrid'
     (hy_loc / 'system.slice' / 'pbs.service').mkdir(parents=True)
     (hy_loc / 'system.slice' / 'pbs.service' / 'cpu.stat').write_text(
-        'usage_usec 1')
+        'usage_usec 81514978331')
+    (hy_loc / 'system.slice' / 'pbs.service' / 'cgroup.controllers'
+     ).write_text('')
     (hy_loc / 'memory' / job).mkdir(parents=True)
     (hy_loc / 'memory' / job / 'memory.stat').write_text('total_rss 1')
+    # the cpu and cpuacct controllers are co-mounted as "cpu,cpuacct"
+    (hy_loc / 'cpu,cpuacct' / job).mkdir(parents=True)
+    (hy_loc / 'cpu,cpuacct' / job / 'cpuacct.usage').write_text('1')
 
     mocker.patch("cylc.flow.scripts.profiler.get_cgroup_names",
                  return_value=hybrid_names)
     process = get_cgroup_paths(hy_loc)
-    assert process.cpu_version == 2
     assert process.memory_version == 1
+    assert process.cpu_version == 1
     assert (process.cgroup_cpu_path ==
-            hy_loc / 'system.slice' / 'pbs.service' / 'cpu.stat')
+            hy_loc / 'cpu,cpuacct' / job / 'cpuacct.usage')
     assert (process.cgroup_memory_path ==
             hy_loc / 'memory' / job / 'memory.stat')
     assert process.memory_allocated_path == hy_loc / 'memory' / job
