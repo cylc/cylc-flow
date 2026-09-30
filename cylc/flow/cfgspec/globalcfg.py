@@ -1873,7 +1873,7 @@ with Conf('global.cylc', desc='''
                 :cylc:conf:`[..]tail command template`.
 
                 Include a ``%(lines)s`` substitution to support the UI
-                "tail-end" view mode. Following GNU ``tail`` ``-n``
+                "tail-end" view mode. Following GNU ``tail -n``
                 semantics, it expands to the line to start tailing from: a
                 number of lines back from the *end* of the file in the
                 "tail-end" view mode, or ``+1`` (the start of the file)
