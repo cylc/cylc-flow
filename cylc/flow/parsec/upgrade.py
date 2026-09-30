@@ -236,8 +236,8 @@ class upgrader:
                         )
                         with contextlib.suppress(KeyError):
                             if upg['remove_at'] is not None:
-                                msg += r" - will be removed at "
-                                r" + upg['remove_at']"
+                                msg += (" - will be removed at " +
+                                        f"{upg['remove_at']}")
                         warnings.setdefault(vn, [])
                         warnings[vn].append(msg)
                         self.del_item(upg['old'])
