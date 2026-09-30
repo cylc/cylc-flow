@@ -45,3 +45,69 @@ async def test_blank_graph(one, disable_graph_open, capsys):
     out, err = capsys.readouterr()
     assert 'No tasks to display' in err
     assert 'Try changing the start and stop values' in err
+
+
+async def test_flatten_icp(flow, tmp_path):
+    """It should flatten out absolute dependencies in the ICP.
+
+    Tests the "--flatten-icp" flag.
+    """
+    id_ = flow({
+        'scheduler': {
+            'cycle point format': 'CCYY',
+        },
+        'scheduling': {
+            'initial cycle point': '2000',
+            'final cycle point': '2004',
+            'graph': {
+                'R1': 'start',
+                'P1Y': 'start[^] => foo => bar',  # ICP dep (^)
+                'R1/2003': 'foo[2001] => pub',  # non-ICP ABS dep (2001)
+            },
+        },
+    })
+    graph_file = tmp_path / 'graph.dot'
+
+    # test default behaviour (expanded ICP deps):
+    await _main(
+        Opts(output=str(graph_file), flatten_icp_dependence=False),
+        id_,
+        '2000',
+        '2003',
+    )
+    with open(graph_file, 'r') as graph_file_:
+        edges = {line.strip() for line in graph_file_ if '->' in line}
+
+    assert edges == {
+        '"2000/foo" -> "2000/bar"',
+        '"2000/start" -> "2000/foo"',  # NOTE: inter-cycle ICP dep
+        '"2000/start" -> "2001/foo"',  # NOTE: ICP dep
+        '"2000/start" -> "2002/foo"',  # NOTE: ICP dep
+        '"2000/start" -> "2003/foo"',  # NOTE: ICP dep
+        '"2001/foo" -> "2001/bar"',
+        '"2001/foo" -> "2003/pub"',
+        '"2002/foo" -> "2002/bar"',
+        '"2003/foo" -> "2003/bar"',
+    }
+
+    # test "--flatten-icp" behaviour:
+    await _main(
+        Opts(output=str(graph_file), flatten_icp_dependence=True),
+        id_,
+        '2000',
+        '2003',
+    )
+    with open(graph_file, 'r') as graph_file_:
+        edges = {line.strip() for line in graph_file_ if '->' in line}
+
+    assert edges == {
+        '"2000/foo" -> "2000/bar"',
+        '"2000/start" -> "2000/foo"',
+        '"2001/foo" -> "2001/bar"',
+        '"2001/foo" -> "2003/pub"',  # NOTE: not flattened (non-ICP abs dep)
+        '"2002/foo" -> "2002/bar"',
+        '"2003/foo" -> "2003/bar"',
+        '"R1.2001/start" -> "2001/foo"',  # NOTE: ICP dep flattened
+        '"R1.2002/start" -> "2002/foo"',  # NOTE: ICP dep flattened
+        '"R1.2003/start" -> "2003/foo"',  # NOTE: ICP dep flattened
+    }

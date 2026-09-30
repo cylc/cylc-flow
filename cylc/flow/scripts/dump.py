@@ -164,6 +164,12 @@ def get_option_parser():
         "-t", "--tasks", help="Task states only.",
         action="store_const", const="tasks", dest="disp_form")
     parser.add_option(
+        "-i", "--full-ids",
+        help="With -t/--tasks (task states only),"
+             " print full workflow//cycle/name IDs without other attributes"
+             " for easy cut-and-paste to other commands.",
+        action="store_true", default=False, dest="full_ids")
+    parser.add_option(
         "-l", "--legacy", help="Tasks states only; use legacy format.",
         action="store_true", default=False, dest="legacy_format")
     parser.add_option(
@@ -207,7 +213,7 @@ async def dump(workflow_id, options, write=print):
     else:
         sort_args = {'keys': ['name', 'cyclePoint']}
 
-    # retrict to the n=0 window
+    # restrict to the n=0 window
     graph_depth = 0
 
     if options.disp_form == "raw":
@@ -300,20 +306,22 @@ async def dump(workflow_id, options, write=print):
                         write(', '.join(values))
                 else:
                     for item in summary['taskProxies']:
-                        result = (
-                            f"{item['cyclePoint']}/{item['name']}"
-                            f":{item['state']}"
-                        )
+                        result = ""
                         attrs = []
-                        if item['isHeld']:
-                            attrs.append("held")
-                        if item['isQueued']:
-                            attrs.append("queued")
-                        if item['isRunahead']:
-                            attrs.append("runahead")
+                        if options.full_ids:
+                            result = f"{workflow_id}//"
+                        result += f"{item['cyclePoint']}/{item['name']}"
+                        if not options.full_ids:
+                            result += f":{item['state']}"
+                            if item['isHeld']:
+                                attrs.append("held")
+                            if item['isQueued']:
+                                attrs.append("queued")
+                            if item['isRunahead']:
+                                attrs.append("runahead")
                         if attrs:
                             result += " (" + ",".join(attrs) + ")"
-                        if options.show_flows:
+                        if options.show_flows and not options.full_ids:
                             result += (
                                 f" flows={item['flowNums'].replace(' ', '')}"
                             )

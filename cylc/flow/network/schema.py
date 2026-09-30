@@ -904,7 +904,7 @@ RUNTIME_FIELD_TO_CFG_MAP = {
 
 
 def runtime_schema_to_cfg(runtime: dict) -> dict:
-    """Covert GraphQL Runtime field names to workflow config setting names and
+    """Convert GraphQL Runtime field names to workflow config setting names and
     perform any necessary processing on the values."""
     # We have to manually lowercase the run_mode field because we don't define
     # a proper schema for BroadcastSetting (it's just GenericScalar) so
@@ -1931,7 +1931,7 @@ class SetVerbosity(Mutation):
             For example, if you choose `WARNING`, only warning, error and
             critical level messages will be logged.
 
-            Valid for: paused, running workflows.
+            Valid for: paused, running, stopping workflows.
         ''')
         resolver = mutator
 
@@ -2170,6 +2170,27 @@ class Remove(Mutation, TaskMutation):
                 By default, tasks will be removed from all flows.
             ''')
         )
+        no_spawn = Boolean(
+            default_value=False,
+            description=sstrip('''
+                Remove the leading instance of a parentless task without
+                spawning its next instance.
+
+                This only affects leading instances of parentless sequential
+                xtriggered tasks and parentless tasks waiting at the
+                runahead-limit.
+
+                WARNING: this is a low-level intervention that cuts tasks from
+                the future graph; it could cause your workflow to shut down
+                prematurely as complete.
+
+                If `false` the scheduler will spawn the next task instance
+                as normal (default).
+
+                If `true` the scheduler will not spawn the next task instance.
+
+            ''')
+        )
 
 
 class SetPrereqsAndOutputs(Mutation, TaskMutation):
@@ -2225,18 +2246,8 @@ class Trigger(Mutation, TaskMutation):
         ''')
         resolver = partial(mutator, command='force_trigger_tasks')
 
-    # BACK COMPAT: on_resume
-    #   Arg no longer used but retained for older clients.
-    # From: 8.6
-    # Remove at: 8.7
     class Arguments(TaskMutation.Arguments, FlowMutationArguments):
-        on_resume = Boolean(
-            default_value=False,
-            description=sstrip('''
-                DEPRECATED: this option is no longer needed and will be
-                ignored by the scheduler.
-            ''')
-        )
+        pass
 
 
 def _mut_field(cls):

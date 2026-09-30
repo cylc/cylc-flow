@@ -166,6 +166,7 @@ def _remove_matched_tasks(
     ids: Set[TaskTokens],
     flow_nums: 'FlowNums',
     warn_unremovable: bool = True,
+    no_spawn: bool = False,
 ):
     """Remove matched tasks."""
     # Mapping of *relative* task IDs to removed flow numbers:
@@ -184,7 +185,8 @@ def _remove_matched_tasks(
                 continue
             removed[itask.tokens.task] = fnums_to_remove
             if fnums_to_remove == itask.flow_nums:
-                schd.pool.remove(itask, 'request')
+                # Need to remove the task from the pool.
+                schd.pool.remove(itask, 'request', no_spawn=no_spawn)
                 to_kill.append(itask)
                 itask.removed = True
             itask.flow_nums.difference_update(fnums_to_remove)
@@ -493,13 +495,17 @@ async def set_verbosity(schd: 'Scheduler', level: 'Enum'):
 
 @_command('remove_tasks')
 async def remove_tasks(
-    schd: 'Scheduler', tasks: Iterable[str], flow: List[str]
+    schd: 'Scheduler',
+    tasks: Iterable[str],
+    flow: List[str],
+    no_spawn: bool = False
 ):
     """Match and remove tasks (`cylc remove` command).
 
     Args:
         tasks: Relative IDs or globs to match.
         flow: flows to remove the tasks from.
+        no_spawn: Do not spawn successors before removal.
     """
     flow = back_compat_flow_all(flow)  # BACK COMPAT (see func def)
     ids = validate.is_tasks(tasks)
@@ -512,7 +518,8 @@ async def remove_tasks(
         _remove_matched_tasks(
             schd,
             matched,
-            schd.pool.flow_mgr.cli_to_flow_nums(flow)
+            schd.pool.flow_mgr.cli_to_flow_nums(flow),
+            no_spawn=no_spawn,
         )
 
 
@@ -540,7 +547,7 @@ async def reload_workflow(schd: 'Scheduler', reload_global: bool = False):
         # which is called synchronously in the main loop so this call is
         # blocking to other main loop functions
 
-        # subproc pool - for issueing/tracking remote-init commands
+        # subproc pool - for issuing/tracking remote-init commands
         schd.proc_pool.process()
         # task messages - for tracking task status changes
         schd.process_queued_task_messages()
@@ -656,11 +663,6 @@ async def force_trigger_tasks(
     flow: List[str],
     flow_wait: bool = False,
     flow_descr: Optional[str] = None,
-    # BACK COMPAT: on_resume
-    #   Arg no longer used but retained for older clients.
-    # From: 8.6
-    # Remove at: 8.7
-    on_resume: bool = False
 ):
     """Match and trigger a group of tasks (`cylc trigger` command).
 

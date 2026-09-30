@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # -----------------------------------------------------------------------------
-# Test that cylc clean succesfully removes the workflow on remote host
+# Test that cylc clean successfully removes the workflow on remote host
 
 export REQUIRE_PLATFORM='loc:remote fs:indep'
 . "$(dirname "$0")/test_header"

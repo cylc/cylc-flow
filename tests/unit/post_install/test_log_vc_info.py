@@ -185,11 +185,15 @@ def test_write_diff_git(git_source_repo: Tuple[str, str], tmp_path: Path):
     assert diff_file.parts[-1] == "01-uncommitted.diff"
     diff_lines = diff_file.read_text().splitlines()
     assert diff_lines[0].startswith("# Auto-generated diff")
-    for line in ("diff --git a/flow.cylc b/flow.cylc",
-                 "-        R1 = foo",
-                 "+        R1 = bar"):
+    assert (
+        "diff --git a/flow.cylc b/flow.cylc" in diff_lines
+        or "diff --git c/flow.cylc w/flow.cylc" in diff_lines
+    )
+    for line in (
+        "-        R1 = foo",
+        "+        R1 = bar",
+    ):
         assert line in diff_lines
-
     flow_file = Path(source_dir) / 'flow.cylc'
     flow_file.write_text(BASIC_FLOW_3)
 
@@ -200,9 +204,14 @@ def test_write_diff_git(git_source_repo: Tuple[str, str], tmp_path: Path):
     assert diff_file.parts[-1] == "02-uncommitted.diff"
     diff_lines = diff_file.read_text().splitlines()
     assert diff_lines[0].startswith("# Auto-generated diff")
-    for line in ("diff --git a/flow.cylc b/flow.cylc",
-                 "-        R1 = foo",
-                 "+        R1 = foobar"):
+    assert (
+        "diff --git a/flow.cylc b/flow.cylc" in diff_lines
+        or "diff --git c/flow.cylc w/flow.cylc" in diff_lines
+    )
+    for line in (
+        "-        R1 = foo",
+        "+        R1 = foobar",
+    ):
         assert line in diff_lines
 
 
