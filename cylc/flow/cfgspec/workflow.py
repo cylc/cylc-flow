@@ -2158,22 +2158,29 @@ def upg(
         '8.0.0',
         ['cylc', 'task event mail interval'],
         ['cylc', 'mail', 'task event batch interval'],
+        remove_at='8.9'
     )
     u.deprecate(
         '8.0.0',
         ['runtime', '__MANY__', 'suite state polling'],
         ['runtime', '__MANY__', 'workflow state polling'],
         is_section=True,
+        remove_at='8.9'
     )
     u.obsolete(
-        '8.0.0', ['runtime', '__MANY__', 'workflow state polling', 'host'])
+        '8.0.0', ['runtime', '__MANY__', 'workflow state polling', 'host'],
+        remove_at='8.9'
+    )
     u.obsolete(
-        '8.0.0', ['runtime', '__MANY__', 'workflow state polling', 'user'])
+        '8.0.0', ['runtime', '__MANY__', 'workflow state polling', 'user'],
+        remove_at='8.9'
+    )
 
     u.deprecate(
         '8.3.0',
         ['runtime', '__MANY__', 'workflow state polling', 'run-dir'],
         ['runtime', '__MANY__', 'workflow state polling', 'alt-cylc-run-dir'],
+        remove_at='8.9'
     )
 
     u.deprecate(
@@ -2181,12 +2188,14 @@ def upg(
         ['cylc', 'parameters'],
         ['task parameters'],
         is_section=True,
+        remove_at='8.9'
     )
     u.deprecate(
         '8.0.0',
         ['cylc', 'parameter templates'],
         ['task parameters', 'templates'],
         is_section=True,
+        remove_at='8.9'
     )
     # Whole workflow task mail settings
     for mail_setting in ['to', 'from', 'footer']:
@@ -2194,6 +2203,7 @@ def upg(
             '8.0.0',
             ['cylc', 'events', f'mail {mail_setting}'],
             ['cylc', 'mail', mail_setting],
+            remove_at='8.9'
         )
     # Task mail settings in [runtime][TASK]
     for mail_setting in ['to', 'from']:
@@ -2201,6 +2211,7 @@ def upg(
             '8.0.0',
             ['runtime', '__MANY__', 'events', f'mail {mail_setting}'],
             ['runtime', '__MANY__', 'mail', mail_setting],
+            remove_at='8.9'
         )
     u.deprecate(
         '8.0.0',
@@ -2210,15 +2221,16 @@ def upg(
             'DELETED (OBSOLETE) - use "global.cylc[scheduler][mail]smtp" '
             'instead')
         ),
+        remove_at='8.9'
     )
     u.deprecate(
         '8.0.0',
         ['runtime', '__MANY__', 'events', 'mail smtp'],
         None,
         cvtr=converter(lambda x: x, (
-            'DELETED (OBSOLETE) - use "global.cylc[scheduler][mail]smtp" '
-            'instead')
+            'DELETED (OBSOLETE) - use "global.cylc[scheduler][mail]smtp" ')
         ),
+        remove_at='8.9'
     )
     u.deprecate(
         '8.0.0',
@@ -2226,13 +2238,15 @@ def upg(
         ['scheduling', 'runahead limit'],
         cvtr=converter(
             lambda x: f'P{int(x) - 1}' if x != '' else '',
-            '"{old}" -> "{new}"'
+            '"{old}" -> "{new}"',
         ),
+        remove_at='8.9'
     )
     u.deprecate(
         '8.0.0',
         ['scheduling', 'hold after point'],
         ['scheduling', 'hold after cycle point'],
+        remove_at='8.9'
     )
 
     for job_setting in [
@@ -2246,6 +2260,7 @@ def upg(
             '8.0.0',
             ['runtime', '__MANY__', 'job', job_setting],
             ['runtime', '__MANY__', job_setting],
+            remove_at='8.9'
         )
 
     # Workflow timeout is now measured from start of run.
@@ -2266,6 +2281,7 @@ def upg(
             '8.0.0',
             ['cylc', 'events', old],
             ['cylc', 'events', new],
+            remove_at='8.9',
         )
 
     for old in [
@@ -2288,6 +2304,7 @@ def upg(
             '8.0.0',
             ['runtime', '__MANY__', 'events', old],
             ['runtime', '__MANY__', 'events', f"{old}s"],
+            remove_at='8.9',
         )
 
     for old in [
@@ -2298,13 +2315,15 @@ def upg(
         'abort if inactivity handler fails',
         'abort if stalled handler fails',
     ]:
-        u.obsolete('8.0.0', ['cylc', 'events', old])
+        u.obsolete('8.0.0', ['cylc', 'events', old,],
+                   remove_at='8.9')
 
     u.deprecate(
         '8.0.0',
         ['cylc'],
         ['scheduler'],
         is_section=True,
+        remove_at='8.9'
     )
     u.upgrade()
 

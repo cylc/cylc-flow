@@ -69,7 +69,7 @@ class upgrader:
 
     def deprecate(
         self, vn, oldkeys, newkeys=None,
-        cvtr=None, is_section=False,
+        cvtr=None, is_section=False, remove_at=None
     ):
         """Replace a deprecated key from a config
         Args:
@@ -84,6 +84,8 @@ class upgrader:
                 description of that function.
             is_section (bool):
                 Is a section heading.
+            remove_at (str):
+                Describes when this will be removed
         """
         if vn not in self.upgrades:
             self.upgrades[vn] = []
@@ -92,10 +94,10 @@ class upgrader:
         self.upgrades[vn].append(
             {
                 'old': oldkeys, 'new': newkeys, 'cvt': cvtr,
-                'is_section': is_section
+                'is_section': is_section, 'remove_at': remove_at
             })
 
-    def obsolete(self, vn, oldkeys, is_section=False):
+    def obsolete(self, vn, oldkeys, is_section=False, remove_at=None):
         """Remove an obsolete key from a config
         Args:
             vn (str):
@@ -111,7 +113,7 @@ class upgrader:
         self.upgrades[vn].append(
             {
                 'old': oldkeys, 'new': None, 'cvt': cvtr,
-                'is_section': is_section
+                'is_section': is_section, 'remove_at': remove_at
             })
 
     def get_item(self, keys):
@@ -232,6 +234,8 @@ class upgrader:
                             old=old,
                             new=upg['cvt'].convert(old)
                         )
+                        if upg['remove_at'] is not None:
+                            msg += " - will be removed at " + upg['remove_at']
                         warnings.setdefault(vn, [])
                         warnings[vn].append(msg)
                         self.del_item(upg['old'])
