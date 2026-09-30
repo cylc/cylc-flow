@@ -60,7 +60,8 @@ async def test_report_to_scheduler(monkeypatch, tmpdir):
         cgroup_memory_path=mem_file,
         cgroup_cpu_path=cpu_file,
         memory_allocated_path=mem_allocated_file,
-        cgroup_version=1,
+        memory_version=1,
+        cpu_version=1,
         max_rss=42,
     )
 
@@ -84,27 +85,30 @@ async def test_report_to_scheduler(monkeypatch, tmpdir):
 
 
 def test_get_resource_usage():
-    """It should return 0 if cGroup information is not provided."""
+    """It should return None if cGroup information is not provided."""
     process_object = Process(
         cgroup_memory_path=None,
         cgroup_cpu_path=None,
         memory_allocated_path=None,
-        cgroup_version=1,
+        memory_version=1,
+        cpu_version=1,
         max_rss=0)
 
     assert get_profiler_data(process_object) == {
-        'max_rss': 0,
-        'cpu_time': 0,
-        'memory_allocated': 0,
+        'max_rss': None,
+        'cpu_time': None,
+        'memory_allocated': None,
     }
 
 
 def test_parse_memory_file(tmpdir):
     """It should return the memory usage of the process."""
     mem_file_v1 = tmpdir.join("memory_file_v1.txt")
-    mem_file_v1.write('total_rss=1024')
+    # 2 MiB in bytes
+    mem_file_v1.write('total_rss=2097152')
     mem_file_v2 = tmpdir.join("memory_file_v2.txt")
-    mem_file_v2.write('anon=666')
+    # 3 MiB in bytes
+    mem_file_v2.write('anon=3145728')
     cpu_file = tmpdir.join("cpu_file.txt")
     cpu_file.write('5678')
     mem_allocated_file = tmpdir.join("memory_allocated.txt")
@@ -114,28 +118,31 @@ def test_parse_memory_file(tmpdir):
         cgroup_memory_path=mem_file_v1,
         cgroup_cpu_path=cpu_file,
         memory_allocated_path=mem_allocated_file,
-        cgroup_version=1,
+        memory_version=1,
+        cpu_version=1,
         max_rss=0)
     good_process_object_v2 = Process(
         cgroup_memory_path=mem_file_v2,
         cgroup_cpu_path=cpu_file,
         memory_allocated_path=mem_allocated_file,
-        cgroup_version=2,
+        memory_version=2,
+        cpu_version=2,
         max_rss=0)
     bad_process_object = Process(
         cgroup_memory_path='',
         cgroup_cpu_path='',
         memory_allocated_path='',
-        cgroup_version=1,
+        memory_version=1,
+        cpu_version=1,
         max_rss=0)
 
     with pytest.raises(CylcProfilerError) as excinfo:
         parse_memory_file(bad_process_object)
     assert "Unable to find memory usage data" in str(excinfo.value)
 
-    # Test the parse_memory_file function
-    assert parse_memory_file(good_process_object_v1) == 1024
-    assert parse_memory_file(good_process_object_v2) == 666
+    # Test the parse_memory_file function (values reported in bytes)
+    assert parse_memory_file(good_process_object_v1) == 2097152
+    assert parse_memory_file(good_process_object_v2) == 3145728
 
 
 def test_parse_cpu_file(tmpdir):
@@ -158,31 +165,36 @@ def test_parse_cpu_file(tmpdir):
         cgroup_memory_path=mem_file,
         cgroup_cpu_path=cpu_file_v1_good,
         memory_allocated_path=mem_allocated_file,
-        cgroup_version=1,
+        memory_version=1,
+        cpu_version=1,
         max_rss=0)
     good_process_object_v2 = Process(
         cgroup_memory_path=mem_file,
         cgroup_cpu_path=cpu_file_v2_good,
         memory_allocated_path=mem_allocated_file,
-        cgroup_version=2,
+        memory_version=2,
+        cpu_version=2,
         max_rss=0)
     bad_process_object_v1_1 = Process(
         cgroup_memory_path='',
         cgroup_cpu_path='',
         memory_allocated_path='',
-        cgroup_version=1,
+        memory_version=1,
+        cpu_version=1,
         max_rss=0)
     bad_process_object_v1_2 = Process(
         cgroup_memory_path=mem_file,
         cgroup_cpu_path=cpu_file_v1_bad,
         memory_allocated_path=mem_allocated_file,
-        cgroup_version=1,
+        memory_version=1,
+        cpu_version=1,
         max_rss=0)
     bad_process_object_v2 = Process(
         cgroup_memory_path=mem_file,
         cgroup_cpu_path=cpu_file_v2_bad,
         memory_allocated_path=mem_allocated_file,
-        cgroup_version=2,
+        memory_version=2,
+        cpu_version=2,
         max_rss=0)
 
     assert parse_cpu_file(good_process_object_v1) == 1235
@@ -217,32 +229,37 @@ def test_parse_memory_allocated(tmp_path_factory):
     """It should return the memory allocated to the process."""
     good_mem_dir = tmp_path_factory.mktemp("mem_dir")
     mem_allocated_file = good_mem_dir / "memory.max"
-    mem_allocated_file.write_text('99999')
+    # 100 MiB in bytes
+    mem_allocated_file.write_text('104857600')
+    # the cgroups v1 equivalent
+    (good_mem_dir / "memory.limit_in_bytes").write_text('104857600')
 
-    # We currently do not track memory allocated for cgroups v1
     good_process_object_v1 = Process(
-        cgroup_memory_path='',
+        cgroup_memory_path=good_mem_dir / "memory.stat",
         cgroup_cpu_path='',
         memory_allocated_path=good_mem_dir,
-        cgroup_version=1,
+        memory_version=1,
+        cpu_version=1,
         max_rss=0)
 
     good_process_object_v2 = Process(
         cgroup_memory_path='',
         cgroup_cpu_path='',
         memory_allocated_path=good_mem_dir,
-        cgroup_version=2,
+        memory_version=2,
+        cpu_version=2,
         max_rss=0)
 
     bad_process_object_v2_1 = Process(
         cgroup_memory_path='',
         cgroup_cpu_path='',
         memory_allocated_path=Path('/'),
-        cgroup_version=2,
+        memory_version=2,
+        cpu_version=2,
         max_rss=0)
 
-    assert parse_memory_allocated(good_process_object_v1) == 0
-    assert parse_memory_allocated(good_process_object_v2) == 99999
+    assert parse_memory_allocated(good_process_object_v1) == 104857600
+    assert parse_memory_allocated(good_process_object_v2) == 104857600
     with pytest.raises(CylcProfilerError) as excinfo:
         parse_memory_file(bad_process_object_v2_1)
     assert "Unable to find memory usage data" in str(excinfo.value)
@@ -278,7 +295,8 @@ def test_parse_memory_allocated(tmp_path_factory):
         cgroup_memory_path='',
         cgroup_cpu_path='',
         memory_allocated_path=dir_5,
-        cgroup_version=2,
+        memory_version=2,
+        cpu_version=2,
         max_rss=0)
 
     # The function should return 0 if it cannot find a memory.max file with
@@ -287,8 +305,41 @@ def test_parse_memory_allocated(tmp_path_factory):
 
     # Add a memory.max file with a value to the top level directory
     # and check it is read
-    mem_file_1.write_text("99999")
-    assert parse_memory_allocated(bad_process_object_v2_2) == 99999
+    mem_file_1.write_text("104857600")
+    assert parse_memory_allocated(bad_process_object_v2_2) == 104857600
+
+    # cgroups v1 (e.g. PBS in hybrid mode) uses memory.limit_in_bytes, and a
+    # huge number rather than "max" to mean "unlimited". The cgroup dir is
+    # taken from cgroup_memory_path as memory_allocated_path is not set.
+    v1_dir = tmp_path_factory.mktemp("v1")
+    job_dir = v1_dir / "jobid" / "2397344.ehz100"
+    job_dir.mkdir(parents=True)
+    (v1_dir / "memory.limit_in_bytes").write_text("9223372036854771712")
+    (v1_dir / "jobid" / "memory.limit_in_bytes").write_text(
+        "9223372036854771712"
+    )
+    (job_dir / "memory.limit_in_bytes").write_text("104857600")
+
+    v1_process = Process(
+        cgroup_memory_path=job_dir / "memory.stat",
+        cgroup_cpu_path='',
+        memory_allocated_path=job_dir,
+        memory_version=1,
+        cpu_version=1,
+        max_rss=0)
+    assert parse_memory_allocated(v1_process) == 104857600
+
+    # the limit should be inherited from a parent cgroup if this one is
+    # unlimited
+    (job_dir / "memory.limit_in_bytes").write_text("9223372036854771712")
+    (v1_dir / "jobid" / "memory.limit_in_bytes").write_text("104857600")
+    assert parse_memory_allocated(v1_process) == 104857600
+
+    # an unlimited v1 cgroup should report 0 rather than the sentinel value
+    (v1_dir / "jobid" / "memory.limit_in_bytes").write_text(
+        "9223372036854771712"
+    )
+    assert parse_memory_allocated(v1_process) == 0
 
 
 def test_get_cgroup_name_file_not_found(mocker):
@@ -321,41 +372,97 @@ def test_get_cgroup_version(mocker):
     assert "Cgroup not found" in str(excinfo.value)
 
 
-def test_get_cgroup_paths(mocker):
-    """It should return the cgroup paths of the process."""
-    mocker.patch("cylc.flow.scripts.profiler.get_cgroup_name",
-                 return_value='test_name')
-    mocker.patch("cylc.flow.scripts.profiler.get_cgroup_version",
-                 return_value=2)
-    process = get_cgroup_paths(Path("test_location/"))
-    assert (process.cgroup_memory_path ==
-            Path("test_location/test_name/memory.stat"))
-    assert process.cgroup_cpu_path == Path("test_location/test_name/cpu.stat")
+def test_get_cgroup_paths(mocker, tmp_path):
+    """It should locate the memory and cpu controllers independently."""
+    # cgroups v2: both controllers in the unified hierarchy
+    v2_names = {'v2': 'test_name', 'memory': 'test_name', 'cpu': 'test_name'}
+    v2_loc = tmp_path / 'v2'
+    (v2_loc / 'test_name').mkdir(parents=True)
+    (v2_loc / 'test_name' / 'memory.stat').write_text('anon 1')
+    (v2_loc / 'test_name' / 'cpu.stat').write_text('usage_usec 1')
+    # a real v2 hierarchy has resource controllers enabled
+    (v2_loc / 'test_name' / 'cgroup.controllers').write_text('memory pids')
 
-    mocker.patch("cylc.flow.scripts.profiler.get_cgroup_version",
-                 return_value=1)
-
-    process = get_cgroup_paths(Path("test_location/"))
+    mocker.patch("cylc.flow.scripts.profiler.get_cgroup_names",
+                 return_value=v2_names)
+    process = get_cgroup_paths(v2_loc)
+    assert process.memory_version == 2
+    assert process.cpu_version == 2
     assert (process.cgroup_memory_path ==
-            Path("test_location/memory/test_name/memory.stat"))
+            v2_loc / "test_name" / "memory.stat")
+    assert process.cgroup_cpu_path == v2_loc / "test_name" / "cpu.stat"
+    assert process.memory_allocated_path == v2_loc / "test_name"
+
+    # cgroups v1: each controller mounted separately, no unified hierarchy
+    v1_names = {'memory': 'test_name', 'cpu': 'test_name'}
+    v1_loc = tmp_path / 'v1'
+    (v1_loc / 'memory' / 'test_name').mkdir(parents=True)
+    (v1_loc / 'memory' / 'test_name' / 'memory.stat').write_text('total_rss 1')
+    (v1_loc / 'cpu' / 'test_name').mkdir(parents=True)
+    (v1_loc / 'cpu' / 'test_name' / 'cpuacct.usage').write_text('1')
+
+    mocker.patch("cylc.flow.scripts.profiler.get_cgroup_names",
+                 return_value=v1_names)
+    process = get_cgroup_paths(v1_loc)
+    assert process.memory_version == 1
+    assert process.cpu_version == 1
+    assert (process.cgroup_memory_path ==
+            v1_loc / "memory" / "test_name" / "memory.stat")
     assert (process.cgroup_cpu_path ==
-            Path("test_location/cpu/test_name/cpuacct.usage"))
+            v1_loc / "cpu" / "test_name" / "cpuacct.usage")
 
-    mocker.patch("cylc.flow.scripts.profiler.get_cgroup_version",
-                 return_value=3)
+    # systemd "hybrid" mode: a cgroup2 hierarchy is mounted for process
+    # tracking only (cgroup.controllers is empty) and the resource
+    # controllers stay on v1. The kernel still exposes cpu.stat in the v2
+    # cgroup, but it describes the batch system's service cgroup - shared
+    # by every job on the node - so it must NOT be preferred over v1.
+    job = 'pbspro.service/jobid/2761065.ehz100'
+    hybrid_names = {
+        'v2': 'system.slice/pbs.service',
+        'memory': job,
+        'cpu': job,
+        'cpuacct': job,
+    }
+    hy_loc = tmp_path / 'hybrid'
+    (hy_loc / 'system.slice' / 'pbs.service').mkdir(parents=True)
+    (hy_loc / 'system.slice' / 'pbs.service' / 'cpu.stat').write_text(
+        'usage_usec 81514978331')
+    (hy_loc / 'system.slice' / 'pbs.service' / 'cgroup.controllers'
+     ).write_text('')
+    (hy_loc / 'memory' / job).mkdir(parents=True)
+    (hy_loc / 'memory' / job / 'memory.stat').write_text('total_rss 1')
+    # the cpu and cpuacct controllers are co-mounted as "cpu,cpuacct"
+    (hy_loc / 'cpu,cpuacct' / job).mkdir(parents=True)
+    (hy_loc / 'cpu,cpuacct' / job / 'cpuacct.usage').write_text('1')
+
+    mocker.patch("cylc.flow.scripts.profiler.get_cgroup_names",
+                 return_value=hybrid_names)
+    process = get_cgroup_paths(hy_loc)
+    assert process.memory_version == 1
+    assert process.cpu_version == 1
+    assert (process.cgroup_cpu_path ==
+            hy_loc / 'cpu,cpuacct' / job / 'cpuacct.usage')
+    assert (process.cgroup_memory_path ==
+            hy_loc / 'memory' / job / 'memory.stat')
+    assert process.memory_allocated_path == hy_loc / 'memory' / job
+
+    # neither version available
     with pytest.raises(CylcProfilerError) as excinfo:
-        get_cgroup_paths(Path("test_location/"))
-    assert "Unable to determine cgroup version" in str(excinfo.value)
+        get_cgroup_paths(tmp_path / 'nothing_here')
+    assert "Cgroup not found" in str(excinfo.value)
 
 
 async def test_profile_data(mocker):
     """Test the profile function with mocked data to ensure it calls the parse
     functions and handles the data correctly."""
-    mocker.patch("cylc.flow.scripts.profiler.get_cgroup_name",
-                 return_value='test_name')
-    mocker.patch("cylc.flow.scripts.profiler.get_cgroup_version",
-                 return_value=2)
-    process = get_cgroup_paths(Path("test_location/"))
+    process = Process(
+        cgroup_memory_path=Path("test_location/test_name/memory.stat"),
+        cgroup_cpu_path=Path("test_location/test_name/cpu.stat"),
+        memory_allocated_path=Path("test_location/test_name"),
+        memory_version=2,
+        cpu_version=2,
+        max_rss=0,
+    )
 
     mock_file = mocker.mock_open(read_data="")
     mocker.patch("builtins.open", mock_file)
@@ -403,7 +510,8 @@ async def test_main(mocker, options, monkeypatch):
                      cgroup_memory_path=Path("/some/place/memory.stat"),
                      cgroup_cpu_path=Path("/some/place/cpu.stat"),
                      memory_allocated_path=Path("/some/place"),
-                     cgroup_version=2,
+                     memory_version=2,
+                     cpu_version=2,
                      max_rss=0,))
     mocker.patch("cylc.flow.scripts.profiler.parse_memory_file",
                  return_value=1234)
