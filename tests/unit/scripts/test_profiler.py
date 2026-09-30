@@ -15,24 +15,31 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Tests for functions contained in cylc.flow.scripts.profiler
+import asyncio
+import logging
 from pathlib import Path
 from unittest import mock
 
 import pytest
 
+from cylc.flow import CYLC_LOG
 from cylc.flow.exceptions import CylcProfilerError
 from cylc.flow.scripts.profiler import (
     Process,
     _main,
     get_cgroup_name,
+    get_cgroup_names,
     get_cgroup_paths,
     get_cgroup_version,
+    get_option_parser,
     get_profiler_data,
+    main,
     parse_cpu_file,
     parse_memory_allocated,
     parse_memory_file,
     profile,
     report_to_scheduler,
+    v2_controllers_enabled,
 )
 
 
@@ -531,3 +538,248 @@ async def test_main(mocker, options, monkeypatch):
     # asyncio.gather
     mock_profile.assert_called_once()
     mock_watch_and_kill.assert_called_once()
+
+
+# The cgroup layout of a PBS job on a node running cgroups in systemd
+# "hybrid" mode: the resource controllers are on v1, and the v2 (unified)
+# hierarchy only tracks the batch system's service.
+HYBRID_PROC_CGROUP = """10:perf_event:/
+9:cpuset:/pbspro.service/jobid/2761065.ehz100
+8:freezer:/
+7:memory:/pbspro.service/jobid/2761065.ehz100
+6:pids:/system.slice/pbs.service
+5:devices:/system.slice/pbs.service
+4:cpu,cpuacct:/pbspro.service/jobid/2761065.ehz100
+3:blkio:/system.slice/pbs.service
+2:net_cls:/
+1:name=systemd:/pbspro.service/jobid/2761065.ehz100
+0::/system.slice/pbs.service
+"""
+# a malformed line, which should be skipped rather than blow up
+HYBRID_PROC_CGROUP_JUNK = HYBRID_PROC_CGROUP + 'sad trombone\n'
+
+
+def test_get_cgroup_names(mocker, monkeypatch):
+    """It should map each controller to the cgroup this process is in."""
+    monkeypatch.delenv('profiler_test_env_var', raising=False)
+    mocker.patch.object(
+        Path, 'read_text', return_value=HYBRID_PROC_CGROUP_JUNK
+    )
+    names = get_cgroup_names()
+
+    job = 'pbspro.service/jobid/2761065.ehz100'
+    # the controllers which matter are resolved independently
+    assert names['memory'] == job
+    assert names['cpu'] == job
+    assert names['cpuacct'] == job
+    # the unified hierarchy is stored separately, and here points at the
+    # batch system's service rather than the job
+    assert names['v2'] == 'system.slice/pbs.service'
+    # other controllers are picked up too
+    assert names['pids'] == 'system.slice/pbs.service'
+    assert names['freezer'] == ''
+    # "name=systemd" is a named hierarchy, not a controller
+    assert 'name=systemd' not in names
+    assert 'systemd' not in names
+
+
+def test_get_cgroup_names_test_env_var(monkeypatch):
+    """It should allow the functional tests to inject a cgroup name."""
+    monkeypatch.setenv('profiler_test_env_var', '/test/cgroup/name')
+    assert get_cgroup_names() == {
+        'v2': 'test/cgroup/name',
+        'memory': 'test/cgroup/name',
+        'cpu': 'test/cgroup/name',
+        'cpuacct': 'test/cgroup/name',
+    }
+    # the legacy single-name lookup uses it as well
+    assert get_cgroup_name() == '/test/cgroup/name'
+
+
+def test_get_cgroup_names_file_not_found(mocker, monkeypatch):
+    """It should raise if /proc/<pid>/cgroup cannot be read."""
+    monkeypatch.delenv('profiler_test_env_var', raising=False)
+    mocker.patch.object(Path, 'read_text', side_effect=OSError('nope'))
+    with pytest.raises(CylcProfilerError) as excinfo:
+        get_cgroup_names()
+    assert '/cgroup not found' in str(excinfo.value)
+
+
+def test_v2_controllers_enabled(tmp_path):
+    """It should detect a v2 hierarchy with no controllers enabled."""
+    # a real v2 hierarchy
+    enabled = tmp_path / 'enabled'
+    enabled.mkdir()
+    (enabled / 'cgroup.controllers').write_text('cpuset cpu io memory pids')
+    assert v2_controllers_enabled(enabled) is True
+
+    # systemd "hybrid" mode: process tracking only
+    empty = tmp_path / 'empty'
+    empty.mkdir()
+    (empty / 'cgroup.controllers').write_text('\n')
+    assert v2_controllers_enabled(empty) is False
+
+    # not a cgroup v2 directory at all
+    assert v2_controllers_enabled(tmp_path / 'does_not_exist') is False
+
+
+def test_parse_memory_file_no_data(tmp_path):
+    """It should return None if the stat file has no usage line in it."""
+    stat_file = tmp_path / 'memory.stat'
+    stat_file.write_text('pgfault 1234\npgmajfault 56\n')
+
+    for version in (1, 2):
+        process = Process(
+            cgroup_memory_path=stat_file,
+            cgroup_cpu_path='',
+            memory_allocated_path=tmp_path,
+            memory_version=version,
+            cpu_version=version,
+            max_rss=0)
+        assert parse_memory_file(process) is None
+
+
+def test_parse_cpu_file_empty(tmp_path):
+    """It should raise if the cpu file exists but holds no usage data."""
+    empty_file = tmp_path / 'cpu.stat'
+    empty_file.write_text('')
+
+    for version in (1, 2):
+        process = Process(
+            cgroup_memory_path='',
+            cgroup_cpu_path=empty_file,
+            memory_allocated_path=tmp_path,
+            memory_version=version,
+            cpu_version=version,
+            max_rss=0)
+        with pytest.raises(CylcProfilerError) as excinfo:
+            parse_cpu_file(process)
+        assert 'Unable to find cpu usage data' in str(excinfo.value)
+
+
+def test_parse_cpu_file_unknown_version(tmp_path):
+    """It should return 0 if the cgroup version is not one it handles."""
+    process = Process(
+        cgroup_memory_path='',
+        cgroup_cpu_path=tmp_path / 'cpu.stat',
+        memory_allocated_path=tmp_path,
+        memory_version=3,
+        cpu_version=3,
+        max_rss=0)
+    assert parse_cpu_file(process) == 0
+
+
+def test_parse_memory_allocated_bad_data(tmp_path):
+    """It should raise if a memory limit file cannot be parsed."""
+    # cgroups v2
+    v2_dir = tmp_path / 'v2'
+    v2_dir.mkdir()
+    (v2_dir / 'memory.max').write_text('Enter Sandman')
+    v2_process = Process(
+        cgroup_memory_path='',
+        cgroup_cpu_path='',
+        memory_allocated_path=v2_dir,
+        memory_version=2,
+        cpu_version=2,
+        max_rss=0)
+    with pytest.raises(CylcProfilerError) as excinfo:
+        parse_memory_allocated(v2_process)
+    assert 'Unable to find memory allocation' in str(excinfo.value)
+
+    # cgroups v1
+    v1_dir = tmp_path / 'v1'
+    v1_dir.mkdir()
+    (v1_dir / 'memory.limit_in_bytes').write_text('Off to never never land')
+    v1_process = Process(
+        cgroup_memory_path='',
+        cgroup_cpu_path='',
+        memory_allocated_path=v1_dir,
+        memory_version=1,
+        cpu_version=1,
+        max_rss=0)
+    with pytest.raises(CylcProfilerError) as excinfo:
+        parse_memory_allocated(v1_process)
+    assert 'Unable to find memory allocation' in str(excinfo.value)
+
+
+def test_parse_memory_allocated_walk_limit(tmp_path):
+    """It should give up walking up the tree rather than loop forever.
+
+    Every cgroup from the leaf upwards is unlimited, and the tree is deeper
+    than the number of levels the search is willing to climb.
+    """
+    for version, filename, unlimited in (
+        (2, 'memory.max', 'max'),
+        (1, 'memory.limit_in_bytes', '9223372036854771712'),
+    ):
+        leaf = tmp_path / f'deep{version}'
+        leaf.mkdir()
+        for depth in range(15):
+            leaf = leaf / f'level_{depth}'
+            leaf.mkdir()
+        # write the "no limit" value at every level
+        directory = leaf
+        while directory != tmp_path:
+            (directory / filename).write_text(unlimited)
+            directory = directory.parent
+
+        process = Process(
+            cgroup_memory_path='',
+            cgroup_cpu_path='',
+            memory_allocated_path=leaf,
+            memory_version=version,
+            cpu_version=version,
+            max_rss=0)
+        assert parse_memory_allocated(process) == 0
+
+
+def test_get_option_parser():
+    """It should provide the profiler's CLI options."""
+    parser = get_option_parser()
+    options, args = parser.parse_args(
+        ['-i', 'PT5S', '-m', '/sys/fs/cgroup']
+    )
+    assert args == []
+    assert options.delay == 'PT5S'
+    assert options.cgroup_location == '/sys/fs/cgroup'
+    # comms=True, so the comms timeout option is available too
+    assert hasattr(options, 'comms_timeout')
+
+
+def test_main_cli(mocker):
+    """It should parse the CLI options and run the profiler."""
+    calls = []
+
+    async def fake_main(options):
+        calls.append(options)
+
+    mocker.patch('cylc.flow.scripts.profiler._main', fake_main)
+    main('-i', 'PT5S', '-m', '/sys/fs/cgroup')
+
+    assert len(calls) == 1
+    assert calls[0].delay == 'PT5S'
+    assert calls[0].cgroup_location == '/sys/fs/cgroup'
+
+
+def test_main_cancelled(mocker):
+    """It should exit quietly if the profiler is cancelled."""
+    async def fake_main(options):
+        raise asyncio.CancelledError()
+
+    mocker.patch('cylc.flow.scripts.profiler._main', fake_main)
+    # should not raise
+    main('-i', 'PT5S', '-m', '/sys/fs/cgroup')
+
+
+def test_main_logs_errors(mocker, log_filter, caplog):
+    """It should log, rather than raise, profiler errors.
+
+    Profiling problems must never fail the job.
+    """
+    async def fake_main(options):
+        raise CylcProfilerError(FileNotFoundError(), 'Cgroup not found')
+
+    mocker.patch('cylc.flow.scripts.profiler._main', fake_main)
+    with caplog.at_level(logging.INFO, logger=CYLC_LOG):
+        main('-i', 'PT5S', '-m', '/sys/fs/cgroup')
+    assert log_filter(contains='Cgroup not found', level=logging.INFO)
