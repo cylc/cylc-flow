@@ -98,11 +98,6 @@ def get_profiler_data(process: Process):
         max_rss = process.max_rss
         cpu_time = parse_cpu_file(process)
         memory_allocated = parse_memory_allocated(process)
-        print({
-            'max_rss': max_rss,
-            'cpu_time': cpu_time,
-            'memory_allocated': memory_allocated,
-        })
     return {
         'max_rss': max_rss,
         'cpu_time': cpu_time,
