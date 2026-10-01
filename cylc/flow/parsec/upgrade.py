@@ -97,7 +97,7 @@ class upgrader:
                 'is_section': is_section, 'remove_at': remove_at
             })
 
-    def obsolete(self, vn, oldkeys, is_section=False, remove_at=None):
+    def obsolete(self, vn, oldkeys, is_section=False):
         """Remove an obsolete key from a config
         Args:
             vn (str):
@@ -113,7 +113,7 @@ class upgrader:
         self.upgrades[vn].append(
             {
                 'old': oldkeys, 'new': None, 'cvt': cvtr,
-                'is_section': is_section, 'remove_at': remove_at
+                'is_section': is_section
             })
 
     def get_item(self, keys):
