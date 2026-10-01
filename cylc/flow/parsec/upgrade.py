@@ -234,10 +234,8 @@ class upgrader:
                             old=old,
                             new=upg['cvt'].convert(old)
                         )
-                        with contextlib.suppress(KeyError):
-                            if upg['remove_at'] is not None:
-                                msg += (" - will be removed at " +
-                                        f"{upg['remove_at']}")
+                        if (remove_at := upg.get('remove_at')) is not None:
+                            msg += f" - will be removed at {remove_at}"
                         warnings.setdefault(vn, [])
                         warnings[vn].append(msg)
                         self.del_item(upg['old'])
