@@ -1915,6 +1915,11 @@ with Conf('global.cylc', desc='''
                    # for PBS
                    qcat -f -o %(job_id)s -n %(lines)s
 
+                .. versionchanged:: 8.7.0
+
+                   Added the ``%(lines)s`` substitution to support the
+                   "tail-end" view mode.
+
                 .. versionchanged:: 8.0.0
 
                    {REPLACES}``global.rc[hosts][<host>][batch systems]
