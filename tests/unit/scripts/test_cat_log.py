@@ -124,9 +124,9 @@ class TestGetTailLines:
 async def test_get_remote_log_bakes_tail_lines_for_tail_end(monkeypatch):
     """TAIL_END bakes the line count into the forwarded tail command.
 
-    The line count is substituted locally and the mode is forwarded as
-    plain "tail", so the remote cat-log needs no knowledge of --tail-lines
-    (keeping it compatible with older Cylc versions).
+    The line count is substituted locally so the remote cat-log needs no
+    knowledge of --tail-lines; the mode is forwarded unchanged so the
+    remote end still knows it is a tail-end view.
     """
     captured = {}
 
@@ -165,8 +165,7 @@ async def test_get_remote_log_bakes_tail_lines_for_tail_end(monkeypatch):
         f"--remote-arg={shlex.quote('tail -n 42 --follow=name %(filename)s')}"
         in captured['cmd']
     )
-    assert f'--remote-arg={TAIL}' in captured['cmd']
-    assert f'--remote-arg={TAIL_END}' not in captured['cmd']
+    assert f'--remote-arg={TAIL_END}' in captured['cmd']
     assert captured['kwargs']['manage'] is True
 
 
