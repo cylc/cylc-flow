@@ -83,6 +83,10 @@ def workflow_state(
        arguments (which are still supported for backwards compatibility).
        The ``flow_num`` argument was added. The ``cylc_run_dir`` argument
        was renamed to ``alt_cylc_run_dir``.
+
+    .. versionchanged:: 8.7.0
+
+       Support for connecting to Cylc 7 databases was removed.
     """
     poller = WorkflowPoller(
         workflow_task_id,
