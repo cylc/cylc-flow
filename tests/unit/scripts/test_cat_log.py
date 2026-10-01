@@ -22,6 +22,7 @@ from colorama import Style
 import pytest
 import shlex
 
+from cylc.flow.exceptions import InputError
 from cylc.flow.option_parsers import Options
 from cylc.flow.loggingutil import CylcLogFormatter
 from cylc.flow.scripts.cat_log import (
@@ -205,6 +206,18 @@ async def test_view_log_tail_vs_tail_end(tmp_path, capfd):
     )
     out = capfd.readouterr().out.splitlines()
     assert out == lines
+
+
+@pytest.mark.parametrize('tail_lines', [0, -1, -100])
+async def test_bad_tail_lines(tail_lines):
+    """Non-positive --tail-lines values should be rejected."""
+    parser = cat_log_gop()
+    with pytest.raises(InputError, match='--tail-lines must be a positive'):
+        await cat_log(
+            parser,
+            Options(parser)(tail_lines=tail_lines),
+            'workflow//1/foo',
+        )
 
 
 async def test_bad_submit_number(monkeypatch, capsys):

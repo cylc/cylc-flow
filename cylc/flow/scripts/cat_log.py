@@ -58,8 +58,11 @@ Examples:
   # Print a custom file in a job's log directory:
   $ cylc cat-log -f my-log-file foo//2020/bar
 
-  # Follow a log file:
-  $ cylc cat-log foo//2020/bar -m f
+  # Follow a log file from the start:
+  $ cylc cat-log foo//2020/bar -m t
+
+  # Follow a log file from the end (show the last few lines, then follow):
+  $ cylc cat-log foo//2020/bar -m te
 """
 
 import asyncio
@@ -551,6 +554,12 @@ async def _main(
     """
     if options.filename is not None:
         _check_fs_path(options.filename)
+
+    if options.tail_lines < 1:
+        raise InputError(
+            "--tail-lines must be a positive integer"
+            f" (got {options.tail_lines})."
+        )
 
     if options.remote_args:
         # Invoked on job hosts for job logs only, as a wrapper to view_log().
