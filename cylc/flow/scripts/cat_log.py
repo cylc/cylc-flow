@@ -398,7 +398,7 @@ def get_option_parser() -> COP:
         "--tail-lines",
         help=(
             "For the tail-end mode, the number of lines to show from the"
-            f" end of the file (default {DEFAULT_TAIL_LINES})."
+            " end of the file (default %default)."
             " Has no effect in other modes."
         ),
         metavar="INT",
