@@ -18,13 +18,13 @@
 
 . "$(dirname "$0")/test_header"
 
-set_test_number 24
+set_test_number 26
 
 install_workflow "${TEST_NAME_BASE}" datetime
 
 # run one cycle
 TEST_NAME="${TEST_NAME_BASE}_run_1"
-workflow_run_ok "${TEST_NAME}" cylc play --debug --no-detach --stopcp=2051 "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME}" cylc play --debug --no-detach --start-cycle-point=2051 --stopcp=2051 "${WORKFLOW_NAME}"
 
 TEST_NAME="${TEST_NAME_BASE}_check_1_status"
 run_ok "${TEST_NAME}" cylc workflow-state --max-polls=1 "${WORKFLOW_NAME}"
@@ -117,6 +117,13 @@ run_fail "${TEST_NAME}" cylc workflow-state --max-polls=1 "${WORKFLOW_NAME}//205
 
 contains_ok "${TEST_NAME}.stderr" <<__END__
 InputError: Cycle point "205" is not compatible with DB point format "CCYY"
+__END__
+
+TEST_NAME="${TEST_NAME_BASE}_pre_start_cycle_point"
+run_ok ${TEST_NAME} cylc workflow-state --max-polls=1 "${WORKFLOW_NAME}//2050/foo:succeeded" --messages
+
+contains_ok "${TEST_NAME}.stdout" <<__END__
+2050/foo:{"succeeded": "before start cycle point"}
 __END__
 
 purge
