@@ -184,7 +184,7 @@ class upgrader:
                         'old': pre + [m] + post,
                         'new': None,
                         'cvt': upg['cvt'],
-                        'is_section': upg['is_section'],
+                        'is_section': upg['is_section']
                     })
                 return exp_upgs
             npre = []
@@ -202,6 +202,7 @@ class upgrader:
                     'new': npre + [m] + npost,
                     'cvt': upg['cvt'],
                     'is_section': upg['is_section'],
+                    'remove_at': upg.get('remove_at')
                 })
         return exp_upgs
 
@@ -236,6 +237,8 @@ class upgrader:
                         )
                         if (remove_at := upg.get('remove_at')) is not None:
                             msg += f" - will be removed at {remove_at}"
+                        #else:
+                        #    msg += str(upg)
                         warnings.setdefault(vn, [])
                         warnings[vn].append(msg)
                         self.del_item(upg['old'])

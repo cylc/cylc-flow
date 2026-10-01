@@ -156,7 +156,7 @@ def test_pre_cylc8(flow, validate, caplog):
         (
             ' * (8.0.0) [runtime][foo, cat, dog][suite state polling]'
             ' -> [runtime][foo, cat, dog][workflow state polling]'
-            ' - value unchanged'),
+            ' - value unchanged - will be removed at 8.9'),
         (' * (8.0.0) [cylc] -> [scheduler] - value unchanged'
          ' - will be removed at 8.9')
     ):
