@@ -1655,15 +1655,17 @@ def test_cylc_env_at_parsing(
         param([], ['foo:failed'], False, id='default-ok'),
     )
 )
-def test_check_outputs(tmp_path, registered_outputs, tasks_and_outputs, fails):
-    (tmp_path / 'flow.cylc').write_text(dedent("""
+def test_check_outputs(
+    tmp_flow_config, registered_outputs, tasks_and_outputs, fails
+):
+    flow_file = tmp_flow_config('wflow', """
         [scheduler]
             allow implicit tasks = true
         [scheduling]
             [[graph]]
                 R1 = foo
-    """))
-    cfg = WorkflowConfig('', tmp_path / 'flow.cylc', '')
+    """)
+    cfg = WorkflowConfig('', flow_file, ValidateOptions())
     cfg.cfg['runtime']['foo']['outputs'] = registered_outputs
     if fails:
         with pytest.raises(
