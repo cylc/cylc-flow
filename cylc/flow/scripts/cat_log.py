@@ -492,7 +492,6 @@ async def _get_remote_log(
     logpath = os.path.normpath(get_remote_workflow_run_job_dir(
         workflow_id, point, task, submit_num, filename))
     tail_tmpl = platform["tail command template"]
-    remote_mode = mode
     if mode in TAIL_MODES:
         # Substitute the line count into the tail command here (on the
         # workflow host) so that the remote end does not need to know about
@@ -500,9 +499,8 @@ async def _get_remote_log(
         tail_tmpl = tail_tmpl.replace(
             '%(lines)s', get_tail_lines(mode, tail_lines)
         )
-        remote_mode = TAIL
     cmd = ['cat-log', *verbosity_to_opts(cylc.flow.flags.verbosity)]
-    for item in [logpath, remote_mode, tail_tmpl]:
+    for item in [logpath, mode, tail_tmpl]:
         cmd.append('--remote-arg=%s' % shlex.quote(item))
     if batchview_cmd:
         cmd.append('--remote-arg=%s' % shlex.quote(batchview_cmd))
