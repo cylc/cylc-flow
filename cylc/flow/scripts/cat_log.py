@@ -496,9 +496,7 @@ async def _get_remote_log(
         # Substitute the line count into the tail command here (on the
         # workflow host) so that the remote end does not need to know about
         # the number of lines.
-        tail_tmpl = tail_tmpl.replace(
-            '%(lines)s', get_tail_lines(mode, tail_lines)
-        )
+        tail_tmpl = tail_tmpl % {'lines': get_tail_lines(mode, tail_lines)}
     cmd = ['cat-log', *verbosity_to_opts(cylc.flow.flags.verbosity)]
     for item in [logpath, mode, tail_tmpl]:
         cmd.append('--remote-arg=%s' % shlex.quote(item))

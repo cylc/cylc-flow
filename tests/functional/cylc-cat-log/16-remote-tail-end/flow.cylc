@@ -2,15 +2,19 @@
 [scheduler]
    [[events]]
        abort on stall timeout = True
-       stall timeout = PT2M
+       stall timeout = PT0S
 [scheduling]
     [[graph]]
         R1 = foo
 [runtime]
     [[foo]]
         script = """
-for I in $(seq 1 100); do
-    echo "from $CYLC_TASK_NAME $I"
-    sleep 1
-done"""
-        platform={{environ['CYLC_TEST_PLATFORM'] | default("localhost")}}
+            # Wait for "INFO - started" to be written to job.out:
+            cylc__job__wait_cylc_message_started
+
+            for I in $(seq 1 100); do
+                echo "from $CYLC_TASK_NAME $I"
+            done
+            sleep 100
+        """
+        platform = {{environ['CYLC_TEST_PLATFORM'] | default("localhost")}}

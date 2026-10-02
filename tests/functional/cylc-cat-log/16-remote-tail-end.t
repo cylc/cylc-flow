@@ -21,7 +21,7 @@
 #   * tail-from-start (-m t)   -> cylc sends "+1"  -> whole file
 #   * tail-end       (-m te)   -> cylc sends "N"   -> last N lines only
 # Also checks that a non-positive --tail-lines value is rejected.
-export REQUIRE_PLATFORM='loc:remote comms:tcp runner:background'
+export REQUIRE_PLATFORM='loc:remote fs:indep comms:tcp runner:background'
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 9
@@ -34,7 +34,9 @@ $SSH -n "${CYLC_TEST_HOST}" "mkdir -p cylc-run/.bin"
 create_test_global_config "" "
 [platforms]
    [[$CYLC_TEST_PLATFORM]]
-        tail command template = \$HOME/cylc-run/.bin/my-tailer.sh %(lines)s %(filename)s"
+        tail command template = \$HOME/cylc-run/.bin/my-tailer.sh %(lines)s %(filename)s
+        retrieve job logs = False
+"
 #-------------------------------------------------------------------------------
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
