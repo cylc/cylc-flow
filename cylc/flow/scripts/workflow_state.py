@@ -315,7 +315,11 @@ def get_option_parser() -> COP:
         help="Print results in legacy comma-separated format.",
         action="store_true", dest="old_format", default=False)
 
-    # Back-compat support for pre-8.3.0 command line options.
+    # BACK COMPAT: workflow_state_backcompat, support for pre-8.3.0 CLI options
+    # from: 8.0.0
+    # to: 8.3.0
+    # remove at: 8.9
+
     parser.add_option(
         "-t", "--task", help=f"Task name. {OPT_DEPR_MSG}.",
         metavar="NAME",
@@ -415,7 +419,10 @@ def main(parser: COP, options: 'Values', *ids: str) -> None:
             id_ += f":{options.depr_msg}"
             options.is_message = True
 
-        msg = f"{depr_opts} are deprecated. Please use an ID: "
+        msg = (
+            f"{depr_opts} are deprecated and will be removed in Cylc 8.9. "
+            "Please use an ID: "
+        )
         if not options.depr_env_point:
             msg += id_
         else:
