@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """"Test the pre_configure entry point."""
 
+from functools import partial
+from itertools import permutations
 from random import random
 
 import pytest
@@ -28,7 +30,7 @@ class EntryPointWrapper:
     """Wraps a method to make it look like an entry point."""
 
     def __init__(self, fcn):
-        self.name = fcn.__name__
+        self.name = getattr(fcn, '__name__', str(fcn))
         self.fcn = fcn
 
     def load(self):
@@ -129,3 +131,46 @@ def test_pre_configure_exception(monkeypatch):
     assert exc_ctx.value.entry_point == 'cylc.pre_configure'
     assert exc_ctx.value.plugin_name == 'pre_configure_error'
     assert str(exc_ctx.value.exc) == 'foo'
+
+
+def _pre_configure(*a, templating_detected=None, **k):
+    """A mock pre-configure plugin where templating_detected can be overridden.
+    """
+    return {
+        'env': {},
+        'template_variables': {},
+        'templating_detected': templating_detected,
+    }
+
+
+@pytest.mark.parametrize(
+    'plugins',
+    permutations(
+        [
+            # four plugins which return differing, but compatible results
+            EntryPointWrapper(
+                partial(_pre_configure, templating_detected='a')
+            ),
+            EntryPointWrapper(
+                partial(_pre_configure, templating_detected='a')
+            ),
+            EntryPointWrapper(
+                partial(_pre_configure, templating_detected=None)
+            ),
+            EntryPointWrapper(
+                partial(_pre_configure, templating_detected=None)
+            ),
+        ],
+    ),
+)
+def test_pre_configure_multiple_compatible(monkeypatch, plugins):
+    """The order in which plugins are run shouldn't affect templating_detected.
+
+    See https://github.com/cylc/cylc-rose/issues/440
+    """
+    monkeypatch.setattr(
+        'cylc.flow.plugins.iter_entry_points',
+        lambda namespace: plugins if namespace == 'cylc.pre_configure' else [],
+    )
+    extra_vars = process_plugins('/', None)
+    assert extra_vars['templating_detected'] == 'a'
