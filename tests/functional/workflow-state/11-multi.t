@@ -22,13 +22,13 @@
 
 . "$(dirname "$0")/test_header"
 
-set_test_number 42
+set_test_number 39
 
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 
-# Create Cylc 7, 8 (pre-8.3.0), and 8(8.3.0+) DBs for workflow-state checking.
+# Create pre-8.3.0 and 8.3.0+ DBs for workflow-state checking.
 DBDIR="${WORKFLOW_RUN_DIR}/dbs"
-for x in c7 c8a c8b; do
+for x in c8a c8b; do
     mkdir -p "${DBDIR}/${x}/log"
     sqlite3 "${DBDIR}/${x}/log/db" < "${x}.sql"
 done
@@ -79,12 +79,6 @@ T=${TEST_NAME_BASE}-cli-c8a
 run_ok   "${T}-1" $CMD "c8a//1/foo:the quick brown" --messages
 run_ok   "${T}-2" $CMD "c8a//1/foo:the quick brown" --triggers  # OK for 8.0 <= 8.3
 run_fail "${T}-3" $CMD "c8a//1/foo:x" --triggers  # not possible for 8.0 <= 8.3
-
-#---------------
-T=${TEST_NAME_BASE}-cli-c7
-run_ok   "${T}-1" $CMD "c7//1/foo:the quick brown" --messages
-run_fail "${T}-2" $CMD "c7//1/foo:the quick brown" --triggers
-run_ok   "${T}-3" $CMD "c7//1/foo:x" --triggers
 
 #---------------
 # Test the old-format command line (pre-8.3.0).
