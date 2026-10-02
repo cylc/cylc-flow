@@ -77,3 +77,18 @@ more quickly.
 
 .. literalinclude:: three/flow.cylc
    :language: cylc
+
+
+Note: Expiry Events
+^^^^^^^^^^^^^^^^^^^
+
+Expiry is a mechanism for "cancelling" tasks *before* they run.
+
+Expiry is only detected for :term:`active` tasks in the waiting state.
+
+This means that if a task ahead of the workflow passes its expiry time, this
+event will not be detected until the workflow catches up with it.
+
+If you need something in your workflow to happen at a configured time, use
+:term:`clock triggers <clock trigger>` rather than triggering off of the
+``:expired`` output.
