@@ -15,15 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Dict, Optional, Tuple, Any
 import asyncio
-from inspect import signature
+from typing import Any
 
-from cylc.flow.scripts.workflow_state import WorkflowPoller
-from cylc.flow.id import tokenise
-from cylc.flow.exceptions import WorkflowConfigError, InputError
-from cylc.flow.task_state import TASK_STATUS_SUCCEEDED
 from cylc.flow.dbstatecheck import check_polling_config
+from cylc.flow.exceptions import InputError, WorkflowConfigError
+from cylc.flow.id import tokenise
+from cylc.flow.scripts.workflow_state import WorkflowPoller
+from cylc.flow.task_state import TASK_STATUS_SUCCEEDED
 
 
 DEFAULT_STATUS = TASK_STATUS_SUCCEEDED
@@ -31,12 +30,12 @@ DEFAULT_STATUS = TASK_STATUS_SUCCEEDED
 
 def workflow_state(
     workflow_task_id: str,
-    offset: Optional[str] = None,
-    flow_num: Optional[int] = None,
+    offset: str | None = None,
+    flow_num: int | None = None,
     is_trigger: bool = False,
     is_message: bool = False,
-    alt_cylc_run_dir: Optional[str] = None,
-) -> Tuple[bool, Dict[str, Any]]:
+    alt_cylc_run_dir: str | None = None,
+) -> tuple[bool, dict[str, Any]]:
     """Connect to a workflow DB and check a task status or output.
 
     If the status or output has been achieved, return {True, result}.
@@ -127,7 +126,7 @@ def workflow_state(
         return (False, {})
 
 
-def validate(args: Dict[str, Any]):
+def validate(args: dict[str, Any]):
     """Validate workflow_state xtrigger function args.
 
     Arguments:
@@ -164,105 +163,3 @@ def validate(args: Dict[str, Any]):
         )
     except InputError as exc:
         raise WorkflowConfigError(str(exc)) from None
-
-
-# BACK COMPAT: workflow_state_backcompat
-# from: 8.0.0
-# to: 8.3.0
-# remove at: 8.7
-def _workflow_state_backcompat(
-    workflow: str,
-    task: str,
-    point: str,
-    offset: Optional[str] = None,
-    status: str = 'succeeded',
-    message: Optional[str] = None,
-    cylc_run_dir: Optional[str] = None
-) -> Tuple[bool, Optional[Dict[str, Optional[str]]]]:
-    """Back-compat wrapper for the workflow_state xtrigger.
-
-    Note Cylc 7 DBs only stored custom task outputs, not standard ones.
-
-    Arguments:
-        workflow:
-            The workflow to interrogate.
-        task:
-            The name of the task to query.
-        point:
-            The cycle point.
-        offset:
-            The offset between the cycle this xtrigger is used in and the one
-            it is querying for as an ISO8601 time duration.
-            e.g. PT1H (one hour).
-        status:
-            The task status required for this xtrigger to be satisfied.
-        message:
-            The custom task output required for this xtrigger to be satisfied.
-
-            .. note::
-
-               This cannot be specified in conjunction with ``status``.
-
-        cylc_run_dir:
-            Alternate cylc-run directory, e.g. for another user.
-
-    Returns:
-        tuple: (satisfied, results)
-
-        satisfied:
-            True if ``satisfied`` else ``False``.
-        results:
-            Dictionary containing the args / kwargs which were provided
-            to this xtrigger.
-
-    """
-    args = {
-        'workflow': workflow,
-        'task': task,
-        'point': point,
-        'offset': offset,
-        'status': status,
-        'message': message,
-        'cylc_run_dir': cylc_run_dir
-    }
-    upg_args = _upgrade_workflow_state_sig(args)
-    satisfied, _results = workflow_state(**upg_args)
-
-    return (satisfied, args)
-
-
-# BACK COMPAT: workflow_state_backcompat
-# from: 8.0.0
-# to: 8.3.0
-# remove at: 8.7
-def _upgrade_workflow_state_sig(args: Dict[str, Any]) -> Dict[str, Any]:
-    """Return upgraded args for workflow_state, given the deprecated args."""
-    is_message = False
-    workflow_task_id = f"{args['workflow']}//{args['point']}/{args['task']}"
-    status = args.get('status')
-    message = args.get('message')
-    if status is not None:
-        workflow_task_id += f":{status}"
-    elif message is not None:
-        is_message = True
-        workflow_task_id += f":{message}"
-    return {
-        'workflow_task_id': workflow_task_id,
-        'offset': args.get('offset'),
-        'alt_cylc_run_dir': args.get('cylc_run_dir'),
-        'is_message': is_message,
-    }
-
-
-# BACK COMPAT: workflow_state_backcompat
-# from: 8.0.0
-# to: 8.3.0
-# remove at: 8.7
-def _validate_backcompat(args: Dict[str, Any]):
-    """Validate old workflow_state xtrigger function args.
-    """
-    bound_args = signature(workflow_state).bind(
-        **_upgrade_workflow_state_sig(args)
-    )
-    bound_args.apply_defaults()
-    validate(bound_args.arguments)

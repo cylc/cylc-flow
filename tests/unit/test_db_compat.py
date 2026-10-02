@@ -18,17 +18,14 @@
 """Compatibility tests for handling old workflow databases."""
 
 from functools import partial
-from unittest.mock import Mock
-import pytest
 import sqlite3
+from unittest.mock import Mock
+
+import pytest
 
 from cylc.flow.exceptions import CylcError, ServiceFileError
 from cylc.flow.task_pool import TaskPool
-from cylc.flow.workflow_db_mgr import (
-    CylcWorkflowDAO,
-    WorkflowDatabaseManager,
-)
-from cylc.flow.dbstatecheck import CylcWorkflowDBChecker
+from cylc.flow.workflow_db_mgr import CylcWorkflowDAO, WorkflowDatabaseManager
 
 
 @pytest.fixture
@@ -142,24 +139,6 @@ def test_check_workflow_db_compat(_setup_db, capsys):
 
     with pytest.raises(ServiceFileError, match='99.99'):
         WorkflowDatabaseManager.check_db_compatibility(pri_path)
-
-
-def test_cylc_7_db_wflow_params_table(_setup_db):
-    """Test back-compat needed by workflow state xtrigger for Cylc 7 DBs."""
-    ptformat = "CCYY"
-    create = r'CREATE TABLE suite_params(key TEXT, value TEXT)'
-    insert = r'INSERT INTO suite_params VALUES (?, ?)'
-    db_file_name = _setup_db([
-        (create, tuple()),
-        (insert, ('cycle_point_format', ptformat)),
-    ])
-    with CylcWorkflowDBChecker('foo', 'bar', db_path=db_file_name) as checker:
-        with pytest.raises(
-            sqlite3.OperationalError, match="no such table: workflow_params"
-        ):
-            checker._get_db_point_format()
-
-        assert checker.db_point_fmt == ptformat
 
 
 def test_pre_830_task_action_timers(_setup_db):
