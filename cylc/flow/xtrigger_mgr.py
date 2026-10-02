@@ -102,7 +102,7 @@ class TemplateVariables(Enum):
     # from:
     #     Cylc 8
     # remove at:
-    #     Cylc 8.x
+    #     Cylc 8.9
     WorkflowName = 'workflow_name'
     """The workflow ID.
 
@@ -117,7 +117,7 @@ class TemplateVariables(Enum):
     # from:
     #     Cylc 8
     # remove at:
-    #     Cylc 8.x
+    #     Cylc 8.9
     SuiteName = 'suite_name'
     """The workflow ID.
 
@@ -132,7 +132,7 @@ class TemplateVariables(Enum):
     # from:
     #     Cylc 8
     # remove at:
-    #     Cylc 8.x
+    #     Cylc 8.9
     SuiteRunDir = 'suite_run_dir'
     """The path to the workflow run directory.
 
@@ -147,7 +147,7 @@ class TemplateVariables(Enum):
     # from:
     #     Cylc 8
     # remove at:
-    #     Cylc 8.x
+    #     Cylc 8.9
     SuiteShareDir = 'suite_share_dir'
     """The path to the workflow share directory.
 
@@ -321,8 +321,9 @@ class XtriggerCollator:
         }
         if deprecated_variables:
             LOG.warning(
-                f'Xtrigger "{label}" uses deprecated template variables:'
-                f' {", ".join(t.value for t in deprecated_variables)}'
+                f'Xtrigger "{label}" uses deprecated template variables, '
+                f"which will be removed in Cylc 8.9: "
+                f"{', '.join(t.value for t in deprecated_variables)}"
             )
 
     @staticmethod
@@ -386,7 +387,7 @@ class XtriggerCollator:
     # BACK COMPAT: workflow_state_backcompat
     # from: 8.0.0
     # to: 8.3.0
-    # remove at: 8.x
+    # remove at: 8.9
     @classmethod
     def _try_workflow_state_backcompat(
         cls,
@@ -419,8 +420,8 @@ class XtriggerCollator:
         )
         LOG.warning(
             "(8.3.0) Deprecated function signature used for "
-            "workflow_state xtrigger was automatically upgraded. Please "
-            "alter your workflow to use the new syntax:\n"
+            "workflow_state xtrigger was automatically upgraded. "
+            "Alter your workflow to use the new syntax before Cylc 8.9:\n"
             f"    {old_sig_str} --> {upg_sig_str}"
         )
         fctx.func_name = _workflow_state_backcompat.__name__

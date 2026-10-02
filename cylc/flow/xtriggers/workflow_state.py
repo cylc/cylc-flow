@@ -168,7 +168,7 @@ def validate(args: Dict[str, Any]):
 # BACK COMPAT: workflow_state_backcompat
 # from: 8.0.0
 # to: 8.3.0
-# remove at: 8.x
+# remove at: 8.9
 def _workflow_state_backcompat(
     workflow: str,
     task: str,
@@ -179,8 +179,6 @@ def _workflow_state_backcompat(
     cylc_run_dir: Optional[str] = None
 ) -> Tuple[bool, Optional[Dict[str, Optional[str]]]]:
     """Back-compat wrapper for the workflow_state xtrigger.
-
-    Note Cylc 7 DBs only stored custom task outputs, not standard ones.
 
     Arguments:
         workflow:
@@ -233,7 +231,7 @@ def _workflow_state_backcompat(
 # BACK COMPAT: workflow_state_backcompat
 # from: 8.0.0
 # to: 8.3.0
-# remove at: 8.x
+# remove at: 8.9
 def _upgrade_workflow_state_sig(args: Dict[str, Any]) -> Dict[str, Any]:
     """Return upgraded args for workflow_state, given the deprecated args."""
     is_message = False
@@ -256,7 +254,7 @@ def _upgrade_workflow_state_sig(args: Dict[str, Any]) -> Dict[str, Any]:
 # BACK COMPAT: workflow_state_backcompat
 # from: 8.0.0
 # to: 8.3.0
-# remove at: 8.x
+# remove at: 8.9
 def _validate_backcompat(args: Dict[str, Any]):
     """Validate old workflow_state xtrigger function args.
     """

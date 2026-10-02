@@ -126,7 +126,8 @@ def test_add_xtrigger_with_deprecated_params(
     caplog.set_level(logging.WARNING, CYLC_LOG)
     xtriggers.add_trig("xtrig", xtrig, 'fdir')
     assert caplog.messages == [
-        'Xtrigger "xtrig" uses deprecated template variables: suite_name'
+        'Xtrigger "xtrig" uses deprecated template variables, which '
+        'will be removed in Cylc 8.9: suite_name'
     ]
 
 
