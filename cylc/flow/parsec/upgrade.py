@@ -237,8 +237,6 @@ class upgrader:
                         )
                         if (remove_at := upg.get('remove_at')) is not None:
                             msg += f" - will be removed at {remove_at}"
-                        #else:
-                        #    msg += str(upg)
                         warnings.setdefault(vn, [])
                         warnings[vn].append(msg)
                         self.del_item(upg['old'])

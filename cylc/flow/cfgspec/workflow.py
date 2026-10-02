@@ -2375,7 +2375,7 @@ def upgrade_graph_section(cfg: Dict[str, Any], descr: str) -> None:
                 if keys:
                     msg = (
                         'graph items were automatically upgraded '
-                        f'in "{descr}":\n'
+                        f'in "{descr}" - will be removed at 8.9:\n'
                         f' * (8.0.0) {msg_old} -> {msg_new}'
                     )
                     if list_cp:
