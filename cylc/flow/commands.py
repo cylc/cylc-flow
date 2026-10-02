@@ -218,6 +218,10 @@ def _remove_matched_tasks(
             # Check if downstream task is still ready to run:
             if (
                 child_itask.state.is_gte(TASK_STATUS_PREPARING)
+                # Leave it alone if it has already run; removing it would wipe
+                # state we should preserve (held, retry timers, manually
+                # satisfied prerequisites).
+                or child_itask.submit_num > 0
                 # Still ready if the task exists in other flows:
                 or child_itask.flow_nums != fnums_to_remove
                 or child_itask.state.prerequisites_all_satisfied()
