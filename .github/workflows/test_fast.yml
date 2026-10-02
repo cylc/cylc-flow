@@ -107,8 +107,8 @@ jobs:
           retention-days: 7
 
   lint:
-    runs-on: 'ubuntu-latest'
-    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
     strategy:
       matrix:
         python-version: ['3']
@@ -134,21 +134,39 @@ jobs:
         run: |
           pip install -e ."[tests]"
 
-      - name: Flake8
-        run: flake8
+      - parallel:
+        - name: Flake8
+          run: flake8
 
-      - name: Bandit
-        run: |
-          bandit -r --ini .bandit cylc/flow
+        - name: Bandit
+          run: |
+            bandit -r --ini .bandit cylc/flow
 
-      - name: Shellchecker
-        run: etc/bin/shellchecker
+        - name: Shellchecker
+          run: etc/bin/shellchecker
 
-      - name: MyPy
-        run: mypy
+        - name: MyPy
+          run: mypy
 
-      - name: Towncrier - draft changelog
-        uses: cylc/release-actions/towncrier-draft@v1
+        - name: Towncrier - draft changelog
+          uses: cylc/release-actions/towncrier-draft@v1
+
+  linkcheck:
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.x"
+          cache: "pip"
+
+      - name: Install Python Dependencies
+        run: pip install ."[tests]"
 
       - name: Linkcheck
         env:
@@ -157,7 +175,7 @@ jobs:
 
   codecov:
     needs: test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     timeout-minutes: 2
     steps:
       - name: Checkout
