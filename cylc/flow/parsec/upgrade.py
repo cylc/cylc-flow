@@ -85,7 +85,7 @@ class upgrader:
             is_section (bool):
                 Is a section heading.
             remove_at (str):
-                Describes when this will be removed
+                Cylc version when this upgrader will be removed
         """
         if vn not in self.upgrades:
             self.upgrades[vn] = []
