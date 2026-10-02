@@ -138,6 +138,12 @@ def test_generate_graph_parents__sequential(tmp_flow_config):
             [],
             id='it.does-not-return-suicide-prereqs',
         ),
+        param(
+            'seq',
+            IntegerPoint("2"),
+            ['1/seq'],
+            id='it.gets-sequential-prerequisites',
+        )
     ],
 )
 def test_get_prereqs(tmp_flow_config, task, point, expected):  # noqa: F811
@@ -153,8 +159,11 @@ def test_get_prereqs(tmp_flow_config, task, point, expected):  # noqa: F811
             [scheduling]
                 final cycle point = 2
                 cycling mode = integer
+                [[special tasks]]
+                    sequential = seq
                 [[graph]]
                     P1 = '''
+                        seq
                         foo[-P1] => foo
                         bar:fail? => !bar
                         food & fool => multiple_pre
