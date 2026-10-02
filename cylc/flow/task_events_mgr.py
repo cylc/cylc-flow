@@ -1637,20 +1637,17 @@ class TaskEventsManager():
         # itask.jobs appends for automatic retries (which reuse the same task
         # proxy) but a retriggered task that was not already in the pool will
         # not see previous submissions (so can't use itask.jobs[submit_num-1]).
-        if itask.run_mode and itask.run_mode.value in JOBLESS_MODES:
-            job_conf = {"submit_num": itask.submit_num}
-        else:
-            try:
-                job_conf = itask.jobs[-1]
-            except IndexError:
-                # we do not have access to the job config (e.g. Scheduler
-                # crashed) - https://github.com/cylc/cylc-flow/pull/6326
-                LOG.warning(
-                    'Could not find the job configuration for '
-                    f'"{itask.job_tokens.relative_id}".'
-                )
-                itask.jobs.append({"submit_num": itask.submit_num})
-                job_conf = itask.jobs[-1]
+        try:
+            job_conf = itask.jobs[-1]
+        except IndexError:
+            # we do not have access to the job config (e.g. Scheduler
+            # crashed) - https://github.com/cylc/cylc-flow/pull/6326
+            LOG.warning(
+                'Could not find the job configuration for '
+                f'"{itask.job_tokens.relative_id}".'
+            )
+            itask.jobs.append({"submit_num": itask.submit_num})
+            job_conf = itask.jobs[-1]
 
         # Job status should be task status unless task is awaiting a
         # retry:
