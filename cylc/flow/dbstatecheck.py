@@ -63,7 +63,10 @@ class CylcWorkflowDBChecker:
                    "succeeded": "succeeded", "x": "the quick brown"}
     """
 
-    def __init__(self, rund, workflow, db_path=None):
+    def __init__(
+        self, rund, workflow, db_path=None, complete_pre_start: bool = False
+    ):
+        self.complete_pre_start = complete_pre_start
         # (Explicit dp_path arg is to make testing easier).
         if db_path is None:
             # Infer DB path from workflow name and run dir.
@@ -365,7 +368,8 @@ class CylcWorkflowDBChecker:
         # the start cycle point; if we are, succeed unconditionally.
         # This makes warm starting a workflow much easier.
         if (
-            not db_res
+            self.complete_pre_start
+            and not db_res
             and cycle is not None
             and self._is_before_start_cycle_point(cycle)
         ):
