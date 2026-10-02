@@ -24,7 +24,7 @@
 export REQUIRE_PLATFORM='loc:remote fs:indep comms:tcp runner:background'
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
-set_test_number 9
+set_test_number 7
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 set -eu
 SSH='ssh -oBatchMode=yes -oConnectTimeout=5'
