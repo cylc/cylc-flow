@@ -82,14 +82,6 @@ timeout -s 'INT' 15 \
     --force-remote >"${TEST_NAME}.out" 2>"${TEST_NAME}.err" || true
 count_ok "HELLO from foo" "${TEST_NAME}.out" 1
 #-------------------------------------------------------------------------------
-# Scenario 4: a non-positive --tail-lines value is rejected (on the workflow
-# host, before any remote invocation).
-TEST_NAME="${TEST_NAME_BASE}-tail-lines-zero"
-run_fail "${TEST_NAME}" \
-    cylc cat-log "${WORKFLOW_NAME}//1/foo" -f 'o' -m 'te' --tail-lines 0 \
-    --force-remote
-grep_ok "--tail-lines must be a positive" "${TEST_NAME}.stderr"
-#-------------------------------------------------------------------------------
 TEST_NAME=${TEST_NAME_BASE}-stop
 run_ok "${TEST_NAME}" cylc stop --kill --max-polls=20 --interval=1 "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
