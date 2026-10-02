@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,10 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Some global flags used in cylc"""
+"""Some global flags used in cylc.
+
+DEPRECATED:
+    We have been gradually whittling down the number of flags stored here.
+
+    Please do not add any further flags, to this module.
+
+"""
 
 # verbosity (<0=quiet, 0=normal, >0=verbose, >1=debug)
 verbosity: int = 0
-
-# Cylc 7 backward compatibility mode.
-cylc7_back_compat = False

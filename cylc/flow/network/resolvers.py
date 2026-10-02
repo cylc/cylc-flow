@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -680,7 +681,7 @@ class Resolvers(BaseResolvers):
         # url: https://github.com/cylc/cylc-flow/pull/6478
         # from: <8.5.0
         # to: >=8.5.0
-        # remove at: 8.x
+        # remove at: 8.9
         # For back compat, with gql-v3 None will not use default_value.
         if 'flow' in kwargs:
             kwargs['flow'] = (

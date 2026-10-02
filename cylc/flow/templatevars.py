@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -184,7 +185,7 @@ def load_template_vars(
 
 
 def get_template_vars(options: 'Values') -> Dict[str, Any]:
-    """Convienence wrapper for ``load_template_vars``.
+    """Convenience wrapper for ``load_template_vars``.
 
     Args:
         options: Options passed to the Cylc script which is using this

@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,7 +47,7 @@ between the nodes of active paths (paths whose node is in n=0) and the nodes of
 flagged paths (whose boundary node(s) have become active).
 This method is used to avoid "blinking", where a task becomes non-active then
 is removed (along with it's window/walk) before a descendant is added, causing
-it to disapear then reappear in the store (and, hence, UIs).
+it to disappear then reappear in the store (and, hence, UIs).
 
 Updates are created by the event/task/job managers.
 
@@ -381,7 +382,7 @@ def runtime_from_config(rtconfig):
 def runtime_from_partial(rtconfig, runtimeold: Optional[PbRuntime] = None):
     """Populate runtime object from partial/full config.
 
-    Potentially slower than the non-partial one, due to tha the setattr calls,
+    Potentially slower than the non-partial one, due to the setattr calls,
     but does not have expected fields.
     """
     runtime = PbRuntime()
@@ -497,9 +498,6 @@ def apply_delta(key, delta, data):
             # The suppression of key/value errors is to avoid
             # elements and their relationships missing on reload.
             if key == TASK_PROXIES:
-                # remove relationship from task
-                with suppress(KeyError, ValueError):
-                    data[TASKS][data[key][del_id].task].proxies.remove(del_id)
                 # remove relationship from parent/family
                 with suppress(KeyError, ValueError):
                     data[FAMILY_PROXIES][
@@ -509,10 +507,6 @@ def apply_delta(key, delta, data):
                 with suppress(KeyError, ValueError):
                     getattr(data[WORKFLOW], key).remove(del_id)
             elif key == FAMILY_PROXIES:
-                with suppress(KeyError, ValueError):
-                    data[FAMILIES][
-                        data[key][del_id].family
-                    ].proxies.remove(del_id)
                 with suppress(KeyError, ValueError):
                     data[FAMILY_PROXIES][
                         data[key][del_id].first_parent
@@ -892,7 +886,7 @@ class DataStoreMgr:
         """Generate graph window about active task proxy to n-edge-distance.
 
         Fills in graph walk from existing walks if possible, otherwise expands
-        the graph front from whereever hasn't been walked.
+        the graph front from wherever hasn't been walked.
         Walk nodes are grouped into locations which are tag according to
         parent child path, i.e. 'cpc' would be children-parents-children away
         from active/start task. Which not only provide a way to cheaply rewalk,
@@ -909,7 +903,7 @@ class DataStoreMgr:
                 Active/Other task proxy, passed in with pool invocation.
         """
 
-        # common refrences
+        # common references
         active_id = source_tokens.id
         all_walks = self.n_window_node_walks
         taskdefs = self.schd.config.taskdefs
@@ -1425,13 +1419,6 @@ class DataStoreMgr:
 
         self.added[TASK_PROXIES][tp_id] = tproxy
         getattr(self.updated[WORKFLOW], TASK_PROXIES).append(tp_id)
-        self.updated[TASKS].setdefault(
-            t_id,
-            PbTask(
-                stamp=f'{t_id}@{update_time}',
-                id=t_id,
-            )
-        ).proxies.append(tp_id)
         self.generate_ghost_family(tproxy.first_parent, child_task=tp_id)
         self.state_update_families.add(tproxy.first_parent)
 
@@ -1556,11 +1543,6 @@ class DataStoreMgr:
 
             self.added[FAMILY_PROXIES][fp_id] = fp_delta
             fp_parent = fp_delta
-            # Add ref ID to family element
-            f_delta = PbFamily(id=fam.id, stamp=f'{fam.id}@{update_time}')
-            f_delta.proxies.append(fp_id)
-            self.updated[FAMILIES].setdefault(
-                fam.id, PbFamily(id=fam.id)).MergeFrom(f_delta)
             # Add ref ID to workflow element
             getattr(self.updated[WORKFLOW], FAMILY_PROXIES).append(fp_id)
             # Generate this families parent if it not root.

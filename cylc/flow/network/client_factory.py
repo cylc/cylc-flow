@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,7 +32,7 @@ class CommsMeth(Enum):
 
 
 def get_comms_method() -> CommsMeth:
-    """"Return Communication Method from environment variable, default zmq"""
+    """Return Communication Method from environment variable, default zmq"""
     return CommsMeth(
         os.getenv('CYLC_TASK_COMMS_METHOD', CommsMeth.ZMQ.value)
     )

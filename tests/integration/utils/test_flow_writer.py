@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -75,7 +76,7 @@ def test_write_setting_multiline():
 
 
 def test_write_section():
-    """It should write out entire cylc configuraitons."""
+    """It should write out entire cylc configurations."""
     assert _write_section(
         'foo',
         {

@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1174,7 +1175,7 @@ class TaskJobManager:
         host_name, platform_name = None, None
         try:
             # We need to assume that we want a host if any of the items
-            # for the old host/batch system plaform selection system are set.
+            # for the old host/batch system platform selection system are set.
             if any(
                 rtconfig[section][key] is not None
                 for section, values in FORBIDDEN_WITH_PLATFORM.items()
@@ -1248,7 +1249,7 @@ class TaskJobManager:
                     msg = '(no platforms available)'
                     # Clear all hosts from all platforms in group from
                     # bad_hosts:
-                    self.bad_hosts -= exc.hosts_consumed
+                    self.bad_hosts -= exc.bad_hosts
                     self._set_retry_timers(itask, rtconfig)
                 # Provide dummy platform otherwise it will incorrectly show as
                 # the default localhost platform in the data store:

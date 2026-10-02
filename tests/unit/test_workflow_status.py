@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -89,7 +90,7 @@ def schd(
             WORKFLOW_STATUS_RUNNING_TO_STOP % 4
         ),
         (
-            {'stop_clock_time': int(STOP_TIME.seconds_since_unix_epoch)},
+            {'stop_clock_time': STOP_TIME.seconds_since_unix_epoch},
             WorkflowStatus.RUNNING,
             WORKFLOW_STATUS_RUNNING_TO_STOP % str(STOP_TIME)
         ),

@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -51,7 +52,7 @@ class ParsecConfig:
         validator: Callable | None = None,
         options: 'Values | None' = None
     ):
-        """Instatiate a parsec config object.
+        """Instantiate a parsec config object.
 
         Args:
             spec: Specification for the config.
@@ -59,7 +60,7 @@ class ParsecConfig:
                 to new ones, or returns errors for obsolete items.
             output_fname: Filename to dump parsed config to.
             tvars: Template variables.
-            validator: Function checkin that config is valid; defaults to
+            validator: Function checking that config is valid; defaults to
                 ``parsec_validate``.
             options: Command line options.
         """
@@ -267,7 +268,7 @@ class ConfigNode(ContextNode):
             This is useful if you want to create a specific instance of
             a generic configuration e.g. ``[elephant]`` from ``[<animal>]``.
 
-            Leaf nodes inherited from the generic config wil have
+            Leaf nodes inherited from the generic config will have
             ``meta=True``.
 
     """

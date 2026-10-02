@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,7 +32,7 @@ export CYLC_CONF_PATH="${PWD}"
 # Control Run
 run_ok "${TEST_NAME_BASE}-ok" cylc config -i "[platforms][foo]"
 
-# If item not settable in config (platforms is mis-spelled):
+# If item not settable in config (platforms is misspelled):
 run_fail "${TEST_NAME_BASE}-not-in-config-spec" cylc config -i "[platfroms][foo]"
 cmp_ok "${TEST_NAME_BASE}-not-in-config-spec.stderr" << __HERE__
 InvalidConfigError: "platfroms" is not a valid configuration for global.cylc.

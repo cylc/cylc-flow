@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -176,7 +177,7 @@ def main(parser: COP, options: 'Values', workflow_id1: str, workflow_id2: str):
     workflow1_only = {}  # type: ignore
     workflow2_only = {}  # type: ignore
     diff_1_2 = {}  # type: ignore
-    # TODO: this whole file could do wih refactoring at some point
+    # TODO: this whole file could do with refactoring at some point
 
     diffdict(config1, config2, workflow1_only, workflow2_only, diff_1_2)
 

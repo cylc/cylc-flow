@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,7 +38,7 @@ from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 async def test_back_compat_flow_all(flow, scheduler, start):
     """Handle --flow=all from old clients.
 
-    The trigger, set, and remove commmands no longer take --flow=all, but
+    The trigger, set, and remove commands no longer take --flow=all, but
     for a while we need to handle that option coming in from older clients.
 
     (Prior to 8.5 it was the schema default for remove, and was documented

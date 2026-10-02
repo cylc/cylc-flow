@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,7 +17,7 @@
 
 """Built-in Cylc task qualifiers.
 
-Qualifier, i.e. the bit after a colon in a graph string: <task>:<qualifer>
+Qualifier, i.e. the bit after a colon in a graph string: <task>:<qualifier>
 """
 
 from cylc.flow.task_outputs import (

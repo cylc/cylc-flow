@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,6 +21,7 @@ from collections import deque
 from contextlib import suppress
 import logging
 import os
+import shlex
 from pathlib import Path
 from queue import (
     Empty,
@@ -108,6 +110,7 @@ from cylc.flow.loggingutil import (
     get_sorted_logs_by_time,
     patch_log_level,
 )
+from cylc.flow.main_loop.health_check import HealthCheckFailed
 from cylc.flow.network import API
 from cylc.flow.network.authentication import key_housekeeping
 from cylc.flow.network.server import WorkflowRuntimeServer
@@ -161,7 +164,6 @@ from cylc.flow.templatevars import (
     get_template_vars,
 )
 from cylc.flow.timer import Timer
-from cylc.flow.util import cli_format
 from cylc.flow.wallclock import (
     get_current_time_string,
     get_time_string_from_unix_time as time2str,
@@ -727,7 +729,7 @@ class Scheduler:
             await self.shutdown(exc)
             try:
                 if self.auto_restart_mode == AutoRestartMode.RESTART_NORMAL:
-                    self.workflow_auto_restart()
+                    await self.workflow_auto_restart()
                 # run shutdown coros
                 await asyncio.gather(
                     *main_loop.get_runners(
@@ -745,8 +747,8 @@ class Scheduler:
         except asyncio.CancelledError as exc:
             await self.handle_exception(exc)
 
-        except CylcError as exc:  # Includes SchedulerError
-            # catch "expected" errors
+        except (CylcError, HealthCheckFailed) as exc:
+            # catch "expected" errors (includes SchedulerError)
             await self.handle_exception(exc)
 
         except Exception as exc:
@@ -1154,7 +1156,7 @@ class Scheduler:
             fields.PID:
                 str(proc.pid),
             fields.COMMAND:
-                cli_format(proc.cmdline()),
+                shlex.join(proc.cmdline()),
             fields.PUBLISH_PORT:
                 str(self.server.pub_port),
             fields.WORKFLOW_RUN_DIR_ON_WORKFLOW_HOST:
@@ -1484,6 +1486,33 @@ class Scheduler:
         if self.get_run_mode() != RunMode.SIMULATION:
             self.task_job_mgr.check_task_jobs(self.pool)
 
+    def can_stop(self) -> bool:
+        """Return True if workflow can stop."""
+        if self.stop_mode is None:
+            return False
+        if self.stop_mode == StopMode.REQUEST_NOW_NOW:
+            # Can stop irrespective of all other conditions
+            return True
+        if self.task_events_mgr._event_timers:
+            return False
+        if self.stop_mode in {
+            StopMode.REQUEST_NOW,
+            StopMode.AUTO,
+            StopMode.AUTO_ON_TASK_FAILURE,
+        }:
+            # Can stop as no pending event handlers
+            return True
+        # Else cannot stop if there are active tasks (unless they're
+        # ones we tried & failed to kill).
+        # NB preparing tasks get reset to waiting on restart.
+        return not any(
+            (
+                itask.state(*TASK_STATUSES_ACTIVE)
+                and not itask.state.kill_failed
+            )
+            for itask in self.pool.get_tasks()
+        )
+
     async def workflow_shutdown(self):
         """Determines if the workflow can be shutdown yet."""
         if self.pool.check_abort_on_task_fails():
@@ -1498,7 +1527,7 @@ class Scheduler:
             self._set_stop(StopMode.AUTO)
 
         # Is the workflow ready to shut down now?
-        if self.pool.can_stop(self.stop_mode):
+        if self.can_stop():
             await self.update_data_structure()
             self.proc_pool.close()
             if self.stop_mode != StopMode.REQUEST_NOW_NOW:
@@ -1583,7 +1612,7 @@ class Scheduler:
             time() >= self.auto_restart_time
         )
 
-    def workflow_auto_restart(self, max_retries: int = 3) -> bool:
+    async def workflow_auto_restart(self, max_retries: int = 3) -> bool:
         """Attempt to restart the workflow assuming it has already stopped."""
         cmd = [
             'cylc', 'play', quote(self.workflow),
@@ -1595,7 +1624,7 @@ class Scheduler:
             error: Optional[str] = None
             proc = None
             try:
-                new_host = select_workflow_host(cached=False)[0]
+                new_host, _ = await select_workflow_host(cached=False)
             except HostSelectException as exc:
                 error = str(exc)
             else:
@@ -1895,9 +1924,10 @@ class Scheduler:
             # Suppress the reason for shutdown, which is logged separately
             exc.__suppress_context__ = True
             if isinstance(exc, CylcError):
-                LOG.error(f"{exc.__class__.__name__}: {exc}")
-                if cylc.flow.flags.verbosity > 1:
-                    LOG.exception(exc)
+                LOG.error(
+                    f"{type(exc).__name__}: {exc}",
+                    exc_info=(exc if cylc.flow.flags.verbosity > 1 else None)
+                )
             else:
                 LOG.exception(exc)
             # Re-raise exception to be caught higher up (sets the exit code)
@@ -1909,10 +1939,7 @@ class Scheduler:
 
         if hasattr(self, 'proc_pool'):
             try:
-                self.proc_pool.close()
-                if self.proc_pool.is_not_done():
-                    self.proc_pool.terminate()
-                self.proc_pool.process()
+                self.proc_pool.terminate()
             except Exception as exc:
                 LOG.exception(exc)
 
@@ -1964,9 +1991,16 @@ class Scheduler:
             fname = workflow_files.get_contact_file_path(self.workflow)
             try:
                 os.unlink(fname)
+            except FileNotFoundError as exc:
+                LOG.warning(
+                    f"contact file missing on shutdown: {fname}",
+                    exc_info=(exc if cylc.flow.flags.verbosity > 1 else None)
+                )
             except OSError as exc:
-                LOG.warning(f"failed to remove workflow contact file: {fname}")
-                LOG.exception(exc)
+                LOG.critical(
+                    f"failed to remove workflow contact file: {fname}",
+                    exc_info=exc,
+                )
             else:
                 # Useful to identify that this Scheduler has shut down
                 # properly (e.g. in tests):
@@ -1984,6 +2018,7 @@ class Scheduler:
     def _log_shutdown_reason(self, reason: BaseException) -> None:
         """Appropriately log the reason for scheduler shutdown."""
         shutdown_msg = "Workflow shutting down"
+        exc_info = reason if cylc.flow.flags.verbosity > 1 else None
         with patch_log_level(LOG):
             if isinstance(reason, SchedulerStop):
                 LOG.info(f'{shutdown_msg} - {reason.args[0]}')
@@ -1997,11 +2032,14 @@ class Scheduler:
                 isinstance(reason, ParsecError) and reason.schd_expected
             ):
                 LOG.error(
-                    f"{shutdown_msg} - {type(reason).__name__}: {reason}"
+                    f"{shutdown_msg} - {type(reason).__name__}: {reason}",
+                    exc_info=exc_info,
                 )
-                if cylc.flow.flags.verbosity > 1:
-                    # Print traceback
-                    LOG.exception(reason)
+            elif isinstance(reason, HealthCheckFailed):
+                LOG.critical(
+                    f"{shutdown_msg} - health check failed: {reason}",
+                    exc_info=exc_info,
+                )
             else:
                 LOG.exception(reason)
                 if str(reason):
@@ -2018,10 +2056,10 @@ class Scheduler:
         self.workflow_db_mgr.put_workflow_stop_clock_time(self.stop_clock_time)
         self.update_data_store()
 
-    def stop_clock_done(self):
+    def stop_clock_done(self) -> bool:
         """Return True if wall clock stop time reached."""
         if self.stop_clock_time is None:
-            return
+            return False
         now = time()
         if now > self.stop_clock_time:
             LOG.info("Wall clock stop time reached: %s", time2str(
@@ -2033,7 +2071,7 @@ class Scheduler:
         LOG.debug("stop time=%d; current time=%d", self.stop_clock_time, now)
         return False
 
-    def check_auto_shutdown(self):
+    def check_auto_shutdown(self) -> bool:
         """Check if we should shut down now."""
         if (
             self.is_paused or

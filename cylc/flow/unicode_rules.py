@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -249,7 +250,7 @@ def not_equals(*strings):
 def disallow_char_if_not_at_end_of_first_word(char):
     """Prevent use of a (non-alphanumeric) character unless it occurs directly
     after first word (in which case there is no limit on subsequent
-    occurances).
+    occurrences).
 
     Example:
         >>> regex, message = disallow_char_if_not_at_end_of_first_word(':')

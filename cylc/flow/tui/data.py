@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -124,6 +125,8 @@ _COMPAT_QUERIES = (
     (
         # BACK COMPAT
         # isRetry, isWallclock and isXtriggered fields added at 8.5.0
+        # FROM 8.4
+        # REMOVE AT: 8.8
         SpecifierSet('>=8, <8.5'),
         _QUERY
         .replace('isRetry', '')
@@ -147,6 +150,8 @@ MUTATIONS = {
         'kill',
         'trigger',
         'poll',
+        'set',
+        'remove',
     ],
     'task': [
         'hold',
@@ -176,7 +181,7 @@ class VersionIncompat(Exception):
 
 
 def get_query(scheduler_version: str) -> str:
-    """Return a GraphQL query compatibile with the provided scheduler version.
+    """Return a GraphQL query compatible with the provided scheduler version.
 
     Args:
         scheduler_version: The version of the scheduler we are connecting to.
@@ -206,7 +211,7 @@ def cli_cmd(*cmd, ret=False):
         ret:
             If True, the stdout will be returned.
 
-    Rasies:
+    Raises:
         ClientError:
             In the event of mishap for consistency with the network
             client alternative.
@@ -478,7 +483,7 @@ def online_mutate(mutation, selection):
         client = get_client(workflow)
     except WorkflowStopped:
         raise Exception(
-            f'Cannot peform command {mutation} on a stopped workflow'
+            f'Cannot perform command {mutation} on a stopped workflow'
         ) from None
     except (ClientError, ClientTimeout) as exc:
         raise Exception(

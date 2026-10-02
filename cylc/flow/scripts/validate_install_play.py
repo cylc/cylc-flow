@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -101,7 +102,7 @@ def main(parser: COP, options: 'Values', workflow_id: Optional[str] = None):
     orig_source = workflow_id
     source = get_source_location(workflow_id)
     log_subcommand('validate', source)
-    asyncio.run(cylc_validate(parser, options, str(source)))
+    asyncio.run(cylc_validate(options, str(source)))
 
     # Unset is validate after validation.
     del options.is_validate

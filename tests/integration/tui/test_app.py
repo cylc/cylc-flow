@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -510,7 +511,7 @@ async def test_restart_reconnect(one_conf, flow, scheduler, start, rakiura):
 
     The Cylc client can raise exceptions e.g. WorkflowStopped. Any text written
     to stdout/err will mess with Tui. The purpose of this test is to ensure Tui
-    can handle shutdown / restart without any errors occuring and any spurious
+    can handle shutdown / restart without any errors occurring and any spurious
     text appearing on the screen.
     """
     with rakiura(size='80,20') as rk:

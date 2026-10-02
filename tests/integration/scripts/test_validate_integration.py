@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -197,7 +198,7 @@ def test_graph_upgrade_msg_graph_equals(flow, validate, caplog, log_filter):
 
 
 def test_graph_upgrade_msg_graph_equals2(flow, validate, caplog, log_filter):
-    """Both an implicit R1 and explict reccurance exist:
+    """Both an implicit R1 and explicit reccurance exist:
     It appends a note.
     """
     id_ = flow({

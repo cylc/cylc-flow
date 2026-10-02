@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 # -----------------------------------------------------------------------------
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # -----------------------------------------------------------------------------
 # This is illustrative code developed for tutorial purposes, it is not
-# intended for scientific use and is not guarantied to be accurate or correct.
+# intended for scientific use and is not guaranteed to be accurate or correct.
 from copy import copy
 from contextlib import suppress
 import math
@@ -144,7 +145,7 @@ def interpolate_grid(points, dim_x, dim_y, d_x, d_y, spline_order=0):
         d_x (float): The grid spacing in the x-dimension.
         d_y (float): The grid spacing in the y-dimension.
         spline_order (int): The order of the beta-spline to use for
-            interpolation (0 = nearset).
+            interpolation (0 = nearest).
 
     Return:
         list - 2D matrix of dimensions dim_x, dim_y containing the interpolated

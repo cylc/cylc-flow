@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,33 +19,49 @@
 
 import contextlib
 from functools import lru_cache
+import os
 import re
-from typing import List, Optional, TYPE_CHECKING, Tuple
+from typing import TYPE_CHECKING
 
-from metomi.isodatetime.data import Calendar, CALENDAR, Duration
+from metomi.isodatetime.data import (
+    CALENDAR,
+    Calendar,
+)
 from metomi.isodatetime.dumpers import TimePointDumper
-from metomi.isodatetime.timezone import (
-    get_local_time_zone, get_local_time_zone_format, TimeZoneFormatMode)
 from metomi.isodatetime.exceptions import IsodatetimeError
 from metomi.isodatetime.parsers import ISO8601SyntaxError
-from cylc.flow.time_parser import CylcTimeParser
+from metomi.isodatetime.timezone import (
+    TimeZoneFormatMode,
+    get_local_time_zone,
+    get_local_time_zone_format,
+)
+
 from cylc.flow.cycling import (
-    PointBase, IntervalBase, SequenceBase, ExclusionBase, cmp
+    ExclusionBase,
+    IntervalBase,
+    PointBase,
+    SequenceBase,
+    cmp,
 )
 from cylc.flow.exceptions import (
     CylcConfigError,
     IntervalParsingError,
     PointParsingError,
     SequenceDegenerateError,
-    WorkflowConfigError
+    WorkflowConfigError,
 )
-from cylc.flow.wallclock import get_current_time_string
 from cylc.flow.parsec.validate import IllegalValueError
+from cylc.flow.time_parser import CylcTimeParser
+from cylc.flow.wallclock import get_current_time_string
+
 
 if TYPE_CHECKING:
     from metomi.isodatetime.data import TimePoint
     from metomi.isodatetime.parsers import (
-        DurationParser, TimePointParser, TimeRecurrenceParser)
+        DurationParser,
+        TimePointParser,
+        TimeRecurrenceParser,
+    )
 
 CYCLER_TYPE_ISO8601 = "iso8601"
 CYCLER_TYPE_SORT_KEY_ISO8601 = 1
@@ -57,16 +74,27 @@ WARNING_PARSE_EXPANDED_YEAR_DIGITS = (
     "(incompatible with [cylc]cycle point num expanded year digits = %s ?)")
 
 
+# NOTE: We cache some datetime cycling operations to improve compute
+# performance. For profiling, this can be disabled by setting the environment
+# variable CYLC_CYCLER_LRU_CACHE_SIZE=0.
+
+# The number of cycling operations to cache:
+_LRU_CACHE_SIZE = int(os.environ.get('CYLC_CYCLER_LRU_CACHE_SIZE', '10000'))
+
+# A smaller cache for use with larger objects (to reduce memory impact):
+_LARGE_LRU_CACHE_SIZE = int(_LRU_CACHE_SIZE / 100) if _LRU_CACHE_SIZE else 0
+
+
 class WorkflowSpecifics:
 
     """Store workflow-setup-specific constants and utilities here."""
-    ASSUMED_TIME_ZONE: Tuple[int, int]
+    ASSUMED_TIME_ZONE: tuple[int, int]
     DUMP_FORMAT: str
     abbrev_util: CylcTimeParser
     interval_parser: 'DurationParser'
     point_parser: 'TimePointParser'
     recurrence_parser: 'TimeRecurrenceParser'
-    iso8601_parsers: Tuple[
+    iso8601_parsers: tuple[
         'TimePointParser', 'DurationParser', 'TimeRecurrenceParser'
     ]
     NUM_EXPANDED_YEAR_DIGITS: int = 0
@@ -123,7 +151,7 @@ class ISO8601Point(PointBase):
         ))
 
     @staticmethod
-    @lru_cache(10000)
+    @lru_cache(_LRU_CACHE_SIZE)
     def _iso_point_add(point_string, interval_string, _calendar_mode):
         """Add the parsed point_string to the parsed interval_string."""
         point = point_parse(point_string)
@@ -134,7 +162,7 @@ class ISO8601Point(PointBase):
         return self._iso_point_cmp(self.value, other.value, CALENDAR.mode)
 
     @staticmethod
-    @lru_cache(10000)
+    @lru_cache(_LRU_CACHE_SIZE)
     def _iso_point_cmp(point_string, other_point_string, _calendar_mode):
         """Compare the parsed point_string to the other one."""
         point = point_parse(point_string)
@@ -142,7 +170,7 @@ class ISO8601Point(PointBase):
         return cmp(point, other_point)
 
     @staticmethod
-    @lru_cache(10000)
+    @lru_cache(_LRU_CACHE_SIZE)
     def _iso_point_sub_interval(point_string, interval_string, _calendar_mode):
         """Return the parsed point_string minus the parsed interval_string."""
         point = point_parse(point_string)
@@ -150,7 +178,7 @@ class ISO8601Point(PointBase):
         return str(point - interval)
 
     @staticmethod
-    @lru_cache(10000)
+    @lru_cache(_LRU_CACHE_SIZE)
     def _iso_point_sub_point(point_string, other_point_string, _calendar_mode):
         """Return the difference between the two parsed point strings."""
         point = point_parse(point_string)
@@ -216,7 +244,7 @@ class ISO8601Interval(IntervalBase):
         return self._iso_interval_nonzero(self.value)
 
     @staticmethod
-    @lru_cache(10000)
+    @lru_cache(_LRU_CACHE_SIZE)
     def _iso_interval_abs(interval_string, other_interval_string):
         """Return the absolute (non-negative) value of an interval_string."""
         interval = interval_parse(interval_string)
@@ -226,7 +254,7 @@ class ISO8601Interval(IntervalBase):
         return interval_string
 
     @staticmethod
-    @lru_cache(10000)
+    @lru_cache(_LRU_CACHE_SIZE)
     def _iso_interval_add(interval_string, other_interval_string):
         """Return one parsed interval_string plus the other one."""
         interval = interval_parse(interval_string)
@@ -234,7 +262,7 @@ class ISO8601Interval(IntervalBase):
         return str(interval + other)
 
     @staticmethod
-    @lru_cache(10000)
+    @lru_cache(_LRU_CACHE_SIZE)
     def _iso_interval_cmp(interval_string, other_interval_string):
         """Compare one parsed interval_string with the other one."""
         interval = interval_parse(interval_string)
@@ -242,7 +270,7 @@ class ISO8601Interval(IntervalBase):
         return cmp(interval, other)
 
     @staticmethod
-    @lru_cache(10000)
+    @lru_cache(_LRU_CACHE_SIZE)
     def _iso_interval_sub(interval_string, other_interval_string):
         """Subtract one parsed interval_string from the other one."""
         interval = interval_parse(interval_string)
@@ -250,14 +278,14 @@ class ISO8601Interval(IntervalBase):
         return str(interval - other)
 
     @staticmethod
-    @lru_cache(10000)
+    @lru_cache(_LRU_CACHE_SIZE)
     def _iso_interval_mul(interval_string, factor):
         """Multiply one parsed interval_string's values by factor."""
         interval = interval_parse(interval_string)
         return str(interval * factor)
 
     @staticmethod
-    @lru_cache(10000)
+    @lru_cache(_LRU_CACHE_SIZE)
     def _iso_interval_nonzero(interval_string):
         """Return whether the parsed interval_string is a null interval."""
         interval = interval_parse(interval_string)
@@ -318,7 +346,6 @@ class ISO8601Sequence(SequenceBase):
 
     TYPE = CYCLER_TYPE_ISO8601
     TYPE_SORT_KEY = CYCLER_TYPE_SORT_KEY_ISO8601
-    _MAX_CACHED_POINTS = 100
 
     __slots__ = ('dep_section', 'context_start_point', 'context_end_point',
                  'offset', '_cached_first_point_values',
@@ -346,7 +373,9 @@ class ISO8601Sequence(SequenceBase):
 
         # cache is_on_sequence
         # see B019 - https://github.com/PyCQA/flake8-bugbear#list-of-warnings
-        self.is_on_sequence = lru_cache(maxsize=100)(self._is_on_sequence)
+        self.is_on_sequence = lru_cache(_LARGE_LRU_CACHE_SIZE)(
+            self._is_on_sequence
+        )
 
         if (
             context_start_point is None
@@ -420,21 +449,6 @@ class ISO8601Sequence(SequenceBase):
         """Return the interval between points in this sequence."""
         return self.step
 
-    def get_offset(self):
-        """Deprecated: return the offset used for this sequence."""
-        return self.offset
-
-    def set_offset(self, i_offset):
-        """Deprecated: alter state to i_offset the entire sequence."""
-        self.recurrence += interval_parse(str(i_offset))
-        self._cached_first_point_values = {}
-        self._cached_next_point_values = {}
-        self._cached_valid_point_booleans = {}
-        self._cached_recent_valid_points = []
-        self.value = str(self.recurrence) + '!' + str(self.exclusions)
-        if self.exclusions:
-            self.value += '!' + str(self.exclusions)
-
     # lru_cache'd see __init__()
     def _is_on_sequence(self, point):
         """Return True if point is on-sequence."""
@@ -462,8 +476,7 @@ class ISO8601Sequence(SequenceBase):
             return self._cached_valid_point_booleans[point.value]
         except KeyError:
             is_valid = self.is_on_sequence(point)
-            if (len(self._cached_valid_point_booleans) >
-                    self._MAX_CACHED_POINTS):
+            if len(self._cached_valid_point_booleans) > _LARGE_LRU_CACHE_SIZE:
                 self._cached_valid_point_booleans.popitem()
             self._cached_valid_point_booleans[point.value] = is_valid
             return is_valid
@@ -552,20 +565,21 @@ class ISO8601Sequence(SequenceBase):
             )
 
         # Cache the answer for point -> next_point.
-        if (len(self._cached_next_point_values) >
-                self._MAX_CACHED_POINTS):
+        if len(self._cached_next_point_values) > _LARGE_LRU_CACHE_SIZE:
             self._cached_next_point_values.popitem()
         self._cached_next_point_values[point.value] = next_point.value
 
         # Cache next_point as a valid starting point for this recurrence.
-        if (len(self._cached_next_point_values) >
-                self._MAX_CACHED_POINTS):
+        if (
+            _LARGE_LRU_CACHE_SIZE
+            and len(self._cached_next_point_values) > _LARGE_LRU_CACHE_SIZE
+        ):
             self._cached_recent_valid_points.pop(0)
         self._cached_recent_valid_points.append(next_point)
 
     def get_next_point_on_sequence(
         self, point: ISO8601Point
-    ) -> Optional[ISO8601Point]:
+    ) -> ISO8601Point | None:
         """Return the on-sequence point > point assuming that point is
         on-sequence, or None if out of bounds."""
         result = None
@@ -585,7 +599,7 @@ class ISO8601Sequence(SequenceBase):
     def get_first_point(
         self,
         point: ISO8601Point
-    ) -> Optional[ISO8601Point]:
+    ) -> ISO8601Point | None:
         """Return the first point >= to point, or None if out of bounds."""
         with contextlib.suppress(KeyError):
             return ISO8601Point(self._cached_first_point_values[point.value])
@@ -597,8 +611,10 @@ class ISO8601Sequence(SequenceBase):
                 # Check multiple exclusions
                 if ret and ret in self.exclusions:
                     return self.get_next_point_on_sequence(ret)
-                if (len(self._cached_first_point_values) >
-                        self._MAX_CACHED_POINTS):
+                if (
+                    len(self._cached_first_point_values)
+                    > _LARGE_LRU_CACHE_SIZE
+                ):
                     self._cached_first_point_values.popitem()
                 self._cached_first_point_values[point.value] = (
                     first_point_value)
@@ -663,7 +679,7 @@ def _get_old_anchor_step_recurrence(anchor, step, start_point):
     return str(anchor_point) + "/" + str(step)
 
 
-def ingest_time(value: str, now: Optional[str] = None) -> str:
+def ingest_time(value: str, now: str | None = None) -> str:
     """Handle relative, truncated and prev/next cycle points.
 
     Args:
@@ -710,14 +726,6 @@ def ingest_time(value: str, now: Optional[str] = None) -> str:
         now = get_current_time_string()
     now_point = parser.parse(now)
 
-    # correct for year in 'now' if year is the only date unit specified -
-    # https://github.com/cylc/cylc-flow/issues/4805#issuecomment-1103928604
-    if re.search(r"\(-\d{2}[);T]", value):
-        now_point += Duration(years=1)
-    # likewise correct for month if year and month are the only date units
-    elif re.search(r"\(-\d{4}[);T]", value):
-        now_point += Duration(months=1)
-
     # perform whatever transformation is required
     offset = None
     if is_prev_next:
@@ -739,7 +747,7 @@ def ingest_time(value: str, now: Optional[str] = None) -> str:
 
 def prev_next(
     value: str, now: 'TimePoint', parser: 'TimePointParser'
-) -> Tuple['TimePoint', Optional[str]]:
+) -> tuple['TimePoint', str | None]:
     """Handle previous() and next() syntax.
 
     Args:
@@ -759,13 +767,13 @@ def prev_next(
 
     # break down cycle point into constituent parts.
     direction, tmp = value.split("(")
-    offset: Optional[str]
+    offset: str | None
     tmp, offset = tmp.split(")")
 
     offset = offset.strip() or None
 
-    str_points: List[str] = tmp.split(";")
-    timepoints: List['TimePoint'] = []
+    str_points: list[str] = tmp.split(";")
+    timepoints: list['TimePoint'] = []
 
     # for use with 'previous' below.
     go_back = {
@@ -785,15 +793,15 @@ def prev_next(
     for my_time in str_points:
         try:
             parsed_point = parser.parse(my_time.strip())
-        except ISO8601SyntaxError as exc:
-            raise exc
-        except ValueError:
-            # If list is accidentally comma
-            suggest = my_time.replace(',', ';')
-            raise WorkflowConfigError(
-                f'Invalid offset: {my_time}:'
-                f' Offset lists are semicolon separated, try {suggest}'
-            ) from None
+        except ISO8601SyntaxError:
+            if ',' in my_time:
+                raise WorkflowConfigError(
+                    f'Invalid offset: {my_time}. Offset lists are '
+                    f"semicolon separated, try {my_time.replace(',', ';')}"
+                ) from None
+            raise
+        except Exception as exc:
+            raise WorkflowConfigError(f'Invalid offset: {my_time}') from exc
 
         timepoints.append(parsed_point + now)
 
@@ -809,28 +817,6 @@ def prev_next(
     my_diff = [abs(my_time - now) for my_time in timepoints]
 
     cycle_point = timepoints[my_diff.index(min(my_diff))]
-
-    # ensure truncated dates do not have time from 'now' included' -
-    # https://github.com/metomi/isodatetime/issues/212
-    if 'T' not in value.split(')')[0]:
-        # NOTE: Strictly speaking we shouldn't forcefully mutate TimePoints
-        # in this way as they're meant to be immutable since
-        # https://github.com/metomi/isodatetime/pull/165, however it
-        # should be ok as long as the TimePoint is not used as a dict key and
-        # we don't call any of the TimePoint's cached methods until after we've
-        # finished mutating it.
-        cycle_point._hour_of_day = 0
-        cycle_point._minute_of_hour = 0
-        cycle_point._second_of_minute = 0
-    # likewise ensure month and day from 'now' are not included
-    # where they did not appear in the truncated datetime
-    if re.search(r"\(-\d{2}[);T]", value):
-        # case 1 - year only
-        cycle_point._month_of_year = 1
-        cycle_point._day_of_month = 1
-    elif re.search(r"\(-(-\d{2}|\d{4})[;T)]", value):
-        # case 2 - month only or year and month
-        cycle_point._day_of_month = 1
 
     return cycle_point, offset
 
@@ -950,7 +936,7 @@ def is_offset_absolute(offset_string):
         return False
 
 
-@lru_cache(10000)
+@lru_cache(_LRU_CACHE_SIZE)
 def _interval_parse(interval_string):
     """Parse an interval_string into a proper Duration object."""
     return WorkflowSpecifics.interval_parser.parse(interval_string)
@@ -965,7 +951,7 @@ def point_parse(point_string: str) -> 'TimePoint':
     )
 
 
-@lru_cache(10000)
+@lru_cache(_LRU_CACHE_SIZE)
 def _point_parse(point_string: str, _dump_fmt, _tz) -> 'TimePoint':
     """Parse a point_string into a proper TimePoint object.
 
