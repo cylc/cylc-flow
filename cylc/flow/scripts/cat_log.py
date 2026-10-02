@@ -495,8 +495,9 @@ async def _get_remote_log(
     if mode in TAIL_MODES:
         # Substitute the line count into the tail command here (on the
         # workflow host) so that the remote end does not need to know about
-        # the number of lines. .replace used to avoid breaking the filename
-        # substitution in the template.
+        # the number of lines.
+        # NB can't use `%` to substitute a single var when the template
+        # contains other placeholders.
         tail_tmpl = tail_tmpl.replace(
             '%(lines)s', get_tail_lines(mode, tail_lines)
         )
