@@ -18,7 +18,7 @@
 
 . "$(dirname "$0")/test_header"
 
-set_test_number 17
+set_test_number 19
 
 install_workflow "${TEST_NAME_BASE}" integer
 
@@ -80,11 +80,18 @@ contains_ok "${TEST_NAME}.stderr" <<__END__
 InputError: Cycle point "*" is not compatible with an offset.
 __END__
 
-TEST_NAME="${TEST_NAME_BASE}_pre_start_cycle_point"
-run_ok "${TEST_NAME}" cylc workflow-state --max-polls=1 "${WORKFLOW_NAME}//0/foo:succeeded" --triggers
+TEST_NAME="${TEST_NAME_BASE}_pre_start_cycle_point_complete_pre_scp"
+run_ok "${TEST_NAME}" cylc workflow-state --max-polls=1 "${WORKFLOW_NAME}//0/foo:succeeded" --triggers --complete-pre-start
 
 contains_ok "${TEST_NAME}.stdout" <<__END__
 0/foo:{"succeeded": "before start cycle point"}
+__END__
+
+TEST_NAME="${TEST_NAME_BASE}_pre_start_cycle_point_no_option"
+run_fail "${TEST_NAME}" cylc workflow-state --max-polls=1 "${WORKFLOW_NAME}//0/foo:succeeded" --triggers
+
+contains_ok "${TEST_NAME}.stderr" <<__END__
+ERROR - failed after 1 polls
 __END__
 
 purge
