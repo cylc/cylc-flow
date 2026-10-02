@@ -110,7 +110,7 @@ def test_validate_simple_graph(flow, validate, caplog):
     validate(id_)
     expect = (
         'graph items were automatically upgraded'
-        ' in "workflow definition":'
+        ' in "workflow definition" - will be removed at 8.9:'
         '\n * (8.0.0) [scheduling][dependencies]graph -> [scheduling][graph]R1'
     )
     assert expect in caplog.messages
@@ -212,7 +212,7 @@ def test_graph_upgrade_msg_graph_equals2(flow, validate, caplog, log_filter):
     validate(id_)
     expect = (
         'graph items were automatically upgraded in'
-        ' "workflow definition":'
+        ' "workflow definition" - will be removed at 8.9:'
         '\n * (8.0.0) [scheduling][dependencies][X]graph'
         ' -> [scheduling][graph]X - for X in:'
         '\n       P1Y, graph'
