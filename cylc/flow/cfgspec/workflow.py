@@ -2226,7 +2226,8 @@ def upg(
         ['runtime', '__MANY__', 'events', 'mail smtp'],
         None,
         cvtr=converter(lambda x: x, (
-            'DELETED (OBSOLETE) - use "global.cylc[scheduler][mail]smtp" ')
+            'DELETED (OBSOLETE) - use "global.cylc[scheduler][mail]smtp" '
+            'instead')
         ),
         remove_at='8.9'
     )
