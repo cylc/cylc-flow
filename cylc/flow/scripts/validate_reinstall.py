@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -120,7 +121,7 @@ def check_tvars_and_workflow_stopped(
     """are template variables set and workflow stopped?
 
     Template vars set by --set (options.templatevars) or --set-file
-    (optiions.templatevars_file) are only valid if the workflow is stopped
+    (options.templatevars_file) are only valid if the workflow is stopped
     and vr will play it.
 
     args:
@@ -198,7 +199,7 @@ async def vr_cli(
 
     # Run "cylc validate"
     log_subcommand('validate --against-source', workflow_id)
-    await cylc_validate(parser, options, workflow_id)
+    await cylc_validate(options, workflow_id)
 
     # Unset options that do not apply after validation:
     del options.against_source

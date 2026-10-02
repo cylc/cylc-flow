@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,7 +47,7 @@ def init_flows(tmp_run_path=None, running=None, registered=None,
                un_registered=None, tmp_src_path=None, src=None):
     """Create some dummy workflows for scan to discover.
 
-    Assume "run1, run2, ..., runN" structure if flow name constains "run".
+    Assume "run1, run2, ..., runN" structure if flow name contains "run".
     Optionally create workflow source dirs in a give location too.
 
     """

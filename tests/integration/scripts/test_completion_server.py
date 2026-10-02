@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -142,10 +143,10 @@ async def test_list_prereqs_and_outputs(flow, scheduler, start):
             '1/c:succeeded',
         }
 
-        # list outputs for a non-existant task
+        # list outputs for a non-existent task
         assert await _complete_cylc('cylc', 'set', e1.id, '--out', '') == set()
 
-        # list outputs for a non-existant workflow
+        # list outputs for a non-existent workflow
         assert await _complete_cylc(
             'cylc',
             'set',

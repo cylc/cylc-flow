@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -69,7 +70,7 @@ __OUT__
 popd || exit 1
 purge_rnd_workflow
 
-# Test cylc install copies files to run dir successfully, exluding files from
+# Test cylc install copies files to run dir successfully, excluding files from
 # .cylcignore file.
 # Should work if we run "cylc install" from source dir or not (see GH #5066)
 for RUN_IN_SRC_DIR in true false; do

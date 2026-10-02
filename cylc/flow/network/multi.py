@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,9 +42,7 @@ from cylc.flow.terminal import DIM
 
 # Known error messages for incompatibilites between this version of Cylc (that
 # is running the command) and the version of Cylc running the workflow:
-KNOWN_INCOMPAT = {
-    'Unknown argument "onResume" on field "trigger" of type "Mutations".',
-}
+KNOWN_INCOMPAT: set[str] = set()
 
 
 def call_multi(*args, **kwargs):

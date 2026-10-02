@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +18,7 @@
 
 #------------------------------------------------------------------------------
 # Test `cylc vr` (Validate Reinstall)
-# In this case the target workflow is in an abiguous state: We cannot tell
+# In this case the target workflow is in an ambiguous state: We cannot tell
 # Whether it's running, paused or stopped. Cylc VR should validate before
 # reinstall:
 

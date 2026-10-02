@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -43,7 +44,6 @@ from cylc.flow.exceptions import (
     PointParsingError,
     WorkflowConfigError,
 )
-import cylc.flow.flags
 from cylc.flow.flow_mgr import (
     FLOW_NONE,
     repr_flow_nums,
@@ -72,7 +72,6 @@ from cylc.flow.task_id import TaskID
 from cylc.flow.task_outputs import (
     TASK_OUTPUT_EXPIRED,
     TASK_OUTPUT_FAILED,
-    TASK_OUTPUT_SUBMIT_FAILED,
     TASK_OUTPUT_SUCCEEDED,
 )
 from cylc.flow.task_proxy import TaskProxy
@@ -91,7 +90,6 @@ from cylc.flow.task_state import (
 )
 from cylc.flow.task_trigger import TaskTrigger
 from cylc.flow.util import deserialise_set
-from cylc.flow.workflow_status import StopMode
 from cylc.flow.scripts.set import XTRIGGER_PREREQ_PREFIX
 
 if TYPE_CHECKING:
@@ -227,7 +225,7 @@ class TaskPool:
         else:
             LOG.warning("Requested stop task name does not exist: %s" % name)
 
-    def stop_task_done(self):
+    def stop_task_done(self) -> bool:
         """Return True if stop task has succeeded."""
         if self.stop_task_id is not None and self.stop_task_finished:
             LOG.info("Stop task %s finished" % self.stop_task_id)
@@ -392,9 +390,8 @@ class TaskPool:
             ilimit = int(limit)  # type: ignore
             count_cycles = True
 
-        base_point: Optional['PointBase'] = None
-
         # First get the runahead base point.
+        base_point: 'PointBase | None'
         if not self.active_tasks:
             # Find the earliest sequence point beyond the workflow start point.
             base_point = min(
@@ -410,19 +407,7 @@ class TaskPool:
             )
         else:
             # Find the earliest point with incomplete tasks.
-            if cylc.flow.flags.cylc7_back_compat:
-                for point, itasks in sorted(self.get_tasks_by_point().items()):
-                    # All n=0 tasks are incomplete by definition, but Cylc 7
-                    # ignores failed ones (it does not ignore submit-failed!).
-                    if all(
-                        itask.state(TASK_STATUS_FAILED)
-                        for itask in itasks
-                    ):
-                        continue
-                    base_point = point
-                    break
-            else:
-                base_point = min(self.active_tasks, default=None)
+            base_point = min(self.active_tasks, default=None)
 
         if base_point is None:
             return False
@@ -541,6 +526,7 @@ class TaskPool:
                 #   messages were stored in the DB as a list.
                 # from: 8.0.0
                 # to: 8.3.0
+                # remove after: https://github.com/cylc/cylc-flow/issues/7339
                 outputs: dict[str, str] | list[str] = json.loads(task_outputs)
                 messages = (
                     outputs.values() if isinstance(outputs, dict)
@@ -842,7 +828,11 @@ class TaskPool:
             if ntask is not None and not is_in_pool:
                 self.add_to_pool(ntask)
 
-    def remove(self, itask: 'TaskProxy', reason: Optional[str] = None) -> None:
+    def remove(
+        self, itask: 'TaskProxy',
+        reason: Optional[str] = None,
+        no_spawn: Optional[bool] = False
+    ) -> None:
         """Remove a task from the pool."""
         # the held state is no longer relevant -> remove it
         self.release_held_active_task(itask)
@@ -850,8 +840,12 @@ class TaskPool:
         # xtriggers are no longer relevant -> remove them
         self.xtrigger_mgr.force_satisfy_all(itask, log=False)
 
-        if itask.flow_nums and (
-            itask.state.is_runahead or itask.is_xtrigger_sequential
+        if (
+            itask.flow_nums
+            and not no_spawn
+            and (
+                itask.state.is_runahead or itask.is_xtrigger_sequential
+            )
         ):
             # If removing a parentless runahead-limited task
             # auto-spawn its next instance first.
@@ -920,13 +914,6 @@ class TaskPool:
     def get_task_ids(self) -> Set[str]:
         """Return a list of task IDs in the task pool."""
         return {itask.identity for itask in self.get_tasks()}
-
-    def get_tasks_by_point(self) -> 'Dict[PointBase, List[TaskProxy]]':
-        """Return a map of task proxies by cycle point."""
-        return {
-            point: list(itask_id_map.values())
-            for point, itask_id_map in self.active_tasks.items()
-        }
 
     def get_task(self, point: 'PointBase', name: str) -> Optional[TaskProxy]:
         """Retrieve a task from the pool."""
@@ -1028,14 +1015,6 @@ class TaskPool:
             itask.state_reset(is_queued=False)
             self.data_store_mgr.delta_task_state(itask)
             itask.waiting_on_job_prep = True
-
-            if cylc.flow.flags.cylc7_back_compat:
-                # Cylc 7 Back Compat: spawn downstream to cause Cylc 7 style
-                # stalls - with unsatisfied waiting tasks - even with single
-                # prerequisites (which result in incomplete tasks in Cylc 8).
-                # We do it here (rather than at runhead release) to avoid
-                # pre-spawning out to the runahead limit.
-                self.spawn_on_all_outputs(itask)
 
         # Note: released and pre_prep_tasks can overlap
         return set(released + pre_prep_tasks)
@@ -1193,30 +1172,6 @@ class TaskPool:
                 ):
                     self.data_store_mgr.delta_task_state(itask)
         return True
-
-    def can_stop(self, stop_mode):
-        """Return True if workflow can stop.
-
-        A task is considered active if:
-        * It is in the active state and not marked with a kill failure.
-        * It has pending event handlers.
-        """
-        if stop_mode is None:
-            return False
-        if stop_mode == StopMode.REQUEST_NOW_NOW:
-            return True
-        if self.task_events_mgr._event_timers:
-            return False
-
-        return not any(
-            (
-                stop_mode in [StopMode.REQUEST_CLEAN, StopMode.REQUEST_KILL]
-                and itask.state(*TASK_STATUSES_ACTIVE)
-                and not itask.state.kill_failed
-            )
-            # preparing tasks get reset to waiting on restart
-            for itask in self.get_tasks()
-        )
 
     def warn_stop_orphans(self) -> None:
         """Log (warning) orphaned tasks on workflow stop."""
@@ -1565,13 +1520,6 @@ class TaskPool:
         if itask.identity == self.stop_task_id:
             self.stop_task_finished = True
 
-        if cylc.flow.flags.cylc7_back_compat:
-            ret = False
-            if not itask.state(TASK_STATUS_FAILED, TASK_OUTPUT_SUBMIT_FAILED):
-                self.remove(itask)
-                ret = True
-            return ret
-
         if not itask.state.outputs.is_complete():
             # Keep incomplete tasks in the pool.
             if output in TASK_STATUSES_FINAL:
@@ -1734,6 +1682,8 @@ class TaskPool:
                     #   messages were stored in the DB as a list.
                     # from: 8.0.0
                     # to: 8.3.0
+                    # remove after:
+                    #     https://github.com/cylc/cylc-flow/issues/7339
                     outputs: dict[str, str] | list[str] = json.loads(
                         outputs_str
                     )
@@ -2019,7 +1969,7 @@ class TaskPool:
         Transient task proxies are used to spawn the children of outputs. Even
         if the parent was previously spawned in this flow its children might
         not have been. ("Transient" just means not intended for the task pool,
-        just a convient way to use TaskProxy methods).
+        just a convenient way to use TaskProxy methods).
 
         A forced output cannot cause a state change to submitted or running,
         but it can complete a task so that it doesn't need to run.
@@ -2229,6 +2179,21 @@ class TaskPool:
             # Can't be runahead limited or queued.
             itask.state_reset(is_runahead=False, is_queued=False)
             self.task_queue_mgr.remove_task(itask)
+            # If we skipped over runahead release (when parentless spawning
+            # happens) the next parentless instance might need to be spawned.
+            if itask.flow_nums and not itask.is_xtrigger_sequential:
+                self.spawn_next_parentless(itask)
+
+        if (
+            itask.state(*TASK_STATUSES_FINAL)
+            and not itask.state.outputs.is_complete()
+        ):
+            # Add future final-incomplete tasks to the pool for visibility.
+            # See https://github.com/cylc/cylc-flow/issues/6383.
+            LOG.debug(f"[{itask}] adding future incomplete task to n=0.")
+            self.add_to_pool(itask)
+            # (The transient used for spawning outputs is now not transient.)
+            itask.transient = False
 
         if no_op:
             return False

@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -287,7 +288,7 @@ class TaskRemoteMgr:
     ) -> Tuple[List[str], str]:
         """Return a remote-tidy SSH command.
 
-        Rasies:
+        Raises:
             NoHostsError: If the platform is not contactable.
         """
         cmd = ['remote-tidy']
@@ -387,10 +388,11 @@ class TaskRemoteMgr:
             else:
                 LOG.error(
                     NoPlatformsError(
-                        install_target,
                         set(),
-                        'install target',
-                        'remote tidy'))
+                        install_target=install_target,
+                        place='remote tidy',
+                    )
+                )
         # Wait for commands to complete for a max of 10 seconds
         timeout = time() + 10.0
         while queue and time() < timeout:

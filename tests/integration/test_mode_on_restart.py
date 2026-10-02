@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,7 +34,7 @@ async def test_restart_mode(
 ):
     """Restarting a workflow in live mode leads to workflow in live mode.
 
-    N.B - we need use run becuase the check in question only happens
+    N.B - we need use run because the check in question only happens
     on start.
     """
     schd: Scheduler

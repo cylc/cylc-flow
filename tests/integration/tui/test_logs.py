@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -375,7 +376,7 @@ async def test_errors(
         # open the file selector
         rk.user_input('enter')
 
-        # it will fail to list avialable log files
+        # it will fail to list available log files
         rk.compare_screenshot(
             'list-error',
             'the error message should be displayed in a pop up',

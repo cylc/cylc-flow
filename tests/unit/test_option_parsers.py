@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -313,7 +314,7 @@ def test_combine_options(inputs, expect):
     result = combine_options(*inputs)
     result_args = [i.args for i in result]
 
-    # Order of args irrelevent to test
+    # Order of args irrelevant to test
     for option in expect:
         assert option[ARGS] in result_args
 

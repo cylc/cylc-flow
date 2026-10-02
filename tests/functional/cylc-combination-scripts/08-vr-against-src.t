@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -44,7 +45,7 @@ run_fail "${TEST_NAME}" cylc vr "${WORKFLOW_NAME}"
 validate2="$(grep -Po "WARNING - vr:(.*)" "${TEST_NAME_BASE}.stderr" | awk -F ':' '{print $2}')"
 play2="$(grep -Po "WARNING - play:(.*)" "${TEST_NAME_BASE}.stderr" | awk -F ':' '{print $2}')"
 
-# Test that the correct source directory is openened at different
+# Test that the correct source directory is opened at different
 # stages of Cylc VIP & VR
 TEST_NAME="outputs-created"
 if [[ -n $validate1 && -n $validate2 && -n $play1 && -n $play2 ]]; then

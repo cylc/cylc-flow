@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -122,7 +123,7 @@ def test_addict_replace_value():
 
 
 def test_addict_replace_value_1():
-    """"Special case depending on key and parents, for
+    """Special case depending on key and parents, for
 
     - key is 'graph' AND parents['scheduling']['graph'] OR
     - len(parents)==3 AND parents['scheduling']['graph'][?]
@@ -475,9 +476,10 @@ def test_read_and_proc_jinja2_warnings(
     assert len(caplog.records) == 1
     rec = caplog.records[0]
     assert rec.levelname == 'WARNING'
+
     assert re.match(
         (
-            r"The following warnings .* during Jinja2 preprocessing.*\s+"
+            rf"The following warnings .* during Jinja2 preprocessing.*\s+"
             rf"{__file__}:\d+: DeprecationWarning: {msg}"
         ),
         rec.message,
@@ -680,7 +682,7 @@ def test_unclosed_multiline():
                 'templating_detected': None,
                 'template_variables': {'FOO': 122}
             },
-            [],
+            ['Overriding FOO: 122 -> 123'],
             id='no templating engine set'
         ),
         pytest.param(

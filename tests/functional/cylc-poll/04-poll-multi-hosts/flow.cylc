@@ -1,20 +1,29 @@
 #!Jinja2
+
 [scheduler]
     UTC mode = True
     [[events]]
         expected task failures = 1/local-fail-1, 1/local-fail-2, 1/remote-fail-1
+
 [scheduling]
     [[graph]]
         R1 = """
             POLLABLE:start-all => poller
             POLLABLE:succeed-any  # (make member success optional)
         """
+
 [runtime]
+    # turn off error trapping to disable "cylc message" calls
+    # (this prevents the "succeeded" / "failed" messages getting through)
     [[POLLABLE]]
         init-script = cylc__job__disable_fail_signals ERR EXIT
+
+    # these tasks will fail (but not send the failed message or write it to the
+    # job.status file)
     [[FAIL]]
         inherit = POLLABLE
         script = """
+            cylc__job__wait_cylc_message_started
             echo 'I am failing...' >&2
             exit 1
         """
@@ -23,9 +32,13 @@
     [[remote-fail-1]]
         inherit = FAIL
         platform = {{ environ['CYLC_TEST_PLATFORM'] }}
+
+    # these tasks will succeed (but not send the succeeded message or write it
+    # to the job.status file)
     [[SUCCESS]]
         inherit = POLLABLE
         script = """
+            cylc__job__wait_cylc_message_started
             echo 'I am OK.'
             {
                 echo 'CYLC_JOB_EXIT=SUCCEEDED'
@@ -38,8 +51,18 @@
     [[remote-success-1, remote-success-2]]
         inherit = SUCCESS
         platform = {{ environ['CYLC_TEST_PLATFORM'] }}
+
+    # this task will poll the active jobs and hopefully detect their
+    # success / failure
     [[poller]]
         script = """
+            # give a bit of grace time for the job to leave the job runner queue
+            sleep 5
+
+            # poll the job (it should change to a final state)
             cylc poll "${CYLC_WORKFLOW_ID}//*/POLLABLE"
+
+            # shut down the scheduler (there should not be any active tasks
+            # left to delay shutdown)
             cylc stop "${CYLC_WORKFLOW_ID}"
         """

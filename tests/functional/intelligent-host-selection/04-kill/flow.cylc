@@ -3,7 +3,6 @@
     description = """
         Tasks
         - goodhost: a control to check that everything works
-        - badhost is always going to fail
         - mixedhost contains some hosts that will and won't fail
     """
 
@@ -18,14 +17,18 @@
     [[graph]]
         # Run good and mixed as controls
         R1 = """
-            goodhosttask & mixedhosttask
             goodhosttask:start => stop_g
             mixedhosttask:start => stop_m
         """
 
 [runtime]
-    [[root]]
-        script = sleep 120 & echo $! >file; wait
+    [[goodhosttask]]
+        script = sleep 60
+        platform = goodhostplatform
+
+    [[mixedhosttask]]
+        script = sleep 60
+        platform = mixedhostplatform
 
     [[mystop]]
         script="""
@@ -33,14 +36,6 @@
             cylc kill "$CYLC_WORKFLOW_ID//$TASK"
             cylc stop $CYLC_WORKFLOW_ID
         """
-
-    [[goodhosttask]]
-        platform = goodhostplatform
-
-    [[mixedhosttask]]
-        script=sleep 120 & echo $! >file; wait
-
-        platform = mixedhostplatform
 
     [[stop_g]]
         inherit = mystop
