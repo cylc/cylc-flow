@@ -236,7 +236,8 @@ class upgrader:
                             new=upg['cvt'].convert(old)
                         )
                         if (remove_at := upg.get('remove_at')) is not None:
-                            msg += f" - will be removed at {remove_at}"
+                            msg += (f' - support for the old item will be '
+                                    f'removed at Cylc {remove_at}')
                         warnings.setdefault(vn, [])
                         warnings[vn].append(msg)
                         self.del_item(upg['old'])
