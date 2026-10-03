@@ -810,6 +810,20 @@ with Conf('global.cylc', desc='''
           `-- flow/
               `-- global.cylc
 
+    The workflow run directory can also be configured by environment:
+
+    .. envvar:: CYLC_RUN_DIR
+
+       Override the root directory in which workflows are installed and run.
+       The default is ``$HOME/cylc-run``.
+
+       All Cylc commands targeting workflows in this directory must be run
+       with the same value of ``CYLC_RUN_DIR``.
+
+       This variable is forwarded to scheduler run hosts and job platforms,
+       and written into generated job scripts. The configured path must be
+       accessible at the same location on these hosts.
+
     .. note::
 
        The ``global.cylc`` file can be templated using Jinja2 variables.
@@ -1358,8 +1372,9 @@ with Conf('global.cylc', desc='''
                   desc="""
             Configure alternate workflow run directory locations.
 
-            Symlinks from the the standard ``$HOME/cylc-run`` locations will be
-            created.
+            Symlinks from the standard run directory locations will be
+            created. The run directory defaults to ``$HOME/cylc-run`` and can
+            be overridden by :envvar:`CYLC_RUN_DIR`.
 
             .. note::
 
@@ -1380,11 +1395,14 @@ with Conf('global.cylc', desc='''
                     If specified, the workflow run directory will
                     be created in ``<this-path>/cylc-run/<workflow-id>``
                     and a symbolic link will be created from
-                    ``$HOME/cylc-run/<workflow-id>``.
+                    ``<run-dir>/<workflow-id>``.
                     If not specified, the workflow run directory will be
-                    created in ``$HOME/cylc-run/<workflow-id>``.
+                    created in ``<run-dir>/<workflow-id>``.
                     All the workflow files and the ``.service`` directory get
                     installed into this directory.
+
+                    Here, ``<run-dir>`` is ``$HOME/cylc-run`` by default or
+                    the value of :envvar:`CYLC_RUN_DIR` if set.
 
                     .. versionadded:: 8.0.0
                 """)
@@ -1396,9 +1414,12 @@ with Conf('global.cylc', desc='''
                         be created in
                         ``<this-path>/cylc-run/<workflow-id>/{folder}``
                         and a symbolic link will be created from
-                        ``$HOME/cylc-run/<workflow-id>/{folder}``.
+                        ``<run-dir>/<workflow-id>/{folder}``.
                         If not specified, the directory will be created in
-                        ``$HOME/cylc-run/<workflow-id>/{folder}``.
+                        ``<run-dir>/<workflow-id>/{folder}``.
+
+                        Here, ``<run-dir>`` is ``$HOME/cylc-run`` by default
+                        or the value of :envvar:`CYLC_RUN_DIR` if set.
 
                         .. versionadded:: {versionadded}
                     """)
