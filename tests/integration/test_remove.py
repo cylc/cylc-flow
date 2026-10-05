@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+from time import time
 
 import pytest
 
@@ -412,6 +413,82 @@ async def test_downstream_other_flows(flow, scheduler, run, complete):
         # other prerequisite tasks could exist in flow 2 (we don't know as
         # prereqs do not hold flow info other than in the DB).
         assert schd.pool._get_task_by_id('1/x').flow_nums == {1, 2}
+
+
+async def test_downstream_never_run_removed(flow, scheduler, start):
+    """A downstream dependent that has never run should be removed when its
+    sole parent is removed.
+
+    See https://github.com/cylc/cylc-flow/issues/7394
+    """
+    schd: Scheduler = scheduler(flow('a => b'))
+    async with start(schd):
+        a = schd.pool._get_task_by_id('1/a')
+        schd.pool.spawn_on_output(a, TASK_OUTPUT_SUCCEEDED)
+        assert schd.pool.get_task_ids() == {'1/a', '1/b'}
+
+        b = schd.pool._get_task_by_id('1/b')
+        assert b.submit_num == 0  # 1/b has never run
+
+        await run_cmd(remove_tasks(schd, ['1/a'], []))
+        # 1/b has never run, so it is safe to remove it along with its parent:
+        assert schd.pool.get_task_ids() == set()
+
+
+async def test_downstream_run_retrying_preserved(flow, scheduler, start):
+    """A downstream dependent that has run and is now retrying (held) should
+    NOT be removed or released when its sole parent is removed.
+
+    See https://github.com/cylc/cylc-flow/issues/7394
+    """
+    schd: Scheduler = scheduler(
+        flow({
+            'scheduling': {'graph': {'R1': 'a => b'}},
+            'runtime': {'b': {'execution retry delays': 'PT1M'}},
+        }),
+    )
+    async with start(schd):
+        a = schd.pool._get_task_by_id('1/a')
+        schd.pool.spawn_on_output(a, TASK_OUTPUT_SUCCEEDED)
+
+        # 1/b has run, failed, and is now waiting on a (held) retry:
+        b = schd.pool._get_task_by_id('1/b')
+        b.submit_num = 1
+        schd.task_events_mgr._retry_task(b, time() + 3600)
+        schd.pool.hold_active_task(b)
+        assert b.state.is_held
+        assert any('retry' in label for label in b.state.xtriggers)
+
+        await run_cmd(remove_tasks(schd, ['1/a'], []))
+
+        # 1/b should NOT be removed (it has run before):
+        assert schd.pool.get_task_ids() == {'1/b'}
+        b = schd.pool._get_task_by_id('1/b')
+        # ...and its held state should be preserved (not released):
+        assert b.state.is_held
+        # ...and its retry timer should be preserved:
+        assert any('retry' in label for label in b.state.xtriggers)
+
+
+async def test_downstream_run_failed_preserved(flow, scheduler, start):
+    """A downstream dependent that has run and failed should NOT be removed
+    when its sole parent is removed.
+
+    See https://github.com/cylc/cylc-flow/issues/7394
+    """
+    schd: Scheduler = scheduler(flow('a => b'))
+    async with start(schd):
+        a = schd.pool._get_task_by_id('1/a')
+        schd.pool.spawn_on_output(a, TASK_OUTPUT_SUCCEEDED)
+
+        # 1/b has run and failed:
+        b = schd.pool._get_task_by_id('1/b')
+        b.submit_num = 1
+        b.state_reset(TASK_STATUS_FAILED)
+
+        await run_cmd(remove_tasks(schd, ['1/a'], []))
+        # 1/b should NOT be removed (it has run before):
+        assert schd.pool.get_task_ids() == {'1/b'}
 
 
 async def test_suicide(flow, scheduler, run, reflog, complete):
