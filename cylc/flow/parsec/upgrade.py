@@ -97,7 +97,7 @@ class upgrader:
                 'is_section': is_section, 'remove_at': remove_at
             })
 
-    def obsolete(self, vn, oldkeys, is_section=False):
+    def obsolete(self, vn, oldkeys, is_section=False, remove_at=None):
         """Remove an obsolete key from a config
         Args:
             vn (str):
@@ -113,7 +113,7 @@ class upgrader:
         self.upgrades[vn].append(
             {
                 'old': oldkeys, 'new': None, 'cvt': cvtr,
-                'is_section': is_section
+                'is_section': is_section, 'remove_at': remove_at
             })
 
     def get_item(self, keys):
@@ -184,7 +184,8 @@ class upgrader:
                         'old': pre + [m] + post,
                         'new': None,
                         'cvt': upg['cvt'],
-                        'is_section': upg['is_section']
+                        'is_section': upg['is_section'],
+                        'remove_at': upg.get('remove_at')
                     })
                 return exp_upgs
             npre = []
@@ -236,8 +237,12 @@ class upgrader:
                             new=upg['cvt'].convert(old)
                         )
                         if (remove_at := upg.get('remove_at')) is not None:
-                            msg += (f' - support for the old item will be '
-                                    f'removed at Cylc {remove_at}')
+                            if upg['new']:
+                                msg += (f' - support for the old item will be '
+                                        f'removed at Cylc {remove_at}')
+                            else:
+                                msg += (f' - this will fail validation in '
+                                        f'Cylc {remove_at}')
                         warnings.setdefault(vn, [])
                         warnings[vn].append(msg)
                         self.del_item(upg['old'])

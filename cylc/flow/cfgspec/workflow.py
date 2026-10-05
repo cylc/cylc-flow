@@ -2168,10 +2168,12 @@ def upg(
         remove_at='8.9'
     )
     u.obsolete(
-        '8.0.0', ['runtime', '__MANY__', 'workflow state polling', 'host']
+        '8.0.0', ['runtime', '__MANY__', 'workflow state polling', 'host'],
+        remove_at='8.9'
     )
     u.obsolete(
-        '8.0.0', ['runtime', '__MANY__', 'workflow state polling', 'user']
+        '8.0.0', ['runtime', '__MANY__', 'workflow state polling', 'user'],
+        remove_at='8.9'
     )
 
     u.deprecate(
@@ -2314,7 +2316,7 @@ def upg(
         'abort if inactivity handler fails',
         'abort if stalled handler fails',
     ]:
-        u.obsolete('8.0.0', ['cylc', 'events', old,])
+        u.obsolete('8.0.0', ['cylc', 'events', old,], remove_at='8.9')
 
     u.deprecate(
         '8.0.0',
