@@ -96,8 +96,9 @@ def workflow_state(
 
        The ``accept_pre_start_tasks`` argument was introduced to make tasks or
        outputs before the start cycle point immediately return as succeeded or
-       completed when queried. This can be used to prevent warm-started
-       workflows getting stuck waiting for earlier tasks that won't exist.
+       completed when queried. This can be used to prevent getting stuck
+       waiting for earlier tasks that will never exist due to the target
+       workflow having been warm-started.
     """
     poller = WorkflowPoller(
         workflow_task_id,
