@@ -64,9 +64,13 @@ class CylcWorkflowDBChecker:
     """
 
     def __init__(
-        self, rund, workflow, db_path=None, complete_pre_start: bool = False
+        self,
+        rund,
+        workflow,
+        db_path=None,
+        accept_pre_start_tasks: bool = False,
     ):
-        self.complete_pre_start = complete_pre_start
+        self.accept_pre_start_tasks = accept_pre_start_tasks
         # (Explicit dp_path arg is to make testing easier).
         if db_path is None:
             # Infer DB path from workflow name and run dir.
@@ -368,7 +372,7 @@ class CylcWorkflowDBChecker:
         # the start cycle point; if we are, succeed unconditionally.
         # This makes warm starting a workflow much easier.
         if (
-            self.complete_pre_start
+            self.accept_pre_start_tasks
             and not db_res
             and cycle is not None
             and self._is_before_start_cycle_point(cycle)

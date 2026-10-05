@@ -81,7 +81,7 @@ InputError: Cycle point "*" is not compatible with an offset.
 __END__
 
 TEST_NAME="${TEST_NAME_BASE}_pre_start_cycle_point_complete_pre_scp"
-run_ok "${TEST_NAME}" cylc workflow-state --max-polls=1 "${WORKFLOW_NAME}//0/foo:succeeded" --triggers --complete-pre-start
+run_ok "${TEST_NAME}" cylc workflow-state --max-polls=1 "${WORKFLOW_NAME}//0/foo:succeeded" --triggers --accept-pre-start-tasks
 
 contains_ok "${TEST_NAME}.stdout" <<__END__
 0/foo:{"succeeded": "before start cycle point"}

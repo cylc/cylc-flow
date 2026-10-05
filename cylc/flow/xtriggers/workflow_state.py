@@ -36,7 +36,7 @@ def workflow_state(
     is_trigger: bool = False,
     is_message: bool = False,
     alt_cylc_run_dir: Optional[str] = None,
-    complete_pre_start: bool = False
+    accept_pre_start_tasks: bool = False
 ) -> Tuple[bool, Dict[str, Any]]:
     """Connect to a workflow DB and check a task status or output.
 
@@ -58,9 +58,9 @@ def workflow_state(
             task status.
         alt_cylc_run_dir:
             Alternate cylc-run directory, e.g. for another user.
-        complete_pre_start:
+        accept_pre_start_tasks:
             Assume queried task statuses or outputs before the start cycle
-            point are complete.
+            point are succeeded or complete.
 
     Returns:
         tuple: (satisfied, result)
@@ -94,10 +94,10 @@ def workflow_state(
 
     .. versionchanged:: 8.7.0
 
-       The ``complete_pre_start`` argument was introduced to make tasks or
-       outputs before the start cycle point immediately return as completed
-       when queried. This can be used to prevent warm-started workflows getting
-       stuck waiting for earlier tasks that won't exist.
+       The ``accept_pre_start_tasks`` argument was introduced to make tasks or
+       outputs before the start cycle point immediately return as succeeded or
+       completed when queried. This can be used to prevent warm-started
+       workflows getting stuck waiting for earlier tasks that won't exist.
     """
     poller = WorkflowPoller(
         workflow_task_id,
@@ -111,7 +111,7 @@ def workflow_state(
         max_polls=1,  # (for xtriggers the scheduler does the polling)
         interval=0,  # irrelevant for 1 poll
         args=[],
-        complete_pre_start=complete_pre_start
+        accept_pre_start_tasks=accept_pre_start_tasks
     )
 
     # NOTE the results dict item names remain compatible with older usage.
