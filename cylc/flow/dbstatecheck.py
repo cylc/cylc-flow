@@ -232,7 +232,7 @@ class CylcWorkflowDBChecker:
         # Parse cycle points into Point objects and compare.
         target_cycle_point = self._str_to_point(cycle)
         # Both parsed the same way, so types will match.
-        return target_cycle_point < self.start_cycle_point  # type: ignore
+        return target_cycle_point < self.start_cycle_point
 
     @staticmethod
     def _dummy_result(
