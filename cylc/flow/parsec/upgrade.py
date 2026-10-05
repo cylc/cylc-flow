@@ -106,6 +106,8 @@ class upgrader:
                 Path within config to be removed.
             is_section (bool):
                 Is a section heading.
+            remove_at (str):
+                Cylc version when this obsoletion will become an error
         """
         if vn not in self.upgrades:
             self.upgrades[vn] = []
