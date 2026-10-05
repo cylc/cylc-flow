@@ -88,15 +88,15 @@ class TestCylcWorkflowDBChecker:
     time_point = ISO8601Point("20260925T0000Z")
 
     @pytest.mark.parametrize(
-        "expected, cycle_string, db_point_fmt",
+        "cycle_string, db_point_fmt, expected",
         [
             # IntegerPoint produced.
-            (int_point, "5", None),
+            ("5", None, int_point),
             # ISO8601Point produced.
-            (time_point, "20260925T0000Z", "CCYYMMDDThhmmZ"),
+            ("20260925T0000Z", "CCYYMMDDThhmmZ", time_point),
         ],
     )
-    def test_str_to_point(self, expected, cycle_string, db_point_fmt):
+    def test_str_to_point(self, cycle_string, db_point_fmt, expected):
         """String produces expected Point object."""
         point = MockDBChecker(None, db_point_fmt)._str_to_point(cycle_string)
         assert isinstance(point, expected.__class__)
@@ -106,9 +106,7 @@ class TestCylcWorkflowDBChecker:
         """An improperly formatted integer cycle point raises an error."""
         with pytest.raises(
             InputError,
-            match=(
-                'Cycle point "not an int" is not a valid integer point'
-            ),
+            match=('Cycle point "not an int" is not a valid integer point'),
         ):
             MockDBChecker(None, None)._str_to_point("not an int")
 
@@ -124,46 +122,46 @@ class TestCylcWorkflowDBChecker:
             MockDBChecker(None, "CCYYMMDDThhmmZ")._str_to_point("not a date")
 
     @pytest.mark.parametrize(
-        "expected, cycle, offset, db_point_fmt",
+        "cycle, offset, db_point_fmt, expected",
         [
             # None cycles are returned unchanged.
             (None, None, None, None),
             # Integer cycles without offsets are returned unchanged.
-            ("1", "1", None, None),
+            ("1", None, None, "1"),
             # Offsets are applied to integer offsets.
-            ("1", "2", "-P1", None),
-            ("3", "2", "P1", None),
+            ("2", "-P1", None, "1"),
+            ("2", "P1", None, "3"),
             # Date cycles are normalised.
-            ("20260925T0000Z", "2026-09-25T00:00Z", None, "CCYYMMDDThhmmZ"),
-            ("2051", "20510101T0000Z", None, "CCYY"),
+            ("2026-09-25T00:00Z", None, "CCYYMMDDThhmmZ", "20260925T0000Z"),
+            ("20510101T0000Z", None, "CCYY", "2051"),
             # Date cycles have offsets applied.
-            ("20260924T0000Z", "20260925T0000Z", "-P1D", "CCYYMMDDThhmmZ"),
-            ("20260926T0000Z", "20260925T0000Z", "+P1D", "CCYYMMDDThhmmZ"),
-            ("2052", "20510101T0000Z", "P1Y", "CCYY"),
-            ("2027", "2026", "P1Y", "CCYY"),
+            ("20260925T0000Z", "-P1D", "CCYYMMDDThhmmZ", "20260924T0000Z"),
+            ("20260925T0000Z", "+P1D", "CCYYMMDDThhmmZ", "20260926T0000Z"),
+            ("20510101T0000Z", "P1Y", "CCYY", "2052"),
+            ("2026", "P1Y", "CCYY", "2027"),
         ],
     )
-    def test_adjust_point_to_db(self, expected, cycle, offset, db_point_fmt):
+    def test_adjust_point_to_db(self, cycle, offset, db_point_fmt, expected):
         """Cycle point is offset and normalised."""
         db_checker = MockDBChecker(None, db_point_fmt)
         normalised_cycle = db_checker.adjust_point_to_db(cycle, offset)
         assert normalised_cycle == expected
 
     @pytest.mark.parametrize(
-        "expected,rows,db_point_fmt",
+        "rows, db_point_fmt, expected",
         [
             # No start cycle point if not in database.
-            (None, [], None),
+            ([], None, None),
             # No start cycle point if blank in database.
-            (None, [("",)], None),
+            ([("",)], None, None),
             # IntegerPoint created when db_point_fmt is None.
-            (IntegerPoint("1"), [("1",)], None),
-            (IntegerPoint("42"), [("42",)], None),
+            ([("1",)], None, IntegerPoint("1")),
+            ([("42",)], None, IntegerPoint("42")),
             # TimePoint created when db_point_fmt is set.
-            (time_point, [("20260925T0000Z",)], "CCYYMMDDThhmmZ"),
+            ([("20260925T0000Z",)], "CCYYMMDDThhmmZ", time_point),
         ],
     )
-    def test_get_start_cycle_point(self, expected, rows, db_point_fmt):
+    def test_get_start_cycle_point(self, rows, db_point_fmt, expected):
         """The start cycle point is converted into a Point object."""
         db_checker = MockDBChecker(MockConn(rows), db_point_fmt)
         start_cycle_point = db_checker._get_start_cycle_point()
@@ -171,29 +169,29 @@ class TestCylcWorkflowDBChecker:
         assert start_cycle_point == expected
 
     @pytest.mark.parametrize(
-        "expected, db_point_fmt, start_cycle_point,target_cycle_point",
+        "db_point_fmt, start_cycle_point,target_cycle_point, expected",
         [
             # Not before an unspecified start cycle point.
-            (False, None, None, "1"),
+            (None, None, "1", False),
             # Non-specific target cycle point is not before.
-            (False, None, int_point, "*"),
-            (False, None, int_point, "%"),
-            (False, "CCYYMMDDThhmmZ", time_point, "*"),
-            (False, "CCYYMMDDThhmmZ", time_point, "%"),
+            (None, int_point, "*", False),
+            (None, int_point, "%", False),
+            ("CCYYMMDDThhmmZ", time_point, "*", False),
+            ("CCYYMMDDThhmmZ", time_point, "%", False),
             # Target is equal or after start cycle point.
-            (False, None, int_point, "5"),
-            (False, None, int_point, "6"),
+            (None, int_point, "5", False),
+            (None, int_point, "6", False),
             # Target is before start cycle point.
-            (True, None, int_point, "2"),
+            (None, int_point, "2", True),
             # ISO8601Point is equal or after start cycle point.
-            (False, "CCYYMMDDThhmmZ", time_point, "20260925T0000Z"),
-            (False, "CCYYMMDDThhmmZ", time_point, "20260930T0000Z"),
+            ("CCYYMMDDThhmmZ", time_point, "20260925T0000Z", False),
+            ("CCYYMMDDThhmmZ", time_point, "20260930T0000Z", False),
             # ISO8601Point is before start cycle point.
-            (True, "CCYYMMDDThhmmZ", time_point, "20260901T0000Z"),
+            ("CCYYMMDDThhmmZ", time_point, "20260901T0000Z", True),
         ],
     )
     def test_is_before_start_cycle_point(
-        self, expected, db_point_fmt, start_cycle_point, target_cycle_point
+        self, db_point_fmt, start_cycle_point, target_cycle_point, expected
     ):
         """Whether the current cycle point is before the start cycle point."""
         db_checker = MockDBChecker(None, db_point_fmt)
@@ -204,41 +202,48 @@ class TestCylcWorkflowDBChecker:
         assert before_start_cycle_point == expected
 
     @pytest.mark.parametrize(
-        "expected, task, cycle, selector, flow_num, is_output_query",
+        "task, cycle, selector, flow_num, is_output_query, expected",
         [
             # Test defaults.
-            (["", "1", "succeeded"], None, "1", None, None, None),
+            (
+                None,
+                "1",
+                None,
+                None,
+                None,
+                ["", "1", "succeeded"],
+            ),
             # Test task name, alternative succeeded, and cycle.
             (
-                ["mytask", "2", "succeeded"],
                 "mytask",
                 "2",
                 "succeeded",
                 None,
                 False,
+                ["mytask", "2", "succeeded"],
             ),
             # Test date cycle and flow number.
             (
-                ["mytask", "20260926T1200Z", "succeeded", "3"],
                 "mytask",
                 "20260926T1200Z",
                 "succeeded",
                 3,
                 False,
+                ["mytask", "20260926T1200Z", "succeeded", "3"],
             ),
             # Test an output query.
             (
-                ["mytask", "1", '{"custom": "before start cycle point"}'],
                 "mytask",
                 "1",
                 "custom",
                 None,
                 True,
+                ["mytask", "1", '{"custom": "before start cycle point"}'],
             ),
         ],
     )
     def test_dummy_result(
-        self, expected, task, cycle, selector, flow_num, is_output_query
+        self, task, cycle, selector, flow_num, is_output_query, expected
     ):
         """It should produce the expected result."""
         result = CylcWorkflowDBChecker._dummy_result(
