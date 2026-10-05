@@ -533,7 +533,7 @@ class Scheduler:
         # https://github.com/cylc/cylc-flow/pull/7237
         # FROM: 8.6.x
         # TO: 8.7.0
-        # REMOVE AT: 8.7.0
+        # REMOVE AT: 8.x
         self.pool.compute_runahead()
         for _ in range(10):
             # (Arbitrary limit to avoid infinite loop if something goes wrong)

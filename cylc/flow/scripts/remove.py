@@ -149,7 +149,7 @@ async def run(options: 'Values', workflow_id: str, *tokens_list):
     # BACK COMPAT: handle --no-spawn absence in earlier clients
     # FROM: 8.0
     # TO: 8.6.*
-    # REMOVE: 8.8
+    # REMOVE AT: 8.8
     if (
         f'{pclient.scheduler_version}'
         in SpecifierSet('>=8, <8.7', prereleases=True)

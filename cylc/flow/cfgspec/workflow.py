@@ -2451,12 +2451,15 @@ def warn_about_depr_platform(cfg):
             # Fail if backticks subshell e.g. platform = `foo`:
             is_platform_definition_subshell(task_cfg['platform'])
         else:
+            # BACK COMPAT: get_platform_deprecated_settings
+            # remove at: 8.9
             depr = get_platform_deprecated_settings(task_cfg, task_name)
             if depr:
                 msg = "\n".join(depr)
                 LOG.warning(
                     "deprecated settings found "
-                    f"(please replace with [runtime][{task_name}]platform):"
+                    f"(replace with [runtime][{task_name}]platform "
+                    "before Cylc 8.9):"
                     f"\n{msg}"
                 )
 

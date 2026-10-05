@@ -173,8 +173,9 @@ class TaskRemoteMgr:
         return os.path.expandvars(eval_str)
 
     # BACK COMPAT: references to "host"
-        # remove at:
-        #     Cylc8.x
+    # from: 7
+    # to: 8.0
+    # remove at: 8.9
     def eval_host(self, host_str: str | None) -> str | None:
         """Evaluate a host from a possible subshell string.
 

@@ -202,14 +202,10 @@ def addict(cfig, key, val, parents, index):
         if (
             parents[0:2] == ['scheduling', 'graph'] or
             # BACK COMPAT: [scheduling][dependencies]
-            # url:
-            #     https://github.com/cylc/cylc-flow/pull/3191
-            # from:
-            #     Cylc<=7
-            # to:
-            #     Cylc8
-            # remove at:
-            #     Cylc8.x
+            # url: https://github.com/cylc/cylc-flow/pull/3191
+            # from: <=7
+            # to: 8.0
+            # remove at: 8.9
             parents[0:2] == ['scheduling', 'dependencies']
         ):
             # append the new graph string to the existing one

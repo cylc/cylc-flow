@@ -318,7 +318,7 @@ async def set_prereqs_and_outputs(
     Note, the "outputs" and "prerequisites" arguments might not be
     populated in the mutation arguments so must provide defaults here.
     """
-    flow = back_compat_flow_all(flow)  # BACK COMPAT (see func def)
+    flow = back_compat_flow_all(flow)
     validate.consistency(outputs, prerequisites)
     outputs = validate.outputs(outputs)
     prerequisites = validate.prereqs(prerequisites)
@@ -507,7 +507,7 @@ async def remove_tasks(
         flow: flows to remove the tasks from.
         no_spawn: Do not spawn successors before removal.
     """
-    flow = back_compat_flow_all(flow)  # BACK COMPAT (see func def)
+    flow = back_compat_flow_all(flow)
     ids = validate.is_tasks(tasks)
     validate.flow_opts(flow, flow_wait=False, allow_new_or_none=False)
     yield
@@ -674,7 +674,7 @@ async def force_trigger_tasks(
       cylc-admin/docs/proposal-group-trigger.md
 
     """
-    flow = back_compat_flow_all(flow)  # BACK COMPAT (see func def)
+    flow = back_compat_flow_all(flow)
     ids = validate.is_tasks(tasks)
     validate.flow_opts(flow, flow_wait)
     yield
