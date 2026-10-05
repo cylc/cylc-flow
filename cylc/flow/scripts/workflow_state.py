@@ -312,7 +312,7 @@ def get_option_parser() -> COP:
         "--complete-pre-start",
         help=(
             "Assume queried task statuses or outputs before the "
-            "start cycle point are complete."
+            "start cycle point are succeeded or complete."
         ),
         action="store_true", dest="complete_pre_start", default=False
     )
