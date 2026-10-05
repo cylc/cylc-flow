@@ -148,24 +148,22 @@ class TestCylcWorkflowDBChecker:
         assert normalised_cycle == expected
 
     @pytest.mark.parametrize(
-        "rows, db_point_fmt, expected",
+        "rows, expected",
         [
-            # No start cycle point if not in database.
-            ([], None, None),
-            # No start cycle point if blank in database.
-            ([("",)], None, None),
-            # IntegerPoint created when db_point_fmt is None.
-            ([("1",)], None, IntegerPoint("1")),
-            ([("42",)], None, IntegerPoint("42")),
-            # TimePoint created when db_point_fmt is set.
-            ([("20260925T0000Z",)], "CCYYMMDDThhmmZ", time_point),
+            # None returned when no key match in database.
+            ([], None),
+            # None if blank in database.
+            ([("",)], None),
+            # Rows correctly parsed to return value.
+            ([("1",)], "1"),
         ],
     )
-    def test_get_start_cycle_point(self, rows, db_point_fmt, expected):
-        """The start cycle point is converted into a Point object."""
-        db_checker = MockDBChecker(MockConn(rows), db_point_fmt)
-        start_cycle_point = db_checker._get_start_cycle_point()
-        assert isinstance(start_cycle_point, expected.__class__)
+    def test_get_db_param(self, rows, expected):
+        """Database param values are parsed out of the workflow database."""
+        db_checker = MockDBChecker(
+            MockConn(rows, expected_parameters=("startcp",))
+        )
+        start_cycle_point = db_checker._get_db_param("startcp")
         assert start_cycle_point == expected
 
     @pytest.mark.parametrize(

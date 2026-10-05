@@ -84,8 +84,12 @@ class CylcWorkflowDBChecker:
 
         # Get workflow point format and start cycle point.
         try:
-            self.db_point_fmt = self._get_db_point_format()
-            self.start_cycle_point = self._get_start_cycle_point()
+            self.db_point_fmt = self._get_db_param("cycle_point_format")
+            self.start_cycle_point = (
+                self._str_to_point(scp)
+                if (scp := self._get_db_param("startcp")) is not None
+                else scp
+            )
         except sqlite3.OperationalError:
             with suppress(Exception):
                 self.conn.close()
@@ -157,19 +161,19 @@ class CylcWorkflowDBChecker:
                         out += row[3]  # flow
                     sys.stdout.write(out + "\n")
 
-    def _get_db_point_format(self):
-        """Query a workflow database for a 'cycle point format' entry"""
-        for row in self.conn.execute(
-            rf'''
-                SELECT
-                    value
-                FROM
-                    {CylcWorkflowDAO.TABLE_WORKFLOW_PARAMS}
-                WHERE
-                    key==?
-            ''',  # nosec (table name is code constant)
-            ['cycle_point_format']
-        ):
+    def _get_db_param(self, key: str) -> str | None:
+        """Query workflow database for a workflow parameter entry"""
+        stmt = rf"""
+        SELECT value
+          FROM {CylcWorkflowDAO.TABLE_WORKFLOW_PARAMS}
+         WHERE key = ?
+         LIMIT 1;
+        """  # nosec (table name is code constant)
+        row = self.conn.execute(stmt, (key,)).fetchone()
+        if row is None or not row[0]:
+            # Parameter is missing or blank.
+            return None
+        else:
             return row[0]
 
     def _str_to_point(self, cycle: str) -> IntegerPoint | ISO8601Point:
@@ -195,20 +199,6 @@ class CylcWorkflowDBChecker:
                     f'Cycle point "{cycle}" is not compatible'
                     f' with DB point format "{self.db_point_fmt}"'
                 ) from err
-
-    def _get_start_cycle_point(self) -> IntegerPoint | ISO8601Point | None:
-        """Query a workflow db for a 'startcp' entry and make a Point."""
-        stmt = rf"""
-        SELECT value
-          FROM {CylcWorkflowDAO.TABLE_WORKFLOW_PARAMS}
-         WHERE key = "startcp"
-         LIMIT 1;
-        """  # nosec (table name is code constant)
-        row = self.conn.execute(stmt).fetchone()
-        if row is None or not row[0]:
-            # startcp key does not exist or is blank.
-            return None
-        return self._str_to_point(row[0])
 
     def _is_before_start_cycle_point(self, cycle: str) -> bool:
         """Whether the desired cycle is before the start cycle point.
