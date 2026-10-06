@@ -226,6 +226,10 @@ class WorkflowEventHandler():
         EVENT_INACTIVITY_TIMEOUT,
         EVENT_RESTART_TIMEOUT,
     ]
+    # BACK COMPAT: Deprecated event names
+    # from: 7
+    # to: 8.0
+    # remove at: 8.9
     EVENTS_DEPRECATED = {
         'aborted': EVENT_ABORTED,
         'inactivity': EVENT_INACTIVITY_TIMEOUT,

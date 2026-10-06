@@ -2836,15 +2836,19 @@ class WorkflowConfig:
             for seq in taskdef.sequences:
                 taskdef.add_xtrig_label(label, seq)
 
+    # BACK COMPAT
+    # from: 7
+    # to: 8.0
+    # remove at: 8.9
     def _upg_wflow_event_names(self) -> None:
         """Upgrade any Cylc 7 workflow handler/mail events names."""
         for setting in ('handler events', 'mail events'):
-            event_names: Optional[List[str]] = self.cfg['scheduler']['events'][
+            event_names: list[str] | None = self.cfg['scheduler']['events'][
                 setting
             ]
             if not event_names:
                 continue
-            upgraded: Dict[str, str] = {}
+            upgraded: dict[str, str] = {}
             for i, event in enumerate(event_names):
                 if event in WorkflowEventHandler.EVENTS_DEPRECATED:
                     event_names[i] = upgraded[event] = (
@@ -2855,4 +2859,5 @@ class WorkflowConfig:
                     f"{upgrader.depr_msg}\n"
                     f" * (8.0.0) [scheduler][events][{setting}] "
                     + ', '.join(f'{k} -> {v}' for k, v in upgraded.items())
+                    + " - support for the old item will be removed at Cylc 8.9"
                 )

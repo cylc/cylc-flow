@@ -2404,6 +2404,10 @@ def upgrade_graph_section(cfg: Dict[str, Any], descr: str) -> None:
                     LOG.warning(msg + note)
 
 
+# BACK COMPAT
+# from: 7
+# to: 8.0
+# remove at: 8.9
 def upgrade_param_env_templates(cfg, descr):
     """Prepend contents of `[runtime][X][parameter environment templates]` to
     `[runtime][X][environment]`."""
@@ -2420,7 +2424,8 @@ def upgrade_param_env_templates(cfg, descr):
                 first_warn = False
             LOG.warning(
                 f' * (8.0.0) {dep % task_name} contents prepended to '
-                f'{new % task_name}'
+                f'{new % task_name} - support for parameter environment '
+                'templates will be removed at Cylc 8.9'
             )
             for key, val in reversed(
                     task_items['parameter environment templates'].items()):

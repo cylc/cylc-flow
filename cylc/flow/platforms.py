@@ -333,6 +333,10 @@ def get_platform_from_group(
         return HOST_SELECTION_METHODS[method](platform_names)
 
 
+# BACK COMPAT
+# from: 7
+# to: 8.0
+# remove at: 8.9
 def _platform_name_from_job_info(
     platforms: Union[dict, 'OrderedDictWithDefaults'],
     job: Dict[str, Any],

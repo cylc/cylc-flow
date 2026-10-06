@@ -1695,7 +1695,10 @@ def test_upg_wflow_event_names(tmp_flow_config, log_filter):
         assert cfg.cfg['scheduler']['events'][item] == expected
     assert log_filter(
         logging.WARNING,
-        'Deprecated config items were automatically upgraded',
+        regex=(
+            r'Deprecated config items were automatically upgraded[\s\S]*'
+            r'support for the old item will be removed at Cylc 8\.9'
+        ),
     )
 
 

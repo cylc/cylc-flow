@@ -51,3 +51,7 @@ WARNING -  * (8.0.0) [cylc] -> [scheduler] - value unchanged - support for the o
 WARNING - graph items were automatically upgraded in "workflow definition" - support for the old item will be removed at Cylc 8.9:
      * (8.0.0) [scheduling][dependencies][X]graph -> [scheduling][graph]X - for X in:
            P1D
+WARNING - Deprecated config items were automatically upgraded. Please alter your workflow to use the new syntax.
+WARNING -  * (8.0.0) [runtime][foo, cat, dog][parameter environment templates] contents prepended to [runtime][foo, cat, dog][environment] - support for parameter environment templates will be removed at Cylc 8.9
+WARNING - Deprecated config items were automatically upgraded. Please alter your workflow to use the new syntax.
+     * (8.0.0) [scheduler][events][handler events] stalled -> stall - support for the old item will be removed at Cylc 8.9
