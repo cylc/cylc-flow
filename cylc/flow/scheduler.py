@@ -531,6 +531,7 @@ class Scheduler:
         # Not strictly necessary, it will spawn ahead per main loop iteration,
         # but useful back-compat for tests that expect this prior to
         # https://github.com/cylc/cylc-flow/pull/7237
+        # URL: https://github.com/cylc/cylc-flow/issues/7359
         # FROM: 8.6.x
         # TO: 8.7.0
         # REMOVE AT: 8.x

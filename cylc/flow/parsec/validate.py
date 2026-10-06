@@ -1314,14 +1314,10 @@ class BroadcastConfigValidator(CylcConfigValidator):
     # The DB at 8.0.x stores Interval values as neither ISO8601 duration
     # string or DurationFloat. This has been fixed at 8.1.0, and
     # the following method acts as a bridge between fixed and broken.
-    # url:
-    #     https://github.com/cylc/cylc-flow/pull/5138
-    # from:
-    #    8.0.x
-    # to:
-    #    8.1.x
-    # remove at:
-    #    8.7
+    # url: https://github.com/cylc/cylc-flow/pull/5138
+    # from: 8.0
+    # to: 8.1
+    # remove after: https://github.com/cylc/cylc-flow/issues/7339
     @classmethod
     def coerce_interval(cls, value, keys):
         """Coerce an ISO 8601 interval into seconds.
