@@ -2123,37 +2123,53 @@ def upg(
     u = upgrader(cfg, descr, broadcast=bool(broadcast))
 
     u.obsolete(
-        '7.8.0', ['runtime', '__MANY__', 'suite state polling', 'template']
+        '7.8.0', ['runtime', '__MANY__', 'suite state polling', 'template'],
+        remove_at='8.9'
     )
-    u.obsolete('7.8.1', ['cylc', 'events', 'reset timer'])
-    u.obsolete('7.8.1', ['cylc', 'events', 'reset inactivity timer'])
-    u.obsolete('8.0.0', ['cylc', 'force run mode'])
-    u.obsolete('7.8.1', ['runtime', '__MANY__', 'events', 'reset timer'])
-    u.obsolete('8.0.0', ['cylc', 'authentication'], is_section=True)
-    u.obsolete('8.0.0', ['cylc', 'include at start-up'])
-    u.obsolete('8.0.0', ['cylc', 'exclude at start-up'])
-    u.obsolete('8.0.0', ['cylc', 'log resolved dependencies'])
-    u.obsolete('8.0.0', ['cylc', 'required run mode'])
+    u.obsolete('7.8.1', ['cylc', 'events', 'reset timer'], remove_at='8.9')
+    u.obsolete('7.8.1', ['cylc', 'events', 'reset inactivity timer'],
+               remove_at='8.9')
+    u.obsolete('8.0.0', ['cylc', 'force run mode'], remove_at='8.9')
+    u.obsolete('7.8.1', ['runtime', '__MANY__', 'events', 'reset timer'],
+               remove_at='8.9')
+    u.obsolete('8.0.0', ['cylc', 'authentication'], is_section=True,
+               remove_at='8.9')
+    u.obsolete('8.0.0', ['cylc', 'include at start-up'], remove_at='8.9')
+    u.obsolete('8.0.0', ['cylc', 'exclude at start-up'], remove_at='8.9')
+    u.obsolete('8.0.0', ['cylc', 'log resolved dependencies'], remove_at='8.9')
+    u.obsolete('8.0.0', ['cylc', 'required run mode'], remove_at='8.9')
     u.obsolete(
         '8.0.0',
-        ['cylc', 'health check interval'])
-    u.obsolete('8.0.0', ['runtime', '__MANY__', 'events', 'mail retry delays'])
-    u.obsolete('8.0.0', ['runtime', '__MANY__', 'extra log files'])
-    u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
+        ['cylc', 'health check interval'],
+        remove_at='8.9')
+    u.obsolete('8.0.0', ['runtime', '__MANY__', 'events', 'mail retry delays'],
+               remove_at='8.9')
+    u.obsolete('8.0.0', ['runtime', '__MANY__', 'extra log files'],
+               remove_at='8.9')
+    u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'],
+               remove_at='8.9')
     u.obsolete(
         '8.0.0',
-        ['runtime', '__MANY__', 'remote', 'suite definition directory']
+        ['runtime', '__MANY__', 'remote', 'suite definition directory'],
+        remove_at='8.9'
     )
-    u.obsolete('8.0.0', ['cylc', 'abort if any task fails'])
-    u.obsolete('8.0.0', ['cylc', 'disable automatic shutdown'])
-    u.obsolete('8.0.0', ['cylc', 'environment'], is_section=True)
-    u.obsolete('8.0.0', ['cylc', 'reference test'], is_section=True)
+    u.obsolete('8.0.0', ['cylc', 'abort if any task fails'],
+               remove_at='8.9')
+    u.obsolete('8.0.0', ['cylc', 'disable automatic shutdown'],
+               remove_at='8.9')
+    u.obsolete('8.0.0', ['cylc', 'environment'], is_section=True,
+               remove_at='8.9')
+    u.obsolete('8.0.0', ['cylc', 'reference test'], is_section=True,
+               remove_at='8.9')
     u.obsolete(
         '8.0.0',
-        ['cylc', 'simulation', 'disable suite event handlers'])
-    u.obsolete('8.0.0', ['cylc', 'simulation'], is_section=True)
-    u.obsolete('8.0.0', ['visualization'], is_section=True)
-    u.obsolete('8.0.0', ['scheduling', 'spawn to max active cycle points'])
+        ['cylc', 'simulation', 'disable suite event handlers'],
+        remove_at='8.9')
+    u.obsolete('8.0.0', ['cylc', 'simulation'], is_section=True,
+               remove_at='8.9')
+    u.obsolete('8.0.0', ['visualization'], is_section=True, remove_at='8.9')
+    u.obsolete('8.0.0', ['scheduling', 'spawn to max active cycle points'],
+               remove_at='8.9')
     u.deprecate(
         '8.0.0',
         ['cylc', 'task event mail interval'],

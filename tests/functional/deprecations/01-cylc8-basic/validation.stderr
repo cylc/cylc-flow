@@ -1,18 +1,18 @@
 WARNING - Obsolete config items were automatically deleted. Please check your workflow and remove them permanently.
 WARNING - Deprecated config items were automatically upgraded. Please alter your workflow to use the new syntax.
-WARNING -  * (8.0.0) [cylc]force run mode - DELETED (OBSOLETE)
-WARNING -  * (8.0.0) [cylc][authentication] - DELETED (OBSOLETE)
-WARNING -  * (8.0.0) [cylc]log resolved dependencies - DELETED (OBSOLETE)
-WARNING -  * (8.0.0) [cylc]required run mode - DELETED (OBSOLETE)
-WARNING -  * (8.0.0) [runtime][foo, cat, dog][events]mail retry delays - DELETED (OBSOLETE)
-WARNING -  * (8.0.0) [runtime][foo, cat, dog]extra log files - DELETED (OBSOLETE)
-WARNING -  * (8.0.0) [runtime][foo, cat, dog][job]shell - DELETED (OBSOLETE)
-WARNING -  * (8.0.0) [cylc]abort if any task fails - DELETED (OBSOLETE)
-WARNING -  * (8.0.0) [cylc]disable automatic shutdown - DELETED (OBSOLETE)
-WARNING -  * (8.0.0) [cylc][environment] - DELETED (OBSOLETE)
-WARNING -  * (8.0.0) [cylc][reference test] - DELETED (OBSOLETE)
-WARNING -  * (8.0.0) [cylc][simulation]disable suite event handlers - DELETED (OBSOLETE)
-WARNING -  * (8.0.0) [cylc][simulation] - DELETED (OBSOLETE)
+WARNING -  * (8.0.0) [cylc]force run mode - DELETED (OBSOLETE) - this will fail validation in Cylc 8.9
+WARNING -  * (8.0.0) [cylc][authentication] - DELETED (OBSOLETE) - this will fail validation in Cylc 8.9
+WARNING -  * (8.0.0) [cylc]log resolved dependencies - DELETED (OBSOLETE) - this will fail validation in Cylc 8.9
+WARNING -  * (8.0.0) [cylc]required run mode - DELETED (OBSOLETE) - this will fail validation in Cylc 8.9
+WARNING -  * (8.0.0) [runtime][foo, cat, dog][events]mail retry delays - DELETED (OBSOLETE) - this will fail validation in Cylc 8.9
+WARNING -  * (8.0.0) [runtime][foo, cat, dog]extra log files - DELETED (OBSOLETE) - this will fail validation in Cylc 8.9
+WARNING -  * (8.0.0) [runtime][foo, cat, dog][job]shell - DELETED (OBSOLETE) - this will fail validation in Cylc 8.9
+WARNING -  * (8.0.0) [cylc]abort if any task fails - DELETED (OBSOLETE) - this will fail validation in Cylc 8.9
+WARNING -  * (8.0.0) [cylc]disable automatic shutdown - DELETED (OBSOLETE) - this will fail validation in Cylc 8.9
+WARNING -  * (8.0.0) [cylc][environment] - DELETED (OBSOLETE) - this will fail validation in Cylc 8.9
+WARNING -  * (8.0.0) [cylc][reference test] - DELETED (OBSOLETE) - this will fail validation in Cylc 8.9
+WARNING -  * (8.0.0) [cylc][simulation]disable suite event handlers - DELETED (OBSOLETE) - this will fail validation in Cylc 8.9
+WARNING -  * (8.0.0) [cylc][simulation] - DELETED (OBSOLETE) - this will fail validation in Cylc 8.9
 WARNING -  * (8.0.0) [cylc]task event mail interval -> [cylc][mail]task event batch interval - value unchanged - support for the old item will be removed at Cylc 8.9
 WARNING -  * (8.0.0) [runtime][foo, cat, dog][suite state polling] -> [runtime][foo, cat, dog][workflow state polling] - value unchanged - support for the old item will be removed at Cylc 8.9
 WARNING -  * (8.0.0) [cylc][parameters] -> [task parameters] - value unchanged - support for the old item will be removed at Cylc 8.9
