@@ -77,7 +77,8 @@ from cylc.flow.run_modes import (
     TASK_CONFIG_RUN_MODES,
     RunMode,
 )
-from cylc.flow.task_events_mgr import EventData
+from cylc.flow.task_events_mgr import EventData as TED
+from cylc.flow.workflow_events import EventData as WED
 
 
 # Regex to check whether a string is a command
@@ -2464,37 +2465,42 @@ def warn_about_depr_platform(cfg):
                 )
 
 
+# BACK COMPAT: deprecated event handler templates
+# from: 7
+# to: 8.0
+# remove at: 8.9
 def warn_about_depr_event_handler_tmpl(cfg):
     """Warn if deprecated template strings appear in event handlers."""
     if 'runtime' not in cfg:
         return
     deprecation_msg = (
-        'The event handler template variable "%({0})s" is deprecated - '
-        'use "%({1})s" instead.')
+        'The {0} event handler template variable "%({1})s" is deprecated and '
+        'will be removed in Cylc 8.9 - use "%({2})s" instead.'
+    )
+    # NOTE: Do NOT use .get() on OrderedDictWithDefaults -
+    # https://github.com/cylc/cylc-flow/pull/4975
+    if 'scheduler' in cfg and 'events' in (schd_cfg := cfg['scheduler']):
+        for handler in schd_cfg['events'].values():
+            for old, new in (
+                (WED.Suite.value, WED.Workflow.value),
+                (WED.Suite_UUID.value, WED.UUID.value),
+                (WED.SuiteURL.value, WED.WorkflowURL.value),
+            ):
+                if f'%({old})' in handler:
+                    LOG.warning(deprecation_msg.format('workflow', old, new))
     for task in cfg['runtime']:
         if 'events' not in cfg['runtime'][task]:
             continue
         for handler in cfg['runtime'][task]['events'].values():
-            if f'%({EventData.JobID_old.value})' in handler:
-                LOG.warning(
-                    deprecation_msg.format(EventData.JobID_old.value,
-                                           EventData.JobID.value)
-                )
-            if f'%({EventData.JobRunnerName_old.value})' in handler:
-                LOG.warning(
-                    deprecation_msg.format(EventData.JobRunnerName_old.value,
-                                           EventData.JobRunnerName.value)
-                )
-            if f'%({EventData.Suite.value})' in handler:
-                LOG.warning(
-                    deprecation_msg.format(EventData.Suite.value,
-                                           EventData.Workflow.value)
-                )
-            if f'%({EventData.SuiteUUID.value})' in handler:
-                LOG.warning(
-                    deprecation_msg.format(EventData.SuiteUUID.value,
-                                           EventData.UUID.value)
-                )
+            for old, new in (
+                (TED.Suite.value, TED.Workflow.value),
+                (TED.SuiteUUID.value, TED.UUID.value),
+                (TED.JobRunnerName_old.value, TED.JobRunnerName.value),
+                (TED.JobID_old.value, TED.JobID.value),
+                (TED.UserAtHost.value, TED.PlatformName.value),
+            ):
+                if f'%({old})' in handler:
+                    LOG.warning(deprecation_msg.format('task', old, new))
 
 
 class RawWorkflowConfig(ParsecConfig):
