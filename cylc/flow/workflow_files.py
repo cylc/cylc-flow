@@ -655,7 +655,9 @@ def refresh_nfs_cache(path: Path):
         deque((cylc_run_dir / subdir).iterdir(), maxlen=0)
 
 
-def load_contact_file(id_: str, run_dir=None) -> Dict[str, str]:
+def load_contact_file(
+    id_: str, run_dir: Path | str | None = None
+) -> dict[str, str]:
     if not run_dir:
         path = Path(get_contact_file_path(id_))
     else:
@@ -677,15 +679,10 @@ def load_contact_file(id_: str, run_dir=None) -> Dict[str, str]:
             file_content = f.read()
     except IOError as exc:
         raise ServiceFileError("Couldn't load contact file") from exc
-    data: Dict[str, str] = {}
+    data: dict[str, str] = {}
     for line in file_content.splitlines():
         key, value = [item.strip() for item in line.split("=", 1)]
-        # BACK COMPAT: contact pre "suite" to "workflow" conversion.
-        # from:
-        #     Cylc 8
-        # remove at:
-        #     Cylc 8.x
-        data[key.replace('SUITE', 'WORKFLOW')] = value
+        data[key] = value
     return data
 
 
