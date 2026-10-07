@@ -15,35 +15,34 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from contextlib import suppress
 import errno
 import json
 import os
 import sqlite3
 import sys
-from contextlib import suppress
-from typing import Dict, Iterable, Optional, List, Union
+from typing import Dict, Iterable, List, Optional, Union
 
-from cylc.flow.exceptions import InputError
-from cylc.flow.cycling.util import add_offset
-from cylc.flow.cycling.integer import (
-    IntegerPoint,
-    IntegerInterval
+from metomi.isodatetime.exceptions import ISO8601SyntaxError
+
+from cylc.flow.cycling.integer import IntegerInterval, IntegerPoint
+from cylc.flow.cycling.iso8601 import (
+    ISO8601Point,
+    WorkflowSpecifics,
+    init as iso8601parser_init,
 )
+from cylc.flow.cycling.util import add_offset
+from cylc.flow.exceptions import InputError, PointParsingError
 from cylc.flow.flow_mgr import repr_flow_nums
 from cylc.flow.pathutil import expand_path
 from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.task_outputs import (
-    TASK_OUTPUT_SUCCEEDED,
     TASK_OUTPUT_FAILED,
     TASK_OUTPUT_FINISHED,
+    TASK_OUTPUT_SUCCEEDED,
 )
-from cylc.flow.task_state import (
-    TASK_STATE_MAP,
-    TASK_STATUSES_FINAL,
-)
+from cylc.flow.task_state import TASK_STATE_MAP, TASK_STATUSES_FINAL
 from cylc.flow.util import deserialise_set
-from metomi.isodatetime.parsers import TimePointParser
-from metomi.isodatetime.exceptions import ISO8601SyntaxError
 
 
 output_fallback_msg = (
@@ -56,18 +55,22 @@ class CylcWorkflowDBChecker:
     """Object for querying task status or outputs from a workflow database.
 
     Back-compat and task outputs:
-        # Cylc 7 stored {trigger: message} for custom outputs only.
-        1|foo|{"x": "the quick brown"}
-
         # Cylc 8 (pre-8.3.0) stored [message] only, for all outputs.
         1|foo|[1]|["submitted", "started", "succeeded", "the quick brown"]
 
-        # Cylc 8 (8.3.0+) stores {trigger: message} for all ouputs.
+        # Cylc 8 (8.3.0+) stores {trigger: message} for all outputs.
         1|foo|[1]|{"submitted": "submitted", "started": "started",
                    "succeeded": "succeeded", "x": "the quick brown"}
     """
 
-    def __init__(self, rund, workflow, db_path=None):
+    def __init__(
+        self,
+        rund,
+        workflow,
+        db_path=None,
+        accept_pre_start_tasks: bool = False,
+    ):
+        self.accept_pre_start_tasks = accept_pre_start_tasks
         # (Explicit dp_path arg is to make testing easier).
         if db_path is None:
             # Infer DB path from workflow name and run dir.
@@ -79,21 +82,14 @@ class CylcWorkflowDBChecker:
 
         self.conn: sqlite3.Connection = sqlite3.connect(db_path, timeout=10.0)
 
-        # Get workflow point format.
+        # Get workflow point format and start cycle point.
         try:
             self.db_point_fmt = self._get_db_point_format()
-            self.c7_back_compat_mode = False
-        except sqlite3.OperationalError as exc:
-            # BACK COMPAT: Cylc 7 DB (see method below).
-            # FROM: 7.x
-            # REMOVE AT: 8.7
-            try:
-                self.db_point_fmt = self._get_db_point_format_compat()
-                self.c7_back_compat_mode = True
-            except sqlite3.OperationalError:
-                with suppress(Exception):
-                    self.conn.close()
-                raise exc from None  # original error
+            self.start_cycle_point = self._get_start_cycle_point()
+        except sqlite3.OperationalError:
+            with suppress(Exception):
+                self.conn.close()
+            raise
 
     def __enter__(self):
         return self
@@ -102,7 +98,9 @@ class CylcWorkflowDBChecker:
         """Close DB connection when leaving context manager."""
         self.conn.close()
 
-    def adjust_point_to_db(self, cycle, offset):
+    def adjust_point_to_db(
+        self, cycle: str | None, offset: str | None
+    ) -> str | None:
         """Adjust a cycle point (with offset) to the DB point format.
 
         Cycle point queries have to match in the DB as string literals,
@@ -118,34 +116,20 @@ class CylcWorkflowDBChecker:
             # Nothing to do
             return cycle
 
-        if offset is not None:
-            if self.db_point_fmt is None:
-                # integer cycling
-                cycle = str(
-                    IntegerPoint(cycle) +
-                    IntegerInterval(offset)
-                )
-            else:
-                cycle = str(
-                    add_offset(cycle, offset)
-                )
-
-        if self.db_point_fmt is None:
+        # Don't need to parse Integer cycles without offsets.
+        if self.db_point_fmt is None and offset is None:
             return cycle
 
-        # Convert cycle point to DB format.
-        try:
-            cycle = str(
-                TimePointParser().parse(
-                    cycle, dump_format=self.db_point_fmt
-                )
-            )
-        except ISO8601SyntaxError:
-            raise InputError(
-                f'Cycle point "{cycle}" is not compatible'
-                f' with DB point format "{self.db_point_fmt}"'
-            ) from None
-        return cycle
+        # Convert into a Point and add any offset.
+        point = self._str_to_point(cycle)
+        if offset is not None:
+            if self.db_point_fmt is None:
+                # Integer cycling.
+                point += IntegerInterval(offset)
+            else:
+                point = add_offset(cycle, offset, dmp_fmt=self.db_point_fmt)
+
+        return str(point)
 
     @staticmethod
     def display_maps(res, old_format=False, pretty_print=False):
@@ -188,28 +172,88 @@ class CylcWorkflowDBChecker:
         ):
             return row[0]
 
-    def _get_db_point_format_compat(self):
-        """Query a Cylc 7 suite database for 'cycle point format'."""
-        # BACK COMPAT: Cylc 7 DB
-        # Workflows parameters table name change.
-        # from:
-        #    8.0.x
-        # to:
-        #    8.1.x
-        # remove at:
-        #    8.7
-        for row in self.conn.execute(
-            rf'''
-                SELECT
-                    value
-                FROM
-                    {CylcWorkflowDAO.TABLE_SUITE_PARAMS}
-                WHERE
-                    key==?
-            ''',  # nosec (table name is code constant)
-            ['cycle_point_format']
-        ):
-            return row[0]
+    def _str_to_point(self, cycle: str) -> IntegerPoint | ISO8601Point:
+        """Parse a cycle string into the appropriate point object."""
+        if self.db_point_fmt is None:
+            try:
+                return IntegerPoint(cycle).standardise()
+            except PointParsingError as err:
+                raise InputError(
+                    f'Cycle point "{cycle}" is not a valid integer point'
+                ) from err
+        else:
+            # Initialise ISO8601 parser if initialised to the dump format.
+            if (
+                getattr(WorkflowSpecifics, "DUMP_FORMAT", None)
+                != self.db_point_fmt
+            ):
+                iso8601parser_init(custom_dump_format=self.db_point_fmt)
+            try:
+                return ISO8601Point.from_nonstandard_string(cycle)
+            except (ISO8601SyntaxError, PointParsingError) as err:
+                raise InputError(
+                    f'Cycle point "{cycle}" is not compatible'
+                    f' with DB point format "{self.db_point_fmt}"'
+                ) from err
+
+    def _get_start_cycle_point(self) -> IntegerPoint | ISO8601Point | None:
+        """Query a workflow db for a 'startcp' entry and make a Point."""
+        stmt = rf"""
+        SELECT value
+          FROM {CylcWorkflowDAO.TABLE_WORKFLOW_PARAMS}
+         WHERE key = "startcp"
+         LIMIT 1;
+        """  # nosec (table name is code constant)
+        row = self.conn.execute(stmt).fetchone()
+        if row is None or not row[0]:
+            # startcp key does not exist or is blank.
+            return None
+        return self._str_to_point(row[0])
+
+    def _is_before_start_cycle_point(self, cycle: str) -> bool:
+        """Whether the desired cycle is before the start cycle point.
+
+        Args:
+            cycle:
+                Cycle point of interest.
+            flow_num:
+                Flow number of the target task.
+
+        Returns:
+            True when cycle is before start cycle point.
+
+            False when cycle is equal or later than start cycle point,
+            or cycle is not a specific specifier, such as *.
+        """
+        if cycle in ("*", "%") or self.start_cycle_point is None:
+            # Target or start cycle is unspecified.
+            return False
+
+        # Parse cycle points into Point objects and compare.
+        target_cycle_point = self._str_to_point(cycle)
+        # Both parsed the same way, so types will match.
+        return target_cycle_point < self.start_cycle_point
+
+    @staticmethod
+    def _dummy_result(
+        task: str | None,
+        cycle: str,
+        selector: str | None,
+        flow_num: int | None,
+        is_output_query: bool | None = False,
+    ) -> list[str]:
+        """Create a dummy workflow_state_query result list."""
+        name = task if task is not None else ""
+        if selector is None:
+            selector = "succeeded"
+        if is_output_query:
+            result = json.dumps({selector: "before start cycle point"})
+        else:
+            result = selector
+        task_state = [name, cycle, result]
+        if flow_num is not None:
+            task_state.append(str(flow_num))
+        return task_state
 
     def workflow_state_query(
         self,
@@ -231,9 +275,11 @@ class CylcWorkflowDBChecker:
             selector:
                 task status, trigger name, or message
             is_trigger:
-                intpret the selector as a trigger
+                interpret the selector as a trigger
             is_message:
                 interpret the selector as a task message
+            flow_num:
+                flow number of the target task
 
         Return:
             A list of results for all tasks that match the query.
@@ -259,10 +305,7 @@ class CylcWorkflowDBChecker:
         else:
             target_table = CylcWorkflowDAO.TABLE_TASK_STATES
             mask = "name, cycle, status"
-
-        if not self.c7_back_compat_mode:
-            # Cylc 8 DBs only
-            mask += ", flow_nums"
+        mask += ", flow_nums"
 
         stmt = rf'''
             SELECT
@@ -313,21 +356,33 @@ class CylcWorkflowDBChecker:
         for row in self.conn.execute(stmt, stmt_args):
             # name, cycle, status_or_outputs, [flow_nums]
             res = list(row[:3])
-            if row[2] is None:
-                # status can be None in Cylc 7 DBs
+            flow_nums = deserialise_set(row[3])
+            if flow_num is not None and flow_num not in flow_nums:
+                # skip result, wrong flow
                 continue
-            if not self.c7_back_compat_mode:
-                flow_nums = deserialise_set(row[3])
-                if flow_num is not None and flow_num not in flow_nums:
-                    # skip result, wrong flow
-                    continue
-                fstr = repr_flow_nums(flow_nums)
-                if fstr:
-                    res.append(fstr)
+            fstr = repr_flow_nums(flow_nums)
+            if fstr:
+                res.append(fstr)
             db_res.append(res)
 
-        if target_table == CylcWorkflowDAO.TABLE_TASK_STATES:
+        if db_res and target_table == CylcWorkflowDAO.TABLE_TASK_STATES:
             return db_res
+
+        # If the normal checks didn't find anything we might be looking before
+        # the start cycle point; if we are, succeed unconditionally.
+        # This makes warm starting a workflow much easier.
+        if (
+            self.accept_pre_start_tasks
+            and not db_res
+            and cycle is not None
+            and self._is_before_start_cycle_point(cycle)
+        ):
+            # No real results to check, therefore return directly.
+            return [
+                self._dummy_result(
+                    task, cycle, selector, flow_num, is_trigger or is_message
+                )
+            ]
 
         warn_output_fallback = is_trigger
         results = []

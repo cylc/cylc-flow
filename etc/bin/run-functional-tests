@@ -68,7 +68,7 @@ Options:
                        job runner: background
 
                    Can be set to a glob. e.g. '_local*' will match all
-                   configuted test platforms with local job submission.
+                   configured test platforms with local job submission.
 
                    '*' will match all configured test platforms.
 
@@ -103,7 +103,7 @@ Examples:
   $ run-functional-tests -p <test_platform> <path>
 
   # run tests using the first matching test platform from the test config
-  # (test platforms have names beggining with an underscore)
+  # (test platforms have names beginning with an underscore)
   $ run-functional-tests -p all <path>
 eof
 }

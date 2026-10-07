@@ -58,8 +58,11 @@ Examples:
   # Print a custom file in a job's log directory:
   $ cylc cat-log -f my-log-file foo//2020/bar
 
-  # Follow a log file:
-  $ cylc cat-log foo//2020/bar -m f
+  # Follow a log file from the start:
+  $ cylc cat-log foo//2020/bar -m t
+
+  # Follow a log file from the end (show the last few lines, then follow):
+  $ cylc cat-log foo//2020/bar -m te
 """
 
 import asyncio
@@ -82,7 +85,6 @@ from typing import (
 from cylc.flow import LOG
 from cylc.flow.exceptions import InputError
 import cylc.flow.flags
-from cylc.flow.hostuserutil import is_remote_platform
 from cylc.flow.id_cli import parse_id_async
 from cylc.flow.log_level import verbosity_to_opts
 from cylc.flow.option_parsers import (
@@ -98,6 +100,8 @@ from cylc.flow.pathutil import (
 )
 from cylc.flow.platforms import (
     get_host_from_platform,
+    get_install_target_from_platform,
+    get_localhost_install_target,
     get_platform,
 )
 from cylc.flow.remote import (
@@ -108,11 +112,13 @@ from cylc.flow.rundb import CylcWorkflowDAO
 from cylc.flow.task_job_logs import (
     JOB_LOG_ACTIVITY,
     JOB_LOG_ERR,
+    JOB_LOG_JOB,
     JOB_LOG_OPTS,
     JOB_LOG_OUT,
     NN,
 )
 from cylc.flow.terminal import cli_function
+from cylc.flow.util import natural_sort_key
 
 
 if TYPE_CHECKING:
@@ -178,8 +184,17 @@ PRINT = 'print'
 LISTDIR = 'list-dir'
 PRINTDIR = 'print-dir'
 CAT = 'cat'
+# tail-follow the log from the *start* of the file
 TAIL = 'tail'
+# tail-follow the log from the *end* of the file
+TAIL_END = 'tail-end'
 AUTO = 'auto'
+
+# the tail-follow modes (both follow the file, but from different positions)
+TAIL_MODES = (TAIL, TAIL_END)
+
+# default number of lines to show from the end of the file in tail-end mode
+DEFAULT_TAIL_LINES = 5000
 
 MODES = {
     'p': PRINT,
@@ -187,6 +202,7 @@ MODES = {
     'd': PRINTDIR,
     'c': CAT,
     't': TAIL,
+    'te': TAIL_END,
     'a': AUTO,
 }
 
@@ -264,14 +280,26 @@ def _check_fs_path(path):
         )
 
 
+def get_tail_lines(mode: str, tail_lines: int) -> str:
+    """Return the ``%(lines)s`` value for a tail command template.
+
+    Follows GNU ``tail`` ``-n`` semantics: in "tail-end" mode, show
+    ``tail_lines`` lines from the *end* of the file; otherwise (tail from
+    start) return ``+1`` (start at the first line).
+    """
+    if mode == TAIL_END:
+        return str(tail_lines)
+    return '+1'
+
+
 async def view_log(
     logpath,
     mode,
     tailer_tmpl,
     batchview_cmd=None,
-    remote=False,
     color=False,
     prepend_path=False,
+    tail_lines=DEFAULT_TAIL_LINES,
 ):
     """View (by mode) local log file. This is only called on the file host.
 
@@ -279,8 +307,9 @@ async def view_log(
     command (e.g. 'qcat') that may be implemented for job runners that don't
     write logs to their final locations until after the job completes.
 
-    If remote is True, we are executing on a remote host for a log file there.
-
+    tail_lines is the number of lines from the end of the file to start
+    tailing from (only used by the "tail-end" mode via the ``%(lines)s``
+    substitution in the tail command template).
     """
     # Resolve NN symlinks etc.
     logpath = os.path.realpath(logpath)
@@ -297,7 +326,7 @@ async def view_log(
         if not os.path.exists(dirname):
             sys.stderr.write(f"Directory not found: {dirname}\n")
             return 1
-        for entry in sorted(os.listdir(dirname)):
+        for entry in sorted(os.listdir(dirname), key=natural_sort_key):
             print(entry)
         return 0
     if not os.path.exists(logpath) and batchview_cmd is None:
@@ -322,11 +351,14 @@ async def view_log(
         # * batchview command is user configurable
         colorise_cat_log(proc1, color=color)
         return 0
-    if mode == TAIL:
+    if mode in TAIL_MODES:
         if batchview_cmd is not None:
             cmd = batchview_cmd
         else:
-            cmd = tailer_tmpl % {"filename": shlex.quote(str(logpath))}
+            cmd = tailer_tmpl % {
+                "filename": shlex.quote(str(logpath)),
+                "lines": get_tail_lines(mode, tail_lines),
+            }
         proc = Popen(shlex.split(cmd), stdin=DEVNULL)  # nosec
         # * batchview command is user configurable
         with suppress(asyncio.CancelledError):
@@ -364,6 +396,20 @@ def get_option_parser() -> COP:
         default='c', dest="mode")
 
     parser.add_option(
+        "--tail-lines",
+        help=(
+            "For the tail-end mode, the number of lines to show from the"
+            " end of the file (default %default)."
+            " Has no effect in other modes."
+        ),
+        metavar="INT",
+        action="store",
+        dest="tail_lines",
+        type=int,
+        default=DEFAULT_TAIL_LINES,
+    )
+
+    parser.add_option(
         "-r", "--rotation",
         help="Workflow log integer rotation number. 0 for current, 1 for "
         "next oldest, etc.",
@@ -395,7 +441,9 @@ def get_option_parser() -> COP:
     return parser
 
 
-def get_task_job_attrs(workflow_id, point, task, submit_num):
+def get_task_job_attrs(
+    workflow_id: str, point: str, task: str, submit_num: str
+) -> tuple[str, str | None, str | None, bool] | tuple[None, None, None, None]:
     """Retrieve job info from the database.
 
     * live_job_id is the job ID if job is running, else None.
@@ -411,14 +459,10 @@ def get_task_job_attrs(workflow_id, point, task, submit_num):
         task_job_data = dao.select_task_job(point, task, submit_num)
     if task_job_data is None:
         return (None, None, None, None)
-    job_runner_name = task_job_data["job_runner_name"]
-    job_id = task_job_data["job_id"]
-    if (not job_runner_name or not job_id
-            or not task_job_data["time_run"]
-            or task_job_data["time_run_exit"]):
+    job_runner_name: str | None = task_job_data["job_runner_name"]
+    live_job_id: str | None = task_job_data["job_id"]
+    if task_job_data["time_run_exit"]:  # finished
         live_job_id = None
-    else:
-        live_job_id = job_id
     return (
         task_job_data["platform_name"],
         job_runner_name,
@@ -437,6 +481,7 @@ async def _get_remote_log(
     mode: str,
     batchview_cmd: str | None = None,
     prepend_path: bool = False,
+    tail_lines: int = DEFAULT_TAIL_LINES,
 ) -> Popen[str] | int:
     """Fetch a log file from the remote job host.
 
@@ -448,6 +493,15 @@ async def _get_remote_log(
     logpath = os.path.normpath(get_remote_workflow_run_job_dir(
         workflow_id, point, task, submit_num, filename))
     tail_tmpl = platform["tail command template"]
+    if mode in TAIL_MODES:
+        # Substitute the line count into the tail command here (on the
+        # workflow host) so that the remote end does not need to know about
+        # the number of lines.
+        # NB can't use `%` to substitute a single var when the template
+        # contains other placeholders.
+        tail_tmpl = tail_tmpl.replace(
+            '%(lines)s', get_tail_lines(mode, tail_lines)
+        )
     cmd = ['cat-log', *verbosity_to_opts(cylc.flow.flags.verbosity)]
     for item in [logpath, mode, tail_tmpl]:
         cmd.append('--remote-arg=%s' % shlex.quote(item))
@@ -468,15 +522,15 @@ async def _get_remote_log(
                 platform,
                 host=host,
                 capture_process=(mode == LISTDIR),
-                manage=(mode == TAIL),
+                manage=(mode in TAIL_MODES),
                 text=(mode == LISTDIR),
             )
 
-            # LISTDIR returns a process so the caller can consume its output.
-            # Wait for this short-lived command here so an SSH failure can be
-            # retried before returning the process to the caller.
+            # Drain LISTDIR's pipes while waiting, so a large listing cannot
+            # block the process. Popen caches the output for the caller's
+            # subsequent communicate() call.
             if isinstance(result, Popen):
-                result.wait()
+                await asyncio.to_thread(result.communicate)
                 return_code = result.returncode
             else:
                 return_code = result
@@ -516,6 +570,12 @@ async def _main(
     if options.filename is not None:
         _check_fs_path(options.filename)
 
+    if options.tail_lines < 1:
+        raise InputError(
+            "--tail-lines must be a positive integer"
+            f" (got {options.tail_lines})."
+        )
+
     if options.remote_args:
         # Invoked on job hosts for job logs only, as a wrapper to view_log().
         # Tail and batchview commands from global config on workflow host).
@@ -532,7 +592,6 @@ async def _main(
             mode,
             tail_tmpl,
             batchview_cmd,
-            remote=True,
             color=color,
             prepend_path=options.prepend_path,
         )
@@ -560,32 +619,38 @@ async def _main(
             mode = CAT
 
         if mode == LISTDIR:
+            # set of log/<x> directories to scan for files in
+            subdirs = {
+                subdir
+                for _, _file_name in WORKFLOW_LOG_OPTS.values()
+                # don't try to list directories which aren't there
+                if (subdir := Path(log_dir, _file_name).parent).exists()
+            }
             # list workflow logs
-            print('\n'.join(sorted(
-                str(path.relative_to(log_dir))
-                for dirpath in {
-                    # set of log/<x> directories to scan for files in
-                    Path(log_dir, _file_name).parent
-                    for _, _file_name in WORKFLOW_LOG_OPTS.values()
-                    # don't try to list directories which aren't there
-                    if Path(log_dir, _file_name).parent.exists()
-                }
-                for path in dirpath.iterdir()
-                # strip out file aliases such as scheduler/log
-                if not path.is_symlink()
-            )))
+            print(
+                '\n'.join(
+                    sorted(
+                        (
+                            str(path.relative_to(log_dir))
+                            for subdir in subdirs
+                            for path in subdir.iterdir()
+                            # strip out file aliases such as scheduler/log
+                            if not path.is_symlink()
+                        ),
+                        key=natural_sort_key,
+                    )
+                )
+            )
             return
 
         if file_name in WORKFLOW_LOG_OPTS:
             rotation_number = options.rotation_num or 0
             pattern = WORKFLOW_LOG_OPTS[file_name][1]
-            logs = sorted(
-                glob(
-                    str(Path(log_dir, pattern))
-                ),
-                reverse=True
-            )
-            if logs:
+            if logs := sorted(
+                glob(os.path.join(log_dir, pattern)),
+                reverse=True,
+                key=natural_sort_key,
+            ):
                 try:
                     log_file_path = Path(logs[rotation_number])
                 except IndexError:
@@ -598,8 +663,9 @@ async def _main(
         else:
             log_file_path = Path(log_dir, file_name)
 
+        platform = get_platform()
         tail_tmpl = os.path.expandvars(
-            get_platform()["tail command template"]
+            platform["tail command template"]
         )
         out = await view_log(
             log_file_path,
@@ -607,6 +673,7 @@ async def _main(
             tail_tmpl,
             color=color,
             prepend_path=options.prepend_path,
+            tail_lines=options.tail_lines,
         )
         sys.exit(out)
 
@@ -644,12 +711,12 @@ async def _main(
             if options.filename == JOB_LOG_OUT:
                 if mode == CAT:
                     conf_key = "out viewer"
-                elif mode == TAIL:
+                elif mode in TAIL_MODES:
                     conf_key = "out tailer"
             elif options.filename == JOB_LOG_ERR:
                 if mode == CAT:
                     conf_key = "err viewer"
-                elif mode == TAIL:
+                elif mode in TAIL_MODES:
                     conf_key = "err tailer"
             if conf_key is not None:
                 batchview_cmd_tmpl = None
@@ -657,7 +724,9 @@ async def _main(
                     batchview_cmd_tmpl = platform[conf_key]
                 if batchview_cmd_tmpl is not None:
                     batchview_cmd = batchview_cmd_tmpl % {
-                        "job_id": str(live_job_id)}
+                        "job_id": str(live_job_id),
+                        "lines": get_tail_lines(mode, options.tail_lines),
+                    }
 
         local_log_dir = Path(
             get_workflow_run_job_dir(workflow_id, point, task, submit_num)
@@ -675,9 +744,10 @@ async def _main(
         )
 
         log_is_remote = (
-            is_remote_platform(platform)
-            # Job activity log is always local
-            and (options.filename != JOB_LOG_ACTIVITY)
+            get_install_target_from_platform(platform)
+            != get_localhost_install_target()
+            # Job script & activity log are always local
+            and options.filename not in {JOB_LOG_JOB, JOB_LOG_ACTIVITY}
             # Don't try to get remote logs if submission failed on
             # remote platform - they may not exist.
             and not submit_failed
@@ -696,35 +766,29 @@ async def _main(
                 workflow_id, platform, point, task, submit_num,
                 options.filename, mode, batchview_cmd,
                 prepend_path=options.prepend_path,
+                tail_lines=options.tail_lines,
             )
 
-            # add and missing items to file listing results
+            # add any missing items to file listing results
             if isinstance(proc, Popen):
                 # i.e: if mode == LISTDIR and ctrl+c not pressed
                 out, err = proc.communicate()
-                files = out.splitlines()
+                files = set(out.splitlines())
 
                 # add files which can be accessed via a tailer
                 if live_job_id is not None:
-                    if (
-                        # NOTE: only list the file if it can be viewed in
-                        # both modes
-                        (platform['out tailer'] and platform['out viewer'])
-                        and 'job.out' not in files
-                    ):
-                        files.append('job.out')
-                    if (
-                        (platform['err tailer'] and platform['err viewer'])
-                        and 'job.err' not in files
-                    ):
-                        files.append('job.err')
+                    # NOTE: only list the file if it can be viewed in
+                    # both modes
+                    if platform['out tailer'] and platform['out viewer']:
+                        files.add(JOB_LOG_OUT)
+                    if platform['err tailer'] and platform['err viewer']:
+                        files.add(JOB_LOG_ERR)
 
                 # add the job-activity.log file which is always local
-                if (local_log_dir / 'job-activity.log').exists():
-                    files.append('job-activity.log')
+                if (local_log_dir / JOB_LOG_ACTIVITY).exists():
+                    files.add(JOB_LOG_ACTIVITY)
 
-                files.sort()
-                print('\n'.join(files))
+                print('\n'.join(sorted(files, key=natural_sort_key)))
                 print(err, file=sys.stderr)
                 sys.exit(proc.returncode)
             else:
@@ -741,5 +805,6 @@ async def _main(
                 batchview_cmd,
                 color=color,
                 prepend_path=options.prepend_path,
+                tail_lines=options.tail_lines,
             )
             sys.exit(out)

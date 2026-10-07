@@ -79,6 +79,7 @@ from cylc.flow.exceptions import (
     CommandFailedError,
     CylcError,
     InputError,
+    WorkflowConfigError,
 )
 import cylc.flow.flags
 from cylc.flow.flow_mgr import (
@@ -525,6 +526,22 @@ class Scheduler:
             self._load_pool_from_tasks()
         else:
             self._load_pool_from_point()
+
+        # BACK COMPAT: spawn the task pool out to RH limit on startup.
+        # Not strictly necessary, it will spawn ahead per main loop iteration,
+        # but useful back-compat for tests that expect this prior to
+        # https://github.com/cylc/cylc-flow/pull/7237
+        # FROM: 8.6.x
+        # TO: 8.7.0
+        # REMOVE AT: 8.7.0
+        self.pool.compute_runahead()
+        for _ in range(10):
+            # (Arbitrary limit to avoid infinite loop if something goes wrong)
+            if not self.pool.release_runahead_tasks():
+                for itask in self.pool.get_tasks():
+                    self.pool.queue_if_ready(itask)
+                break
+
         self.profiler.log_memory("scheduler.py: after load_tasks")
 
         self.workflow_db_mgr.put_workflow_params(self)
@@ -1003,7 +1020,12 @@ class Scheduler:
         warn = ""
         for tm in unprocessed_messages:
             job_tokens = self.tokens.duplicate(tm.job_id)
-            tdef = self.config.get_taskdef(job_tokens['task'])
+            try:
+                tdef = self.config.get_taskdef(job_tokens['task'])
+            except WorkflowConfigError as exc:
+                LOG.error(exc)
+                warn += f'\n  {tm.job_id}: {tm.severity} - "{tm.message}"'
+                continue
             if not self.task_events_mgr.process_job_message(
                 job_tokens, tdef, tm.message, tm.event_time
             ):
@@ -1464,6 +1486,33 @@ class Scheduler:
         if self.get_run_mode() != RunMode.SIMULATION:
             self.task_job_mgr.check_task_jobs(self.pool)
 
+    def can_stop(self) -> bool:
+        """Return True if workflow can stop."""
+        if self.stop_mode is None:
+            return False
+        if self.stop_mode == StopMode.REQUEST_NOW_NOW:
+            # Can stop irrespective of all other conditions
+            return True
+        if self.task_events_mgr._event_timers:
+            return False
+        if self.stop_mode in {
+            StopMode.REQUEST_NOW,
+            StopMode.AUTO,
+            StopMode.AUTO_ON_TASK_FAILURE,
+        }:
+            # Can stop as no pending event handlers
+            return True
+        # Else cannot stop if there are active tasks (unless they're
+        # ones we tried & failed to kill).
+        # NB preparing tasks get reset to waiting on restart.
+        return not any(
+            (
+                itask.state(*TASK_STATUSES_ACTIVE)
+                and not itask.state.kill_failed
+            )
+            for itask in self.pool.get_tasks()
+        )
+
     async def workflow_shutdown(self):
         """Determines if the workflow can be shutdown yet."""
         if self.pool.check_abort_on_task_fails():
@@ -1478,7 +1527,7 @@ class Scheduler:
             self._set_stop(StopMode.AUTO)
 
         # Is the workflow ready to shut down now?
-        if self.pool.can_stop(self.stop_mode):
+        if self.can_stop():
             await self.update_data_structure()
             self.proc_pool.close()
             if self.stop_mode != StopMode.REQUEST_NOW_NOW:
@@ -1625,11 +1674,6 @@ class Scheduler:
 
         tinit = time()
 
-        self.pool.compute_runahead()
-        self.pool.release_runahead_tasks()
-        # If applicable, set stop mode or shutdown on task failure:
-        await self.workflow_shutdown()
-
         # Useful for debugging core scheduler issues:
         # import logging
         # self.pool.log_task_pool(logging.CRITICAL)
@@ -1711,25 +1755,30 @@ class Scheduler:
         # List of task whose states have changed.
         updated_task_list = [
             t for t in self.pool.get_tasks() if t.state.is_updated]
-        has_updated = updated_task_list or self.is_updated
-
         if updated_task_list and self.is_restart_timeout_wait:
             # Stop restart timeout if action has been triggered.
             with suppress(KeyError):
                 self.timers[self.EVENT_RESTART_TIMEOUT].stop()
                 self.is_restart_timeout_wait = False
 
-        if has_updated or self.data_store_mgr.updates_pending:
-            # Update the datastore.
-            await self.update_data_structure()
+        has_updated = (
+            bool(updated_task_list)
+            or self.is_updated
+            or self.pool.tasks_removed
+        )
 
         if has_updated:
+            # The runahead limit might need recomputing.
+            self.pool.compute_runahead()
+            self.pool.release_runahead_tasks()
+
             if not self.is_reloaded and self.is_stalled:
                 # (A reload cannot un-stall workflow by itself)
                 self.is_stalled = False
                 self.update_data_store()
-            self.is_reloaded = False
 
+            self.is_reloaded = False
+            self.pool.tasks_removed = False
             # Reset workflow and task updated flags.
             self.is_updated = False
             for itask in updated_task_list:
@@ -1739,6 +1788,12 @@ class Scheduler:
                 # Stop the stalled timer.
                 with suppress(KeyError):
                     self.timers[self.EVENT_STALL_TIMEOUT].stop()
+        elif not self.stop_mode:
+            # Has the workflow stalled?
+            self.check_workflow_stalled()
+
+        if has_updated or self.data_store_mgr.updates_pending:
+            await self.update_data_structure()
 
         self.process_workflow_db_queue()
 
@@ -1760,11 +1815,6 @@ class Scheduler:
                 self
             )
         )
-
-        if not has_updated and not self.stop_mode:
-            # Has the workflow stalled?
-            self.check_workflow_stalled()
-
         # Sleep a bit for things to catch up.
         # Quick sleep if there are items pending in process pool.
         # (Should probably use quick sleep logic for other queues?)
@@ -1773,7 +1823,7 @@ class Scheduler:
         if (elapsed >= self.INTERVAL_MAIN_LOOP or
                 quick_mode and elapsed >= self.INTERVAL_MAIN_LOOP_QUICK):
             # Main loop has taken quite a bit to get through
-            # Still yield control to other threads by sleep(0.0)
+            # Still yield control to other async tasks by sleep(0)
             duration: float = 0
         elif quick_mode:
             duration = self.INTERVAL_MAIN_LOOP_QUICK - elapsed
@@ -1782,6 +1832,9 @@ class Scheduler:
         await asyncio.sleep(duration)
         # Record latest main loop interval
         self.main_loop_intervals.append(time() - tinit)
+
+        # If applicable, set stop mode or shutdown on task failure:
+        await self.workflow_shutdown()
         # END MAIN LOOP
 
     def _update_workflow_state(self):
@@ -2003,10 +2056,10 @@ class Scheduler:
         self.workflow_db_mgr.put_workflow_stop_clock_time(self.stop_clock_time)
         self.update_data_store()
 
-    def stop_clock_done(self):
+    def stop_clock_done(self) -> bool:
         """Return True if wall clock stop time reached."""
         if self.stop_clock_time is None:
-            return
+            return False
         now = time()
         if now > self.stop_clock_time:
             LOG.info("Wall clock stop time reached: %s", time2str(
@@ -2018,7 +2071,7 @@ class Scheduler:
         LOG.debug("stop time=%d; current time=%d", self.stop_clock_time, now)
         return False
 
-    def check_auto_shutdown(self):
+    def check_auto_shutdown(self) -> bool:
         """Check if we should shut down now."""
         if (
             self.is_paused or

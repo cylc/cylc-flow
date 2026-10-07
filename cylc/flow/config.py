@@ -637,7 +637,7 @@ class WorkflowConfig:
     def _warn_if_queues_have_implicit_tasks(
         config, taskdefs, max_warning_lines
     ):
-        """Warn if queues contain implict tasks.
+        """Warn if queues contain implicit tasks.
         """
         implicit_q_msg = ''
 
@@ -1829,7 +1829,7 @@ class WorkflowConfig:
     def get_task_name_list(self):
         """Return a sorted list of all tasks used in the dependency graph.
 
-        Note: the sort order may effect get_graph_raw ouput.
+        Note: the sort order may effect get_graph_raw output.
 
         """
         return sorted(self.taskdefs)
@@ -2066,6 +2066,7 @@ class WorkflowConfig:
         start_point_str=None,
         stop_point_str=None,
         grouping=None,
+        flatten_icp_dependence=False,
         sort=True,
     ):
         """Return concrete graph edges between specified cycle points.
@@ -2073,6 +2074,11 @@ class WorkflowConfig:
         Return a family-collapsed graph if the grouping arg is not None:
           * ['FAM1', 'FAM2']: group (collapse) specified families
           * ['<all>']: group (collapse) all families above root
+
+        The "flatten_icp_dependence" option detects ICP dependencies
+        (e.g. "start[^] => foo") and prefixes the cycle point on the left
+        side of the edge with "R1.". This allows graph visualisation tools
+        to handle these nodes differently.
 
         For validation, return non-suicide edges with left and right nodes.
         """
@@ -2177,7 +2183,22 @@ class WorkflowConfig:
                             cache[offset] = l_point
                     else:
                         l_point = point
-                    l_id = (name, l_point)
+
+                    if (
+                        flatten_icp_dependence
+                        and point != self.initial_point
+                        and offset
+                        and offset_is_from_icp
+                        and get_interval_cls()(offset)
+                        == get_interval_cls().get_null()
+                    ):
+                        # this is an R1 dependency (e.g, start[^] => foo). When
+                        # "collapse_icp = True", we prefix the point with "R1."
+                        # so graph visualization tools can apply special logic.
+                        l_id = (name, f'R1.{point}')
+                        # print('%', str(l_id))
+                    else:
+                        l_id = (name, l_point)
 
                     if actual_first_point > l_point:
                         # Check that l_id is not earlier than start time.
@@ -2361,7 +2382,7 @@ class WorkflowConfig:
             # dependencies are checked in generate_triggers:
             self.check_terminal_outputs(parser.terminals)
 
-        # set of all cycling intervals containined within the workflow
+        # set of all cycling intervals contained within the workflow
         cycling_intervals = {
             sequence.get_interval()
             for sequence in self.sequences

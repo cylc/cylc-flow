@@ -176,13 +176,13 @@ TASK_STATE_MAP = {
 
 
 def status_leq(status_a, status_b):
-    """"Return True if status_a <= status_b"""
+    """Return True if status_a <= status_b"""
     return (TASK_STATUSES_ORDERED.index(status_a) <=
             TASK_STATUSES_ORDERED.index(status_b))
 
 
 def status_geq(status_a, status_b):
-    """"Return True if status_a >= status_b"""
+    """Return True if status_a >= status_b"""
     return (TASK_STATUSES_ORDERED.index(status_a) >=
             TASK_STATUSES_ORDERED.index(status_b))
 
@@ -348,7 +348,7 @@ class TaskState:
         }
 
     def prerequisites_eval_all(self) -> None:
-        """Evaluate satisifaction of all prerequisites and
+        """Evaluate satisfaction of all prerequisites and
         suicide prerequisites.
 
         Provides validation - will abort on illegal trigger expressions.
@@ -364,7 +364,7 @@ class TaskState:
 
     def get_resolved_dependencies(self):
         """Return a list of dependencies which have been met for this task
-        (ignoring the specific output in the depedency).
+        (ignoring the specific output in the dependency).
 
         E.G: ['1/foo', '2/bar']
 
@@ -436,12 +436,12 @@ class TaskState:
         return True
 
     def is_gt(self, status):
-        """"Return True if self.status > status."""
+        """Return True if self.status > status."""
         return (TASK_STATUSES_ORDERED.index(self.status) >
                 TASK_STATUSES_ORDERED.index(status))
 
     def is_gte(self, status):
-        """"Return True if self.status >= status."""
+        """Return True if self.status >= status."""
         return (TASK_STATUSES_ORDERED.index(self.status) >=
                 TASK_STATUSES_ORDERED.index(status))
 

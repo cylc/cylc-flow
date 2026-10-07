@@ -1,7 +1,7 @@
 [scheduler]
     cycle point format = CCYY
 [scheduling]
-    initial cycle point = 2051
+    initial cycle point = 2050
     final cycle point = 2052
     [[graph]]
         P1Y = """

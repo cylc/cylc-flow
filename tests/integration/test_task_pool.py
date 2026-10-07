@@ -17,6 +17,7 @@
 
 from json import loads
 import logging
+import re
 from typing import (
     TYPE_CHECKING,
     AsyncGenerator,
@@ -30,7 +31,6 @@ from typing import (
 
 import pytest
 from pytest import param
-import re
 
 from cylc.flow import (
     CYLC_LOG,
@@ -42,7 +42,10 @@ from cylc.flow.data_messages_pb2 import PbPrerequisite
 from cylc.flow.data_store_mgr import TASK_PROXIES
 from cylc.flow.exceptions import WorkflowConfigError
 from cylc.flow.flow_mgr import FLOW_NONE
-from cylc.flow.id import TaskTokens, Tokens
+from cylc.flow.id import (
+    TaskTokens,
+    Tokens,
+)
 from cylc.flow.run_modes import RunMode
 from cylc.flow.task_events_mgr import TaskEventsManager
 from cylc.flow.task_outputs import (
@@ -805,7 +808,7 @@ async def test_graph_change_prereq_satisfaction(
     """It should handle graph prerequisites change on reload/restart.
 
     If the graph is changed to add a dependency which has been previously
-    satisfied, then Cylc should perform a DB check and mark the prerequsite
+    satisfied, then Cylc should perform a DB check and mark the prerequisite
     as satisfied accordingly.
 
     See https://github.com/cylc/cylc-flow/pull/5334
@@ -833,7 +836,7 @@ async def test_graph_change_prereq_satisfaction(
             # start the workflow and run part 1 of the tests
             await test.asend(schd)
 
-        # shutdown and change the workflow definiton
+        # shutdown and change the workflow definition
         conf['scheduling']['graph']['R1'] += '\nb => c'
         flow(conf, workflow_id=id_)
         schd = scheduler(id_, run_mode='simulation', paused_start=False)
@@ -911,25 +914,28 @@ async def test_db_update_on_removal(
     See: https://github.com/cylc/cylc-flow/issues/5598
     """
     id_ = flow({
-        'scheduler': {
-            'allow implicit tasks': 'true',
-        },
         'scheduling': {
             'graph': {
                 'R1': 'a',
             },
         },
+        'runtime': {
+            'root': {
+                'simulation': {
+                    # Avoid instant task success for this test
+                    'default run length': 'PT2S',
+                },
+            },
+        },
     })
-    schd = scheduler(id_)
+    schd: Scheduler = scheduler(id_)
     async with start(schd):
         task_a = schd.pool.get_tasks()[0]
 
         # set the task to running
         schd.pool.task_events_mgr.process_message(task_a, 1, 'started')
 
-        # update the db
-        await schd.update_data_structure()
-        schd.workflow_db_mgr.process_queued_ops()
+        await schd._main_loop()
 
         # the task should appear in the DB
         assert list_pool_from_db(schd) == [
@@ -940,9 +946,7 @@ async def test_db_update_on_removal(
         schd.pool.task_events_mgr.process_message(task_a, 1, 'succeeded')
         schd.pool.remove_if_complete(task_a)
 
-        # update the DB, note no new tasks have been added to the pool
-        await schd.update_data_structure()
-        schd.workflow_db_mgr.process_queued_ops()
+        await schd._main_loop()
 
         # the task should be gone from the DB
         assert list_pool_from_db(schd) == []
@@ -1495,8 +1499,14 @@ async def test_set_outputs_future(
     id_ = flow(
         {
             'scheduling': {
+                'cycling mode': 'integer',
+                'initial cycle point': '1',
+                'runahead limit': 'P0',
                 'graph': {
-                    'R1': "a:x & a:y => b => c"
+                    'P1': """
+                        a:x & a:y => b => c
+                        a:y => f
+                    """
                 }
             },
             'runtime': {
@@ -1513,13 +1523,31 @@ async def test_set_outputs_future(
 
     async with start(schd):
 
-        # it should start up with just 1/a
-        assert schd.pool.get_task_ids() == {"1/a"}
+        # It should start up with just 1/a and 2/a.
+        assert schd.pool.get_task_ids() == {"1/a", "2/a"}
 
-        # setting inactive task b succeeded should spawn c but not b
+        # Setting inactive future task b succeeded should
+        # spawn c but not b.
         schd.pool.set_prereqs_and_outputs(
             {TaskTokens('1', 'b')}, ["succeeded"], [], [])
-        assert schd.pool.get_task_ids() == {"1/a", "1/c"}
+        assert schd.pool.get_task_ids() == {"1/a", "2/a", "1/c"}
+
+        # Setting inactive future task f failed should
+        # add it to n=0 as final incomplete.
+        # See https://github.com/cylc/cylc-flow/pull/7248
+        schd.pool.set_prereqs_and_outputs(
+            {TaskTokens('1', 'f')}, ["failed"], [], [])
+        assert schd.pool.get_task_ids() == {"1/a", "2/a", "1/c", "1/f"}
+
+        # Setting inactive future parentless task a failed should
+        # add it to n=0 as final, and spawn its next instance.
+        # (A failed task has passed runahead release, which is when next
+        # instances are spawned).
+        # See https://github.com/cylc/cylc-flow/pull/7248
+        schd.pool.set_prereqs_and_outputs(
+            {TaskTokens('5', 'a')}, ["failed"], [], [])
+        assert schd.pool.get_task_ids() == {
+            "1/a", "2/a", "1/c", "1/f", "5/a", "6/a"}
 
         schd.pool.set_prereqs_and_outputs(
             items={TaskTokens('1', 'a')},
@@ -2373,20 +2401,13 @@ async def test_clock_expire_with_sequential_xtriggers(
 async def test_downstream_complete_before_upstream(
     flow, scheduler, start, db_select
 ):
-    """It should handle an upstream task completing before a downstream task.
+    """A downstream task that completes - in the same main loop iteration as
+    its upstream task - does not get re-spawned.
 
     See https://github.com/cylc/cylc-flow/issues/6315
     """
-    id_ = flow(
-        {
-            'scheduling': {
-                'graph': {
-                    'R1': 'a => b',
-                },
-            },
-        }
-    )
-    schd = scheduler(id_)
+    id_ = flow('a => b')
+    schd: Scheduler = scheduler(id_)
     async with start(schd):
         # 1/a should be pre-spawned (parentless)
         a_1 = schd.pool.get_task(IntegerPoint('1'), 'a')
@@ -2403,7 +2424,8 @@ async def test_downstream_complete_before_upstream(
         # 1/b should be removed from the pool (completed)
         assert schd.pool.get_tasks() == [a_1]
 
-        # as a side effect the DB should have been updated
+        # as a side effect the DB should have been updated (not waiting for
+        # the main loop to do it)
         assert (
             TASK_OUTPUT_SUCCEEDED
             in db_select(
@@ -2489,7 +2511,7 @@ async def test_start_tasks(
             }
         }
     )
-    schd = scheduler(
+    schd: Scheduler = scheduler(
         id_,
         starttask=['2050/foo', '2050/bar', '2050/baz'],
         paused_start=False
@@ -2499,11 +2521,6 @@ async def test_start_tasks(
         # capture any job submissions
         submitted_tasks = capture_submission(schd)
         assert submitted_tasks == set()
-
-        # This test expects tasks to be spawned to the runahead limit for
-        # historical reasons - pre GitHub #7237. We can remove this call
-        # if we change test expectations below.
-        schd.pool.spawn_to_runahead_limit()
 
         # It should start up with:
         # - 2050/foo and 2051/foo (spawned to runahead limit)

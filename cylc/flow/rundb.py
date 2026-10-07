@@ -48,6 +48,7 @@ from cylc.flow.util import (
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from pathlib import Path
 
     from cylc.flow.flow_mgr import FlowNums
@@ -215,13 +216,6 @@ class CylcWorkflowDAO:
     TABLE_BROADCAST_STATES = "broadcast_states"
     TABLE_INHERITANCE = "inheritance"
     TABLE_WORKFLOW_PARAMS = "workflow_params"
-    # BACK COMPAT: suite_params
-    # This Cylc 7 DB table is needed to allow workflow-state
-    # xtriggers (and the `cylc workflow-state` command) to
-    # work with Cylc 7 workflows.
-    # url: https://github.com/cylc/cylc-flow/issues/5236
-    # remove at: 8.7
-    TABLE_SUITE_PARAMS = "suite_params"
     TABLE_WORKFLOW_FLOWS = "workflow_flows"
     TABLE_WORKFLOW_TEMPLATE_VARS = "workflow_template_vars"
     TABLE_TASK_JOBS = "task_jobs"
@@ -520,7 +514,7 @@ class CylcWorkflowDAO:
                 error_name = "Not available"
 
             if not self.is_public:
-                # incase this isn't a filesystem issue, log the statements
+                # in case this isn't a filesystem issue, log the statements
                 # which make up the transaction to assist debug
                 LOG.error(
                     'An error occurred when writing to the database %(file)s,'
@@ -882,11 +876,10 @@ class CylcWorkflowDAO:
 
     def select_task_outputs(
         self, name: str, point: str
-    ) -> 'Dict[str, FlowNums]':
+    ) -> 'Iterator[tuple[str, FlowNums]]':
         """Select task outputs for each flow.
 
-        Return: {outputs_dict_str: flow_nums_set}
-
+        Yields: (outputs_dict_str, flow_nums_set)
         """
         stmt = rf'''
             SELECT
@@ -896,12 +889,10 @@ class CylcWorkflowDAO:
             WHERE
                 name==? AND cycle==?
         '''  # nosec B608 (table name is code constant)
-        return {
-            outputs: deserialise_set(flow_nums)
-            for flow_nums, outputs in self.connect().execute(
-                stmt, (name, point,)
-            )
-        }
+        for flow_nums, outputs in self.connect().execute(
+            stmt, (name, point,)
+        ):
+            yield (outputs, deserialise_set(flow_nums))
 
     def select_xtriggers_for_restart(self, callback):
         stmt = rf'''

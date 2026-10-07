@@ -140,7 +140,7 @@ def mod_test_dir(request, ses_test_dir):
         # Shorten path by dropping `integration.` prefix:
         re.sub(r'^integration\.', '', request.module.__name__)
     )
-    path.mkdir(exist_ok=True)
+    path.mkdir(parents=True, exist_ok=True)
     yield path
     if _pytest_passed(request):
         # test passed -> remove all files
@@ -619,7 +619,7 @@ async def _complete(
             async.timeout (handles shutdown logic more cleanly).
         allow_paused:
             This function will raise an Exception if the scheduler is paused
-            (because this usually means the sepecified tasks cannot complete)
+            (because this usually means the specified tasks cannot complete)
             unless allow_paused==True.
 
     Raises:

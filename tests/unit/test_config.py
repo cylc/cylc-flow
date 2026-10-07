@@ -525,7 +525,7 @@ def test_process_startcp(
             '2019',
             '20190101T0000+0530',
             None,
-            id="Overriden by cli option"
+            id="Overridden by cli option"
         ),
         pytest.param(
             ISO8601_CYCLING_TYPE,
@@ -1655,15 +1655,17 @@ def test_cylc_env_at_parsing(
         param([], ['foo:failed'], False, id='default-ok'),
     )
 )
-def test_check_outputs(tmp_path, registered_outputs, tasks_and_outputs, fails):
-    (tmp_path / 'flow.cylc').write_text(dedent("""
+def test_check_outputs(
+    tmp_flow_config, registered_outputs, tasks_and_outputs, fails
+):
+    flow_file = tmp_flow_config('wflow', """
         [scheduler]
             allow implicit tasks = true
         [scheduling]
             [[graph]]
                 R1 = foo
-    """))
-    cfg = WorkflowConfig('', tmp_path / 'flow.cylc', '')
+    """)
+    cfg = WorkflowConfig('', flow_file, ValidateOptions())
     cfg.cfg['runtime']['foo']['outputs'] = registered_outputs
     if fails:
         with pytest.raises(
@@ -1715,7 +1717,7 @@ def test_val_wflow_event_names(item, tmp_flow_config, log_filter):
 
 @pytest.mark.parametrize('item', ['handler events', 'mail events'])
 def test_check_task_event_names(item, tmp_flow_config, log_filter):
-    """"Any invalid task handler events are warned about."""
+    """Any invalid task handler events are warned about."""
     flow_file = tmp_flow_config('foo', f"""
         [scheduling]
             [[graph]]

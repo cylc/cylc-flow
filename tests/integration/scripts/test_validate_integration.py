@@ -110,7 +110,8 @@ def test_validate_simple_graph(flow, validate, caplog):
     validate(id_)
     expect = (
         'graph items were automatically upgraded'
-        ' in "workflow definition":'
+        ' in "workflow definition" - support for the old item will be '
+        'removed at Cylc 8.9:'
         '\n * (8.0.0) [scheduling][dependencies]graph -> [scheduling][graph]R1'
     )
     assert expect in caplog.messages
@@ -147,17 +148,22 @@ def test_pre_cylc8(flow, validate, caplog):
     for warning in (
         (
             ' * (7.8.0) [runtime][foo, cat, dog][suite state polling]template'
-            ' - DELETED (OBSOLETE)'),
-        ' * (7.8.1) [cylc][events]reset timer - DELETED (OBSOLETE)',
-        ' * (7.8.1) [cylc][events]reset inactivity timer - DELETED (OBSOLETE)',
+            ' - DELETED (OBSOLETE)'
+            ' - this will fail validation in Cylc 8.9'),
+        (' * (7.8.1) [cylc][events]reset timer - DELETED (OBSOLETE)'
+         ' - this will fail validation in Cylc 8.9'),
+        (' * (7.8.1) [cylc][events]reset inactivity timer - DELETED (OBSOLETE)'
+         ' - this will fail validation in Cylc 8.9'),
         (
             ' * (7.8.1) [runtime][foo, cat, dog][events]reset timer'
-            ' - DELETED (OBSOLETE)'),
+            ' - DELETED (OBSOLETE) - this will fail validation in Cylc 8.9'),
         (
             ' * (8.0.0) [runtime][foo, cat, dog][suite state polling]'
             ' -> [runtime][foo, cat, dog][workflow state polling]'
-            ' - value unchanged'),
-        ' * (8.0.0) [cylc] -> [scheduler] - value unchanged'
+            ' - value unchanged - support for the old item will be '
+            'removed at Cylc 8.9'),
+        (' * (8.0.0) [cylc] -> [scheduler] - value unchanged'
+         ' - support for the old item will be removed at Cylc 8.9')
     ):
         assert warning in caplog.messages
 
@@ -198,7 +204,7 @@ def test_graph_upgrade_msg_graph_equals(flow, validate, caplog, log_filter):
 
 
 def test_graph_upgrade_msg_graph_equals2(flow, validate, caplog, log_filter):
-    """Both an implicit R1 and explict reccurance exist:
+    """Both an implicit R1 and explicit reccurance exist:
     It appends a note.
     """
     id_ = flow({
@@ -211,7 +217,8 @@ def test_graph_upgrade_msg_graph_equals2(flow, validate, caplog, log_filter):
     validate(id_)
     expect = (
         'graph items were automatically upgraded in'
-        ' "workflow definition":'
+        ' "workflow definition" - support for the old item will be '
+        'removed at Cylc 8.9:'
         '\n * (8.0.0) [scheduling][dependencies][X]graph'
         ' -> [scheduling][graph]X - for X in:'
         '\n       P1Y, graph'

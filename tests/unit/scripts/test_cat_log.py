@@ -16,17 +16,37 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from subprocess import Popen, PIPE
+import asyncio
+import sys
 
 from ansimarkup import parse as cparse
 from colorama import Style
 import pytest
+import shlex
 
+from cylc.flow.exceptions import InputError, NoHostsError
+from cylc.flow.option_parsers import Options
 from cylc.flow.loggingutil import CylcLogFormatter
 from cylc.flow.scripts.cat_log import (
     CAT,
-    _get_remote_log,
+    LISTDIR,
     colorise_cat_log,
+    TAIL,
+    TAIL_END,
+    _main as cat_log,
+    _get_remote_log,
+    get_option_parser as cat_log_gop,
+    get_tail_lines,
+    view_log,
 )
+
+
+TAILER_PLATFORM = {
+    'name': 'test-platform',
+    'hosts': ['foo', 'bar'],
+    'selection': {'method': 'definition order'},
+    'tail command template': 'tail -n %(lines)s --follow=name %(filename)s',
+}
 
 
 @pytest.fixture
@@ -92,44 +112,277 @@ def test_colorise_cat_log_colour(log_file):
     )
 
 
-@pytest.mark.asyncio
-async def test_get_remote_log_retries_unreachable_host(monkeypatch):
-    """It should try another platform host after an SSH failure."""
-    from cylc.flow.scripts import cat_log
+class TestGetTailLines:
+    """Tests for the get_tail_lines function."""
 
-    hosts = []
+    @pytest.mark.parametrize(
+        'mode, expected',
+        [
+            (TAIL, '+1'),
+            (TAIL_END, '100'),
+            ('unknown_mode', '+1'),
+        ],
+    )
+    def test_modes(self, mode, expected):
+        """tail-end starts from the end; all other modes from the start."""
+        assert get_tail_lines(mode, 100) == expected
 
-    def select_host(platform, bad_hosts=None):
-        host = next(
-            item for item in platform['hosts']
-            if item not in (bad_hosts or set())
-        )
-        hosts.append(host)
-        return host
 
-    async def remote_cmd(*args, **kwargs):
-        return 255 if kwargs['host'] == 'foo' else 0
+async def test_get_remote_log_bakes_tail_lines_for_tail_end(monkeypatch):
+    """TAIL_END bakes the line count into the forwarded tail command.
 
-    monkeypatch.setattr(cat_log, 'get_host_from_platform', select_host)
-    monkeypatch.setattr(cat_log, 'remote_cylc_cmd', remote_cmd)
+    The line count is substituted locally so the remote cat-log needs no
+    knowledge of --tail-lines; the mode is forwarded unchanged so the
+    remote end still knows it is a tail-end view.
+    """
+    captured = {}
+
+    async def mock_remote_cylc_cmd(cmd, platform, **kwargs):
+        captured['cmd'] = cmd
+        captured['kwargs'] = kwargs
+        return 0
+
     monkeypatch.setattr(
-        cat_log,
-        'get_remote_workflow_run_job_dir',
-        lambda *args: '/remote/log/job.out',
+        'cylc.flow.scripts.cat_log.remote_cylc_cmd',
+        mock_remote_cylc_cmd
+    )
+    monkeypatch.setattr(
+        'cylc.flow.scripts.cat_log.get_remote_workflow_run_job_dir',
+        lambda *a, **k: '/remote/workflow/log/job.out',
+    )
+    monkeypatch.setattr(
+        'cylc.flow.scripts.cat_log.verbosity_to_opts',
+        lambda *a, **k: []
     )
 
+    workflow_id = 'workflow'
+
+    await _get_remote_log(
+        workflow_id,
+        TAILER_PLATFORM,
+        point='1',
+        task='foo',
+        submit_num='NN',
+        filename='job.out',
+        mode=TAIL_END,
+        tail_lines=42,
+    )
+
+    assert (
+        f"--remote-arg={shlex.quote('tail -n 42 --follow=name %(filename)s')}"
+        in captured['cmd']
+    )
+    assert f'--remote-arg={TAIL_END}' in captured['cmd']
+    assert captured['kwargs']['manage'] is True
+
+
+async def test_view_log_tail_vs_tail_end(tmp_path, capfd):
+    """TAIL reads from the start; TAIL_END reads from the end."""
+    logpath = tmp_path / 'job.out'
+    lines = [
+        'line-1',
+        'line-2',
+        'line-3',
+        'line-4',
+    ]
+    logpath.write_text('\n'.join(lines) + '\n')
+
+    await view_log(
+        logpath,
+        TAIL,
+        'tail -n %(lines)s %(filename)s',
+    )
+    out = capfd.readouterr().out.splitlines()
+    assert out == lines
+
+    await view_log(
+        logpath,
+        TAIL_END,
+        'tail -n %(lines)s %(filename)s',
+        tail_lines=2,
+    )
+    out = capfd.readouterr().out.splitlines()
+    assert out == lines[-2:]
+
+    await view_log(
+        logpath,
+        TAIL,
+        'tail -n +1 --follow=name %(filename)s',
+        batchview_cmd=f'cat {logpath}',
+    )
+    out = capfd.readouterr().out.splitlines()
+    assert out == lines
+
+
+@pytest.mark.parametrize('tail_lines', [0, -1, -100])
+async def test_bad_tail_lines(tail_lines):
+    """Non-positive --tail-lines values should be rejected."""
+    parser = cat_log_gop()
+    with pytest.raises(InputError, match='--tail-lines must be a positive'):
+        await cat_log(
+            parser,
+            Options(parser)(tail_lines=tail_lines),
+            'workflow//1/foo',
+        )
+
+
+async def test_bad_submit_number(monkeypatch, capsys):
+    """Illegal submit numbers should be rejected before log lookup."""
+    parser = cat_log_gop()
+
+    async def mock_parse_id_async(*args, **kwargs):
+        return 'workflow', {'task': 'foo', 'cycle': '1'}, None
+
+    monkeypatch.setattr(
+        'cylc.flow.scripts.cat_log.parse_id_async',
+        mock_parse_id_async,
+    )
+
+    with pytest.raises(SystemExit) as exc_info:
+        await cat_log(
+            parser,
+            Options(parser)(submit_num='not-a-number'),
+            'workflow//1/foo',
+        )
+    # The SystemExit is raised from within the `except ValueError` handler,
+    # so its context should be the underlying ValueError.
+    assert isinstance(exc_info.value.__context__, ValueError)
+    assert 'Illegal submit number: not-a-number' in capsys.readouterr().err
+
+
+async def test_good_submit_number(monkeypatch):
+    """A valid submit number should be zero-padded and passed through."""
+    parser = cat_log_gop()
+
+    async def mock_parse_id_async(*args, **kwargs):
+        return 'workflow', {'task': 'foo', 'cycle': '1'}, None
+
+    monkeypatch.setattr(
+        'cylc.flow.scripts.cat_log.parse_id_async',
+        mock_parse_id_async,
+    )
+
+    captured = {}
+
+    class StopHere(Exception):
+        pass
+
+    def mock_get_task_job_attrs(workflow_id, point, task, submit_num):
+        captured['submit_num'] = submit_num
+        raise StopHere
+
+    monkeypatch.setattr(
+        'cylc.flow.scripts.cat_log.get_task_job_attrs',
+        mock_get_task_job_attrs,
+    )
+
+    # Stop execution once the submit number has been processed.
+    with pytest.raises(StopHere):
+        await cat_log(
+            parser,
+            Options(parser)(submit_num='1'),
+            'workflow//1/foo',
+        )
+    # The submit number should have been zero-padded to two digits.
+    assert captured['submit_num'] == '01'
+
+
+@pytest.mark.parametrize('mode', [CAT, TAIL, TAIL_END])
+async def test_get_remote_log_retries_unreachable_host(monkeypatch, mode):
+    """Retry SSH failure and preserve management of both tail modes."""
+    calls = []
+
+    async def remote_cmd(*args, **kwargs):
+        calls.append(kwargs)
+        return 255 if kwargs['host'] == 'foo' else 0
+
+    monkeypatch.setattr(
+        'cylc.flow.scripts.cat_log.remote_cylc_cmd', remote_cmd,
+    )
     result = await _get_remote_log(
-        'workflow',
-        {
-            'hosts': ['foo', 'bar'],
-            'tail command template': 'tail -f %(filename)s',
-        },
-        '1',
-        'task',
-        '01',
-        'job.out',
-        CAT,
+        'workflow', TAILER_PLATFORM, '1', 'task', '01', 'job.out', mode,
     )
 
     assert result == 0
-    assert hosts == ['foo', 'bar']
+    assert [call['host'] for call in calls] == ['foo', 'bar']
+    assert all(call['manage'] == (mode in (TAIL, TAIL_END)) for call in calls)
+
+
+@pytest.mark.parametrize('return_code', [0, 1, 2])
+async def test_get_remote_log_does_not_retry_command_result(
+    monkeypatch, return_code,
+):
+    """A remote command result other than SSH failure is returned directly."""
+    calls = []
+
+    async def remote_cmd(*args, **kwargs):
+        calls.append(kwargs['host'])
+        return return_code
+
+    monkeypatch.setattr(
+        'cylc.flow.scripts.cat_log.remote_cylc_cmd', remote_cmd,
+    )
+    result = await _get_remote_log(
+        'workflow', TAILER_PLATFORM, '1', 'task', '01', 'job.out', CAT,
+    )
+
+    assert result == return_code
+    assert calls == ['foo']
+
+
+async def test_get_remote_log_exhausts_unreachable_hosts(monkeypatch):
+    """Each host is tried once before reporting that none is reachable."""
+    calls = []
+
+    async def remote_cmd(*args, **kwargs):
+        calls.append(kwargs['host'])
+        return 255
+
+    monkeypatch.setattr(
+        'cylc.flow.scripts.cat_log.remote_cylc_cmd', remote_cmd,
+    )
+    with pytest.raises(NoHostsError):
+        await _get_remote_log(
+            'workflow', TAILER_PLATFORM, '1', 'task', '01', 'job.out', CAT,
+        )
+
+    assert calls == ['foo', 'bar']
+
+
+async def test_get_remote_log_listdir_drains_pipes_and_preserves_output(
+    monkeypatch,
+):
+    """Drain a large listing after retrying an SSH failure."""
+    processes = []
+
+    async def remote_cmd(*args, **kwargs):
+        assert kwargs['capture_process'] is True
+        script = (
+            'import sys; sys.stderr.write("SSH failed\\n"); sys.exit(255)'
+            if kwargs['host'] == 'foo'
+            else 'import sys; sys.stdout.write("job.out\\n" * 20000)'
+        )
+        process = Popen(
+            [sys.executable, '-c', script],
+            stdout=PIPE,
+            stderr=PIPE,
+            text=True,
+        )
+        processes.append(process)
+        return process
+
+    monkeypatch.setattr(
+        'cylc.flow.scripts.cat_log.remote_cylc_cmd', remote_cmd,
+    )
+    try:
+        result = await asyncio.wait_for(_get_remote_log(
+            'workflow', TAILER_PLATFORM, '1', 'task', '01', 'job.out', LISTDIR,
+        ), timeout=10)
+        assert result is processes[1]
+        assert result.communicate() == ('job.out\n' * 20000, '')
+        assert result.returncode == 0
+    finally:
+        for process in processes:
+            if process.poll() is None:
+                process.kill()
+                process.wait()
