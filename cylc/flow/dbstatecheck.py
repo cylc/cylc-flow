@@ -49,6 +49,7 @@ output_fallback_msg = (
     "Unable to filter by task output label for tasks run in Cylc versions "
     "between 8.0.0-8.3.0. Falling back to filtering by task message instead."
 )
+pre_icp_msg = "Target cycle is before initial cycle point of target workflow."
 
 
 class CylcWorkflowDBChecker:
@@ -84,8 +85,17 @@ class CylcWorkflowDBChecker:
 
         # Get workflow point format and start cycle point.
         try:
-            self.db_point_fmt = self._get_db_point_format()
-            self.start_cycle_point = self._get_start_cycle_point()
+            self.db_point_fmt = self._get_db_param("cycle_point_format")
+            self.initial_cycle_point = (
+                self._str_to_point(icp)
+                if (icp := self._get_db_param("icp")) is not None
+                else icp
+            )
+            self.start_cycle_point = (
+                self._str_to_point(scp)
+                if (scp := self._get_db_param("startcp")) is not None
+                else scp
+            )
         except sqlite3.OperationalError:
             with suppress(Exception):
                 self.conn.close()
@@ -157,19 +167,19 @@ class CylcWorkflowDBChecker:
                         out += row[3]  # flow
                     sys.stdout.write(out + "\n")
 
-    def _get_db_point_format(self):
-        """Query a workflow database for a 'cycle point format' entry"""
-        for row in self.conn.execute(
-            rf'''
-                SELECT
-                    value
-                FROM
-                    {CylcWorkflowDAO.TABLE_WORKFLOW_PARAMS}
-                WHERE
-                    key==?
-            ''',  # nosec (table name is code constant)
-            ['cycle_point_format']
-        ):
+    def _get_db_param(self, key: str) -> str | None:
+        """Query workflow database for a workflow parameter entry"""
+        stmt = rf"""
+        SELECT value
+          FROM {CylcWorkflowDAO.TABLE_WORKFLOW_PARAMS}
+         WHERE key = ?
+         LIMIT 1;
+        """  # nosec (table name is code constant)
+        row = self.conn.execute(stmt, (key,)).fetchone()
+        if row is None or not row[0]:
+            # Parameter is missing or blank.
+            return None
+        else:
             return row[0]
 
     def _str_to_point(self, cycle: str) -> IntegerPoint | ISO8601Point:
@@ -196,20 +206,6 @@ class CylcWorkflowDBChecker:
                     f' with DB point format "{self.db_point_fmt}"'
                 ) from err
 
-    def _get_start_cycle_point(self) -> IntegerPoint | ISO8601Point | None:
-        """Query a workflow db for a 'startcp' entry and make a Point."""
-        stmt = rf"""
-        SELECT value
-          FROM {CylcWorkflowDAO.TABLE_WORKFLOW_PARAMS}
-         WHERE key = "startcp"
-         LIMIT 1;
-        """  # nosec (table name is code constant)
-        row = self.conn.execute(stmt).fetchone()
-        if row is None or not row[0]:
-            # startcp key does not exist or is blank.
-            return None
-        return self._str_to_point(row[0])
-
     def _is_before_start_cycle_point(self, cycle: str) -> bool:
         """Whether the desired cycle is before the start cycle point.
 
@@ -224,15 +220,25 @@ class CylcWorkflowDBChecker:
 
             False when cycle is equal or later than start cycle point,
             or cycle is not a specific specifier, such as *.
+            Tasks before the initial cycle point always return False.
         """
-        if cycle in ("*", "%") or self.start_cycle_point is None:
-            # Target or start cycle is unspecified.
+        if cycle in ("*", "%"):
+            # Target cycle is unspecified.
             return False
-
         # Parse cycle points into Point objects and compare.
         target_cycle_point = self._str_to_point(cycle)
-        # Both parsed the same way, so types will match.
-        return target_cycle_point < self.start_cycle_point
+        if (
+            self.initial_cycle_point is not None
+            and target_cycle_point < self.initial_cycle_point
+        ):
+            # Pre-ICP tasks should not succeed.
+            print(f"WARNING - {pre_icp_msg}", file=sys.stderr)
+            return False
+        # Return True if start cycle point is defined and target is before it.
+        return (
+            self.start_cycle_point is not None
+            and target_cycle_point < self.start_cycle_point
+        )
 
     @staticmethod
     def _dummy_result(

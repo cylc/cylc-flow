@@ -84,16 +84,17 @@ class MockDBChecker(CylcWorkflowDBChecker):
 
 
 class TestCylcWorkflowDBChecker:
-    int_point = IntegerPoint("5")
-    time_point = ISO8601Point("20260925T0000Z")
-
     @pytest.mark.parametrize(
         "cycle_string, db_point_fmt, expected",
         [
             # IntegerPoint produced.
-            ("5", None, int_point),
+            ("5", None, IntegerPoint("5")),
             # ISO8601Point produced.
-            ("20260925T0000Z", "CCYYMMDDThhmmZ", time_point),
+            (
+                "20260925T0000Z",
+                "CCYYMMDDThhmmZ",
+                ISO8601Point("20260925T0000Z"),
+            ),
         ],
     )
     def test_str_to_point(self, cycle_string, db_point_fmt, expected):
@@ -148,58 +149,103 @@ class TestCylcWorkflowDBChecker:
         assert normalised_cycle == expected
 
     @pytest.mark.parametrize(
-        "rows, db_point_fmt, expected",
+        "rows, expected",
         [
-            # No start cycle point if not in database.
-            ([], None, None),
-            # No start cycle point if blank in database.
-            ([("",)], None, None),
-            # IntegerPoint created when db_point_fmt is None.
-            ([("1",)], None, IntegerPoint("1")),
-            ([("42",)], None, IntegerPoint("42")),
-            # TimePoint created when db_point_fmt is set.
-            ([("20260925T0000Z",)], "CCYYMMDDThhmmZ", time_point),
+            # None returned when no key match in database.
+            ([], None),
+            # None if blank in database.
+            ([("",)], None),
+            # Rows correctly parsed to return value.
+            ([("1",)], "1"),
         ],
     )
-    def test_get_start_cycle_point(self, rows, db_point_fmt, expected):
-        """The start cycle point is converted into a Point object."""
-        db_checker = MockDBChecker(MockConn(rows), db_point_fmt)
-        start_cycle_point = db_checker._get_start_cycle_point()
-        assert isinstance(start_cycle_point, expected.__class__)
+    def test_get_db_param(self, rows, expected):
+        """Database param values are parsed out of the workflow database."""
+        db_checker = MockDBChecker(
+            MockConn(rows, expected_parameters=("startcp",))
+        )
+        start_cycle_point = db_checker._get_db_param("startcp")
         assert start_cycle_point == expected
 
     @pytest.mark.parametrize(
-        "db_point_fmt, start_cycle_point,target_cycle_point, expected",
+        "fmt, icp, scp, tcp, expected, warns",
         [
             # Not before an unspecified start cycle point.
-            (None, None, "1", False),
+            (None, None, None, "1", False, False),
             # Non-specific target cycle point is not before.
-            (None, int_point, "*", False),
-            (None, int_point, "%", False),
-            ("CCYYMMDDThhmmZ", time_point, "*", False),
-            ("CCYYMMDDThhmmZ", time_point, "%", False),
+            (None, "5", "5", "*", False, False),
+            (None, "5", "5", "%", False, False),
+            (
+                "CCYYMMDDThhmmZ",
+                "20260925T0000Z",
+                "20260925T0000Z",
+                "*",
+                False,
+                False,
+            ),
+            (
+                "CCYYMMDDThhmmZ",
+                "20260925T0000Z",
+                "20260925T0000Z",
+                "%",
+                False,
+                False,
+            ),
             # Target is equal or after start cycle point.
-            (None, int_point, "5", False),
-            (None, int_point, "6", False),
-            # Target is before start cycle point.
-            (None, int_point, "2", True),
+            (None, "5", "5", "5", False, False),
+            (None, "5", "5", "6", False, False),
+            # Target is before start cycle point but after initial.
+            (None, "1", "5", "2", True, False),
+            # Target is before initial cycle point.
+            (None, "2", "2", "1", False, True),
+            (None, "2", "5", "1", False, True),
+            # Target is before initial cycle point and no start.
+            (None, "2", None, "1", False, True),
             # ISO8601Point is equal or after start cycle point.
-            ("CCYYMMDDThhmmZ", time_point, "20260925T0000Z", False),
-            ("CCYYMMDDThhmmZ", time_point, "20260930T0000Z", False),
-            # ISO8601Point is before start cycle point.
-            ("CCYYMMDDThhmmZ", time_point, "20260901T0000Z", True),
+            (
+                "CCYYMMDDThhmmZ",
+                "20260925T0000Z",
+                "20260925T0000Z",
+                "20260925T0000Z",
+                False,
+                False,
+            ),
+            (
+                "CCYYMMDDThhmmZ",
+                "20260925T0000Z",
+                "20260925T0000Z",
+                "20260930T0000Z",
+                False,
+                False,
+            ),
+            # ISO8601Point is before start cycle point but after initial.
+            (
+                "CCYYMMDDThhmmZ",
+                "20260801T0000Z",
+                "20260925T0000Z",
+                "20260901T0000Z",
+                True,
+                False,
+            ),
+            # ISO8601Point is before initial cycle point.
+            ("CCYY", "2020", "2026", "2000", False, True),
         ],
     )
     def test_is_before_start_cycle_point(
-        self, db_point_fmt, start_cycle_point, target_cycle_point, expected
+        self, fmt, icp, scp, tcp, expected, warns, capsys
     ):
         """Whether the current cycle point is before the start cycle point."""
-        db_checker = MockDBChecker(None, db_point_fmt)
-        db_checker.start_cycle_point = start_cycle_point
-        before_start_cycle_point = db_checker._is_before_start_cycle_point(
-            target_cycle_point
+        db_checker = MockDBChecker(None, fmt)
+        db_checker.start_cycle_point = (
+            db_checker._str_to_point(scp) if isinstance(scp, str) else scp
         )
+        db_checker.initial_cycle_point = (
+            db_checker._str_to_point(icp) if isinstance(icp, str) else icp
+        )
+        before_start_cycle_point = db_checker._is_before_start_cycle_point(tcp)
         assert before_start_cycle_point == expected
+        captured = capsys.readouterr()
+        assert warns == ("WARNING" in captured.err)
 
     @pytest.mark.parametrize(
         "task, cycle, selector, flow_num, is_output_query, expected",
