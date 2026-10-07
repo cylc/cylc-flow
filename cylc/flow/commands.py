@@ -638,7 +638,6 @@ async def reload_workflow(schd: 'Scheduler', reload_global: bool = False):
         schd.task_job_mgr.task_remote_mgr.remote_init_map.clear()
         schd.task_job_mgr.task_remote_mgr.is_reload = True
         schd.pool.reload(config)
-        schd.data_store_mgr.apply_task_proxy_db_history()
         # Load jobs from DB
         schd.workflow_db_mgr.pri_dao.select_jobs_for_restart(
             schd.data_store_mgr.insert_db_job
@@ -647,6 +646,9 @@ async def reload_workflow(schd: 'Scheduler', reload_global: bool = False):
             schd.pool.release_runahead_tasks()
         schd.is_reloaded = True
         schd.is_updated = True
+
+        # flush out data store changes
+        await schd.update_data_structure()
 
         LOG.info("Reload completed.")
 
