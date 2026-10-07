@@ -248,13 +248,6 @@ with Conf(
             ``False`` after finishing the :cylc:conf:`flow.cylc[runtime]`
             section.
 
-            .. admonition:: Cylc 7 compatibility mode
-
-               In :ref:`Cylc_7_compat_mode`, implicit tasks are still
-               allowed unless you explicitly set this to ``False``, or
-               unless a ``rose-suite.conf`` file is present (to maintain
-               backward compatibility with Rose 2019).
-
             .. versionadded:: 8.0.0
         ''')
 
@@ -376,11 +369,6 @@ with Conf(
             be represented with this string at the end.
 
             If not set, it will default to UTC (``Z``).
-
-            .. admonition:: Cylc 7 compatibility mode
-
-               In :ref:`Cylc_7_compat_mode`, it will default to the
-               local/system time zone, rather than UTC.
 
             The time zone will persist over reloads/restarts following any
             local time zone changes (e.g. if the
@@ -1918,8 +1906,8 @@ with Conf(
 
                 .. deprecated:: 8.3.0
 
-                Please use the :ref:`workflow_state xtrigger
-                <Built-in Workflow State Triggers>` instead.
+                   Please use the :ref:`workflow_state xtrigger
+                   <Built-in Workflow State Triggers>` instead.
             '''):
                 Conf('interval', VDR.V_INTERVAL, desc='''
                     Polling interval.
@@ -2106,11 +2094,6 @@ def upg(
     cfg: dict, descr: str, broadcast: bool | Literal["cancel"] = False
 ) -> upgrader:
     """Upgrade old workflow configuration.
-
-    NOTE: We are silencing deprecation (and only deprecation) warnings
-    when in Cylc 7 compat mode to help support Cylc 7/8 compatible workflows
-    (which would loose Cylc 7 compatibility if users were to follow the
-    warnings and upgrade the syntax).
 
     Args:
         broadcast:
