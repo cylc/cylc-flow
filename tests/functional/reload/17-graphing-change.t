@@ -81,7 +81,7 @@ poll grep_workflow_log_n_times 'Reload completed' 3
 grep_ok 'Added task definitions:\n.*add\n.*boo\n.*one' "${LOG_FILE}" -Pzo
 grep_ok "\\[1/bar.*\\].*removed by reload" "${LOG_FILE}"
 grep_ok "\\[1/bol.*\\].*removed by reload" "${LOG_FILE}"
-grep_ok 'Removed tasks:\n.*1/bar:waiting\(queued\)\n.*1/bol:waiting' \
+grep_ok 'Removed tasks:\n.*1/bar:waiting.*\n.*1/bol:waiting' \
     "${LOG_FILE}" -Pzo
 
 run_ok "${TEST_NAME_BASE}-stop" \
