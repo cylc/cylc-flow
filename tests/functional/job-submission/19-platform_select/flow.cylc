@@ -53,4 +53,4 @@ purpose = """
 
     [[localhost_subshell]]
         [[[remote]]]
-            host = $(echo "localhost4.localdomain4")
+            host = $(echo "localhost")
