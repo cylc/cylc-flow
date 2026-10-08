@@ -17,7 +17,7 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 [#5928](https://github.com/cylc/cylc-flow/pull/5928) - Fixed behaviour of `initial cycle point = next(...)` which could result in a time in the past, and equivalently for `previous()`. E.g. if the current time is `2024-01-01T12:30Z`, `next(--01-01)` now evaluates to `2025-01-01T00:00Z` instead of `2024-01-01T00:00Z`.
 
-[#6849](https://github.com/cylc/cylc-flow/pull/6849) - Cylc 7 compatibility mode has been removed. Any workflows defined by a `suite.rc` file must now be renamed to `flow.cylc` to run with Cylc 8.7.0.+.
+[#6849](https://github.com/cylc/cylc-flow/pull/6849) - Cylc 7 compatibility mode has been removed. Any workflows defined by a `suite.rc` file must now be renamed to `flow.cylc` to run with Cylc 8.7.0+.
 
 [#6850](https://github.com/cylc/cylc-flow/pull/6850) - The version of Jinja2 has been upgraded from 3.0 to 3.1, the version at which deprecated language features were removed. See https://jinja.palletsprojects.com/en/stable/changes/#version-3-1-0 for details.
 
@@ -76,6 +76,8 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 [#7446](https://github.com/cylc/cylc-flow/pull/7446) - Added `-y` as an alias for `--yes` in `cylc reinstall` and `vr`
 
 ### 🔧 Fixes
+
+[#7209](https://github.com/cylc/cylc-flow/pull/7209) - Fixed an occasional issue where `cylc tui` could crash when workflows are reloaded.
 
 [#7290](https://github.com/cylc/cylc-flow/pull/7290) - `cylc clean` now correctly retries remote clean commands on another host if the previously chosen hosts were not contactable.
 
