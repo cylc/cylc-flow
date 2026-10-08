@@ -17,7 +17,7 @@
 
 #------------------------------------------------------------------------------
 # Test `cylc vr` (Validate Reinstall restart)
-# Test that args for re-invocation are correct:
+# Simple test that it works for a workflow reinvoked on a remote host
 export REQUIRE_PLATFORM='loc:remote runner:background fs:shared'
 . "$(dirname "$0")/test_header"
 
@@ -39,17 +39,16 @@ run_ok "${TEST_NAME_BASE}-install" \
     --no-detach
 
 # It validates and restarts:
-# Change source workflow and run vr:
 TEST_NAME="${TEST_NAME_BASE}-reinvoke"
 run_ok "${TEST_NAME}" cylc vr "${WORKFLOW_NAME}" --no-detach
 
+# Simply check that we have the expected scheduler logs:
 ls "${RUN_DIR}/${WORKFLOW_NAME}/runN/log/scheduler" > logdir.txt
 cmp_ok logdir.txt <<__HERE__
 01-start-01.log
-02-start-01.log
+02-restart-02.log
 log
 __HERE__
 
 # Clean Up.
 purge
-exit 0
