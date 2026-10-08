@@ -16,16 +16,20 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from subprocess import Popen, PIPE
+import asyncio
+import sys
 
 from ansimarkup import parse as cparse
 from colorama import Style
 import pytest
 import shlex
 
-from cylc.flow.exceptions import InputError
+from cylc.flow.exceptions import InputError, NoHostsError
 from cylc.flow.option_parsers import Options
 from cylc.flow.loggingutil import CylcLogFormatter
 from cylc.flow.scripts.cat_log import (
+    CAT,
+    LISTDIR,
     colorise_cat_log,
     TAIL,
     TAIL_END,
@@ -38,6 +42,9 @@ from cylc.flow.scripts.cat_log import (
 
 
 TAILER_PLATFORM = {
+    'name': 'test-platform',
+    'hosts': ['foo', 'bar'],
+    'selection': {'method': 'definition order'},
     'tail command template': 'tail -n %(lines)s --follow=name %(filename)s',
 }
 
@@ -278,3 +285,104 @@ async def test_good_submit_number(monkeypatch):
         )
     # The submit number should have been zero-padded to two digits.
     assert captured['submit_num'] == '01'
+
+
+@pytest.mark.parametrize('mode', [CAT, TAIL, TAIL_END])
+async def test_get_remote_log_retries_unreachable_host(monkeypatch, mode):
+    """Retry SSH failure and preserve management of both tail modes."""
+    calls = []
+
+    async def remote_cmd(*args, **kwargs):
+        calls.append(kwargs)
+        return 255 if kwargs['host'] == 'foo' else 0
+
+    monkeypatch.setattr(
+        'cylc.flow.scripts.cat_log.remote_cylc_cmd', remote_cmd,
+    )
+    result = await _get_remote_log(
+        'workflow', TAILER_PLATFORM, '1', 'task', '01', 'job.out', mode,
+    )
+
+    assert result == 0
+    assert [call['host'] for call in calls] == ['foo', 'bar']
+    assert all(call['manage'] == (mode in (TAIL, TAIL_END)) for call in calls)
+
+
+@pytest.mark.parametrize('return_code', [0, 1, 2])
+async def test_get_remote_log_does_not_retry_command_result(
+    monkeypatch, return_code,
+):
+    """A remote command result other than SSH failure is returned directly."""
+    calls = []
+
+    async def remote_cmd(*args, **kwargs):
+        calls.append(kwargs['host'])
+        return return_code
+
+    monkeypatch.setattr(
+        'cylc.flow.scripts.cat_log.remote_cylc_cmd', remote_cmd,
+    )
+    result = await _get_remote_log(
+        'workflow', TAILER_PLATFORM, '1', 'task', '01', 'job.out', CAT,
+    )
+
+    assert result == return_code
+    assert calls == ['foo']
+
+
+async def test_get_remote_log_exhausts_unreachable_hosts(monkeypatch):
+    """Each host is tried once before reporting that none is reachable."""
+    calls = []
+
+    async def remote_cmd(*args, **kwargs):
+        calls.append(kwargs['host'])
+        return 255
+
+    monkeypatch.setattr(
+        'cylc.flow.scripts.cat_log.remote_cylc_cmd', remote_cmd,
+    )
+    with pytest.raises(NoHostsError):
+        await _get_remote_log(
+            'workflow', TAILER_PLATFORM, '1', 'task', '01', 'job.out', CAT,
+        )
+
+    assert calls == ['foo', 'bar']
+
+
+async def test_get_remote_log_listdir_drains_pipes_and_preserves_output(
+    monkeypatch,
+):
+    """Drain a large listing after retrying an SSH failure."""
+    processes = []
+
+    async def remote_cmd(*args, **kwargs):
+        assert kwargs['capture_process'] is True
+        script = (
+            'import sys; sys.stderr.write("SSH failed\\n"); sys.exit(255)'
+            if kwargs['host'] == 'foo'
+            else 'import sys; sys.stdout.write("job.out\\n" * 20000)'
+        )
+        process = Popen(
+            [sys.executable, '-c', script],
+            stdout=PIPE,
+            stderr=PIPE,
+            text=True,
+        )
+        processes.append(process)
+        return process
+
+    monkeypatch.setattr(
+        'cylc.flow.scripts.cat_log.remote_cylc_cmd', remote_cmd,
+    )
+    try:
+        result = await asyncio.wait_for(_get_remote_log(
+            'workflow', TAILER_PLATFORM, '1', 'task', '01', 'job.out', LISTDIR,
+        ), timeout=10)
+        assert result is processes[1]
+        assert result.communicate() == ('job.out\n' * 20000, '')
+        assert result.returncode == 0
+    finally:
+        for process in processes:
+            if process.poll() is None:
+                process.kill()
+                process.wait()
