@@ -365,7 +365,6 @@ class TaskPool:
         To be called if:
         * The runahead base point might have changed:
            - a task completed expected outputs, or expired
-           - (Cylc7 back compat: a task succeeded or failed)
         * The max future offset might have changed.
         * The runahead limit config or task pool might have changed (reload).
 
@@ -1499,19 +1498,10 @@ class TaskPool:
 
         Return True if removed else False.
 
-        Cylc 8:
-            - if complete:
-              - remove task and recompute runahead
-            - else (incomplete):
-              - retain
-
-        Cylc 7 back compat:
-            - if succeeded:
-                - remove task and recompute runahead
-            else (failed):
-                - retain and recompute runahead
-                  (C7 failed tasks don't count toward runahead limit)
-
+        - if complete:
+            - remove task and recompute runahead
+        - else (incomplete):
+            - retain
         """
         if not itask.state(*TASK_STATUSES_FINAL):
             # can't be complete
@@ -1537,26 +1527,19 @@ class TaskPool:
         self.remove(itask)
         return True
 
-    def spawn_on_all_outputs(
-        self, itask: TaskProxy, completed_only: bool = False
-    ) -> None:
+    def spawn_on_all_outputs(self, itask: TaskProxy) -> None:
         """Spawn on all (or all completed) task outputs.
 
-        If completed_only is False:
-           Used in Cylc 7 Back Compat mode for pre-spawning waiting tasks. Do
-           not set the associated prerequisites of spawned children satisfied.
-
-        If completed_only is True:
-           Used to retroactively spawn on already-completed outputs when a flow
-           merges into a force-triggered no-flow task. In this case, do set the
-           associated prerequisites of spawned children to satisfied.
+        Retroactively spawn on already-completed outputs when a flow
+        merges into a force-triggered no-flow task. In this case, do set the
+        associated prerequisites of spawned children to satisfied.
 
         """
         if not itask.flow_nums:
             return
 
         for _, message, is_completed in itask.state.outputs:
-            if completed_only and not is_completed:
+            if not is_completed:
                 continue
             try:
                 children = itask.graph_children[message]
@@ -1577,12 +1560,11 @@ class TaskPool:
                 if c_task is None:
                     # not spawnable
                     continue
-                if completed_only:
-                    c_task.satisfy_me(
-                        [itask.tokens.duplicate(task_sel=message)],
-                        mode=itask.run_mode
-                    )
-                    self.data_store_mgr.delta_task_prerequisite(c_task)
+                c_task.satisfy_me(
+                    [itask.tokens.duplicate(task_sel=message)],
+                    mode=itask.run_mode
+                )
+                self.data_store_mgr.delta_task_prerequisite(c_task)
                 self.add_to_pool(c_task)
 
     def can_be_spawned(self, name: str, point: 'PointBase') -> bool:
@@ -1836,7 +1818,7 @@ class TaskPool:
 
     def _spawn_after_flow_wait(self, itask: TaskProxy) -> None:
         LOG.info(f"[{itask}] spawning outputs after flow-wait")
-        self.spawn_on_all_outputs(itask, completed_only=True)
+        self.spawn_on_all_outputs(itask)
         # update flow wait status in the DB
         itask.flow_wait = False
         # itask.flow_nums = orig_fnums
@@ -2426,4 +2408,4 @@ class TaskPool:
             # 2. Retro-spawn on completed outputs and continue as merged flow.
             LOG.info(f"[{itask}] spawning on pre-merge outputs")
             itask.flow_wait = False
-            self.spawn_on_all_outputs(itask, completed_only=True)
+            self.spawn_on_all_outputs(itask)

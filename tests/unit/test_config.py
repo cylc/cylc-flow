@@ -1695,7 +1695,10 @@ def test_upg_wflow_event_names(tmp_flow_config, log_filter):
         assert cfg.cfg['scheduler']['events'][item] == expected
     assert log_filter(
         logging.WARNING,
-        'Deprecated config items were automatically upgraded',
+        regex=(
+            r'Deprecated config items were automatically upgraded[\s\S]*'
+            r'support for the old item will be removed at Cylc 8\.9'
+        ),
     )
 
 
@@ -1770,3 +1773,80 @@ def test_jinja2_lib_python(tmp_flow_config):
     conf = WorkflowConfig(id_, str(flow_file), ValidateOptions())
     assert conf.cfg['meta']['x'] == 'bar'
     assert conf.cfg['scheduling']['graph']['R1'] == 'foo_bar'
+
+
+@pytest.mark.parametrize('old, new', [
+    ('suite', 'workflow'),
+    ('suite_uuid', 'uuid'),
+    ('suite_url', 'workflow_url')
+])
+@pytest.mark.parametrize('handlers', [
+    'handlers',
+    'startup handlers',
+    'shutdown handlers',
+    'stall timeout handlers',
+])
+def test_depr_wflow_event_template_vars(
+    handlers, old, new, tmp_flow_config, log_filter
+):
+    """Deprecated workflow event template variables are logged."""
+    flow_file = tmp_flow_config('foo', f"""
+        [scheduler]
+            [[events]]
+                {handlers} = echo %({old})s
+        [scheduling]
+            [[graph]]
+                R1 = foo
+        [runtime]
+            [[foo]]
+    """)
+    WorkflowConfig('foo', str(flow_file), ValidateOptions())
+    assert log_filter(
+        logging.WARNING,
+        contains=(
+            f'The workflow event handler template variable "%({old})s" is '
+            f'deprecated and will be removed in Cylc 8.9 - '
+            f'use "%({new})s" instead.'
+        )
+    )
+
+
+@pytest.mark.parametrize('old, new', [
+    ('suite', 'workflow'),
+    ('suite_uuid', 'uuid'),
+    ('batch_sys_name', 'job_runner_name'),
+    ('batch_sys_job_id', 'job_id'),
+    ('user@host', 'platform_name'),
+])
+@pytest.mark.parametrize('handlers', [
+    'handlers',
+    'started handlers',
+    'submission failed handlers',
+    'execution timeout handlers',
+    'critical handlers',
+])
+def test_depr_task_event_template_vars(
+    handlers, old, new, tmp_flow_config, log_filter
+):
+    """Deprecated task event template variables are logged.
+
+    See also tests/flakyfunctional/events/41-task-event-template-deprecated.t
+    """
+    flow_file = tmp_flow_config('foo', f"""
+        [scheduling]
+            [[graph]]
+                R1 = foo
+        [runtime]
+            [[foo]]
+                [[[events]]]
+                    {handlers} = echo %({old})s
+    """)
+    WorkflowConfig('foo', str(flow_file), ValidateOptions())
+    assert log_filter(
+        logging.WARNING,
+        contains=(
+            f'The task event handler template variable "%({old})s" is '
+            f'deprecated and will be removed in Cylc 8.9 - '
+            f'use "%({new})s" instead.'
+        )
+    )

@@ -110,14 +110,10 @@ LINT_TABLE = ['tool', 'cylc', 'lint']
 LINT_SECTION = '.'.join(LINT_TABLE)
 
 # BACK COMPAT: DEPR_LINT_SECTION
-# url:
-#     https://github.com/cylc/cylc-flow/issues/5811
-# from:
-#    8.1.0
-# to:
-#    8.3.0
-# remove at:
-#    8.7
+# url: https://github.com/cylc/cylc-flow/issues/5811
+# from: 8.1.0
+# to: 8.3.0
+# remove at: 8.8
 DEPR_LINT_SECTION = 'cylc-lint'
 
 IGNORE = 'ignore'
@@ -305,7 +301,7 @@ def check_dead_ends(line: str) -> bool:
 
 def check_for_deprecated_environment_variables(
     line: str
-) -> Union[bool, dict]:
+) -> dict[str, str] | dict[str, list[str]] | Literal[False]:
     """Warn that environment variables with SUITE in are deprecated
 
     Examples:
@@ -324,7 +320,9 @@ def check_for_deprecated_environment_variables(
     return False
 
 
-def check_for_obsolete_environment_variables(line: str) -> Dict[str, List]:
+def check_for_obsolete_environment_variables(
+    line: str,
+) -> dict[str, list[str]]:
     """Warn that environment variables are obsolete.
 
     Examples:
@@ -912,11 +910,11 @@ def validate_toml_items(tomldata):
     return True
 
 
-def get_pyproject_toml(dir_: Path) -> Dict[str, Any]:
+def get_pyproject_toml(dir_: Path) -> dict[str, Any]:
     """if a pyproject.toml file is present open it and return settings.
     """
     tomlfile = dir_ / 'pyproject.toml'
-    tomldata: Dict[str, Union[List[str], int, None]] = {
+    tomldata: dict[str, list[str] | int | None] = {
         RULESETS: [],
         IGNORE: [],
         EXCLUDE: [],
@@ -935,7 +933,8 @@ def get_pyproject_toml(dir_: Path) -> Dict[str, Any]:
             if DEPR_LINT_SECTION in loadeddata:
                 LOG.warning(
                     f"The [{DEPR_LINT_SECTION}] section in pyproject.toml is "
-                    f"deprecated. Use [{LINT_SECTION}] instead."
+                    "deprecated and support will be removed in Cylc 8.8. "
+                    f"Use [{LINT_SECTION}] instead."
                 )
             data = loadeddata.get(DEPR_LINT_SECTION, {})
         tomldata.update(data)

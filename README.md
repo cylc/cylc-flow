@@ -50,11 +50,6 @@ cylc tui integer-cycling
 [Migration Guide](https://cylc.github.io/cylc-doc/stable/html/7-to-8/index.html)
 | [Migration Support](https://cylc.discourse.group/c/cylc/7-to-8/13)
 
-Cylc 8 can run most Cylc 7 workflows in compatibility mode with little to no
-changes, go through the
-[migration guide](https://cylc.github.io/cylc-doc/stable/html/7-to-8/index.html)
-for more details.
-
 Quick summary of major changes:
 
 * Python 2 -> 3.
@@ -68,7 +63,7 @@ Quick summary of major changes:
   * `cylc restart <id>` -> `cylc play <id>`
   * `rose suite-run` -> `cylc install; cylc play <id>`
 * The core package containing Cylc scheduler program has been renamed cylc-flow.
-* Cylc review has been removed, the Cylc 7 version remains Cylc 8 compatible.
+* Cylc Review has been moved to [cylc-uiserver](https://github.com/cylc/cylc-uiserver).
 
 
 ### Citations & Publications

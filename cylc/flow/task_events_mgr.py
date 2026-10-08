@@ -289,7 +289,9 @@ class EventData(Enum):
     Workflow = 'workflow'
     """Workflow ID."""
 
-    Suite = 'suite'  # deprecated
+    # BACK COMPAT
+    # remove at: 8.9
+    Suite = 'suite'
     """Workflow ID.
 
     .. deprecated:: 8.0.0
@@ -304,7 +306,9 @@ class EventData(Enum):
     from the database on restart.
     """
 
-    SuiteUUID = 'suite_uuid'  # deprecated
+    # BACK COMPAT
+    # remove at: 8.9
+    SuiteUUID = 'suite_uuid'
     """The unique identification string for this workflow run.
 
     .. deprecated:: 8.0.0
@@ -338,7 +342,9 @@ class EventData(Enum):
     JobRunnerName = 'job_runner_name'
     """The job runner name."""
 
-    JobRunnerName_old = 'batch_sys_name'  # deprecated
+    # BACK COMPAT
+    # remove at: 8.9
+    JobRunnerName_old = 'batch_sys_name'
     """The job runner name.
 
     .. deprecated:: 8.0.0
@@ -352,7 +358,9 @@ class EventData(Enum):
     I.E. The job submission ID. For background jobs this is the process ID.
     """
 
-    JobID_old = 'batch_sys_job_id'  # deprecated
+    # BACK COMPAT
+    # remove at: 8.9
+    JobID_old = 'batch_sys_job_id'
     """The job ID in the job runner.
 
     .. deprecated:: 8.0.0
@@ -372,6 +380,8 @@ class EventData(Enum):
     PlatformName = 'platform_name'
     """The name of the platform where the job is submitted."""
 
+    # BACK COMPAT
+    # remove at: 8.9
     UserAtHost = 'user@host'
     """The name of the platform where the job is submitted.
 
@@ -387,7 +397,10 @@ class EventData(Enum):
     TaskName = 'name'
     """The name of the task."""
 
-    TaskURL = 'task_url'  # deprecated
+    # BACK COMPAT
+    # remove at: 8.x (pending a deprecation warning mentioning the removal
+    # version at least 2 minor versions before)
+    TaskURL = 'task_url'
     """The URL defined in the task's metadata.
 
     .. deprecated:: 8.0.0
@@ -395,7 +408,10 @@ class EventData(Enum):
        Use ``URL`` from ``<task metadata>``.
     """
 
-    WorkflowURL = 'workflow_url'  # deprecated
+    # BACK COMPAT
+    # remove at: 8.x (pending a deprecation warning mentioning the removal
+    # version at least 2 minor versions before)
+    WorkflowURL = 'workflow_url'
     """The URL defined in the workflow's metadata.
 
     .. deprecated:: 8.0.0
@@ -1809,10 +1825,7 @@ class TaskEventsManager():
             # Note quote() fails on None, need str(None).
 
             template_variables = self._get_handler_template_variables(
-                itask,
-                event,
-                message,
-                platform_name,
+                itask, event, message, platform_name
             )
             key1 = (id_key.handler, id_key.event)
             try:
@@ -1838,10 +1851,10 @@ class TaskEventsManager():
 
     def _get_handler_template_variables(
         self,
-        itask,
-        event,
-        message,
-        platform_name,
+        itask: 'TaskProxy',
+        event: str,
+        message: str,
+        platform_name: str,
     ):
         # fmt: off
         return {
@@ -1875,27 +1888,12 @@ class TaskEventsManager():
                 quote(self.workflow),
             EventData.UUID.value:
                 quote(self.uuid_str),
-            # BACK COMPAT: Suite, SuiteUUID deprecated
-            # url:
-            #     https://github.com/cylc/cylc-flow/pull/4174
-            # from:
-            #     Cylc 8
-            # remove at:
-            #     Cylc 8.x
-            EventData.Suite.value:  # deprecated
+            EventData.Suite.value:
                 quote(self.workflow),
-            EventData.SuiteUUID.value:  # deprecated
+            EventData.SuiteUUID.value:
                 quote(self.uuid_str),
             EventData.TryNum.value:
                 itask.get_try_num(),
-            # BACK COMPAT: JobID_old, JobRunnerName_old
-            # url:
-            #     https://github.com/cylc/cylc-flow/pull/3992
-            # from:
-            #     Cylc < 8
-            # remove at:
-            #     Cylc8.x - pending announcement of deprecation
-            # next 2 (JobID_old, JobRunnerName_old) are deprecated
             EventData.JobID_old.value:
                 quote(str(itask.summary['submit_method_id'])),
             EventData.JobRunnerName_old.value:

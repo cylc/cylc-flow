@@ -143,8 +143,6 @@ class GraphParser:
        i.e.: if NOT end-of-chain OR left is None.
 
     """
-    CYLC7_COMPAT = "CYLC 7 BACK-COMPAT"
-
     OP_AND = '&'
     OP_OR = '|'
     OP_AND_ERR = '&&'

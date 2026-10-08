@@ -2719,14 +2719,10 @@ class WorkflowConfig:
             try:
                 # Replace workflow and task name in workflow and task URLs.
                 # BACK COMPAT: suite_name
-                # url:
-                #     https://github.com/cylc/cylc-flow/pull/4724
-                # from:
-                #     Cylc7
-                # to:
-                #     Cylc8
-                # remove at:
-                #     Cylc8.x
+                # url: https://github.com/cylc/cylc-flow/pull/4724
+                # from: 7
+                # to: 8.0
+                # remove at: 8.9
                 self.cfg['meta']['URL'] = url % {
                     # cylc 7
                     'suite_name': self.workflow,
@@ -2739,7 +2735,8 @@ class WorkflowConfig:
                 ) from None
             else:
                 LOG.warning(
-                    'Detected deprecated template variables in [meta]URL.'
+                    'Detected deprecated template variables in [meta]URL. '
+                    'Support will be removed in Cylc 8.9.'
                     '\nSee the configuration documentation for details.'
                 )
 
@@ -2754,14 +2751,10 @@ class WorkflowConfig:
                 }
             except (KeyError, ValueError):
                 # BACK COMPAT: suite_name, task_name
-                # url:
-                #     https://github.com/cylc/cylc-flow/pull/4724
-                # from:
-                #     Cylc7
-                # to:
-                #     Cylc8
-                # remove at:
-                #     Cylc8.x
+                # url: https://github.com/cylc/cylc-flow/pull/4724
+                # from: 7
+                # to: 8.0
+                # remove at: 8.9
                 try:
                     cfg['meta']['URL'] = cfg['meta']['URL'] % {
                         # cylc 7
@@ -2778,7 +2771,8 @@ class WorkflowConfig:
                 else:
                     LOG.warning(
                         'Detected deprecated template variables in'
-                        f' [runtime][{name}][meta]URL.'
+                        f' [runtime][{name}][meta]URL. Support will be '
+                        'removed in Cylc 8.9.'
                         '\nSee the configuration documentation for details.'
                     )
             cfg['meta']['URL'] = RE_WORKFLOW_ID_VAR.sub(
@@ -2842,15 +2836,19 @@ class WorkflowConfig:
             for seq in taskdef.sequences:
                 taskdef.add_xtrig_label(label, seq)
 
+    # BACK COMPAT
+    # from: 7
+    # to: 8.0
+    # remove at: 8.9
     def _upg_wflow_event_names(self) -> None:
         """Upgrade any Cylc 7 workflow handler/mail events names."""
         for setting in ('handler events', 'mail events'):
-            event_names: Optional[List[str]] = self.cfg['scheduler']['events'][
+            event_names: list[str] | None = self.cfg['scheduler']['events'][
                 setting
             ]
             if not event_names:
                 continue
-            upgraded: Dict[str, str] = {}
+            upgraded: dict[str, str] = {}
             for i, event in enumerate(event_names):
                 if event in WorkflowEventHandler.EVENTS_DEPRECATED:
                     event_names[i] = upgraded[event] = (
@@ -2861,4 +2859,5 @@ class WorkflowConfig:
                     f"{upgrader.depr_msg}\n"
                     f" * (8.0.0) [scheduler][events][{setting}] "
                     + ', '.join(f'{k} -> {v}' for k, v in upgraded.items())
+                    + " - support for the old item will be removed at Cylc 8.9"
                 )

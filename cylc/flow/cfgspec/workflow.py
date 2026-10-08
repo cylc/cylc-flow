@@ -77,7 +77,8 @@ from cylc.flow.run_modes import (
     TASK_CONFIG_RUN_MODES,
     RunMode,
 )
-from cylc.flow.task_events_mgr import EventData
+from cylc.flow.task_events_mgr import EventData as TED
+from cylc.flow.workflow_events import EventData as WED
 
 
 # Regex to check whether a string is a command
@@ -247,13 +248,6 @@ with Conf(
             ``False`` after finishing the :cylc:conf:`flow.cylc[runtime]`
             section.
 
-            .. admonition:: Cylc 7 compatibility mode
-
-               In :ref:`Cylc_7_compat_mode`, implicit tasks are still
-               allowed unless you explicitly set this to ``False``, or
-               unless a ``rose-suite.conf`` file is present (to maintain
-               backward compatibility with Rose 2019).
-
             .. versionadded:: 8.0.0
         ''')
 
@@ -375,11 +369,6 @@ with Conf(
             be represented with this string at the end.
 
             If not set, it will default to UTC (``Z``).
-
-            .. admonition:: Cylc 7 compatibility mode
-
-               In :ref:`Cylc_7_compat_mode`, it will default to the
-               local/system time zone, rather than UTC.
 
             The time zone will persist over reloads/restarts following any
             local time zone changes (e.g. if the
@@ -1917,8 +1906,8 @@ with Conf(
 
                 .. deprecated:: 8.3.0
 
-                Please use the :ref:`workflow_state xtrigger
-                <Built-in Workflow State Triggers>` instead.
+                   Please use the :ref:`workflow_state xtrigger
+                   <Built-in Workflow State Triggers>` instead.
             '''):
                 Conf('interval', VDR.V_INTERVAL, desc='''
                     Polling interval.
@@ -2105,11 +2094,6 @@ def upg(
     cfg: dict, descr: str, broadcast: bool | Literal["cancel"] = False
 ) -> upgrader:
     """Upgrade old workflow configuration.
-
-    NOTE: We are silencing deprecation (and only deprecation) warnings
-    when in Cylc 7 compat mode to help support Cylc 7/8 compatible workflows
-    (which would loose Cylc 7 compatibility if users were to follow the
-    warnings and upgrade the syntax).
 
     Args:
         broadcast:
@@ -2403,6 +2387,10 @@ def upgrade_graph_section(cfg: Dict[str, Any], descr: str) -> None:
                     LOG.warning(msg + note)
 
 
+# BACK COMPAT
+# from: 7
+# to: 8.0
+# remove at: 8.9
 def upgrade_param_env_templates(cfg, descr):
     """Prepend contents of `[runtime][X][parameter environment templates]` to
     `[runtime][X][environment]`."""
@@ -2419,7 +2407,8 @@ def upgrade_param_env_templates(cfg, descr):
                 first_warn = False
             LOG.warning(
                 f' * (8.0.0) {dep % task_name} contents prepended to '
-                f'{new % task_name}'
+                f'{new % task_name} - support for parameter environment '
+                'templates will be removed at Cylc 8.9'
             )
             for key, val in reversed(
                     task_items['parameter environment templates'].items()):
@@ -2451,47 +2440,55 @@ def warn_about_depr_platform(cfg):
             # Fail if backticks subshell e.g. platform = `foo`:
             is_platform_definition_subshell(task_cfg['platform'])
         else:
+            # BACK COMPAT: get_platform_deprecated_settings
+            # remove at: 8.9
             depr = get_platform_deprecated_settings(task_cfg, task_name)
             if depr:
                 msg = "\n".join(depr)
                 LOG.warning(
                     "deprecated settings found "
-                    f"(please replace with [runtime][{task_name}]platform):"
+                    f"(replace with [runtime][{task_name}]platform "
+                    "before Cylc 8.9):"
                     f"\n{msg}"
                 )
 
 
+# BACK COMPAT: deprecated event handler templates
+# from: 7
+# to: 8.0
+# remove at: 8.9
 def warn_about_depr_event_handler_tmpl(cfg):
     """Warn if deprecated template strings appear in event handlers."""
     if 'runtime' not in cfg:
         return
     deprecation_msg = (
-        'The event handler template variable "%({0})s" is deprecated - '
-        'use "%({1})s" instead.')
+        'The {0} event handler template variable "%({1})s" is deprecated and '
+        'will be removed in Cylc 8.9 - use "%({2})s" instead.'
+    )
+    # NOTE: Do NOT use .get() on OrderedDictWithDefaults -
+    # https://github.com/cylc/cylc-flow/pull/4975
+    if 'scheduler' in cfg and 'events' in (schd_cfg := cfg['scheduler']):
+        for handler in schd_cfg['events'].values():
+            for old, new in (
+                (WED.Suite.value, WED.Workflow.value),
+                (WED.Suite_UUID.value, WED.UUID.value),
+                (WED.SuiteURL.value, WED.WorkflowURL.value),
+            ):
+                if f'%({old})' in handler:
+                    LOG.warning(deprecation_msg.format('workflow', old, new))
     for task in cfg['runtime']:
         if 'events' not in cfg['runtime'][task]:
             continue
         for handler in cfg['runtime'][task]['events'].values():
-            if f'%({EventData.JobID_old.value})' in handler:
-                LOG.warning(
-                    deprecation_msg.format(EventData.JobID_old.value,
-                                           EventData.JobID.value)
-                )
-            if f'%({EventData.JobRunnerName_old.value})' in handler:
-                LOG.warning(
-                    deprecation_msg.format(EventData.JobRunnerName_old.value,
-                                           EventData.JobRunnerName.value)
-                )
-            if f'%({EventData.Suite.value})' in handler:
-                LOG.warning(
-                    deprecation_msg.format(EventData.Suite.value,
-                                           EventData.Workflow.value)
-                )
-            if f'%({EventData.SuiteUUID.value})' in handler:
-                LOG.warning(
-                    deprecation_msg.format(EventData.SuiteUUID.value,
-                                           EventData.UUID.value)
-                )
+            for old, new in (
+                (TED.Suite.value, TED.Workflow.value),
+                (TED.SuiteUUID.value, TED.UUID.value),
+                (TED.JobRunnerName_old.value, TED.JobRunnerName.value),
+                (TED.JobID_old.value, TED.JobID.value),
+                (TED.UserAtHost.value, TED.PlatformName.value),
+            ):
+                if f'%({old})' in handler:
+                    LOG.warning(deprecation_msg.format('task', old, new))
 
 
 class RawWorkflowConfig(ParsecConfig):

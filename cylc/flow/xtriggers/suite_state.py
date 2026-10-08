@@ -75,6 +75,9 @@ def suite_state(suite, task, point, offset=None, status='succeeded',
             Dictionary containing the args / kwargs which were provided
             to this xtrigger.
 
+    .. deprecated:: 8.0.0
+
+       ``suite_state`` will be removed in Cylc 8.9.
     """
     return _workflow_state_backcompat(
         suite, task, point, offset, status, message, cylc_run_dir

@@ -1155,21 +1155,6 @@ class TaskJobManager:
             itask
         )
 
-        # BACK COMPAT: host logic
-        # Determine task host or platform now, just before job submission,
-        # because dynamic host/platform selection may be used.
-        # cases:
-        # - Platform exists, host does = throw error here:
-        #    Although errors of this sort should ideally be caught on config
-        #    load this cannot be done because inheritance may create conflicts
-        #    which appear later. Although this error is also raised
-        #    by the platforms module it's probably worth putting it here too
-        #    to prevent trying to run the remote_host/platform_select logic for
-        #    tasks which will fail anyway later.
-        # - Platform exists, host doesn't = eval platform_name
-        # - host exists - eval host_n
-        # remove at:
-        #     Cylc8.x
         fail_if_platform_and_host_conflict(rtconfig, itask.tdef.name)
 
         host_name, platform_name = None, None
