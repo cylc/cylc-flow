@@ -422,7 +422,7 @@ async def release(
         only_match_pool=True,
     )
     _report_unmatched(unmatched, "held")
-    schd.pool.release_held_tasks(ids, matched, flow_num)
+    schd.pool.release_held_tasks(matched, flow_num)
 
 
 @_command('release_hold_point')
