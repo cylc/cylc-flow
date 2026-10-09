@@ -32,6 +32,9 @@ mkdir -p "${PWD}/cgroups_test_data"
 echo 'anon 12345678' > cgroups_test_data/memory.stat
 echo '123456789' > cgroups_test_data/memory.max
 printf "blah blah 123456\nusage_usec 56781234" > cgroups_test_data/cpu.stat
+# a real v2 hierarchy has its resource controllers enabled (in systemd
+# "hybrid" mode this file is empty and the controllers live on v1)
+echo 'cpuset cpu io memory hugetlb pids' > cgroups_test_data/cgroup.controllers
 
 export profiler_test_env_var='/cgroups_test_data'
 create_test_global_config "
