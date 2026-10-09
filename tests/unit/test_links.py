@@ -87,9 +87,10 @@ def test_embedded_url(link):
     try:
         make_request(link)
     except HTTPError as exc:
-        # Allowing 403 (forbidden) & 429 (rate-limited) as the link
-        # is probably valid, but we are blocked.
-        if exc.code in {403, 429}:
+        # Allowing 403 (forbidden), 429 (rate-limited), and 503
+        # (service unavailable) as the link is probably valid,
+        # but we are blocked.
+        if exc.code in {403, 429, 503}:
             pytest.skip(f'{exc} | {link}')
         # Sleep and retry to reduce risk of flakiness:
         sleep(10)
