@@ -23,15 +23,20 @@ Reason for doing this here:
   for them to show up in Cylc.
 """
 
-import os
-import re
-import pytest
 import fnmatch
-
-from time import sleep
+import os
 from pathlib import Path
+import re
+from time import sleep
 from urllib import request
 from urllib.error import HTTPError
+
+import pytest
+
+
+class LinkCheckError(Exception):
+    """A link has failed to validate."""
+
 
 EXCLUDE = [
     r'*//www.gnu.org/licenses/',
@@ -91,4 +96,4 @@ def test_embedded_url(link):
         try:
             make_request(link)
         except HTTPError as exc:
-            raise Exception(f'{exc} | {link}')
+            raise LinkCheckError(f'{exc} | {link}') from None
