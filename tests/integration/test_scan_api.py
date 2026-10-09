@@ -332,7 +332,6 @@ async def test_scan_fail_well_when_client_unreachable(
     flows = []
     await main(opts, write=flows.append, scan_dir=test_dir)
 
-    # Check that the records contain a message but not an error
-    rec = caplog.records[-1]
-    assert not rec.exc_text
-    assert 'Workflow not running' in rec.msg
+    # Check that the records contain a message but not any errors.
+    assert all(rec.exc_info is None for rec in caplog.records)
+    assert any('Workflow not running' in rec.msg for rec in caplog.records)
