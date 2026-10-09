@@ -11,6 +11,16 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 <!-- towncrier release notes start -->
 
+## __cylc-8.6.7 (Released 2026-10-09)__
+
+### 🔧 Fixes
+
+[#7434](https://github.com/cylc/cylc-flow/pull/7434) - Fixed a bug where `cylc set` could clobber the history of a completed task.
+
+[#7447](https://github.com/cylc/cylc-flow/pull/7447) - Fixed an issue in `cylc.pre_configure` plugins where `templating_detected` could be set incorrectly when multiple plugins are run.
+
+[#7516](https://github.com/cylc/cylc-flow/pull/7516) - Fixed a bug introduced in 8.6.6 that prevented custom outputs from triggering dependent tasks immediately
+
 ## __cylc-8.6.6 (Released 2026-09-10)__
 
 ### 🚀 Enhancements
