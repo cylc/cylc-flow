@@ -55,12 +55,17 @@
     # this task will poll the active jobs and hopefully detect their
     # success / failure
     [[poller]]
+        execution time limit = PT5M
         script = """
-            # give a bit of grace time for the job to leave the job runner queue
-            sleep 5
+            # while this workflow has multiple tasks running
+            while [[ $(cylc dump -t "${CYLC_WORKFLOW_ID}" | grep running | wc -l) -gt 1 ]]; do
+                # poll the job (it should change to a final state)
+                cylc poll "${CYLC_WORKFLOW_ID}//*/POLLABLE"
 
-            # poll the job (it should change to a final state)
-            cylc poll "${CYLC_WORKFLOW_ID}//*/POLLABLE"
+                # sleep a while then retry the poll to give a bit of grace time
+                # for the job to leave the job runner queue
+                sleep 5
+            done
 
             # shut down the scheduler (there should not be any active tasks
             # left to delay shutdown)

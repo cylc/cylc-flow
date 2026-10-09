@@ -22,6 +22,13 @@
 # https://github.com/cylc/cylc-flow/issues/6808
 export REQUIRE_PLATFORM='loc:remote runner:background'
 
+# NOTE: We are testing old-school host/job-runner selection - since multiple
+# platforms may match the host/job-runner pair, this test can fail depending on
+# the test platforms you have and the order they are defined in. Setting
+# `CYLC_INCLUDE_TEST_CONFIG=false` ensures that only the one test platform
+# appears in the test config, removing this degree of variability.
+CYLC_INCLUDE_TEST_CONFIG=false
+
 . "$(dirname "$0")/test_header"
 
 set_test_number 3
