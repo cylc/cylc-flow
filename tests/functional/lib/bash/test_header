@@ -148,6 +148,8 @@
 #         with PRE and POST pre- and ap-pended.
 #         PRE and POST are strings.
 #         The global config starts with #!Jinja2 in case Jinja2 is used.
+#         To prevent the *entire* global test config from being installed into
+#         the test config, specify CYLC_INCLUDE_TEST_CONFIG=true
 #     localhost_fqdn
 #         Get the FQDN of the current host using the same mechanism Cylc uses.
 #     get_fqdn [TARGET]
@@ -938,7 +940,7 @@ create_test_global_config() {
 __HERE__
     # add global-tests.cylc
     USER_TESTS_CONF_FILE="$(_get_test_config_file)"
-    if [[ -n "${USER_TESTS_CONF_FILE}" ]]; then
+    if ${CYLC_INCLUDE_TEST_CONFIG:-true} && [[ -n "${USER_TESTS_CONF_FILE}" ]]; then
         cat "${USER_TESTS_CONF_FILE}" >>'etc/global.cylc'
     fi
     # add platform config

@@ -13,6 +13,8 @@
     [[remote_task]]
         [[[remote]]]
             host = $(cat ${CYLC_WORKFLOW_RUN_DIR}/pretend-hall-info)
+        [[[job]]]
+            batch system = background
 
     [[toggler]]
         script = """
