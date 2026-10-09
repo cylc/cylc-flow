@@ -62,6 +62,11 @@ class WorkflowPublisher(ZMQSocketBase):
         # this limit on messages in queue is more than enough,
         # as messages correspond to scheduler loops (*messages/loop):
         self.socket.sndhwm = 1000
+        # allow more time for connect/reconnect
+        self.socket.setsockopt(zmq.CONNECT_TIMEOUT, 10 * 1000)
+        self.socket.setsockopt(zmq.RECONNECT_IVL_MAX, 5000)
+        # send heartbeat to keep subscriber connections active
+        self.socket.setsockopt(zmq.HEARTBEAT_IVL, 20 * 1000)
 
     def _bespoke_stop(self):
         """Bespoke stop items."""
