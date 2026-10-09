@@ -33,11 +33,14 @@ import pytest
 
 from cylc.flow import commands
 from cylc.flow.exceptions import CylcError
+from cylc.flow.id import Tokens
+from cylc.flow.network.resolvers import TaskMsg
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.scheduler import (
     Scheduler,
     SchedulerStop,
 )
+from cylc.flow.task_outputs import TASK_OUTPUT_STARTED
 from cylc.flow.task_remote_mgr import (
     REMOTE_FILE_INSTALL_255,
     REMOTE_FILE_INSTALL_DONE,
@@ -59,9 +62,6 @@ from cylc.flow.workflow_status import (
     StopMode,
 )
 
-
-from cylc.flow.network.resolvers import TaskMsg
-from cylc.flow.id import Tokens
 
 Fixture = Any
 
@@ -586,3 +586,36 @@ async def test_manage_remote_init_retry_on_255(
         mock_remote_init.assert_not_called()
         mock_file_install.assert_not_called()
         assert missing_target not in schd.incomplete_ri_map
+
+
+async def test_custom_output_runahead_release(flow, scheduler, run, complete):
+    """Test that a custom output can trigger runahead release of the
+    dependent task.
+
+    https://github.com/cylc/cylc-flow/pull/7516
+    """
+    wid = flow({
+        'scheduling': {
+            'graph': {'R1': 'a:x => b'},
+        },
+        'runtime': {
+            'a': {
+                'outputs': {'x': 'xray'},
+                'simulation': {'default run length': 'PT30S'},
+            },
+        },
+    })
+    schd: Scheduler = scheduler(wid, paused_start=False)
+    async with run(schd):
+        task_a = schd.pool._get_task_by_id('1/a')
+        task_a.submit_num = 1
+        schd.task_events_mgr.process_message(
+            task_a, logging.INFO, TASK_OUTPUT_STARTED
+        )
+        # Ensure started (& other, implied standard) outputs are air-gapped
+        # from the custom output by a main loop iteration, otherwise the bug
+        # may not be triggered:
+        await schd._main_loop()
+        schd.task_events_mgr.process_message(task_a, logging.INFO, 'xray')
+        # b should release and run:
+        await complete(schd, '1/b', timeout=5)
