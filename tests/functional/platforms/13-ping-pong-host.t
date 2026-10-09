@@ -27,7 +27,7 @@ export REQUIRE_PLATFORM='loc:remote runner:background'
 # the test platforms you have and the order they are defined in. Setting
 # `CYLC_INCLUDE_TEST_CONFIG=false` ensures that only the one test platform
 # appears in the test config, removing this degree of variability.
-CYLC_INCLUDE_TEST_CONFIG=false
+export CYLC_INCLUDE_TEST_CONFIG=false
 
 . "$(dirname "$0")/test_header"
 
