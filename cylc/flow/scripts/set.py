@@ -142,7 +142,10 @@ from cylc.flow.terminal import (
     cli_function,
     flatten_cli_lists
 )
-from cylc.flow.flow_mgr import add_flow_opts_for_trigger_and_set
+from cylc.flow.flow_mgr import (
+    add_flow_opts_for_trigger_and_set,
+    validate_flow_opt
+)
 
 
 if TYPE_CHECKING:
@@ -216,6 +219,11 @@ def get_option_parser() -> COP:
 
     add_flow_opts_for_trigger_and_set(parser)
     return parser
+
+
+def _validate(options: 'Values', *task_globs: str) -> None:
+    """Check options are valid."""
+    validate_flow_opt(options.flow_num)
 
 
 async def run(

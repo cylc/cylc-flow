@@ -25,7 +25,7 @@ CREATE TABLE task_prerequisites(cycle TEXT, name TEXT, flow_nums TEXT, prereq_na
 CREATE TABLE task_states(name TEXT, cycle TEXT, flow_nums TEXT, time_created TEXT, time_updated TEXT, submit_num INTEGER, status TEXT, flow_wait INTEGER, is_manual_submit INTEGER, PRIMARY KEY(name, cycle, flow_nums));
 INSERT INTO task_states VALUES('foo','1','[1]','2024-06-05T16:36:55+12:00','2024-06-05T16:36:57+12:00',1,'succeeded',0,0);
 CREATE TABLE task_timeout_timers(cycle TEXT, name TEXT, timeout REAL, PRIMARY KEY(cycle, name));
-CREATE TABLE tasks_to_hold(name TEXT, cycle TEXT);
+CREATE TABLE tasks_to_hold(name TEXT, cycle TEXT, flow TEXT);
 CREATE TABLE workflow_flows(flow_num INTEGER, start_time TEXT, description TEXT, PRIMARY KEY(flow_num));
 INSERT INTO workflow_flows VALUES(1,'2024-06-05T16:36:55','original flow from 1');
 CREATE TABLE workflow_params(key TEXT, value TEXT, PRIMARY KEY(key));

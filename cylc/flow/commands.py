@@ -85,6 +85,7 @@ from cylc.flow.exceptions import (
 import cylc.flow.flags
 from cylc.flow.flow_mgr import FLOW_NONE, repr_flow_nums
 from cylc.flow.id import TaskTokens
+from cylc.flow.id_match import id_match
 from cylc.flow.log_level import log_level_to_verbosity
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.prerequisite import PrereqTuple
@@ -145,16 +146,20 @@ def _command(name: str):
     return _command
 
 
-def _report_unmatched(unmatched: Set[TaskTokens]):
+def _report_unmatched(unmatched: Set[TaskTokens], descriptor=""):
     """Log unmatched IDs."""
+    things = "tasks"
+    if descriptor:
+        things = f"{descriptor} {things}"
+
     if len(unmatched) == 1:
         LOG.warning(
-            'No tasks match'
+            f'No {things} match'
             f' "{next(iter(unmatched)).relative_id_with_selectors}"'
         )
     elif len(unmatched) > 1:
         LOG.warning(
-            'No tasks match the IDs:\n* '
+            f'No {things} match the IDs:\n* '
             + '\n* '.join(
                 sorted([id_.relative_id_with_selectors for id_ in unmatched])
             )
@@ -398,20 +403,40 @@ async def stop(
 
 
 @_command('release')
-async def release(schd: 'Scheduler', tasks: Iterable[str]):
+async def release(
+    schd: 'Scheduler',
+    tasks: Iterable[str],
+    flow_num: int | None = None
+):
     """Release held tasks."""
     ids = validate.is_tasks(tasks)
     yield
-    yield schd.pool.release_held_tasks(ids)
+
+    matched, unmatched = id_match(
+        schd.config,
+        {
+            # only match held tasks
+            TaskTokens(cycle=str(cycle), task=task)
+            for task, cycle, _ in schd.pool.hold_mgr._flatten()
+        },
+        ids,
+        # only match tasks within the held task list
+        only_match_pool=True,
+    )
+    _report_unmatched(unmatched, "held")
+    schd.pool.release_held_tasks(matched, flow_num)
 
 
 @_command('release_hold_point')
-async def release_hold_point(schd: 'Scheduler'):
+async def release_hold_point(
+    schd: 'Scheduler',
+    flow_num: int | None = None
+):
     """Release all held tasks and unset workflow hold after cycle point,
     if set."""
     yield
     LOG.info("Releasing all tasks and removing hold cycle point.")
-    schd.pool.release_hold_point()
+    schd.pool.release_hold_point(flow_num)
     schd._update_workflow_state()
 
 
@@ -453,15 +478,23 @@ async def kill_tasks(schd: 'Scheduler', tasks: Iterable[str]):
 
 
 @_command('hold')
-async def hold(schd: 'Scheduler', tasks: Iterable[str]):
+async def hold(
+    schd: 'Scheduler',
+    tasks: Iterable[str],
+    flow_num: int | None = None
+):
     """Hold specified tasks."""
     ids = validate.is_tasks(tasks)
     yield
-    yield schd.pool.hold_tasks(ids)
+    yield schd.pool.hold_tasks(ids, flow_num)
 
 
 @_command('set_hold_point')
-async def set_hold_point(schd: 'Scheduler', point: str):
+async def set_hold_point(
+    schd: 'Scheduler',
+    point: str,
+    flow_num: int | None = None
+):
     """Hold all tasks after the specified cycle point."""
     cycle_point = TaskID.get_standardised_point(point)
     if cycle_point is None:
@@ -471,7 +504,7 @@ async def set_hold_point(schd: 'Scheduler', point: str):
         f"Setting hold cycle point: {cycle_point}\n"
         "All tasks after this point will be held."
     )
-    schd.pool.set_hold_point(cycle_point)
+    schd.pool.set_hold_point(cycle_point, flow_num)
     schd._update_workflow_state()
 
 
