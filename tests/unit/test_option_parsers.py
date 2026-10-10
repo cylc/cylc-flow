@@ -106,6 +106,20 @@ def test_Options_std_opts():
     assert MyValues.verbosity == 1
 
 
+def test_parse_args_no_auto_add():
+    """parse_args should work when the standard options are not added.
+
+    The standard options define --verbose/--debug/--timestamp, so with
+    auto_add=False the logging setup must not read them.
+
+    See https://github.com/cylc/cylc-flow/issues/7251
+    """
+    parser = COP(USAGE_WITH_COMMENT, auto_add=False)
+    options, args = parser.parse_args([])
+    assert args == []
+    assert not hasattr(options, 'verbosity')
+
+
 # Add overlapping args tomorrow
 @pytest.mark.parametrize(
     'first, second, expect',
