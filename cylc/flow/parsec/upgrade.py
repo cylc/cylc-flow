@@ -17,7 +17,7 @@
 """Support automatic deprecation and obsoletion of parsec config items."""
 
 import contextlib
-from logging import DEBUG, WARNING
+from logging import DEBUG, ERROR, WARNING
 
 from cylc.flow import LOG
 from cylc.flow.parsec.exceptions import UpgradeError
@@ -271,7 +271,10 @@ class upgrader:
             else:
                 # User level configuration, user should be able to fix.
                 # Log at warning level.
-                level = WARNING
+                if upg.get('remove_at') == '8.9':
+                    level = ERROR
+                else:
+                    level = WARNING
             if obsoletions:
                 LOG.log(level, self.obslt_msg)
             if deprecations:

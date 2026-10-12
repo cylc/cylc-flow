@@ -2734,7 +2734,7 @@ class WorkflowConfig:
                     f'Invalid template [meta]URL: {url}'
                 ) from None
             else:
-                LOG.warning(
+                LOG.error(
                     'Detected deprecated template variables in [meta]URL. '
                     'Support will be removed in Cylc 8.9.'
                     '\nSee the configuration documentation for details.'
@@ -2769,7 +2769,7 @@ class WorkflowConfig:
                         f'Invalid template [meta]URL: {url}'
                     ) from None
                 else:
-                    LOG.warning(
+                    LOG.error(
                         'Detected deprecated template variables in'
                         f' [runtime][{name}][meta]URL. Support will be '
                         'removed in Cylc 8.9.'
@@ -2855,7 +2855,7 @@ class WorkflowConfig:
                         WorkflowEventHandler.EVENTS_DEPRECATED[event]
                     )
             if upgraded:
-                LOG.warning(
+                LOG.error(
                     f"{upgrader.depr_msg}\n"
                     f" * (8.0.0) [scheduler][events][{setting}] "
                     + ', '.join(f'{k} -> {v}' for k, v in upgraded.items())
