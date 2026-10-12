@@ -749,6 +749,7 @@ def _force_trigger_tasks(
         # Group start tasks are not removed, but a reload would
         # replace them, so using the TaskDef is fine.
         inactive.remove(itask.tokens.task)
+        LOG.debug("Active task: %s", itask)
 
         if not any(
             TaskTokens(str(trg.get_point(itask.point)), trg.task_name)
@@ -802,6 +803,7 @@ def _force_trigger_tasks(
         msg = '\n  * '.join(warnings_has_job)
         LOG.warning(f"Job already in process - ignoring trigger:\n  * {msg}")
 
+    LOG.debug("Active to remove: %s, Inactive: %s", active_to_remove, inactive)
     # Remove all inactive and selected active group members.
     if flow != [FLOW_NONE]:
         # (No need to remove tasks if triggering with no-flow).
@@ -840,6 +842,7 @@ def _force_trigger_tasks(
         jtask: Optional[TaskProxy] = None
         if tdef.is_parentless(icycle, cutoff=schd.config.initial_point):
             # Parentless: set all prereqs to spawn the task.
+            LOG.debug("%s is parentless.", tdef)
             jtask = schd.pool._set_prereqs_tdef(
                 icycle, tdef,
                 [],  # prerequisites
@@ -850,6 +853,9 @@ def _force_trigger_tasks(
             )
         else:
             _prereqs = tdef.get_prereqs(icycle)
+            LOG.debug("%s has prerequisites: %s", tdef, ", ".join(str(pre) for pre in _prereqs))
+            for pre in _prereqs:
+                LOG.debug("Point: %s, Keys: %s", pre.point, pre._satisfied)
             # Off-flow prereqs to satisfy, for the triggered flow:
             prereqs_to_set = {
                 PrereqTuple(str(key.point), str(key.task), key.output)
@@ -872,6 +878,9 @@ def _force_trigger_tasks(
                 if (str(key.point), key.task) in active_completed_outputs
             })
 
+            LOG.debug("prereqs_to_set: %s", prereqs_to_set)
+            LOG.debug("in_flow_prereqs: %s", in_flow_prereqs)
+
             if (
                 prereqs_to_set
                 or tdef.get_xtrigs(icycle)
@@ -886,11 +895,14 @@ def _force_trigger_tasks(
                     flow_wait,
                     set_all=False
                 )
+                LOG.debug("Setting jtask %s for %s", jtask, tdef)
                 if jtask is not None and tdef.external_triggers:
                     jtask.force_satisfy_external_triggers()
 
         if jtask is not None and not in_flow_prereqs:
             # Trigger group start task.
             schd.pool.queue_or_trigger(jtask)
+
+        LOG.debug("jtask: %s", jtask)
 
     schd.pool.release_runahead_tasks()
