@@ -699,7 +699,15 @@ def ingest_time(value: str, now: Optional[str] = None) -> str:
         timepoint = None
         is_truncated = None
     else:
-        timepoint = parser.parse(value)
+        try:
+            timepoint = parser.parse(value)
+        except ISO8601SyntaxError:
+            raise
+        except ValueError as exc:
+            # The parser can fail with a bare ValueError on some malformed
+            # input (e.g. "T, T"); convert it to a recognisable syntax error
+            # so callers report it cleanly instead of tracing back.
+            raise ISO8601SyntaxError('date-time', value) from exc
         # missing date-time components off the front (e.g. 01T00)
         is_truncated = timepoint.truncated
 
