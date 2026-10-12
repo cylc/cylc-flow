@@ -27,10 +27,8 @@ from cylc.flow.exceptions import CylcProfilerError
 from cylc.flow.scripts.profiler import (
     Process,
     _main,
-    get_cgroup_name,
     get_cgroup_names,
     get_cgroup_paths,
-    get_cgroup_version,
     get_option_parser,
     get_profiler_data,
     main,
@@ -43,7 +41,7 @@ from cylc.flow.scripts.profiler import (
 )
 
 
-async def test_report_to_scheduler(monkeypatch, tmpdir):
+async def test_report_to_scheduler(monkeypatch, tmp_path):
     """It should capture and record profiler data."""
     monkeypatch.setenv('CYLC_WORKFLOW_ID', "test_value")
     monkeypatch.setenv('CYLC_TASK_JOB', "test_task_job")
@@ -55,13 +53,13 @@ async def test_report_to_scheduler(monkeypatch, tmpdir):
     )
 
     # mock the cGroup filesystem
-    mem_file = tmpdir.join("memory_file.txt")
-    mem_file.write('total_rss=1234')
-    cpu_file = tmpdir.join("cpu_file.txt")
-    cpu_file.write('5678000')
+    mem_file = tmp_path / "memory_file.txt"
+    mem_file.write_text('total_rss=1234')
+    cpu_file = tmp_path / "cpu_file.txt"
+    cpu_file.write_text('5678000')
     # NOTE: memory allocated is not available for cGroups v1
-    mem_allocated_file = tmpdir.join("memory_allocated.txt")
-    mem_allocated_file.write('99999')
+    mem_allocated_file = tmp_path / "memory_allocated.txt"
+    mem_allocated_file.write_text('99999')
 
     process_object = Process(
         cgroup_memory_path=mem_file,
@@ -83,7 +81,8 @@ async def test_report_to_scheduler(monkeypatch, tmpdir):
                 [
                     'DEBUG',
                     '_cylc_profiler:'
-                    ' {"max_rss": 42, "cpu_time": 6, "memory_allocated": 0}',
+                    ' {"max_rss": 42, "cpu_time": 6,'
+                    '"memory_allocated": null}',
                 ]
             ],
             comms_timeout=1,
@@ -108,18 +107,18 @@ def test_get_resource_usage():
     }
 
 
-def test_parse_memory_file(tmpdir):
+def test_parse_memory_file(tmp_path):
     """It should return the memory usage of the process."""
-    mem_file_v1 = tmpdir.join("memory_file_v1.txt")
+    mem_file_v1 = tmp_path / "memory_file_v1.txt"
     # 2 MiB in bytes
-    mem_file_v1.write('total_rss=2097152')
-    mem_file_v2 = tmpdir.join("memory_file_v2.txt")
+    mem_file_v1.write_text('total_rss=2097152')
+    mem_file_v2 = tmp_path / "memory_file_v2.txt"
     # 3 MiB in bytes
-    mem_file_v2.write('anon=3145728')
-    cpu_file = tmpdir.join("cpu_file.txt")
-    cpu_file.write('5678')
-    mem_allocated_file = tmpdir.join("memory_allocated.txt")
-    mem_allocated_file.write('99999')
+    mem_file_v2.write_text('anon=3145728')
+    cpu_file = tmp_path / "cpu_file.txt"
+    cpu_file.write_text('5678')
+    mem_allocated_file = tmp_path / "memory_allocated.txt"
+    mem_allocated_file.write_text('99999')
 
     good_process_object_v1 = Process(
         cgroup_memory_path=mem_file_v1,
@@ -152,21 +151,21 @@ def test_parse_memory_file(tmpdir):
     assert parse_memory_file(good_process_object_v2) == 3145728
 
 
-def test_parse_cpu_file(tmpdir):
+def test_parse_cpu_file(tmp_path):
     """It should return the cpu usage of the process."""
-    mem_file = tmpdir.join("memory_file.txt")
-    mem_file.write('1024')
-    cpu_file_v1_good = tmpdir.join("cpu_file_v1_good.txt")
-    cpu_file_v1_good.write('1234567890')
-    cpu_file_v1_bad = tmpdir.join("cpu_file_v1_bad.txt")
-    cpu_file_v1_bad.write("I'm your dream, mind ashtray")
-    cpu_file_v2_good = tmpdir.join("cpu_file_v2_good.txt")
-    cpu_file_v2_good.write('usage_usec 1234567890')
-    cpu_file_v2_bad = tmpdir.join("cpu_file_v2_bad.txt")
-    cpu_file_v2_bad.write('Give me fuel, give me fire, '
-                          'give me that which I desire')
-    mem_allocated_file = tmpdir.join("memory_allocated.txt")
-    mem_allocated_file.write('99999')
+    mem_file = tmp_path / "memory_file.txt"
+    mem_file.write_text('1024')
+    cpu_file_v1_good = tmp_path / "cpu_file_v1_good.txt"
+    cpu_file_v1_good.write_text('1234567890')
+    cpu_file_v1_bad = tmp_path / "cpu_file_v1_bad.txt"
+    cpu_file_v1_bad.write_text("I'm your dream, mind ashtray")
+    cpu_file_v2_good = tmp_path / "cpu_file_v2_good.txt"
+    cpu_file_v2_good.write_text('usage_usec 1234567890')
+    cpu_file_v2_bad = tmp_path / "cpu_file_v2_bad.txt"
+    cpu_file_v2_bad.write_text('Give me fuel, give me fire, '
+                               'give me that which I desire')
+    mem_allocated_file = tmp_path / "memory_allocated.txt"
+    mem_allocated_file.write_text('99999')
 
     good_process_object_v1 = Process(
         cgroup_memory_path=mem_file,
@@ -216,20 +215,6 @@ def test_parse_cpu_file(tmpdir):
     with pytest.raises(CylcProfilerError) as excinfo:
         parse_cpu_file(bad_process_object_v2)
     assert "Unable to find cpu usage data" in str(excinfo.value)
-
-
-def test_get_cgroup_name(mocker):
-    """It should return the cgroup name of the process."""
-    mocker.patch.object(
-        Path, 'read_text', return_value="0::bad/test/cgroup/place"
-    )
-    with pytest.raises(CylcProfilerError):
-        get_cgroup_name()
-
-    mocker.patch.object(
-        Path, 'read_text', return_value="0::good/cgroup/place/2222222"
-    )
-    assert get_cgroup_name() == "good/cgroup/place/2222222"
 
 
 def test_parse_memory_allocated(tmp_path_factory):
@@ -306,9 +291,8 @@ def test_parse_memory_allocated(tmp_path_factory):
         cpu_version=2,
         max_rss=0)
 
-    # The function should return 0 if it cannot find a memory.max file with
-    # a value
-    assert parse_memory_allocated(bad_process_object_v2_2) == 0
+    # Memory allocated has not been found
+    assert parse_memory_allocated(bad_process_object_v2_2) is None
 
     # Add a memory.max file with a value to the top level directory
     # and check it is read
@@ -342,41 +326,11 @@ def test_parse_memory_allocated(tmp_path_factory):
     (v1_dir / "jobid" / "memory.limit_in_bytes").write_text("104857600")
     assert parse_memory_allocated(v1_process) == 104857600
 
-    # an unlimited v1 cgroup should report 0 rather than the sentinel value
+    # an unlimited v1 cgroup should report None rather than the sentinel value
     (v1_dir / "jobid" / "memory.limit_in_bytes").write_text(
         "9223372036854771712"
     )
-    assert parse_memory_allocated(v1_process) == 0
-
-
-def test_get_cgroup_name_file_not_found(mocker):
-    """It should raise an error if the cgroup file is not found."""
-    def mock_os_pid():
-        return 'The Thing That Should Not Be'
-
-    mocker.patch("os.getpid", mock_os_pid)
-    with pytest.raises(CylcProfilerError) as excinfo:
-        get_cgroup_name()
-    assert "/cgroup not found" in str(excinfo.value)
-
-
-def test_get_cgroup_version(mocker):
-    """It should return the cgroup version of the process."""
-    # Mock the Path.exists function call to return True
-    mocker.patch("pathlib.Path.exists", return_value=True)
-    assert get_cgroup_version(Path('stuff/in/place'),
-                              'more_stuff') == 2
-
-    with mock.patch('pathlib.Path.exists', side_effect=[False, True]):
-        assert get_cgroup_version(Path('stuff/in/place'),
-                                  'more_stuff') == 1
-
-    # Mock the Path.exists function call to return False
-    mocker.patch("pathlib.Path.exists", return_value=False)
-    with pytest.raises(CylcProfilerError) as excinfo:
-        get_cgroup_version(Path('stuff/in/other/place'),
-                           'things')
-    assert "Cgroup not found" in str(excinfo.value)
+    assert parse_memory_allocated(v1_process) is None
 
 
 def test_get_cgroup_paths(mocker, tmp_path):
@@ -592,8 +546,6 @@ def test_get_cgroup_names_test_env_var(monkeypatch):
         'cpu': 'test/cgroup/name',
         'cpuacct': 'test/cgroup/name',
     }
-    # the legacy single-name lookup uses it as well
-    assert get_cgroup_name() == '/test/cgroup/name'
 
 
 def test_get_cgroup_names_file_not_found(mocker, monkeypatch):
@@ -658,7 +610,7 @@ def test_parse_cpu_file_empty(tmp_path):
 
 
 def test_parse_cpu_file_unknown_version(tmp_path):
-    """It should return 0 if the cgroup version is not one it handles."""
+    """It should return None if the cgroup version is not one it handles."""
     process = Process(
         cgroup_memory_path='',
         cgroup_cpu_path=tmp_path / 'cpu.stat',
@@ -666,7 +618,7 @@ def test_parse_cpu_file_unknown_version(tmp_path):
         memory_version=3,
         cpu_version=3,
         max_rss=0)
-    assert parse_cpu_file(process) == 0
+    assert parse_cpu_file(process) is None
 
 
 def test_parse_memory_allocated_bad_data(tmp_path):
@@ -730,7 +682,7 @@ def test_parse_memory_allocated_walk_limit(tmp_path):
             memory_version=version,
             cpu_version=version,
             max_rss=0)
-        assert parse_memory_allocated(process) == 0
+        assert parse_memory_allocated(process) is None
 
 
 def test_get_option_parser():

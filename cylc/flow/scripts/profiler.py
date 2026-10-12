@@ -28,6 +28,7 @@ import os
 from pathlib import Path
 import re
 import signal
+from typing import Literal
 
 import psutil
 
@@ -125,32 +126,35 @@ def parse_memory_file(process: Process):
 
 
 def parse_memory_allocated(process: Process) -> int | None:
-    """Open the memory stat file and copy the appropriate data"""
+    """Return the cgroup maximum memory limit."""
+
+    memory_max_file_name = "memory.max"
+    memory_limit_file_name = "memory.limit_in_bytes"
+    unlimited_marker = "max"
+
+    cgroup_memory_path = process.memory_allocated_path
     if process.memory_version == 2:
-        try:
-            cgroup_memory_path = process.memory_allocated_path
-            for _ in range(10):
-                memory_max_file = cgroup_memory_path / "memory.max"
-                if not os.path.isfile(memory_max_file):
-                    # we have walked off the top of the cgroup filesystem
-                    break
+        for _ in range(10):
+            memory_max_file = cgroup_memory_path / memory_max_file_name
+            if not memory_max_file.is_file():
+                # we have walked off the top of the cgroup filesystem
+                break
+            try:
                 with open(memory_max_file, 'r') as f:
                     line = f.readline()
-                    if "max" not in line:
+                    if unlimited_marker not in line:
                         return int(line)
                     cgroup_memory_path = cgroup_memory_path.parent
-        except Exception as err:
-            raise CylcProfilerError(
-                err, "Unable to find memory allocation") from err
+            except Exception as err:
+                raise CylcProfilerError(
+                    err, "Unable to find memory allocation") from err
     if process.memory_version == 1:
-        try:
-            cgroup_memory_path = process.memory_allocated_path
-            for _ in range(10):
-                memory_limit_file = (cgroup_memory_path /
-                                     "memory.limit_in_bytes")
-                if not os.path.isfile(memory_limit_file):
-                    # we have walked off the top of the cgroup filesystem
-                    break
+        for _ in range(10):
+            memory_limit_file = cgroup_memory_path / memory_limit_file_name
+            if not memory_limit_file.is_file():
+                # we have walked off the top of the cgroup filesystem
+                break
+            try:
                 with open(memory_limit_file, 'r') as f:
                     line = f.readline()
                     # cgroups v1 uses a huge number, rather than "max", to
@@ -161,14 +165,14 @@ def parse_memory_allocated(process: Process) -> int | None:
                     if int(line) < CGROUP_V1_UNLIMITED:
                         return int(line)
                     cgroup_memory_path = cgroup_memory_path.parent
-        except Exception as err:
-            raise CylcProfilerError(
-                err, "Unable to find memory allocation") from err
+            except Exception as err:
+                raise CylcProfilerError(
+                    err, "Unable to find memory allocation") from err
     # no limit is set anywhere in this cgroup's ancestry
-    return 0
+    return None
 
 
-def parse_cpu_file(process: Process) -> int:
+def parse_cpu_file(process: Process) -> int | None:
     """Open the CPU stat file and return the appropriate data"""
     try:
         if process.cpu_version == 2:
@@ -188,7 +192,7 @@ def parse_cpu_file(process: Process) -> int:
     except Exception as err:
         raise CylcProfilerError(
             err, "Unable to find cpu usage data") from err
-    return 0
+    return None
 
 
 def get_cgroup_names() -> dict:
@@ -211,8 +215,7 @@ def get_cgroup_names() -> dict:
         name = os.environ['profiler_test_env_var'].lstrip('/')
         return {'v2': name, 'memory': name, 'cpu': name, 'cpuacct': name}
 
-    pid = os.getpid()
-    cgroup_path = Path('/proc') / str(pid) / 'cgroup'
+    cgroup_path = Path('/proc/self/cgroup')
     try:
         result = cgroup_path.read_text()
     except Exception as err:
@@ -222,6 +225,7 @@ def get_cgroup_names() -> dict:
     names = {}
     for line in result.splitlines():
         fields = line.split(':', 2)
+        # Skip over any line that we don't care about
         if len(fields) != 3:
             continue
         hierarchy_id, controllers, path = fields
@@ -229,7 +233,7 @@ def get_cgroup_names() -> dict:
         if hierarchy_id == '0' and not controllers:
             # the unified (v2) hierarchy
             names['v2'] = path
-        else:
+        elif controllers:
             for controller in controllers.split(','):
                 # "name=systemd" is a named v1 hierarchy, not a controller
                 if not controller.startswith('name='):
@@ -259,7 +263,7 @@ def v2_controllers_enabled(directory: Path) -> bool:
 
 def get_controller_paths(
     location: Path, names: dict, controller: str, v2_file: str, v1_file: str
-):
+) -> tuple[Literal[1, 2], Path]:
     """Locate the cgroup directory holding a controller's data.
 
     Prefers cgroups v2, falling back to v1 if the v2 hierarchy does not
@@ -271,7 +275,7 @@ def get_controller_paths(
     if 'v2' in names:
         directory = location / names['v2']
         if (
-            os.path.isfile(directory / v2_file)
+            (directory / v2_file).is_file()
             and v2_controllers_enabled(directory)
         ):
             return 2, directory
@@ -284,48 +288,13 @@ def get_controller_paths(
             if name is None:
                 continue
             directory = location / mount / name
-            if os.path.isfile(directory / v1_file):
+            if (directory / v1_file).is_file():
                 return 1, directory
 
     raise CylcProfilerError(
         FileNotFoundError(location),
         f"Cgroup not found for the {controller} controller under {location}"
     )
-
-
-def get_cgroup_version(cgroup_location: Path, cgroup_name: str) -> int:
-    # Strip leading '/' so the name is treated as relative when joined
-    cgroup_name = cgroup_name.lstrip('/')
-    try:
-        if (cgroup_location / cgroup_name).exists():
-            return 2
-        elif (cgroup_location / "memory" / cgroup_name).exists():
-            return 1
-        raise FileNotFoundError(cgroup_location / cgroup_name)
-    except Exception as err:
-        raise CylcProfilerError(
-            err, f"Cgroup not found at {cgroup_location / cgroup_name}"
-        ) from err
-
-
-def get_cgroup_name():
-    """Get the cgroup directory for the current process"""
-
-    # fugly hack to allow functional tests to use test data
-    if 'profiler_test_env_var' in os.environ:
-        return os.environ['profiler_test_env_var']
-
-    # Get the PID of the current process
-    pid = os.getpid()
-    cgroup_path = Path('/proc') / str(pid) / 'cgroup'
-    try:
-        # Get the cgroup information for the current process
-        result = cgroup_path.read_text()
-        return PID_REGEX.search(result).group().lstrip('/')
-
-    except Exception as err:
-        raise CylcProfilerError(
-            err, f'{cgroup_path} not found') from err
 
 
 def get_cgroup_paths(location: Path) -> Process:
