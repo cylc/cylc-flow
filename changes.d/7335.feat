@@ -1,2 +1,0 @@
-New `cylc dump` command option to print full task IDs for easy cut-and-paste
-to other commands.
