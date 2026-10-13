@@ -744,7 +744,7 @@ MANUAL_DEPRECATIONS = {
             ]
         ),
         'url': '''
-            https://cylc.github.io/cylc-doc/stable/html/reference/job-script-vars/index.html
+            https://cylc.github.io/cylc-doc/stable/html/reference/env-vars.html#job-script-environment-variables
         ''',
         FUNCTION: check_for_deprecated_environment_variables,
     },
@@ -756,7 +756,7 @@ MANUAL_DEPRECATIONS = {
             + ''.join([f'\n * ``{old}``' for old in OBSOLETE_ENV_VARS])
         ),
         'url': '''
-            https://cylc.github.io/cylc-doc/stable/html/reference/job-script-vars/index.html
+            https://cylc.github.io/cylc-doc/stable/html/reference/env-vars.html#job-script-environment-variables
         ''',
         FUNCTION: check_for_obsolete_environment_variables,
     },
