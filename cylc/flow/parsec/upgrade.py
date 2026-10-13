@@ -271,6 +271,10 @@ class upgrader:
             else:
                 # User level configuration, user should be able to fix.
                 # Log at warning level.
+
+                # BACK COMPAT: In Cylc 8.8 display Errors for
+                # deprecations but allow workflow to run and be upgraded
+                # remove after: 8.9 has workflows failing to validate
                 if upg.get('remove_at') == '8.9':
                     level = ERROR
                 else:
