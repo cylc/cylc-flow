@@ -62,7 +62,7 @@
                 # poll the job (it should change to a final state)
                 cylc poll "${CYLC_WORKFLOW_ID}//*/POLLABLE"
 
-                # sleep a while then retry the poll to give a bit of grace time
+                # sleep awhile then retry the poll to give a bit of grace time
                 # for the job to leave the job runner queue
                 sleep 5
             done
