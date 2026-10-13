@@ -156,7 +156,7 @@ jobs:
 
       - name: Install
         run: |
-          pip install -e ."[all]"
+          pip install -e --group dev
           mkdir "$HOME/cylc-run"
 
       - name: Configure Atrun
