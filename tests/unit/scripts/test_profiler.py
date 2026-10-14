@@ -82,7 +82,7 @@ async def test_report_to_scheduler(monkeypatch, tmp_path):
                     'DEBUG',
                     '_cylc_profiler:'
                     ' {"max_rss": 42, "cpu_time": 6,'
-                    '"memory_allocated": null}',
+                    ' "memory_allocated": null}',
                 ]
             ],
             comms_timeout=1,
