@@ -133,28 +133,24 @@ def parse_memory_allocated(process: Process) -> int | None:
     unlimited_marker = "max"
 
     cgroup_memory_path = process.memory_allocated_path
-    if process.memory_version == 2:
-        for _ in range(10):
-            memory_max_file = cgroup_memory_path / memory_max_file_name
-            if not memory_max_file.is_file():
-                # we have walked off the top of the cgroup filesystem
-                break
-            try:
+    try:
+        if process.memory_version == 2:
+            for _ in range(10):
+                memory_max_file = cgroup_memory_path / memory_max_file_name
+                if not memory_max_file.is_file():
+                    # we have walked off the top of the cgroup filesystem
+                    break
                 with open(memory_max_file, 'r') as f:
                     line = f.readline()
                     if unlimited_marker not in line:
                         return int(line)
-                    cgroup_memory_path = cgroup_memory_path.parent
-            except Exception as err:
-                raise CylcProfilerError(
-                    err, "Unable to find memory allocation") from err
-    if process.memory_version == 1:
-        for _ in range(10):
-            memory_limit_file = cgroup_memory_path / memory_limit_file_name
-            if not memory_limit_file.is_file():
-                # we have walked off the top of the cgroup filesystem
-                break
-            try:
+                cgroup_memory_path = cgroup_memory_path.parent
+        if process.memory_version == 1:
+            for _ in range(10):
+                memory_limit_file = cgroup_memory_path / memory_limit_file_name
+                if not memory_limit_file.is_file():
+                    # we have walked off the top of the cgroup filesystem
+                    break
                 with open(memory_limit_file, 'r') as f:
                     line = f.readline()
                     # cgroups v1 uses a huge number, rather than "max", to
@@ -164,10 +160,11 @@ def parse_memory_allocated(process: Process) -> int | None:
                     # usual 4K pages) - test a threshold, not equality.
                     if int(line) < CGROUP_V1_UNLIMITED:
                         return int(line)
-                    cgroup_memory_path = cgroup_memory_path.parent
-            except Exception as err:
-                raise CylcProfilerError(
-                    err, "Unable to find memory allocation") from err
+                cgroup_memory_path = cgroup_memory_path.parent
+    except Exception as err:
+        raise CylcProfilerError(
+            err, "Unable to find memory allocation"
+        ) from err
     # no limit is set anywhere in this cgroup's ancestry
     return None
 
