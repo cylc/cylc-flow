@@ -51,7 +51,9 @@ def schd(
         stop_mode=stop_mode,
         reload_pending=reload_pending,
         pool=SimpleNamespace(
-            hold_point=hold_point,
+            hold_mgr=SimpleNamespace(
+                hold_point=hold_point
+            ),
             stop_point=stop_point,
             stop_task_id=stop_task_id,
         ),

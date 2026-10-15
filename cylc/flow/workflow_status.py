@@ -192,7 +192,7 @@ def _get_earliest_stop_point_status_msg(pool: 'TaskPool') -> Optional[str]:
     )
     for point, tmpl in (
         (pool.stop_point, WORKFLOW_STATUS_RUNNING_TO_STOP),
-        (pool.hold_point, WORKFLOW_STATUS_RUNNING_TO_HOLD)
+        (pool.hold_mgr.hold_point, WORKFLOW_STATUS_RUNNING_TO_HOLD)
     ):
         if point is not None and (min_point is None or point < min_point):
             template = tmpl
