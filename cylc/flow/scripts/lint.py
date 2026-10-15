@@ -51,6 +51,7 @@ pyproject.toml configuration:
    max-line-length = 130        # Max line length for linting
 """
 from collections import Counter
+from contextlib import suppress
 import functools
 from pathlib import Path
 import pkgutil
@@ -106,15 +107,8 @@ if TYPE_CHECKING:
     from optparse import Values
 
 
-LINT_TABLE = ['tool', 'cylc', 'lint']
+LINT_TABLE = ('tool', 'cylc', 'lint')
 LINT_SECTION = '.'.join(LINT_TABLE)
-
-# BACK COMPAT: DEPR_LINT_SECTION
-# url: https://github.com/cylc/cylc-flow/issues/5811
-# from: 8.1.0
-# to: 8.3.0
-# remove at: 8.8
-DEPR_LINT_SECTION = 'cylc-lint'
 
 IGNORE = 'ignore'
 EXCLUDE = 'exclude'
@@ -927,17 +921,8 @@ def get_pyproject_toml(dir_: Path) -> dict[str, Any]:
             raise CylcError(f'pyproject.toml did not load: {exc}') from None
 
         _tool, _cylc, _lint = LINT_TABLE
-        try:
-            data = loadeddata[_tool][_cylc][_lint]
-        except KeyError:
-            if DEPR_LINT_SECTION in loadeddata:
-                LOG.warning(
-                    f"The [{DEPR_LINT_SECTION}] section in pyproject.toml is "
-                    "deprecated and support will be removed in Cylc 8.8. "
-                    f"Use [{LINT_SECTION}] instead."
-                )
-            data = loadeddata.get(DEPR_LINT_SECTION, {})
-        tomldata.update(data)
+        with suppress(KeyError):
+            tomldata.update(loadeddata[_tool][_cylc][_lint])
         validate_toml_items(tomldata)
 
     return tomldata
