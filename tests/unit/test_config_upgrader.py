@@ -112,7 +112,7 @@ def test_upgrade_param_env_templates(cfg, expected, log_filter):
     upgrade_param_env_templates(config, 'flow.cylc')
     assert config == _cfg(expected)
     assert log_filter(
-        logging.WARNING,
+        logging.ERROR,
         contains=(
             "support for parameter environment templates will be "
             "removed at Cylc 8.9"
