@@ -555,28 +555,31 @@ class CylcOptionParser(OptionParser):
                 options.templatevars_file)
             )
 
-        cylc.flow.flags.verbosity = options.verbosity
+        # The verbosity and log timestamp options are only defined when the
+        # standard options have been added, so only configure logging then.
+        if self.auto_add:
+            cylc.flow.flags.verbosity = options.verbosity
 
-        # Set up stream logging for CLI. Note:
-        # 1. On choosing STDERR: Log messages are diagnostics, so STDERR is the
-        #    better choice for the logging stream. This allows us to use STDOUT
-        #    for verbosity agnostic outputs.
-        # 2. Scheduler will remove this handler when it becomes a daemon.
-        LOG.setLevel(verbosity_to_log_level(options.verbosity))
-        # Remove NullHandler before add the StreamHandler
+            # Set up stream logging for CLI. Note:
+            # 1. On choosing STDERR: Log messages are diagnostics, so STDERR is
+            #    the better choice for the logging stream. This allows us to
+            #    use STDOUT for verbosity agnostic outputs.
+            # 2. Scheduler will remove this handler when it becomes a daemon.
+            LOG.setLevel(verbosity_to_log_level(options.verbosity))
+            # Remove NullHandler before add the StreamHandler
 
-        while LOG.handlers:
-            LOG.handlers[0].close()
-            LOG.removeHandler(LOG.handlers[0])
-        log_handler = logging.StreamHandler(sys.stderr)
-        log_handler.setFormatter(CylcLogFormatter(
-            timestamp=options.log_timestamp,
-            dev_info=(options.verbosity > 2)
-        ))
-        LOG.addHandler(log_handler)
+            while LOG.handlers:
+                LOG.handlers[0].close()
+                LOG.removeHandler(LOG.handlers[0])
+            log_handler = logging.StreamHandler(sys.stderr)
+            log_handler.setFormatter(CylcLogFormatter(
+                timestamp=options.log_timestamp,
+                dev_info=(options.verbosity > 2)
+            ))
+            LOG.addHandler(log_handler)
 
-        if self.segregated_log:
-            setup_segregated_log_streams(LOG, log_handler)
+            if self.segregated_log:
+                setup_segregated_log_streams(LOG, log_handler)
 
         return (options, args)
 
