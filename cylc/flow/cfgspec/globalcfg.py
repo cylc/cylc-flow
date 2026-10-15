@@ -163,7 +163,7 @@ LOG_RETR_SETTINGS = {
         subsequent retrieval attempts.
 
         Job log retrieval will be retried until the expected job files have
-        been retried, see
+        been retrieved, see
         :cylc:conf:`
         global.cylc[platforms][<platform name>]retrieve job log expected files`
         for details
