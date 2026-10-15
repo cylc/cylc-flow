@@ -1483,6 +1483,9 @@ class Scheduler:
             elif key == self.workflow_db_mgr.KEY_CYCLE_POINT_TIME_ZONE:
                 self.options.cycle_point_tz = value
                 LOG.info(f"+ cycle point time zone = {value}")
+            elif key == self.workflow_db_mgr.KEY_CYCLE_POINT_FORMAT:
+                self.options._cycle_point_format = value
+                LOG.info(f"+ cycle point format = {value}")
 
     def _load_template_vars(self, _, row):
         """Load workflow start up template variables."""
