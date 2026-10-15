@@ -794,21 +794,27 @@ with Conf(
             Family names can be used in special task lists as shorthand for
             listing all member tasks.
         '''):
+            # BACK COMPAT
+            # remove at: 8.9
             Conf('clock-trigger', VDR.V_STRING_LIST, desc='''
             Legacy clock trigger definitions.
 
             .. deprecated:: 8.0.0
 
-               These are now auto-upgraded to the newer wall_clock xtriggers
-               (see :ref:`Section External Triggers`). The old way defining
-               clock-triggers will be removed in an upcoming Cylc version.
+               This old way of defining clock-triggers will be removed
+               in Cylc 8.9. See :ref:`ClockTriggerTasks`.
 
-            Clock-triggered tasks (see :ref:`ClockTriggerTasks`) wait on a wall
+            Clock-triggered tasks wait on a wall
             clock time specified as an offset from their own cycle point.
 
             Example:
 
             ``foo(PT1H30M), bar(PT1.5H), baz``
+
+            .. versionchanged:: 8.2.0
+
+               These are now auto-upgraded to the newer
+               :ref:`wall_clock xtriggers <Section External Triggers>`.
             ''')
             Conf('external-trigger', VDR.V_STRING_LIST, desc='''
                 Legacy external trigger definition section.

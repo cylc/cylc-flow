@@ -809,10 +809,17 @@ MANUAL_DEPRECATIONS = {
     },
     'U018': {
         'short': (
-            'clock-trigger is deprecated, please use @wall_clock'
+            "[scheduling][special tasks]clock-trigger is deprecated "
+            "and will be removed in Cylc 8.9; use the @wall_clock "
+            "xtrigger instead"
+        ),
+        'rst': (
+            "The :cylc:conf:`[scheduling][special tasks]clock-trigger` "
+            "setting is deprecated and will be removed in Cylc 8.9; use the "
+            ":ref:`@wall_clock xtrigger <Built-in Clock Triggers>` instead."
         ),
         'url': '''
-            https://cylc.github.io/cylc-doc/stable/html/user-guide/writing-workflows/external-triggers.html#built-in-clock-triggers
+            https://cylc.github.io/cylc-doc/stable/html/user-guide/writing-workflows/scheduling.html#clock-triggers
         ''',
         FUNCTION: re.compile(r'clock-trigger*=*').findall
     },

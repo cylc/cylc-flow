@@ -2802,25 +2802,29 @@ class WorkflowConfig:
                 msg += f'\n  * {task}"'
             raise WorkflowConfigError(msg)
 
+    # BACK COMPAT: clock-trigger has been deprecated
+    # from: 7
+    # to: 8.0 (auto upgrader added in 8.2; warning added at 8.7)
+    # remove at: 8.9
     def upgrade_clock_triggers(self):
         """Convert old-style clock triggers to clock xtriggers.
 
         [[special tasks]]
-           clock-trigger = foo(PT1D)
+           clock-trigger = foo(PT1H)
 
         becomes:
 
         [[xtriggers]]
-           _cylc_wall_clock_foo = wall_clock(PT1D)
+           _cylc_wall_clock_foo = wall_clock(PT1H)
 
         Not done by parsec upgrade because the graph has to be parsed first.
         """
-        # BACK COMPAT: clock-trigger has been deprecated
-        # from: 8.0.0
-        # remove at: x
         if len(self.cfg['scheduling']['special tasks']['clock-trigger']) > 0:
-            LOG.warning(r"Clock-trigger is deprecated; "
-                        r"please use @wall_clock")
+            LOG.warning(
+                "[scheduling][special tasks]clock-trigger is deprecated "
+                "and will be removed in Cylc 8.9; use the @wall_clock "
+                "xtrigger instead"
+            )
         for item in self.cfg['scheduling']['special tasks']['clock-trigger']:
             match = RE_CLOCK_OFFSET.match(item)
             # (Already validated during "special tasks" parsing above.)
