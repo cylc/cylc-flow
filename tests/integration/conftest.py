@@ -347,6 +347,17 @@ def db_select():
 
 
 @pytest.fixture
+def db_select_workflow_param(db_select):
+    """Select a parameter from the workflow_params table"""
+    def inner(schd: 'Scheduler', key: str):
+        return db_select(
+            schd, True, CylcWorkflowDAO.TABLE_WORKFLOW_PARAMS, 'value', key=key
+        )[0][0]
+
+    return inner
+
+
+@pytest.fixture
 def gql_query():
     """Execute a GraphQL query given a workflow runtime client."""
     async def _gql_query(
