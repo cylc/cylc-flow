@@ -472,13 +472,14 @@ class WorkflowConfig:
         self.set_experimental_features()
         self.process_utc_mode()
         self.process_cycle_point_tz()
+        self.process_cycle_point_format()
 
         # after the call to init_cyclers, we can start getting proper points.
         init_cyclers(self.cfg)
         self.cycling_type: Literal['integer', 'iso8601'] = (
             get_interval_cls().get_null().TYPE
         )
-        self.cycle_point_dump_format = get_dump_format(self.cycling_type)
+        self.cycle_point_format = get_dump_format(self.cycling_type)
 
         # Initial point from workflow definition (or CLI override above).
         self.process_initial_cycle_point()
@@ -709,6 +710,22 @@ class WorkflowConfig:
             )
         self.cfg['scheduler']['UTC mode'] = orig_utc_mode
         set_utc_mode(orig_utc_mode)
+
+    def process_cycle_point_format(self) -> None:
+        """Prevent change to cycle point format on reload/restart.
+
+        Sets:
+            self.cfg['scheduler']['cycle point format']
+        """
+        if orig_val := getattr(self.options, '_cycle_point_format', None):
+            if (
+                cfg_val := self.cfg['scheduler']['cycle point format']
+            ) is not None and cfg_val != orig_val:
+                LOG.warning(
+                    f"Cannot change cycle point format after the workflow has "
+                    f"started. The workflow will continue to use {orig_val}."
+                )
+            self.cfg['scheduler']['cycle point format'] = orig_val
 
     def process_cycle_point_tz(self):
         """Set the cycle point time zone from config or from stored value

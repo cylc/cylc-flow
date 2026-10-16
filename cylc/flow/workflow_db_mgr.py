@@ -342,7 +342,7 @@ class WorkflowDatabaseManager:
             {"key": self.KEY_UTC_MODE, "value": get_utc_mode()},
             {"key": self.KEY_RESTART_COUNT, "value": self.n_restart},
             {"key": self.KEY_CYCLE_POINT_FORMAT,
-             "value": schd.config.cycle_point_dump_format},
+             "value": schd.config.cycle_point_format},
             {"key": self.KEY_PAUSED, "value": int(schd.is_paused)},
             {"key": self.KEY_STOP_CLOCK_TIME, "value": schd.stop_clock_time},
             {"key": self.KEY_STOP_TASK, "value": schd.stop_task},
