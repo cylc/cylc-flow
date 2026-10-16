@@ -45,7 +45,6 @@ dp = DurationParser()
 
 
 INTERNAL = True
-PID_REGEX = re.compile(r"([^:]*\d{6,}.*)")
 RE_CPU_USAGE = re.compile(r'usage_usec\s*(\d+)')
 # Any cgroups v1 memory limit at or above this is the kernel's "no limit"
 # value (PAGE_COUNTER_MAX * PAGE_SIZE, which depends on the page size).
