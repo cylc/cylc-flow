@@ -132,28 +132,24 @@ def parse_memory_allocated(process: Process) -> int | None:
     unlimited_marker = "max"
 
     cgroup_memory_path = process.memory_allocated_path
-    if process.memory_version == 2:
-        for _ in range(10):
-            memory_max_file = cgroup_memory_path / memory_max_file_name
-            if not memory_max_file.is_file():
-                # we have walked off the top of the cgroup filesystem
-                break
-            try:
+    try:
+        if process.memory_version == 2:
+            for _ in range(10):
+                memory_max_file = cgroup_memory_path / memory_max_file_name
+                if not memory_max_file.is_file():
+                    # we have walked off the top of the cgroup filesystem
+                    break
                 with open(memory_max_file, 'r') as f:
                     line = f.readline()
                     if unlimited_marker not in line:
                         return int(line)
-                    cgroup_memory_path = cgroup_memory_path.parent
-            except Exception as err:
-                raise CylcProfilerError(
-                    err, "Unable to find memory allocation") from err
-    if process.memory_version == 1:
-        for _ in range(10):
-            memory_limit_file = cgroup_memory_path / memory_limit_file_name
-            if not memory_limit_file.is_file():
-                # we have walked off the top of the cgroup filesystem
-                break
-            try:
+                cgroup_memory_path = cgroup_memory_path.parent
+        if process.memory_version == 1:
+            for _ in range(10):
+                memory_limit_file = cgroup_memory_path / memory_limit_file_name
+                if not memory_limit_file.is_file():
+                    # we have walked off the top of the cgroup filesystem
+                    break
                 with open(memory_limit_file, 'r') as f:
                     line = f.readline()
                     # cgroups v1 uses a huge number, rather than "max", to
@@ -163,10 +159,11 @@ def parse_memory_allocated(process: Process) -> int | None:
                     # usual 4K pages) - test a threshold, not equality.
                     if int(line) < CGROUP_V1_UNLIMITED:
                         return int(line)
-                    cgroup_memory_path = cgroup_memory_path.parent
-            except Exception as err:
-                raise CylcProfilerError(
-                    err, "Unable to find memory allocation") from err
+                cgroup_memory_path = cgroup_memory_path.parent
+    except Exception as err:
+        raise CylcProfilerError(
+            err, "Unable to find memory allocation"
+        ) from err
     # no limit is set anywhere in this cgroup's ancestry
     return None
 
@@ -263,21 +260,21 @@ def v2_controllers_enabled(directory: Path) -> bool:
 def get_controller_paths(
     location: Path, names: dict, controller: str, v2_file: str, v1_file: str
 ) -> tuple[Literal[1, 2], Path]:
-    """Locate the cgroup directory holding a controller's data.
+    """Locate the cgroup file holding a controller's data.
 
     Prefers cgroups v2, falling back to v1 if the v2 hierarchy does not
     provide this controller (as happens in "hybrid" mode).
 
-    Returns (version, directory).
+    Returns (version, filepath).
     """
     # cgroups v2: everything lives in the one unified hierarchy
     if 'v2' in names:
         directory = location / names['v2']
         if (
-            (directory / v2_file).is_file()
+            (filepath := directory / v2_file).is_file()
             and v2_controllers_enabled(directory)
         ):
-            return 2, directory
+            return 2, filepath
 
     # cgroups v1: each controller is mounted separately, and the mount
     # point does not always match the controller name (e.g. the cpu and
@@ -286,9 +283,8 @@ def get_controller_paths(
         for name in (names.get(mount), names.get(controller)):
             if name is None:
                 continue
-            directory = location / mount / name
-            if (directory / v1_file).is_file():
-                return 1, directory
+            if (filepath := location / mount / name / v1_file).is_file():
+                return 1, filepath
 
     raise CylcProfilerError(
         FileNotFoundError(location),
@@ -305,23 +301,21 @@ def get_cgroup_paths(location: Path) -> Process:
     names = get_cgroup_names()
 
     # RSS and the memory limit both come from the memory controller
-    memory_version, memory_dir = get_controller_paths(
+    memory_version, memory_path = get_controller_paths(
         location, names, 'memory', 'memory.stat', 'memory.stat'
     )
-    cpu_version, cpu_dir = get_controller_paths(
+    cpu_version, cpu_path = get_controller_paths(
         location, names, 'cpu', 'cpu.stat', 'cpuacct.usage'
     )
     LOG.debug(
-        f'profiler: memory=cgroups v{memory_version} ({memory_dir}), '
-        f'cpu=cgroups v{cpu_version} ({cpu_dir})'
+        f'profiler: memory=cgroups v{memory_version} ({memory_path.parent}), '
+        f'cpu=cgroups v{cpu_version} ({cpu_path.parent})'
     )
 
     return Process(
-        cgroup_memory_path=memory_dir / "memory.stat",
-        cgroup_cpu_path=(
-            cpu_dir / ("cpu.stat" if cpu_version == 2 else "cpuacct.usage")
-        ),
-        memory_allocated_path=memory_dir,
+        cgroup_memory_path=memory_path,
+        cgroup_cpu_path=cpu_path,
+        memory_allocated_path=memory_path.parent,
         memory_version=memory_version,
         cpu_version=cpu_version,
         max_rss=0,
