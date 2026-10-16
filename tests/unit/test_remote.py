@@ -141,6 +141,22 @@ def test_construct_ssh_cmd_forward_env(monkeypatch: pytest.MonkeyPatch):
     cmd = construct_ssh_cmd(['play'], config, host)
     assert cmd == expect
 
+    # CYLC_RUN_DIR is a core variable and does not need to be configured for
+    # forwarding.
+    monkeypatch.setenv('CYLC_RUN_DIR', '/data/cylc-run')
+    expect = [
+        'ssh',
+        host,
+        'env',
+        f'CYLC_VERSION={cylc.flow.__version__}',
+        'CYLC_RUN_DIR=/data/cylc-run',
+        'FOO=BAR',
+        'cylc',
+        'play',
+    ]
+    cmd = construct_ssh_cmd(['play'], config, host)
+    assert cmd == expect
+
 
 def test_get_proc_ancestors__basic():
     """It should return a list of ancestor PIDs, starting with the parent."""

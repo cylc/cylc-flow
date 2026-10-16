@@ -301,9 +301,12 @@ def test_write_prelude(
         "CYLC_WORKFLOW_INITIAL_CYCLE_POINT": "20200101T0000Z",
         "CYLC_WORKFLOW_NAME": "test_write_prelude",
         "CYLC_WORKFLOW_NAME_BASE": "test_write_prelude",
-        'CYLC_COVERAGE': '1'
+        'CYLC_COVERAGE': '1',
+        'CYLC_RUN_DIR': '/data/cylc-run',
     }.items():
         monkeypatch.setenv(k, v)
+
+    expected.append("export CYLC_RUN_DIR='/data/cylc-run'")
 
     with io.StringIO() as fake_file:
         # copyable environment variables
