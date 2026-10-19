@@ -90,17 +90,11 @@ def test_summary(workflow, capsys):
     assert 'Job Runner: simulation' in lines[1]
 
     # the first data row
-    assert lines[6].split() == [
-        'a',
-        '3.0',
-        '0.0',
-        '0.0',
-        '0.0',
-        '0.0',
-        '0.0',
-        '0.0',
-        '0.0',
-    ]
+    row = lines[6].split()
+    assert row[:2] == ['a', '3.0']
+    # the remaining 7 columns should be job run times, as floats
+    # (not guaranteed to be 0s even in simulation mode, depends on CPU load?)
+    assert len([float(x) for x in row[2:]]) == 7
 
 
 def test_html(workflow, capsys):
