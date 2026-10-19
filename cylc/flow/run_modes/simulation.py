@@ -58,6 +58,9 @@ if TYPE_CHECKING:
     from cylc.flow.workflow_db_mgr import WorkflowDatabaseManager
 
 
+DURATION_PARSER = DurationParser()
+
+
 def submit_task_job(
     task_job_mgr: 'TaskJobManager',
     itask: 'TaskProxy',
@@ -185,8 +188,7 @@ class ModeSettings:
             )
 
         # Calculate simulation outcome and run-time:
-        self.simulated_run_length = (
-            get_simulated_run_len(rtconfig))
+        self.simulated_run_length = get_simulated_run_len(rtconfig)
         self.sim_task_fails = sim_task_failed(
             rtconfig['simulation'],
             itask.point,
@@ -238,19 +240,19 @@ def configure_sim_mode(rtc, fallback, warnonly: bool = True):
     )
 
 
-def get_simulated_run_len(rtc: Dict[str, Any]) -> int:
-    """Calculate simulation run time from a task's config.
+def get_simulated_run_len(rtc: dict[str, Any]) -> float:
+    """Calculate simulation run time (in secs) from a task's runtime config.
 
-    rtc = run time config
+    Args:
+        rtc: runtime config
     """
     limit = rtc['execution time limit']
     speedup = rtc['simulation']['speedup factor']
 
     if limit and speedup:
-        sleep_sec = (DurationParser().parse(
-            str(limit)).get_seconds() / speedup)
+        sleep_sec = DURATION_PARSER.parse(str(limit)).get_seconds() / speedup
     else:
-        sleep_sec = DurationParser().parse(
+        sleep_sec = DURATION_PARSER.parse(
             str(rtc['simulation']['default run length'])
         ).get_seconds()
 

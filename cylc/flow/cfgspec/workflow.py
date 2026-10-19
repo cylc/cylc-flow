@@ -1594,13 +1594,10 @@ with Conf(
                     speedup factor` are not set.
                 ''')
                 Conf('speedup factor', VDR.V_FLOAT, desc='''
-                    Simulated run length = speedup factor * execution time
-                    limit.
-
                     If :cylc:conf:`flow.cylc[runtime][<namespace>]
                     execution time limit` is set, the task
-                    simulated run length is computed by dividing it by this
-                    factor.
+                    simulated run length is computed by dividing the limit
+                    by this factor.
                 ''')
                 Conf('time limit buffer', VDR.V_INTERVAL, DurationFloat(30),
                      desc='''
