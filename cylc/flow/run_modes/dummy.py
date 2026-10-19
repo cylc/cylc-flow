@@ -93,7 +93,7 @@ def submit_task_job(
     return False
 
 
-def configure_dummy_mode(rtc: Dict[str, Any], fallback: str) -> None:
+def configure_dummy_mode(rtc: dict[str, Any], fallback: str) -> None:
     """Adjust task defs for dummy mode.
     """
     rtc['submission retry delays'] = [1]
@@ -102,8 +102,7 @@ def configure_dummy_mode(rtc: Dict[str, Any], fallback: str) -> None:
     for script in CLEAR_THESE_SCRIPTS:
         rtc[script] = ''
 
-    rtc['script'] = build_dummy_script(
-        rtc, get_simulated_run_len(rtc))
+    rtc['script'] = build_dummy_script(rtc, get_simulated_run_len(rtc))
     disable_platforms(rtc)
     # Disable environment, in case it depends on env-script.
     rtc['environment'] = {}
@@ -114,7 +113,7 @@ def configure_dummy_mode(rtc: Dict[str, Any], fallback: str) -> None:
     )
 
 
-def build_dummy_script(rtc: Dict[str, Any], sleep_sec: int) -> str:
+def build_dummy_script(rtc: dict[str, Any], sleep_sec: float) -> str:
     """Create fake scripting for dummy mode script.
     """
     script = "sleep %d" % sleep_sec
