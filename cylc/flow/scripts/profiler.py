@@ -46,14 +46,20 @@ dp = DurationParser()
 
 INTERNAL = True
 RE_CPU_USAGE = re.compile(r'usage_usec\s*(\d+)')
+MEMORY_CONTROLLER = 'memory'
+CPU_CONTROLLER = 'cpu'
+CPUACCT_CONTROLLER = 'cpuacct'
+V2_HIERARCHY = 'v2'
+MEMORY_STAT_FILE = 'memory.stat'
+PROFILER_TEST_ENV_VAR = 'profiler_test_env_var'
 # Any cgroups v1 memory limit at or above this is the kernel's "no limit"
 # value (PAGE_COUNTER_MAX * PAGE_SIZE, which depends on the page size).
 CGROUP_V1_UNLIMITED = 2 ** 62
 # cgroups v1 mounts each controller separately, and the mount point is not
 # always named after the controller (cpu and cpuacct are usually co-mounted)
 V1_MOUNTS = {
-    'memory': ('memory',),
-    'cpu': ('cpu', 'cpu,cpuacct', 'cpuacct'),
+    MEMORY_CONTROLLER: (MEMORY_CONTROLLER,),
+    CPU_CONTROLLER: (CPU_CONTROLLER, 'cpu,cpuacct', CPUACCT_CONTROLLER),
 }
 
 
@@ -207,9 +213,14 @@ def get_cgroup_names() -> dict:
     The v2 (unified) hierarchy is stored under the key "v2".
     """
     # fugly hack to allow functional tests to use test data
-    if 'profiler_test_env_var' in os.environ:
-        name = os.environ['profiler_test_env_var'].lstrip('/')
-        return {'v2': name, 'memory': name, 'cpu': name, 'cpuacct': name}
+    if PROFILER_TEST_ENV_VAR in os.environ:
+        name = os.environ[PROFILER_TEST_ENV_VAR].lstrip('/')
+        return {
+            V2_HIERARCHY: name,
+            MEMORY_CONTROLLER: name,
+            CPU_CONTROLLER: name,
+            CPUACCT_CONTROLLER: name,
+        }
 
     cgroup_path = Path('/proc/self/cgroup')
     try:
@@ -228,7 +239,7 @@ def get_cgroup_names() -> dict:
         path = path.lstrip('/')
         if hierarchy_id == '0' and not controllers:
             # the unified (v2) hierarchy
-            names['v2'] = path
+            names[V2_HIERARCHY] = path
         elif controllers:
             for controller in controllers.split(','):
                 # "name=systemd" is a named v1 hierarchy, not a controller
@@ -268,8 +279,8 @@ def get_controller_paths(
     Returns (version, filepath).
     """
     # cgroups v2: everything lives in the one unified hierarchy
-    if 'v2' in names:
-        directory = location / names['v2']
+    if V2_HIERARCHY in names:
+        directory = location / names[V2_HIERARCHY]
         if (
             (filepath := directory / v2_file).is_file()
             and v2_controllers_enabled(directory)
@@ -302,10 +313,10 @@ def get_cgroup_paths(location: Path) -> Process:
 
     # RSS and the memory limit both come from the memory controller
     memory_version, memory_path = get_controller_paths(
-        location, names, 'memory', 'memory.stat', 'memory.stat'
+        location, names, MEMORY_CONTROLLER, MEMORY_STAT_FILE, MEMORY_STAT_FILE
     )
     cpu_version, cpu_path = get_controller_paths(
-        location, names, 'cpu', 'cpu.stat', 'cpuacct.usage'
+        location, names, CPU_CONTROLLER, 'cpu.stat', 'cpuacct.usage'
     )
     LOG.debug(
         f'profiler: memory=cgroups v{memory_version} ({memory_path.parent}), '
