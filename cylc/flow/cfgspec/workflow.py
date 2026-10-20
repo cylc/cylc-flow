@@ -896,7 +896,7 @@ with Conf(
 
                 Example::
 
-                ``my_trigger(arg1, arg2, kwarg1, kwarg2):PT10S``
+                   my_trigger(arg1, arg2, kwarg1, kwarg2):PT10S
             ''')
 
         with Conf('graph', desc=f'''
@@ -1525,10 +1525,10 @@ with Conf(
 
                         See also :cylc:conf:`[meta]URL <flow.cylc[meta]URL>`.
 
-                        Example:
+                        Example::
 
-                        ``http://my-site.com/workflows/%(workflow)s/'''
-                    '%(task)s.html``')
+                           http://my-site.com/workflows/%(workflow)s/%(task)s.html
+                    ''')
                 Conf('<custom metadata>', VDR.V_STRING, '', desc='''
                     Any user-defined metadata item.
 
