@@ -1465,13 +1465,10 @@ class TaskPool:
                         suicide.append(t)
 
         for c_task in suicide:
-            if self.config.experimental.expire_triggers:
-                self.task_queue_mgr.remove_task(c_task)
-                self.task_events_mgr.process_message(
-                    c_task, logging.WARNING, TASK_OUTPUT_EXPIRED
-                )
-            else:
-                self.remove(c_task, self.__class__.SUICIDE_MSG)
+            self.task_queue_mgr.remove_task(c_task)
+            self.task_events_mgr.process_message(
+                c_task, logging.WARNING, TASK_OUTPUT_EXPIRED
+            )
 
         if suicide:
             # Update DB now in case of very quick respawn attempt.
@@ -1723,7 +1720,6 @@ class TaskPool:
         if (
             prev_status is not None
             and not itask.state.outputs.get_completed_outputs()
-            and not self.config.experimental.expire_triggers
         ):
             # If itask has any history but no completed outputs, it must have
             # been removed by suicide trigger (not by `cylc remove` which

@@ -52,7 +52,6 @@ from cylc.flow.task_outputs import (
     TASK_OUTPUT_FAILED,
     TASK_OUTPUT_SUCCEEDED,
 )
-from cylc.flow.task_pool import TaskPool
 from cylc.flow.task_state import (
     TASK_STATUS_EXPIRED,
     TASK_STATUS_FAILED,
@@ -1714,11 +1713,6 @@ async def test_remove_by_expire_trigger(
     """
     def _get_id(b_completion: str = "succeeded"):
         return flow({
-            'scheduler': {
-                'experimental': {
-                    'expire triggers': 'True',
-                }
-            },
             'scheduling': {
                 'graph': {
                     'R1': '''
@@ -1736,7 +1730,7 @@ async def test_remove_by_expire_trigger(
     with pytest.raises(
         WorkflowConfigError,
         match=re.escape(
-            "This may be due to use of an expire (formerly suicide) trigger"
+            "This may be due to use of an expire trigger"
         )
     ):
         validate(_get_id())
@@ -1776,64 +1770,6 @@ async def test_remove_by_expire_trigger(
         )
 
         # and bring 1/b back again by triggering it again
-        log.clear()
-        await commands.run_cmd(
-            commands.force_trigger_tasks(schd, ['1/b'], ['1']))
-        assert log_filter(regex='1/b.*added to the n=0 window',)
-
-
-async def test_remove_by_suicide(
-    flow,
-    scheduler,
-    start,
-    log_filter
-):
-    """Test task removal by suicide trigger.
-
-    * Suicide triggers should remove tasks from the pool.
-    * It should be possible to bring them back by manually triggering them.
-    * Removing a task manually (cylc remove) should work the same.
-    """
-    id_ = flow({
-        'scheduling': {
-            'graph': {
-                'R1': '''
-                    a? & b
-                    a:failed? => !b
-                '''
-            },
-        }
-    })
-    schd: 'Scheduler' = scheduler(id_)
-    async with start(schd, level=logging.DEBUG) as log:
-        # it should start up with 1/a and 1/b
-        assert schd.pool.get_task_ids() == {"1/a", "1/b"}
-        a = schd.pool.get_task(IntegerPoint("1"), "a")
-
-        # mark 1/a as failed and ensure 1/b is removed by suicide trigger
-        schd.pool.spawn_on_output(a, TASK_OUTPUT_FAILED)
-        assert log_filter(
-            regex="1/b.*removed from the n=0 window: suicide trigger"
-        )
-        assert schd.pool.get_task_ids() == {"1/a"}
-
-        # ensure that we are able to bring 1/b back by triggering it
-        log.clear()
-        await commands.run_cmd(
-            commands.force_trigger_tasks(schd, ['1/b'], ['1']))
-        assert log_filter(
-            regex='1/b.*added to the n=0 window',
-        )
-
-        # remove 1/b by request (cylc remove)
-        await commands.run_cmd(
-            commands.remove_tasks(schd, ['1/b'], [])
-        )
-        assert log_filter(
-            regex='1/b.*removed from the n=0 window: request',
-        )
-
-        # ensure that we are able to bring 1/b back by triggering it
         log.clear()
         await commands.run_cmd(
             commands.force_trigger_tasks(schd, ['1/b'], ['1']))
@@ -2015,11 +1951,6 @@ async def test_expire_dequeue_with_retries(
     See https://github.com/cylc/cylc-flow/issues/6284
     """
     conf = {
-        'scheduler': {
-            'experimental': {
-                'expire triggers': True,
-            },
-        },
         'scheduling': {
             'initial cycle point': '2000',
             'graph': {
@@ -2298,78 +2229,6 @@ async def test_start_tasks(
                 "2050/baz",
             }
         )
-
-
-async def test_add_new_flow_rows_on_spawn(
-    flow,
-    scheduler,
-    run,
-    complete,
-    db_select,
-    capcall,
-) -> None:
-    """Task suicide should not override previously completed outputs.
-
-    See https://github.com/cylc/cylc-flow/pull/6821
-    """
-    # capture all TaskPool.spawn_task() calls
-    spawn_task_calls = capcall(
-        'cylc.flow.task_pool.TaskPool.spawn_task', TaskPool.spawn_task
-    )
-
-    def list_spawn_task_calls():
-        """Return a list of the names of tasks which have been run through the
-        "spawn_tasks" function so far."""
-        return [
-            args[1] for args, _kwargs in spawn_task_calls
-        ]
-
-    id_ = flow({
-        'scheduling': {
-            'graph': {
-                'R1': '''
-                    slow:fail? => foo
-                    slow? => !foo
-                    foo:x => x
-                ''',
-            },
-        },
-        'runtime': {
-            'foo': {
-                'outputs': {'x': 'xxx'}
-            },
-        },
-    })
-
-    schd = scheduler(id_, paused_start=False)
-    async with run(schd):
-        # 1/slow should spawn on startup
-        assert list_spawn_task_calls() == ['slow']
-
-        # set foo:x
-        await commands.run_cmd(
-            commands.set_prereqs_and_outputs(
-                schd, ['1/foo'], ['1'], ['x'], None
-            )
-        )
-        # 1/foo:x should be recorded in the DB:
-        assert db_select(
-            schd, True, 'task_outputs', 'outputs', cycle='1', name='foo'
-        ) == [('{"x": "(manually completed)"}',)]
-        # and 1/x should spawn:
-        assert list_spawn_task_calls() == ['slow', 'x']
-
-        # run the workflow until completion
-        await complete(schd, timeout=5)
-
-        # 1/foo should spawn as a result of the suicide trigger
-        assert list_spawn_task_calls() == ['slow', 'x', 'foo']
-
-        # the manually completed output should not have been overwritten by the
-        # suicide trigger
-        assert db_select(
-            schd, True, 'task_outputs', 'outputs', cycle='1', name='foo'
-        ) == [('{"x": "(manually completed)"}',)]
 
 
 async def test_add_to_pool(
