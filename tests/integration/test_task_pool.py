@@ -1714,12 +1714,8 @@ async def test_remove_by_expire_trigger(
     """
     def _get_id(b_completion: str = "succeeded"):
         return flow({
-            'scheduler': {
-                'experimental': {
-                    'expire triggers': 'True',
-                }
-            },
             'scheduling': {
+                'expire triggers': True,
                 'graph': {
                     'R1': '''
                         a? => b
@@ -1736,7 +1732,7 @@ async def test_remove_by_expire_trigger(
     with pytest.raises(
         WorkflowConfigError,
         match=re.escape(
-            "This may be due to use of an expire (formerly suicide) trigger"
+            "This may be due to use of an expire trigger"
         )
     ):
         validate(_get_id())
@@ -2015,13 +2011,9 @@ async def test_expire_dequeue_with_retries(
     See https://github.com/cylc/cylc-flow/issues/6284
     """
     conf = {
-        'scheduler': {
-            'experimental': {
-                'expire triggers': True,
-            },
-        },
         'scheduling': {
             'initial cycle point': '2000',
+            'expire triggers': True,
             'graph': {
                 'R1': 'foo'
             },
