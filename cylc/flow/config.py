@@ -2496,11 +2496,11 @@ class WorkflowConfig:
                     suicides += 1
 
         if suicides:
-            LOG.log(WARNING,
-                f"{suicides} suicide trigger(s) detected. These are rarely "
-                "needed in Cylc 8 - see https://cylc.github.io/cylc-doc/"
-                "stable/html/7-to-8/major-changes/suicide-triggers.html"
-            )
+            LOG.log(WARNING, f"{suicides} suicide trigger(s) detected."
+                    "These are rarely needed in Cylc 8 - see https://cylc."
+                    "github.io/cylc-doc/stable/html/7-to-8/major-changes/"
+                    "suicide-triggers.html"
+                    )
 
     def set_required_outputs(
         self, task_output_opt: Dict[Tuple[str, str], Tuple[bool, bool, bool]]
