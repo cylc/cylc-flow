@@ -155,6 +155,7 @@ from cylc.flow.workflow_files import (
 )
 from cylc.flow.xtrigger_mgr import XtriggerCollator
 
+from logging import WARNING
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -2495,7 +2496,7 @@ class WorkflowConfig:
                     suicides += 1
 
         if suicides:
-            LOG.info(
+            LOG.log(WARNING,
                 f"{suicides} suicide trigger(s) detected. These are rarely "
                 "needed in Cylc 8 - see https://cylc.github.io/cylc-doc/"
                 "stable/html/7-to-8/major-changes/suicide-triggers.html"
