@@ -832,7 +832,7 @@ with Conf(
                 ``cylc ext-trigger`` command.
             ''')
             Conf('clock-expire', VDR.V_STRING_LIST, desc='''
-                Don't submit jobs if they are too late in wall-clock time.
+                Don't submit jobs if the wall-clock time has advanced too far.
 
                 Clock-expire tasks enter the ``expired`` state and skip job
                 submission if too far behind the clock when they become
@@ -841,7 +841,7 @@ with Conf(
                 The expiry time is specified as an offset from the task's
                 cycle point. The offset:
 
-                   * May be positive or negative
+                   * May be positive or negative (positive means later expiry)
                    * May be omitted if it is zero
 
                 .. seealso::
@@ -1788,10 +1788,8 @@ with Conf(
 
                     .. caution::
 
-                       Changes to the scheduling algorithm in Cylc 8 mean
-                       this event will not be triggered until the expired task
-                       is ready to run.  Earlier expired-task detection will be
-                       implemented in a future Cylc release.
+                       Expiry can only be detected, and this event triggered,
+                       after the task enters the :term:`active window`.
                 ''')
                 Conf('late offset', VDR.V_INTERVAL, None, desc='''
                     Offset from cycle point, in real time, at which this task
