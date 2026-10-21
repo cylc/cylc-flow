@@ -750,16 +750,22 @@ with Conf(
         ''')
 
         with Conf('queues', desc='''
-            Internal task queues to limit job activity.
+            Internal queues limit how many tasks can have active jobs at once.
 
-            Queues delay job submission in member tasks, until the active
-            job count (for members) drops below the queue limit.
+            Tasks become queued when they are ready to run, and are released
+            on a FIFO basis when the active job count (among queue members)
+            drops below the queue limit.
 
-            There is a ``default`` queue with a configurable limit of 100, for
-            all tasks that are not assigned to other queues.
+            All tasks that are not assigned to other queues belong to a
+            ``default`` queue with a default limit of 100.
 
-            You can define custom queues to limit job activity across other
-            groups of tasks.
+            You can define custom queues to limit job activity across groups
+            of tasks. The default limit for custom queues is 0 (no limit).
+
+            Tasks can be assigned en masse to queues by family name.
+
+            A given task can only be in one queue. If a task is assigned to
+            multiple queues, only the last assignment will take effect.
 
             .. code-block:: cylc
 
