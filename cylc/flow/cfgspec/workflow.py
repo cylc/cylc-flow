@@ -804,8 +804,8 @@ with Conf(
                This old way of defining clock-triggers will be removed
                in Cylc 8.9. See :ref:`ClockTriggerTasks`.
 
-            Clock-triggered tasks wait on a wall
-            clock time specified as an offset from their own cycle point.
+            Clock-triggered tasks wait on a wall-clock time
+            specified as an offset from their own cycle point.
 
             Example:
 
@@ -832,10 +832,10 @@ with Conf(
                 ``cylc ext-trigger`` command.
             ''')
             Conf('clock-expire', VDR.V_STRING_LIST, desc='''
-                Don't submit jobs if they are too late in wall clock time.
+                Don't submit jobs if they are too late in wall-clock time.
 
                 Clock-expire tasks enter the ``expired`` state and skip job
-                submission if too far behind the wall clock when they become
+                submission if too far behind the clock when they become
                 ready to run.
 
                 The expiry time is specified as an offset from the task's
@@ -850,10 +850,10 @@ with Conf(
 
                 .. rubric:: Examples:
 
-                ``foo(PT1H)`` - expire task ``foo`` if the current wall clock
+                ``foo(PT1H)`` - expire task ``foo`` if the current wall-clock
                 time has reached 1 hour after the task's cycle point.
 
-                ``bar(-PT5M)`` - expire task ``bar`` if the current wall clock
+                ``bar(-PT5M)`` - expire task ``bar`` if the current wall-clock
                 time has reached 5 minutes *before* the task's cycle point.
             ''')
             Conf('sequential', VDR.V_STRING_LIST, desc='''
@@ -1405,7 +1405,7 @@ with Conf(
                    retry delays``.
             ''')
             Conf('execution time limit', VDR.V_INTERVAL, desc=f'''
-                Set the execution (:term:`wallclock <wallclock time>`) time
+                Set the execution (:term:`wall-clock <wall-clock time>`) time
                 limit of a job.
 
                 For the ``background`` and ``at`` job runners, Cylc runs the
