@@ -753,8 +753,9 @@ with Conf(
             Internal queues limit how many tasks can have active jobs at once.
 
             Tasks become queued when they are ready to run, and are released
-            on a FIFO (first in, first out) basis when the number of active jobs
-            within that queue drops below the queue limit.
+            on a first in, first out basis when the number of
+            :term:`active jobs <active job>` within that queue drops below
+            the queue limit.
 
             All tasks that are not assigned to other queues belong to a
             ``default`` queue with a default limit of 100.
