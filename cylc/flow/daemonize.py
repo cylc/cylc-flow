@@ -87,7 +87,7 @@ def daemonize(schd):
                                     with open(logfname, 'r') as logfile2:
                                         sys.stderr.write(logfile2.read())
                                     sys.exit(1)
-                                except IOError:
+                                except OSError:
                                     sys.exit("Workflow schd program exited")
                 except (OSError, ValueError):
                     pass

@@ -176,7 +176,7 @@ def _append_job_status_file(workflow, job_id, event_time, messages):
     try:
         job_status_file = open(job_log_name + '.status', 'a')  # noqa: SIM115
         # TODO: niceify read/write/appending messages to this file
-    except IOError as exc:
+    except OSError as exc:
         print(f"{type(exc).__name__}: {exc}", file=sys.stderr)
         if cylc.flow.flags.verbosity > 1:
             import traceback
@@ -220,7 +220,7 @@ def _append_job_status_file(workflow, job_id, event_time, messages):
                 CYLC_MESSAGE, event_time, severity, message))
     try:
         job_status_file.close()
-    except IOError:
+    except OSError:
         if cylc.flow.flags.verbosity > 1:
             import traceback
             traceback.print_exc()

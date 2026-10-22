@@ -239,7 +239,7 @@ def log_task_job_activity(
     try:
         with open(os.path.expandvars(job_activity_log), "ab") as handle:
             handle.write((ctx_str + '\n').encode())
-    except IOError:
+    except OSError:
         # This happens when there is no job directory. E.g., if a job host
         # selection command causes a submission failure, or if a waiting task
         # expires before a job log directory is otherwise needed.

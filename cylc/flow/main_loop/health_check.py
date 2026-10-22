@@ -64,7 +64,7 @@ def _check_contact_file(scheduler):
             raise HealthCheckFailed('contact file unexpectedly modified')
     except ServiceFileError as exc:
         raise HealthCheckFailed(exc) from exc.__cause__
-    except (AssertionError, IOError, ValueError) as exc:
+    except (AssertionError, OSError, ValueError) as exc:
         raise MainLoopPluginException(
             '%s: contact file corrupted/modified and may be left'
             % workflow_files.get_contact_file_path(scheduler.workflow)

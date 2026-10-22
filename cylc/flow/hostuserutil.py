@@ -109,7 +109,7 @@ class HostUtil:
         """
 
         ipaddr = ""
-        with suppress(IOError):  # noqa: SIM117 (use of as convolutes this)
+        with suppress(OSError):  # noqa: SIM117 (use of as convolutes this)
             with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
                 sock.connect((target, 8000))
                 ipaddr = sock.getsockname()[0]
@@ -139,7 +139,7 @@ class HostUtil:
         if target not in self._host_exs:
             try:
                 self._host_exs[target] = socket.gethostbyname_ex(target)
-            except IOError as exc:
+            except OSError as exc:
                 if exc.filename is None:
                     exc.filename = target
                 raise
@@ -215,7 +215,7 @@ class HostUtil:
             else:
                 try:
                     host_info = self._get_host_info(name)
-                except IOError:
+                except OSError:
                     self._remote_hosts[name] = True
                 else:
                     self._remote_hosts[name] = (

@@ -67,7 +67,7 @@ def main(site_name, time):
             'forecast',
             filename
         ))
-    except IOError:
+    except OSError:
         sys.exit('Could not find forecast "%s".' % filename)
 
     # Calculate the time for which this forecast is valid.
