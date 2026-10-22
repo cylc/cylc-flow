@@ -72,7 +72,7 @@ class JobFileWriter:
                 self._write_script(handle, job_conf)
                 self._write_global_init_script(handle, job_conf)
                 self._write_epilogue(handle, job_conf)
-        except IOError as exc:
+        except OSError as exc:
             # Remove temporary file
             with suppress(OSError):
                 os.unlink(tmp_name)

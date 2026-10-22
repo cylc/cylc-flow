@@ -55,7 +55,7 @@ def test_get_fqdn_by_host_on_bad_host():
 
     """
     bad_host = 'nosuchhost.nosuchdomain.org'
-    with pytest.raises(IOError) as exc:
+    with pytest.raises(OSError) as exc:
         get_fqdn_by_host(bad_host)
     assert re.match(
         r"(\[Errno -2\] Name or service|"
