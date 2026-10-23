@@ -17,19 +17,23 @@
 
 """Extract named resources from the cylc.flow package."""
 
-from ansimarkup import parse
 from contextlib import suppress
 from pathlib import Path
 import re
 import shutil
-import sys
-from typing import Optional
+from typing import TYPE_CHECKING
+
+from ansimarkup import parse
 
 import cylc.flow
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 from cylc.flow.exceptions import InputError
 from cylc.flow.wallclock import get_current_time_string
+
+
+if TYPE_CHECKING:
+    from logging import Logger
 
 
 RESOURCE_DIR = Path(cylc.flow.__file__).parent / 'etc'
@@ -94,18 +98,23 @@ def path_is_source_workflow(src: Path) -> bool:
     return False
 
 
-def get_resources(resource: str, tgt_dir: Optional[str]):
+def get_resources(
+    resource: Path | str,
+    target_dir: Path | str | None,
+    logger: 'Logger | None' = None,
+):
     """Extract cylc.flow resources and write them to a target directory.
 
     Arguments:
         resource: path relative to RESOURCE_DIR.
         target_dir: Where to put extracted resources, created if necessary.
+        logger: Logger instance for logging messages.
 
     """
     # get the resource path
-    resource_path = Path(resource)
+    resource = Path(resource)
 
-    src = RESOURCE_DIR / resource_path
+    src = RESOURCE_DIR / resource
     if not src.exists():
         raise InputError(
             f'No such resources {resource}.'
@@ -115,25 +124,25 @@ def get_resources(resource: str, tgt_dir: Optional[str]):
     is_source_workflow = path_is_source_workflow(src)
 
     # get the target path
-    name = resource_path.name
-    if not tgt_dir:
+    name = resource.name
+    if not target_dir:
         if is_source_workflow:
             # this is a tutorial => use the primary source dir
-            _tgt_dir = Path(glbl_cfg().get(['install', 'source dirs'])[0])
+            target_dir = Path(glbl_cfg().get(['install', 'source dirs'])[0])
             # remove any numerical prefix (used in the examples to ensure they
             # appear in order in the docs) as these are not valid workflow IDs
             name = re.sub(r'^[\d]+-', '', name)
         else:
             # this is a regular resource => use $PWD
-            _tgt_dir = Path.cwd()
+            target_dir = Path.cwd()
     else:
-        _tgt_dir = Path(tgt_dir).resolve()
-    tgt = _tgt_dir / name
+        target_dir = Path(target_dir).resolve()
 
-    tgt = tgt.expanduser()
-    tgt = tgt.resolve()
+    tgt = (target_dir / name).expanduser().resolve()
 
-    # extract resources
+    if logger:
+        logger.info(f"Extracting {src.relative_to(RESOURCE_DIR)} to {tgt}")
+
     extract_resource(src, tgt, is_source_workflow)
 
 
@@ -159,7 +168,6 @@ def extract_resource(
 
     NOTE: src can be a dir or a file.
     """
-    LOG.info(f"Extracting {src.relative_to(RESOURCE_DIR)} to {tgt}")
     if is_source_workflow and tgt.exists():
         # target exists, back up the old copy
         _backup(tgt)
@@ -191,14 +199,12 @@ def extract_resource(
             if path.exists():
                 path.unlink()
     except IsADirectoryError as exc:
-        LOG.error(
+        raise InputError(
             f'Cannot extract file {exc.filename} as there is an '
             'existing directory with the same name'
-        )
-        sys.exit(1)
+        ) from exc
     except FileExistsError as exc:
-        LOG.error(
+        raise InputError(
             f'Cannot extract directory {exc.filename} as there is an '
             'existing file with the same name'
-        )
-        sys.exit(1)
+        ) from exc
