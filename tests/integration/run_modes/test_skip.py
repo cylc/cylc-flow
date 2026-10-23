@@ -169,7 +169,7 @@ async def test_skip_mode_outputs(
 
 
 async def test_doesnt_release_held_tasks(
-    one_conf, flow, scheduler, start, log_filter, capture_live_submissions
+    one_conf, flow, scheduler, start, log_filter, spawn_ahead_and_queue
 ):
     """Point 5 of the proposal
     https://github.com/cylc/cylc-admin/blob/master/docs/proposal-skip-mode.md
@@ -192,6 +192,7 @@ async def test_doesnt_release_held_tasks(
 
         # Release held task and assert that it now skips successfully:
         schd.pool.release_held_tasks({TaskTokens('1', 'one')})
+        spawn_ahead_and_queue(schd.pool)
         schd.release_tasks_to_run()
 
         assert log_filter(contains='=> running'), msg.format('run')

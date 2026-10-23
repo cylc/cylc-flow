@@ -778,3 +778,37 @@ def capture_live_submissions(capcall, monkeypatch):
         }
 
     return get_submissions
+
+
+def _spawn_ahead_and_queue(task_pool):
+    """Repeatedly release runahead tasks and queue them if ready.
+
+    Use to make parentless tasks spawn ahead without the main loop,
+    for tests that look at the logical outcome of an operation that
+    may take multiple issues to play out.
+
+    """
+    n_limit = 10  # arbitrary safety net
+    count = 0
+    while True:
+        count += 1
+        task_pool.compute_runahead()
+        if not task_pool.release_runahead_tasks():
+            break
+        for itask in task_pool.get_tasks():
+            task_pool.queue_if_ready(itask)
+        if count > n_limit:
+            raise AssertionError(
+                f"Exceeded {n_limit} iterations"
+                " waiting for task pool to settle"
+            )
+
+
+@pytest.fixture
+def spawn_ahead_and_queue():
+    return _spawn_ahead_and_queue
+
+
+@pytest.fixture(scope='module')
+def mod_spawn_ahead_and_queue():
+    return _spawn_ahead_and_queue

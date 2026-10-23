@@ -61,10 +61,11 @@ async def test_queue_release(
     capture_submission,
     start_paused,
     queue_limit,
+    spawn_ahead_and_queue,
 ):
     """Tasks should be released up to the limit if the scheduler is not paused.
 
-    When the scheudler is paused the scheduler should not release tasks from
+    When the scheduler is paused it should not release tasks from
     queues because tasks may subsequently be held by the user and we don't
     want them clogging up the queue limit.
 
@@ -78,10 +79,12 @@ async def test_queue_release(
         # capture task submissions (prevents real submissions)
         submitted_tasks = capture_submission(schd)
 
-        # release runahead/queued tasks
+        # release queued tasks
         # (if scheduler is paused we should not have any submissions)
         # (otherwise a number of tasks up to the limit should be released)
-        schd.pool.release_runahead_tasks()
+        # (Note runhead release is needed even in non-cycling workflows)
+        spawn_ahead_and_queue(schd.pool)
+
         schd.release_tasks_to_run()
         assert len(submitted_tasks) == expected_submissions
 
