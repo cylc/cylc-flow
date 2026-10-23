@@ -529,22 +529,6 @@ class Scheduler:
         else:
             self._load_pool_from_point()
 
-        # BACK COMPAT: spawn the task pool out to RH limit on startup.
-        # Not strictly necessary, it will spawn ahead per main loop iteration,
-        # but useful back-compat for tests that expect this prior to
-        # https://github.com/cylc/cylc-flow/pull/7237
-        # URL: https://github.com/cylc/cylc-flow/issues/7359
-        # FROM: 8.6.x
-        # TO: 8.7.0
-        # REMOVE AT: >=8.8
-        self.pool.compute_runahead()
-        for _ in range(10):
-            # (Arbitrary limit to avoid infinite loop if something goes wrong)
-            if not self.pool.release_runahead_tasks():
-                for itask in self.pool.get_tasks():
-                    self.pool.queue_if_ready(itask)
-                break
-
         self.profiler.log_memory("scheduler.py: after load_tasks")
 
         self.workflow_db_mgr.put_workflow_params(self)
