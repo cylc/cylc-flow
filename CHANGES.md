@@ -165,7 +165,7 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 [#6719](https://github.com/cylc/cylc-flow/pull/6719) - Fix incorrect job submission time reported after a time zone change.
 
-[#7100](https://github.com/cylc/cylc-flow/pull/7100) - Task hold, retry, wallclock and xtriggers are now cleared when they are no longer applicable.
+[#7100](https://github.com/cylc/cylc-flow/pull/7100) - Task hold, retry, wall-clock and xtriggers are now cleared when they are no longer applicable.
 
 [#7101](https://github.com/cylc/cylc-flow/pull/7101) - Fixed manual group triggering of tasks before the start cycle point not obeying prerequisites within the group.
 

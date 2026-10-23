@@ -2219,12 +2219,12 @@ class Scheduler:
         self.update_data_store()
 
     def stop_clock_done(self) -> bool:
-        """Return True if wall clock stop time reached."""
+        """Return True if wall-clock stop time reached."""
         if self.stop_clock_time is None:
             return False
         now = time()
         if now > self.stop_clock_time:
-            LOG.info("Wall clock stop time reached: %s", time2str(
+            LOG.info("Wall-clock stop time reached: %s", time2str(
                 self.stop_clock_time))
             self.stop_clock_time = None
             self.workflow_db_mgr.put_workflow_stop_clock_time(None)
