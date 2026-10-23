@@ -112,28 +112,7 @@ if TYPE_CHECKING:
     _TCommand = TypeVar('_TCommand', bound=Command)
 
 # a directory of registered commands (populated on module import)
-COMMANDS: 'Dict[str, Command]' = {}
-
-
-# BACK COMPAT: handle --flow=all from earlier clients
-# FROM: 8.0
-# TO: 8.5.0
-# REMOVE AT: 8.8
-def back_compat_flow_all(flow: List[str]) -> List[str]:
-    """From 8.5 the old --flow=all is just the default.
-
-    Examples:
-        >>> back_compat_flow_all(['1', '2', '3'])
-        ['1', '2', '3']
-
-        >>> back_compat_flow_all(["all"])
-        []
-
-    """
-    if flow == ["all"]:
-        return []
-    else:
-        return flow
+COMMANDS: 'dict[str, Command]' = {}
 
 
 def _command(name: str):
@@ -306,19 +285,18 @@ async def run_cmd(bound_fcn: AsyncGenerator):
 @_command('set')
 async def set_prereqs_and_outputs(
     schd: 'Scheduler',
-    tasks: List[str],
-    flow: List[str],
-    outputs: Optional[List[str]] = None,
-    prerequisites: Optional[List[str]] = None,
+    tasks: list[str],
+    flow: list[str],
+    outputs: list[str] | None = None,
+    prerequisites: list[str] | None = None,
     flow_wait: bool = False,
-    flow_descr: Optional[str] = None,
+    flow_descr: str | None = None,
 ) -> AsyncGenerator:
     """Force spawn task successors.
 
     Note, the "outputs" and "prerequisites" arguments might not be
     populated in the mutation arguments so must provide defaults here.
     """
-    flow = back_compat_flow_all(flow)
     validate.consistency(outputs, prerequisites)
     outputs = validate.outputs(outputs)
     prerequisites = validate.prereqs(prerequisites)
@@ -344,12 +322,12 @@ async def set_prereqs_and_outputs(
 @_command('stop')
 async def stop(
     schd: 'Scheduler',
-    mode: 'Optional[Enum]',
-    cycle_point: Optional[str] = None,
+    mode: 'Enum',
+    cycle_point: str | None = None,
     # NOTE clock_time YYYY/MM/DD-HH:mm back-compat removed
-    clock_time: Optional[str] = None,
-    task: Optional[str] = None,
-    flow_num: Optional[int] = None,
+    clock_time: str | None = None,
+    task: str | None = None,
+    flow_num: int | None = None,
 ):
     if task:
         validate.is_tasks([task])
@@ -383,13 +361,7 @@ async def stop(
     else:
         # immediate shutdown
         try:
-            # BACK COMPAT: mode=None
-            #     the mode can be `None` for commands issued from older Cylc
-            #     versions
-            # From: 8.4
-            # To: 8.5
-            # Remove at: 8.8
-            mode = StopMode(mode.value) if mode else StopMode.REQUEST_CLEAN
+            mode = StopMode(mode.value)
         except ValueError:
             raise CommandFailedError(f"Invalid stop mode: '{mode}'") from None
         schd._set_stop(mode)
@@ -497,7 +469,7 @@ async def set_verbosity(schd: 'Scheduler', level: 'Enum'):
 async def remove_tasks(
     schd: 'Scheduler',
     tasks: Iterable[str],
-    flow: List[str],
+    flow: list[str],
     no_spawn: bool = False
 ):
     """Match and remove tasks (`cylc remove` command).
@@ -507,7 +479,6 @@ async def remove_tasks(
         flow: flows to remove the tasks from.
         no_spawn: Do not spawn successors before removal.
     """
-    flow = back_compat_flow_all(flow)
     ids = validate.is_tasks(tasks)
     validate.flow_opts(flow, flow_wait=False, allow_new_or_none=False)
     yield
@@ -665,9 +636,9 @@ async def reload_workflow(schd: 'Scheduler', reload_global: bool = False):
 async def force_trigger_tasks(
     schd: 'Scheduler',
     tasks: Iterable[str],
-    flow: List[str],
+    flow: list[str],
     flow_wait: bool = False,
-    flow_descr: Optional[str] = None,
+    flow_descr: str | None = None,
 ):
     """Match and trigger a group of tasks (`cylc trigger` command).
 
@@ -679,7 +650,6 @@ async def force_trigger_tasks(
       cylc-admin/docs/proposal-group-trigger.md
 
     """
-    flow = back_compat_flow_all(flow)
     ids = validate.is_tasks(tasks)
     validate.flow_opts(flow, flow_wait)
     yield
@@ -688,7 +658,7 @@ async def force_trigger_tasks(
     _report_unmatched(unmatched)
 
     # split IDs into connected groups of tasks
-    adjacency: Dict[TaskTokens, Set[TaskTokens]] = {}
+    adjacency: dict[TaskTokens, set[TaskTokens]] = {}
     for id_ in matched:
         id_ = id_.duplicate(task_sel=None)  # strip the task selector
         icycle = get_point(id_['cycle'])
