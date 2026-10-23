@@ -155,6 +155,7 @@ from cylc.flow.workflow_files import (
 )
 from cylc.flow.xtrigger_mgr import XtriggerCollator
 
+from logging import WARNING
 
 if TYPE_CHECKING:
     from optparse import Values
@@ -1248,11 +1249,10 @@ class WorkflowConfig:
                 if (
                     any_suicide
                     and trigger == "expired"
-                    and self.experimental.expire_triggers
+                    and self.cfg["scheduling"]["expire triggers"]
                 ):
                     msg += (
-                        "\nThis may be due to use of an expire "
-                        "(formerly suicide) trigger."
+                        "\nThis may be due to use of an expire trigger."
                     )
                 msg += f'\nTry: completion = "{expr} or {compvar}"'
                 raise WorkflowConfigError(msg)
@@ -2370,7 +2370,7 @@ class WorkflowConfig:
                 family_map,
                 self.parameters,
                 task_output_opt=task_output_opt,
-                expire_triggers=self.experimental.expire_triggers,
+                expire_triggers=self.cfg["scheduling"]["expire triggers"],
             )
             parser.parse_graph(graph)
             task_output_opt.update(parser.task_output_opt)
@@ -2496,11 +2496,11 @@ class WorkflowConfig:
                     suicides += 1
 
         if suicides:
-            LOG.info(
-                f"{suicides} suicide trigger(s) detected. These are rarely "
-                "needed in Cylc 8 - see https://cylc.github.io/cylc-doc/"
-                "stable/html/7-to-8/major-changes/suicide-triggers.html"
-            )
+            LOG.log(WARNING, f"{suicides} suicide trigger(s) detected."
+                    "These are rarely needed in Cylc 8 - see https://cylc."
+                    "github.io/cylc-doc/stable/html/7-to-8/major-changes/"
+                    "suicide-triggers.html"
+                    )
 
     def set_required_outputs(
         self, task_output_opt: Dict[Tuple[str, str], Tuple[bool, bool, bool]]
