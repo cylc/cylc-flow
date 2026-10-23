@@ -347,7 +347,7 @@ async def test_broadcast_auto_upgraded_settings(
         )
         assert set(rets.values()) == {True}
         assert log_filter(
-            logging.WARNING, regex=r"Deprecated config.* upgraded.* broadcast"
+            logging.ERROR, regex=r"Deprecated config.* upgraded.* broadcast"
         )
 
         stdout, stderr = capsys.readouterr()
@@ -364,7 +364,7 @@ async def test_broadcast_auto_upgraded_settings(
         )
         assert set(rets.values()) == {False}
         assert log_filter(
-            logging.WARNING,
+            logging.ERROR,
             regex=r"Obsolete config.* rejected by the broadcast",
         )
         stdout, stderr = capsys.readouterr()

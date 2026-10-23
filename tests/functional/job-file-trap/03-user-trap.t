@@ -22,7 +22,7 @@
 set_test_number 5
 
 init_workflow "${TEST_NAME_BASE}" <<'__WORKFLOW__'
-[cylc]
+[scheduler]
     [[events]]
         abort on inactivity timeout = True
         abort on stall timeout = True
