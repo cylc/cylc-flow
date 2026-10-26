@@ -757,8 +757,8 @@ with Conf(
             :term:`active jobs <active job>` within that queue drops below
             the queue limit.
 
-            All tasks that are not assigned to other queues belong to a
-            ``default`` queue with a default limit of 100.
+            All tasks that are not assigned to other queues belong to the
+            :cylc:conf:`[default]` queue with a default limit of 100.
 
             You can define custom queues to limit job activity across groups
             of tasks. The default limit for custom queues is 0 (no limit).
@@ -767,6 +767,8 @@ with Conf(
 
             A given task can only be in one queue. If a task is assigned to
             multiple queues, only the last assignment will take effect.
+
+            .. rubric:: Example:
 
             .. code-block:: cylc
 
