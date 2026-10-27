@@ -632,8 +632,10 @@ def test_delta_task_xtrigger(xharness):
     assert xtrig_y.satisfied
 
 
-async def test_absolute_graph_edges(flow, scheduler, start):
-    """It should add absolute graph edges to the store.
+async def test_absolute_graph_edges(
+    flow, scheduler, start, spawn_ahead_and_queue
+):
+    """It should add absolute graph edges to the store, in future cycles.
 
     See: https://github.com/cylc/cylc-flow/issues/5845
     """
@@ -652,6 +654,7 @@ async def test_absolute_graph_edges(flow, scheduler, start):
     schd = scheduler(id_)
 
     async with start(schd):
+        spawn_ahead_and_queue(schd.pool)
         await schd.update_data_structure()
 
         assert {

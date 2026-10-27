@@ -182,6 +182,7 @@ async def test_holding_tasks_whilst_scheduler_paused(
     one_conf,
     start,
     scheduler,
+    spawn_ahead_and_queue,
 ):
     """It should hold tasks irrespective of workflow state.
 
@@ -192,6 +193,7 @@ async def test_holding_tasks_whilst_scheduler_paused(
 
     # run the workflow
     async with start(one):
+        spawn_ahead_and_queue(one.pool)
         # capture any job submissions
         submitted_tasks = capture_submission(one)
         assert submitted_tasks == set()
