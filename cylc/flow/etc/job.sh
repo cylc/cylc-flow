@@ -134,7 +134,7 @@ cylc__job__main() {
     # System paths:
     # * workflow directory (installed run-dir first).
     export PATH="${CYLC_WORKFLOW_RUN_DIR}/share/bin:${CYLC_WORKFLOW_RUN_DIR}/bin:${PATH}"
-    export PYTHONPATH="${CYLC_WORKFLOW_RUN_DIR}/share/lib/python:${CYLC_WORKFLOW_RUN_DIR}/lib/python:${PYTHONPATH:-}"
+    export PYTHONPATH="${CYLC_WORKFLOW_RUN_DIR}/share/lib/python:${CYLC_WORKFLOW_RUN_DIR}/lib/python${PYTHONPATH:+:${PYTHONPATH}}"
     # Create share and work directories
     mkdir -p "${CYLC_TASK_SHARE_CYCLE_DIR}" || true
     mkdir -p "$(dirname "${CYLC_TASK_WORK_DIR}")" || true
