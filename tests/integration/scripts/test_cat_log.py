@@ -25,7 +25,7 @@ from cylc.flow.exceptions import InputError
 from cylc.flow.option_parsers import Options
 from cylc.flow.scripts.cat_log import (
     _main as cat_log,
-    get_option_parser as cat_log_gop
+    get_option_parser as cat_log_gop,
 )
 
 

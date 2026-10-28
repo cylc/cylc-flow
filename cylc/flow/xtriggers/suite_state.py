@@ -20,11 +20,15 @@ from cylc.flow.xtriggers.workflow_state import _workflow_state_backcompat
 
 
 LOG.warning(
-    "The suite_state xtrigger is deprecated. "
-    "Please use the workflow_state xtrigger instead."
+    "The suite_state xtrigger is deprecated and will be removed "
+    "in Cylc 8.9. Please use the workflow_state xtrigger instead."
 )
 
 
+# BACK COMPAT: suite_state
+# from: 7
+# to: 8.0
+# remove at: 8.9
 def suite_state(suite, task, point, offset=None, status='succeeded',
                 message=None, cylc_run_dir=None, debug=False):
     """Suite state xtrigger, required for interoperability with Cylc 7.
@@ -71,6 +75,9 @@ def suite_state(suite, task, point, offset=None, status='succeeded',
             Dictionary containing the args / kwargs which were provided
             to this xtrigger.
 
+    .. deprecated:: 8.0.0
+
+       ``suite_state`` will be removed in Cylc 8.9.
     """
     return _workflow_state_backcompat(
         suite, task, point, offset, status, message, cylc_run_dir

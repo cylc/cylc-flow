@@ -32,11 +32,13 @@ jobs:
       matrix:
         include:
           - os: 'ubuntu-latest'
-            python-version: '3'
+            # Temporary pinned while h5py doesn't have python 3.15 wheels.
+            # See https://github.com/cylc/cylc-flow/issues/7549
+            python-version: '3.14'
           - os: 'ubuntu-22.04'
             python-version: '3.12'
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - name: configure python
         uses: actions/setup-python@v7
@@ -51,6 +53,9 @@ jobs:
 
       - name: install cylc-flow
         run: pip install .[all]
+
+      # Useful debug info:
+      - run: pip list
 
       - name: run tutorial workflow
         run: |

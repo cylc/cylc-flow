@@ -17,8 +17,14 @@
 #
 # Tests that configs can be upgraded from earlier versions of Cylc.
 
+import logging
+
 import pytest
-from cylc.flow.cfgspec.workflow import upg, upgrade_param_env_templates
+
+from cylc.flow.cfgspec.workflow import (
+    upg,
+    upgrade_param_env_templates,
+)
 from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults as ord_dict
 
 
@@ -79,7 +85,7 @@ from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults as ord_dict
         )
     ]
 )
-def test_upgrade_param_env_templates(cfg, expected):
+def test_upgrade_param_env_templates(cfg, expected, log_filter):
     """Test that the deprecated [runtime][X][parameter environment templates]
     contents are prepended to [runtime][X][environment], in the correct
     order"""
@@ -105,6 +111,13 @@ def test_upgrade_param_env_templates(cfg, expected):
     config = _cfg(cfg)
     upgrade_param_env_templates(config, 'flow.cylc')
     assert config == _cfg(expected)
+    assert log_filter(
+        logging.WARNING,
+        contains=(
+            "support for parameter environment templates will be "
+            "removed at Cylc 8.9"
+        )
+    )
 
 
 @pytest.mark.parametrize(

@@ -431,7 +431,7 @@ async def test_scan_sigstop(
 def cylc7_run_dir(tmp_path):
     """A run directory containing three Cylc 7 workflows."""
     # a workflow that has not yet been run
-    # (could be run by either cylc 7 or 8 so should appear in scan results)
+    # (could be run by Cylc <8.7 so should appear in scan results)
     either = tmp_path / 'either'
     either.mkdir()
     (either / WorkflowFiles.SUITE_RC).touch()

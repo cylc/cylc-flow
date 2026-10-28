@@ -838,3 +838,30 @@ async def test_icp_now_reload(
             f'{expected_icp}/foo',
         }
         assert not log_filter(level=logging.WARNING)
+
+
+async def test_upgrade_clock_triggers(flow, scheduler, start, log_filter):
+    """Test that old-style clock triggers are upgraded to wall_clock xtriggers.
+    """
+    wid = flow({
+        'scheduling': {
+            'initial cycle point': '2024',
+            'special tasks': {'clock-trigger': 'foo(PT1H)'},
+            'graph': {'R1': 'foo'},
+        },
+    })
+    schd: Scheduler = scheduler(wid)
+    async with start(schd):
+        label = '_cylc_wall_clock_foo'
+        assert label in schd.xtrigger_mgr.xtriggers.wall_clock_labels
+        assert schd.xtrigger_mgr.xtriggers.functx_map[label].func_args == [
+            'PT1H',
+        ]
+    assert log_filter(
+        logging.WARNING,
+        contains=(
+            "[scheduling][special tasks]clock-trigger is deprecated "
+            "and will be removed in Cylc 8.9; use the @wall_clock "
+            "xtrigger instead"
+        )
+    )

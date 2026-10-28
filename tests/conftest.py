@@ -21,7 +21,7 @@ from pathlib import Path
 import re
 from shutil import rmtree
 import time
-from typing import Callable, List, Optional, Tuple
+from typing import Callable
 
 import pytest
 
@@ -111,12 +111,12 @@ def log_filter(caplog: pytest.LogCaptureFixture):
         log: A caplog instance.
     """
     def _log_filter(
-        level: Optional[int] = None,
-        contains: Optional[str] = None,
-        regex: Optional[str] = None,
-        exact_match: Optional[str] = None,
-        log: Optional[pytest.LogCaptureFixture] = None
-    ) -> List[Tuple[int, str]]:
+        level: int | None = None,
+        contains: str | None = None,
+        regex: str | None = None,
+        exact_match: str | None = None,
+        log: pytest.LogCaptureFixture | None = None
+    ) -> list[tuple[int, str]]:
         if log is None:
             log = caplog
         return [

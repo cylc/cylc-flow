@@ -67,7 +67,8 @@ from cylc.flow.exceptions import PlatformLookupError
                     'job': {'batch system': 'pbs'}
                 }
             },
-            False, "please replace with [runtime][bar]platform",
+            False,
+            "replace with [runtime][bar]platform",
             id="Deprecated settings"
         )
     ]

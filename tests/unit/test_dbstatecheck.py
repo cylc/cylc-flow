@@ -15,10 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from cylc.flow.dbstatecheck import check_polling_config
-from cylc.flow.exceptions import InputError
+import sqlite3
 
 import pytest
+
+from cylc.flow.cycling.integer import IntegerPoint
+from cylc.flow.cycling.iso8601 import ISO8601Point
+from cylc.flow.dbstatecheck import CylcWorkflowDBChecker, check_polling_config
+from cylc.flow.exceptions import InputError
 
 
 def test_check_polling_config():
@@ -43,3 +47,252 @@ def test_check_polling_config():
     # valid query use cases
     check_polling_config(None, False, True)
     check_polling_config(None, False, False)
+
+
+class MockConn(sqlite3.Connection):
+    """Mock Connection that allows asserting inputs and providing outputs."""
+
+    def __init__(
+        self,
+        rows: list[tuple],
+        expected_statement: str | None = None,
+        expected_parameters: tuple | None = None,
+    ) -> None:
+        self.rows = rows
+        self.expected_stmt = expected_statement
+        self.expected_parameters = expected_parameters
+
+    def execute(self, sql: str, parameters=None):  # type: ignore
+        if self.expected_stmt is not None:
+            assert self.expected_stmt == sql
+        assert self.expected_parameters == parameters
+        return self
+
+    def fetchone(self):
+        return self.rows[0] if len(self.rows) > 0 else None
+
+    def fetchall(self):
+        return self.rows
+
+
+class MockDBChecker(CylcWorkflowDBChecker):
+    """Mock CylcWorkflowDBChecker that doesn't need a real database."""
+
+    def __init__(self, conn: MockConn | None, db_point_fmt: str | None = None):
+        self.conn = conn if conn is not None else MockConn([])
+        self.db_point_fmt = db_point_fmt
+
+
+class TestCylcWorkflowDBChecker:
+    @pytest.mark.parametrize(
+        "cycle_string, db_point_fmt, expected",
+        [
+            # IntegerPoint produced.
+            ("5", None, IntegerPoint("5")),
+            # ISO8601Point produced.
+            (
+                "20260925T0000Z",
+                "CCYYMMDDThhmmZ",
+                ISO8601Point("20260925T0000Z"),
+            ),
+        ],
+    )
+    def test_str_to_point(self, cycle_string, db_point_fmt, expected):
+        """String produces expected Point object."""
+        point = MockDBChecker(None, db_point_fmt)._str_to_point(cycle_string)
+        assert isinstance(point, expected.__class__)
+        assert point == expected
+
+    def test_str_to_point_invalid_integer_format(self):
+        """An improperly formatted integer cycle point raises an error."""
+        with pytest.raises(
+            InputError,
+            match=('Cycle point "not an int" is not a valid integer point'),
+        ):
+            MockDBChecker(None, None)._str_to_point("not an int")
+
+    def test_str_to_point_invalid_datetime_format(self):
+        """An improperly formatted ISO8601 cycle point raises an error."""
+        with pytest.raises(
+            InputError,
+            match=(
+                'Cycle point "not a date" is not compatible '
+                'with DB point format "CCYYMMDDThhmmZ"'
+            ),
+        ):
+            MockDBChecker(None, "CCYYMMDDThhmmZ")._str_to_point("not a date")
+
+    @pytest.mark.parametrize(
+        "cycle, offset, db_point_fmt, expected",
+        [
+            # None cycles are returned unchanged.
+            (None, None, None, None),
+            # Integer cycles without offsets are returned unchanged.
+            ("1", None, None, "1"),
+            # Offsets are applied to integer offsets.
+            ("2", "-P1", None, "1"),
+            ("2", "P1", None, "3"),
+            # Date cycles are normalised.
+            ("2026-09-25T00:00Z", None, "CCYYMMDDThhmmZ", "20260925T0000Z"),
+            ("20510101T0000Z", None, "CCYY", "2051"),
+            # Date cycles have offsets applied.
+            ("20260925T0000Z", "-P1D", "CCYYMMDDThhmmZ", "20260924T0000Z"),
+            ("20260925T0000Z", "+P1D", "CCYYMMDDThhmmZ", "20260926T0000Z"),
+            ("20510101T0000Z", "P1Y", "CCYY", "2052"),
+            ("2026", "P1Y", "CCYY", "2027"),
+        ],
+    )
+    def test_adjust_point_to_db(self, cycle, offset, db_point_fmt, expected):
+        """Cycle point is offset and normalised."""
+        db_checker = MockDBChecker(None, db_point_fmt)
+        normalised_cycle = db_checker.adjust_point_to_db(cycle, offset)
+        assert normalised_cycle == expected
+
+    @pytest.mark.parametrize(
+        "rows, expected",
+        [
+            # None returned when no key match in database.
+            ([], None),
+            # None if blank in database.
+            ([("",)], None),
+            # Rows correctly parsed to return value.
+            ([("1",)], "1"),
+        ],
+    )
+    def test_get_db_param(self, rows, expected):
+        """Database param values are parsed out of the workflow database."""
+        db_checker = MockDBChecker(
+            MockConn(rows, expected_parameters=("startcp",))
+        )
+        start_cycle_point = db_checker._get_db_param("startcp")
+        assert start_cycle_point == expected
+
+    @pytest.mark.parametrize(
+        "fmt, icp, scp, tcp, expected, warns",
+        [
+            # Not before an unspecified start cycle point.
+            (None, None, None, "1", False, False),
+            # Non-specific target cycle point is not before.
+            (None, "5", "5", "*", False, False),
+            (None, "5", "5", "%", False, False),
+            (
+                "CCYYMMDDThhmmZ",
+                "20260925T0000Z",
+                "20260925T0000Z",
+                "*",
+                False,
+                False,
+            ),
+            (
+                "CCYYMMDDThhmmZ",
+                "20260925T0000Z",
+                "20260925T0000Z",
+                "%",
+                False,
+                False,
+            ),
+            # Target is equal or after start cycle point.
+            (None, "5", "5", "5", False, False),
+            (None, "5", "5", "6", False, False),
+            # Target is before start cycle point but after initial.
+            (None, "1", "5", "2", True, False),
+            # Target is before initial cycle point.
+            (None, "2", "2", "1", False, True),
+            (None, "2", "5", "1", False, True),
+            # Target is before initial cycle point and no start.
+            (None, "2", None, "1", False, True),
+            # ISO8601Point is equal or after start cycle point.
+            (
+                "CCYYMMDDThhmmZ",
+                "20260925T0000Z",
+                "20260925T0000Z",
+                "20260925T0000Z",
+                False,
+                False,
+            ),
+            (
+                "CCYYMMDDThhmmZ",
+                "20260925T0000Z",
+                "20260925T0000Z",
+                "20260930T0000Z",
+                False,
+                False,
+            ),
+            # ISO8601Point is before start cycle point but after initial.
+            (
+                "CCYYMMDDThhmmZ",
+                "20260801T0000Z",
+                "20260925T0000Z",
+                "20260901T0000Z",
+                True,
+                False,
+            ),
+            # ISO8601Point is before initial cycle point.
+            ("CCYY", "2020", "2026", "2000", False, True),
+        ],
+    )
+    def test_is_before_start_cycle_point(
+        self, fmt, icp, scp, tcp, expected, warns, capsys
+    ):
+        """Whether the current cycle point is before the start cycle point."""
+        db_checker = MockDBChecker(None, fmt)
+        db_checker.start_cycle_point = (
+            db_checker._str_to_point(scp) if isinstance(scp, str) else scp
+        )
+        db_checker.initial_cycle_point = (
+            db_checker._str_to_point(icp) if isinstance(icp, str) else icp
+        )
+        before_start_cycle_point = db_checker._is_before_start_cycle_point(tcp)
+        assert before_start_cycle_point == expected
+        captured = capsys.readouterr()
+        assert warns == ("WARNING" in captured.err)
+
+    @pytest.mark.parametrize(
+        "task, cycle, selector, flow_num, is_output_query, expected",
+        [
+            # Test defaults.
+            (
+                None,
+                "1",
+                None,
+                None,
+                None,
+                ["", "1", "succeeded"],
+            ),
+            # Test task name, alternative succeeded, and cycle.
+            (
+                "mytask",
+                "2",
+                "succeeded",
+                None,
+                False,
+                ["mytask", "2", "succeeded"],
+            ),
+            # Test date cycle and flow number.
+            (
+                "mytask",
+                "20260926T1200Z",
+                "succeeded",
+                3,
+                False,
+                ["mytask", "20260926T1200Z", "succeeded", "3"],
+            ),
+            # Test an output query.
+            (
+                "mytask",
+                "1",
+                "custom",
+                None,
+                True,
+                ["mytask", "1", '{"custom": "before start cycle point"}'],
+            ),
+        ],
+    )
+    def test_dummy_result(
+        self, task, cycle, selector, flow_num, is_output_query, expected
+    ):
+        """It should produce the expected result."""
+        result = CylcWorkflowDBChecker._dummy_result(
+            task, cycle, selector, flow_num, is_output_query
+        )
+        assert result == expected

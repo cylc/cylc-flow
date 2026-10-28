@@ -1,4 +1,4 @@
-# Run this with Cylc 7, 8 (pre-8.3.0), and 8 (8.3.0+)
+# Run this with Cylc 8 (pre-8.3.0), and 8 (8.3.0+)
 # to generate DBs for workflow state checks.
 # (The task_outputs table is different in each case).
 

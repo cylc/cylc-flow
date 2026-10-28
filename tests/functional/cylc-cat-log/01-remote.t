@@ -86,7 +86,9 @@ __END__
 # remote
 TEST_NAME=${TEST_NAME_BASE}-task-list-remote-NN
 run_ok "$TEST_NAME" cylc cat-log -m l "${WORKFLOW_NAME}//1/a-task"
-cmp_ok "${TEST_NAME}.stdout" <<__END__
+# NOTE: Job platforms may produce log files additional to these so we're using
+# contains_ok rather than cmp_ok
+contains_ok "${TEST_NAME}.stdout" <<__END__
 job
 job-activity.log
 job.custom-log

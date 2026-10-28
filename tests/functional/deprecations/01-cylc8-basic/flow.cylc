@@ -32,6 +32,7 @@
         abort if inactivity handler fails =
         abort if startup handler fails =
         abort if shutdown handler fails =
+        handler events = stalled
     [[reference test]]
         allow task failures =
         live mode suite timeout =
@@ -72,3 +73,5 @@
         [[[suite state polling]]]
             interval = PT10S
             message = "pork scratchings"
+        [[[parameter environment templates]]]
+            FOO = telemachus

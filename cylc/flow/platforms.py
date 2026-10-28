@@ -333,6 +333,10 @@ def get_platform_from_group(
         return HOST_SELECTION_METHODS[method](platform_names)
 
 
+# BACK COMPAT
+# from: 7
+# to: 8.0
+# remove at: 8.9
 def _platform_name_from_job_info(
     platforms: Union[dict, 'OrderedDictWithDefaults'],
     job: Dict[str, Any],
@@ -564,6 +568,22 @@ def get_host_from_platform(
     return HOST_SELECTION_METHODS[method](goodhosts)
 
 
+# BACK COMPAT: host logic
+# Determine task host or platform now, just before job submission,
+# because dynamic host/platform selection may be used.
+# cases:
+# - Platform exists, host does = throw error here:
+#    Although errors of this sort should ideally be caught on config
+#    load this cannot be done because inheritance may create conflicts
+#    which appear later. Although this error is also raised
+#    by the platforms module it's probably worth putting it here too
+#    to prevent trying to run the remote_host/platform_select logic for
+#    tasks which will fail anyway later.
+# - Platform exists, host doesn't = eval platform_name
+# - host exists - eval host_n
+# from: 7
+# to: 8.0
+# remove at: 8.9
 def fail_if_platform_and_host_conflict(
     task_conf: Union[dict, 'OrderedDictWithDefaults'], task_name: str
 ) -> None:
@@ -600,16 +620,13 @@ def fail_if_platform_and_host_conflict(
 
 
 # BACK COMPAT: get_platform_deprecated_settings
-# from:
-#     Cylc7
-# to:
-#     Cylc8
-# remove at:
-#     Cylc8.x
+# from: 7
+# to: 8.0
+# remove at: 8.9
 def get_platform_deprecated_settings(
-    task_conf: Union[dict, 'OrderedDictWithDefaults'],
+    task_conf: 'dict | OrderedDictWithDefaults',
     task_name: str = UNKNOWN_TASK
-) -> List[str]:
+) -> list[str]:
     """Return deprecated [runtime][<task_name>] settings that should be
     upgraded to platforms.
 

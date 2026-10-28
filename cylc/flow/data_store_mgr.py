@@ -1934,8 +1934,6 @@ class DataStoreMgr:
         self.n_window_node_walks.clear()
         for tp_id in self.all_task_pool:
             tokens = Tokens(tp_id)
-            tproxy: PbTaskProxy
-            _, tproxy = self.store_node_fetcher(tokens)
             self.increment_graph_window(
                 tokens,
                 get_point(tokens['cycle']),

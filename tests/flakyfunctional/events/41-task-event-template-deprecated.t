@@ -17,10 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Test deprecated batch_sys_job_id & batch_sys_name event handler template vars
-# - they should still work but give a validation warning
+# - they should still work (validation warnings tested separately in unit tests)
 
 . "$(dirname "$0")/test_header"
-set_test_number 7
+set_test_number 2
 
 init_workflow "${TEST_NAME_BASE}" << __FLOW__
 [scheduling]
@@ -32,17 +32,6 @@ init_workflow "${TEST_NAME_BASE}" << __FLOW__
             started handlers = \
                echo "job_id = %(batch_sys_job_id)s; job_runner_name = %(batch_sys_name)s; workflow = %(suite)s; workflow_uuid = %(suite_uuid)s"
 __FLOW__
-
-run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
-
-grep_ok 'WARNING - The event handler template variable "%(batch_sys_job_id)s" is deprecated - use "%(job_id)s" instead' \
-    "${TEST_NAME_BASE}-validate.stderr" -F
-grep_ok 'WARNING - The event handler template variable "%(batch_sys_name)s" is deprecated - use "%(job_runner_name)s" instead' \
-    "${TEST_NAME_BASE}-validate.stderr" -F
-grep_ok 'WARNING - The event handler template variable "%(suite)s" is deprecated - use "%(workflow)s" instead' \
-    "${TEST_NAME_BASE}-validate.stderr" -F
-grep_ok 'WARNING - The event handler template variable "%(suite_uuid)s" is deprecated - use "%(uuid)s" instead' \
-    "${TEST_NAME_BASE}-validate.stderr" -F
 
 workflow_run_ok "${TEST_NAME_BASE}-run" cylc play --no-detach "${WORKFLOW_NAME}"
 

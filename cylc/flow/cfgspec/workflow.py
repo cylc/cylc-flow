@@ -77,7 +77,8 @@ from cylc.flow.run_modes import (
     TASK_CONFIG_RUN_MODES,
     RunMode,
 )
-from cylc.flow.task_events_mgr import EventData
+from cylc.flow.task_events_mgr import EventData as TED
+from cylc.flow.workflow_events import EventData as WED
 
 
 # Regex to check whether a string is a command
@@ -247,13 +248,6 @@ with Conf(
             ``False`` after finishing the :cylc:conf:`flow.cylc[runtime]`
             section.
 
-            .. admonition:: Cylc 7 compatibility mode
-
-               In :ref:`Cylc_7_compat_mode`, implicit tasks are still
-               allowed unless you explicitly set this to ``False``, or
-               unless a ``rose-suite.conf`` file is present (to maintain
-               backward compatibility with Rose 2019).
-
             .. versionadded:: 8.0.0
         ''')
 
@@ -375,11 +369,6 @@ with Conf(
             be represented with this string at the end.
 
             If not set, it will default to UTC (``Z``).
-
-            .. admonition:: Cylc 7 compatibility mode
-
-               In :ref:`Cylc_7_compat_mode`, it will default to the
-               local/system time zone, rather than UTC.
 
             The time zone will persist over reloads/restarts following any
             local time zone changes (e.g. if the
@@ -761,16 +750,25 @@ with Conf(
         ''')
 
         with Conf('queues', desc='''
-            Internal task queues to limit job activity.
+            Internal queues limit how many tasks can have active jobs at once.
 
-            Queues delay job submission in member tasks, until the active
-            job count (for members) drops below the queue limit.
+            Tasks become queued when they are ready to run, and are released
+            on a first in, first out basis when the number of
+            :term:`active jobs <active job>` within that queue drops below
+            the queue limit.
 
-            There is a ``default`` queue with a configurable limit of 100, for
-            all tasks that are not assigned to other queues.
+            All tasks that are not assigned to other queues belong to the
+            :cylc:conf:`[default]` queue with a default limit of 100.
 
-            You can define custom queues to limit job activity across other
-            groups of tasks.
+            You can define custom queues to limit job activity across groups
+            of tasks. The default limit for custom queues is 0 (no limit).
+
+            Tasks can be assigned en masse to queues by family name.
+
+            A given task can only be in one queue. If a task is assigned to
+            multiple queues, only the last assignment will take effect.
+
+            .. rubric:: Example:
 
             .. code-block:: cylc
 
@@ -805,21 +803,27 @@ with Conf(
             Family names can be used in special task lists as shorthand for
             listing all member tasks.
         '''):
+            # BACK COMPAT
+            # remove at: 8.9
             Conf('clock-trigger', VDR.V_STRING_LIST, desc='''
             Legacy clock trigger definitions.
 
             .. deprecated:: 8.0.0
 
-               These are now auto-upgraded to the newer wall_clock xtriggers
-               (see :ref:`Section External Triggers`). The old way defining
-               clock-triggers will be removed in an upcoming Cylc version.
+               This old way of defining clock-triggers will be removed
+               in Cylc 8.9. See :ref:`ClockTriggerTasks`.
 
-            Clock-triggered tasks (see :ref:`ClockTriggerTasks`) wait on a wall
+            Clock-triggered tasks wait on a wall
             clock time specified as an offset from their own cycle point.
 
             Example:
 
             ``foo(PT1H30M), bar(PT1.5H), baz``
+
+            .. versionchanged:: 8.2.0
+
+               These are now auto-upgraded to the newer
+               :ref:`wall_clock xtriggers <Section External Triggers>`.
             ''')
             Conf('external-trigger', VDR.V_STRING_LIST, desc='''
                 Legacy external trigger definition section.
@@ -901,7 +905,7 @@ with Conf(
 
                 Example::
 
-                ``my_trigger(arg1, arg2, kwarg1, kwarg2):PT10S``
+                   my_trigger(arg1, arg2, kwarg1, kwarg2):PT10S
             ''')
 
         with Conf('graph', desc=f'''
@@ -1530,10 +1534,10 @@ with Conf(
 
                         See also :cylc:conf:`[meta]URL <flow.cylc[meta]URL>`.
 
-                        Example:
+                        Example::
 
-                        ``http://my-site.com/workflows/%(workflow)s/'''
-                    '%(task)s.html``')
+                           http://my-site.com/workflows/%(workflow)s/%(task)s.html
+                    ''')
                 Conf('<custom metadata>', VDR.V_STRING, '', desc='''
                     Any user-defined metadata item.
 
@@ -1599,13 +1603,10 @@ with Conf(
                     speedup factor` are not set.
                 ''')
                 Conf('speedup factor', VDR.V_FLOAT, desc='''
-                    Simulated run length = speedup factor * execution time
-                    limit.
-
                     If :cylc:conf:`flow.cylc[runtime][<namespace>]
                     execution time limit` is set, the task
-                    simulated run length is computed by dividing it by this
-                    factor.
+                    simulated run length is computed by dividing the limit
+                    by this factor.
                 ''')
                 Conf('time limit buffer', VDR.V_INTERVAL, DurationFloat(30),
                      desc='''
@@ -1917,8 +1918,8 @@ with Conf(
 
                 .. deprecated:: 8.3.0
 
-                Please use the :ref:`workflow_state xtrigger
-                <Built-in Workflow State Triggers>` instead.
+                   Please use the :ref:`workflow_state xtrigger
+                   <Built-in Workflow State Triggers>` instead.
             '''):
                 Conf('interval', VDR.V_INTERVAL, desc='''
                     Polling interval.
@@ -2106,11 +2107,6 @@ def upg(
 ) -> upgrader:
     """Upgrade old workflow configuration.
 
-    NOTE: We are silencing deprecation (and only deprecation) warnings
-    when in Cylc 7 compat mode to help support Cylc 7/8 compatible workflows
-    (which would loose Cylc 7 compatibility if users were to follow the
-    warnings and upgrade the syntax).
-
     Args:
         broadcast:
             If truthy, tailors warning messages for the context of broadcasts.
@@ -2123,57 +2119,80 @@ def upg(
     u = upgrader(cfg, descr, broadcast=bool(broadcast))
 
     u.obsolete(
-        '7.8.0', ['runtime', '__MANY__', 'suite state polling', 'template']
+        '7.8.0', ['runtime', '__MANY__', 'suite state polling', 'template'],
+        remove_at='8.9'
     )
-    u.obsolete('7.8.1', ['cylc', 'events', 'reset timer'])
-    u.obsolete('7.8.1', ['cylc', 'events', 'reset inactivity timer'])
-    u.obsolete('8.0.0', ['cylc', 'force run mode'])
-    u.obsolete('7.8.1', ['runtime', '__MANY__', 'events', 'reset timer'])
-    u.obsolete('8.0.0', ['cylc', 'authentication'], is_section=True)
-    u.obsolete('8.0.0', ['cylc', 'include at start-up'])
-    u.obsolete('8.0.0', ['cylc', 'exclude at start-up'])
-    u.obsolete('8.0.0', ['cylc', 'log resolved dependencies'])
-    u.obsolete('8.0.0', ['cylc', 'required run mode'])
+    u.obsolete('7.8.1', ['cylc', 'events', 'reset timer'], remove_at='8.9')
+    u.obsolete('7.8.1', ['cylc', 'events', 'reset inactivity timer'],
+               remove_at='8.9')
+    u.obsolete('8.0.0', ['cylc', 'force run mode'], remove_at='8.9')
+    u.obsolete('7.8.1', ['runtime', '__MANY__', 'events', 'reset timer'],
+               remove_at='8.9')
+    u.obsolete('8.0.0', ['cylc', 'authentication'], is_section=True,
+               remove_at='8.9')
+    u.obsolete('8.0.0', ['cylc', 'include at start-up'], remove_at='8.9')
+    u.obsolete('8.0.0', ['cylc', 'exclude at start-up'], remove_at='8.9')
+    u.obsolete('8.0.0', ['cylc', 'log resolved dependencies'], remove_at='8.9')
+    u.obsolete('8.0.0', ['cylc', 'required run mode'], remove_at='8.9')
     u.obsolete(
         '8.0.0',
-        ['cylc', 'health check interval'])
-    u.obsolete('8.0.0', ['runtime', '__MANY__', 'events', 'mail retry delays'])
-    u.obsolete('8.0.0', ['runtime', '__MANY__', 'extra log files'])
-    u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'])
+        ['cylc', 'health check interval'],
+        remove_at='8.9')
+    u.obsolete('8.0.0', ['runtime', '__MANY__', 'events', 'mail retry delays'],
+               remove_at='8.9')
+    u.obsolete('8.0.0', ['runtime', '__MANY__', 'extra log files'],
+               remove_at='8.9')
+    u.obsolete('8.0.0', ['runtime', '__MANY__', 'job', 'shell'],
+               remove_at='8.9')
     u.obsolete(
         '8.0.0',
-        ['runtime', '__MANY__', 'remote', 'suite definition directory']
+        ['runtime', '__MANY__', 'remote', 'suite definition directory'],
+        remove_at='8.9'
     )
-    u.obsolete('8.0.0', ['cylc', 'abort if any task fails'])
-    u.obsolete('8.0.0', ['cylc', 'disable automatic shutdown'])
-    u.obsolete('8.0.0', ['cylc', 'environment'], is_section=True)
-    u.obsolete('8.0.0', ['cylc', 'reference test'], is_section=True)
+    u.obsolete('8.0.0', ['cylc', 'abort if any task fails'],
+               remove_at='8.9')
+    u.obsolete('8.0.0', ['cylc', 'disable automatic shutdown'],
+               remove_at='8.9')
+    u.obsolete('8.0.0', ['cylc', 'environment'], is_section=True,
+               remove_at='8.9')
+    u.obsolete('8.0.0', ['cylc', 'reference test'], is_section=True,
+               remove_at='8.9')
     u.obsolete(
         '8.0.0',
-        ['cylc', 'simulation', 'disable suite event handlers'])
-    u.obsolete('8.0.0', ['cylc', 'simulation'], is_section=True)
-    u.obsolete('8.0.0', ['visualization'], is_section=True)
-    u.obsolete('8.0.0', ['scheduling', 'spawn to max active cycle points'])
+        ['cylc', 'simulation', 'disable suite event handlers'],
+        remove_at='8.9')
+    u.obsolete('8.0.0', ['cylc', 'simulation'], is_section=True,
+               remove_at='8.9')
+    u.obsolete('8.0.0', ['visualization'], is_section=True, remove_at='8.9')
+    u.obsolete('8.0.0', ['scheduling', 'spawn to max active cycle points'],
+               remove_at='8.9')
     u.deprecate(
         '8.0.0',
         ['cylc', 'task event mail interval'],
         ['cylc', 'mail', 'task event batch interval'],
+        remove_at='8.9'
     )
     u.deprecate(
         '8.0.0',
         ['runtime', '__MANY__', 'suite state polling'],
         ['runtime', '__MANY__', 'workflow state polling'],
         is_section=True,
+        remove_at='8.9'
     )
     u.obsolete(
-        '8.0.0', ['runtime', '__MANY__', 'workflow state polling', 'host'])
+        '8.0.0', ['runtime', '__MANY__', 'workflow state polling', 'host'],
+        remove_at='8.9'
+    )
     u.obsolete(
-        '8.0.0', ['runtime', '__MANY__', 'workflow state polling', 'user'])
+        '8.0.0', ['runtime', '__MANY__', 'workflow state polling', 'user'],
+        remove_at='8.9'
+    )
 
     u.deprecate(
         '8.3.0',
         ['runtime', '__MANY__', 'workflow state polling', 'run-dir'],
         ['runtime', '__MANY__', 'workflow state polling', 'alt-cylc-run-dir'],
+        remove_at='8.9'
     )
 
     u.deprecate(
@@ -2181,12 +2200,14 @@ def upg(
         ['cylc', 'parameters'],
         ['task parameters'],
         is_section=True,
+        remove_at='8.9'
     )
     u.deprecate(
         '8.0.0',
         ['cylc', 'parameter templates'],
         ['task parameters', 'templates'],
         is_section=True,
+        remove_at='8.9'
     )
     # Whole workflow task mail settings
     for mail_setting in ['to', 'from', 'footer']:
@@ -2194,6 +2215,7 @@ def upg(
             '8.0.0',
             ['cylc', 'events', f'mail {mail_setting}'],
             ['cylc', 'mail', mail_setting],
+            remove_at='8.9'
         )
     # Task mail settings in [runtime][TASK]
     for mail_setting in ['to', 'from']:
@@ -2201,6 +2223,7 @@ def upg(
             '8.0.0',
             ['runtime', '__MANY__', 'events', f'mail {mail_setting}'],
             ['runtime', '__MANY__', 'mail', mail_setting],
+            remove_at='8.9'
         )
     u.deprecate(
         '8.0.0',
@@ -2210,6 +2233,7 @@ def upg(
             'DELETED (OBSOLETE) - use "global.cylc[scheduler][mail]smtp" '
             'instead')
         ),
+        remove_at='8.9'
     )
     u.deprecate(
         '8.0.0',
@@ -2219,6 +2243,7 @@ def upg(
             'DELETED (OBSOLETE) - use "global.cylc[scheduler][mail]smtp" '
             'instead')
         ),
+        remove_at='8.9'
     )
     u.deprecate(
         '8.0.0',
@@ -2226,13 +2251,15 @@ def upg(
         ['scheduling', 'runahead limit'],
         cvtr=converter(
             lambda x: f'P{int(x) - 1}' if x != '' else '',
-            '"{old}" -> "{new}"'
+            '"{old}" -> "{new}"',
         ),
+        remove_at='8.9'
     )
     u.deprecate(
         '8.0.0',
         ['scheduling', 'hold after point'],
         ['scheduling', 'hold after cycle point'],
+        remove_at='8.9'
     )
 
     for job_setting in [
@@ -2246,6 +2273,7 @@ def upg(
             '8.0.0',
             ['runtime', '__MANY__', 'job', job_setting],
             ['runtime', '__MANY__', job_setting],
+            remove_at='8.9'
         )
 
     # Workflow timeout is now measured from start of run.
@@ -2266,6 +2294,7 @@ def upg(
             '8.0.0',
             ['cylc', 'events', old],
             ['cylc', 'events', new],
+            remove_at='8.9',
         )
 
     for old in [
@@ -2288,6 +2317,7 @@ def upg(
             '8.0.0',
             ['runtime', '__MANY__', 'events', old],
             ['runtime', '__MANY__', 'events', f"{old}s"],
+            remove_at='8.9',
         )
 
     for old in [
@@ -2298,13 +2328,14 @@ def upg(
         'abort if inactivity handler fails',
         'abort if stalled handler fails',
     ]:
-        u.obsolete('8.0.0', ['cylc', 'events', old])
+        u.obsolete('8.0.0', ['cylc', 'events', old,], remove_at='8.9')
 
     u.deprecate(
         '8.0.0',
         ['cylc'],
         ['scheduler'],
         is_section=True,
+        remove_at='8.9'
     )
     u.upgrade()
 
@@ -2359,7 +2390,8 @@ def upgrade_graph_section(cfg: Dict[str, Any], descr: str) -> None:
                 if keys:
                     msg = (
                         'graph items were automatically upgraded '
-                        f'in "{descr}":\n'
+                        f'in "{descr}" - support for the old item will be '
+                        'removed at Cylc 8.9:\n'
                         f' * (8.0.0) {msg_old} -> {msg_new}'
                     )
                     if list_cp:
@@ -2367,6 +2399,10 @@ def upgrade_graph_section(cfg: Dict[str, Any], descr: str) -> None:
                     LOG.warning(msg + note)
 
 
+# BACK COMPAT
+# from: 7
+# to: 8.0
+# remove at: 8.9
 def upgrade_param_env_templates(cfg, descr):
     """Prepend contents of `[runtime][X][parameter environment templates]` to
     `[runtime][X][environment]`."""
@@ -2383,7 +2419,8 @@ def upgrade_param_env_templates(cfg, descr):
                 first_warn = False
             LOG.warning(
                 f' * (8.0.0) {dep % task_name} contents prepended to '
-                f'{new % task_name}'
+                f'{new % task_name} - support for parameter environment '
+                'templates will be removed at Cylc 8.9'
             )
             for key, val in reversed(
                     task_items['parameter environment templates'].items()):
@@ -2415,47 +2452,55 @@ def warn_about_depr_platform(cfg):
             # Fail if backticks subshell e.g. platform = `foo`:
             is_platform_definition_subshell(task_cfg['platform'])
         else:
+            # BACK COMPAT: get_platform_deprecated_settings
+            # remove at: 8.9
             depr = get_platform_deprecated_settings(task_cfg, task_name)
             if depr:
                 msg = "\n".join(depr)
                 LOG.warning(
                     "deprecated settings found "
-                    f"(please replace with [runtime][{task_name}]platform):"
+                    f"(replace with [runtime][{task_name}]platform "
+                    "before Cylc 8.9):"
                     f"\n{msg}"
                 )
 
 
+# BACK COMPAT: deprecated event handler templates
+# from: 7
+# to: 8.0
+# remove at: 8.9
 def warn_about_depr_event_handler_tmpl(cfg):
     """Warn if deprecated template strings appear in event handlers."""
     if 'runtime' not in cfg:
         return
     deprecation_msg = (
-        'The event handler template variable "%({0})s" is deprecated - '
-        'use "%({1})s" instead.')
+        'The {0} event handler template variable "%({1})s" is deprecated and '
+        'will be removed in Cylc 8.9 - use "%({2})s" instead.'
+    )
+    # NOTE: Do NOT use .get() on OrderedDictWithDefaults -
+    # https://github.com/cylc/cylc-flow/pull/4975
+    if 'scheduler' in cfg and 'events' in (schd_cfg := cfg['scheduler']):
+        for handler in schd_cfg['events'].values():
+            for old, new in (
+                (WED.Suite.value, WED.Workflow.value),
+                (WED.Suite_UUID.value, WED.UUID.value),
+                (WED.SuiteURL.value, WED.WorkflowURL.value),
+            ):
+                if f'%({old})' in handler:
+                    LOG.warning(deprecation_msg.format('workflow', old, new))
     for task in cfg['runtime']:
         if 'events' not in cfg['runtime'][task]:
             continue
         for handler in cfg['runtime'][task]['events'].values():
-            if f'%({EventData.JobID_old.value})' in handler:
-                LOG.warning(
-                    deprecation_msg.format(EventData.JobID_old.value,
-                                           EventData.JobID.value)
-                )
-            if f'%({EventData.JobRunnerName_old.value})' in handler:
-                LOG.warning(
-                    deprecation_msg.format(EventData.JobRunnerName_old.value,
-                                           EventData.JobRunnerName.value)
-                )
-            if f'%({EventData.Suite.value})' in handler:
-                LOG.warning(
-                    deprecation_msg.format(EventData.Suite.value,
-                                           EventData.Workflow.value)
-                )
-            if f'%({EventData.SuiteUUID.value})' in handler:
-                LOG.warning(
-                    deprecation_msg.format(EventData.SuiteUUID.value,
-                                           EventData.UUID.value)
-                )
+            for old, new in (
+                (TED.Suite.value, TED.Workflow.value),
+                (TED.SuiteUUID.value, TED.UUID.value),
+                (TED.JobRunnerName_old.value, TED.JobRunnerName.value),
+                (TED.JobID_old.value, TED.JobID.value),
+                (TED.UserAtHost.value, TED.PlatformName.value),
+            ):
+                if f'%({old})' in handler:
+                    LOG.warning(deprecation_msg.format('task', old, new))
 
 
 class RawWorkflowConfig(ParsecConfig):

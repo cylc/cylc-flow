@@ -318,7 +318,7 @@ async def set_prereqs_and_outputs(
     Note, the "outputs" and "prerequisites" arguments might not be
     populated in the mutation arguments so must provide defaults here.
     """
-    flow = back_compat_flow_all(flow)  # BACK COMPAT (see func def)
+    flow = back_compat_flow_all(flow)
     validate.consistency(outputs, prerequisites)
     outputs = validate.outputs(outputs)
     prerequisites = validate.prereqs(prerequisites)
@@ -372,7 +372,7 @@ async def stop(
         # schedule shutdown after wallclock time passes provided time
         parser = TimePointParser()
         schd.set_stop_clock(
-            int(parser.parse(clock_time).seconds_since_unix_epoch)
+            parser.parse(clock_time).seconds_since_unix_epoch
         )
         schd._update_workflow_state()
     elif task is not None:
@@ -507,7 +507,7 @@ async def remove_tasks(
         flow: flows to remove the tasks from.
         no_spawn: Do not spawn successors before removal.
     """
-    flow = back_compat_flow_all(flow)  # BACK COMPAT (see func def)
+    flow = back_compat_flow_all(flow)
     ids = validate.is_tasks(tasks)
     validate.flow_opts(flow, flow_wait=False, allow_new_or_none=False)
     yield
@@ -561,10 +561,9 @@ async def reload_workflow(schd: 'Scheduler', reload_global: bool = False):
         # give commands time to complete
         sleep(1)  # give any remove-init's time to complete
 
+    # Back up the current config in case workflow reload errors
+    global_cfg_old = glbl_cfg()
     try:
-        # Back up the current config in case workflow reload errors
-        global_cfg_old = glbl_cfg()
-
         if reload_global:
             # Reload global config if requested
             schd.reload_pending = 'reloading the global configuration'
@@ -602,24 +601,28 @@ async def reload_workflow(schd: 'Scheduler', reload_global: bool = False):
         glbl_cfg().set_cache(global_cfg_old)
     else:
         schd.reload_pending = 'applying the new config'
-        old_tasks = set(schd.config.get_task_name_list())
 
+        # Replace the config
+        old_tasks = set(schd.config.get_task_name_list())
         schd.apply_new_config(config, is_reload=True)
+        new_tasks = set(schd.config.get_task_name_list())
+
+        orphans = [
+            itask
+            for itask in schd.pool.get_tasks()
+            if itask.tokens['task'] not in new_tasks
+        ]
+        schd.handle_graph_change('reload', orphans, new_tasks - old_tasks)
+
+        # Reconfigure
         schd.broadcast_mgr.linearized_ancestors = (
             schd.config.get_linearized_ancestors()
         )
-
         schd.task_events_mgr.mail_interval = schd.cylc_config['mail'][
             'task event batch interval'
         ]
         schd.task_events_mgr.mail_smtp = schd._get_events_conf("smtp")
         schd.task_events_mgr.mail_footer = schd._get_events_conf("footer")
-
-        # Log tasks that have been added by the reload, removed tasks are
-        # logged by the TaskPool.
-        add = set(schd.config.get_task_name_list()) - old_tasks
-        for task in add:
-            LOG.info(f"Added task: '{task}'")
         schd.workflow_db_mgr.put_workflow_template_vars(schd.template_vars)
         schd.workflow_db_mgr.put_runtime_inheritance(schd.config)
         schd.workflow_db_mgr.put_workflow_params(schd)
@@ -635,7 +638,6 @@ async def reload_workflow(schd: 'Scheduler', reload_global: bool = False):
         schd.task_job_mgr.task_remote_mgr.remote_init_map.clear()
         schd.task_job_mgr.task_remote_mgr.is_reload = True
         schd.pool.reload(config)
-        schd.data_store_mgr.apply_task_proxy_db_history()
         # Load jobs from DB
         schd.workflow_db_mgr.pri_dao.select_jobs_for_restart(
             schd.data_store_mgr.insert_db_job
@@ -644,6 +646,9 @@ async def reload_workflow(schd: 'Scheduler', reload_global: bool = False):
             schd.pool.release_runahead_tasks()
         schd.is_reloaded = True
         schd.is_updated = True
+
+        # flush out data store changes
+        await schd.update_data_structure()
 
         LOG.info("Reload completed.")
 
@@ -674,7 +679,7 @@ async def force_trigger_tasks(
       cylc-admin/docs/proposal-group-trigger.md
 
     """
-    flow = back_compat_flow_all(flow)  # BACK COMPAT (see func def)
+    flow = back_compat_flow_all(flow)
     ids = validate.is_tasks(tasks)
     validate.flow_opts(flow, flow_wait)
     yield

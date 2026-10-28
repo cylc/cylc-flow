@@ -202,14 +202,10 @@ def addict(cfig, key, val, parents, index):
         if (
             parents[0:2] == ['scheduling', 'graph'] or
             # BACK COMPAT: [scheduling][dependencies]
-            # url:
-            #     https://github.com/cylc/cylc-flow/pull/3191
-            # from:
-            #     Cylc<=7
-            # to:
-            #     Cylc8
-            # remove at:
-            #     Cylc8.x
+            # url: https://github.com/cylc/cylc-flow/pull/3191
+            # from: <=7
+            # to: 8.0
+            # remove at: 8.9
             parents[0:2] == ['scheduling', 'dependencies']
         ):
             # append the new graph string to the existing one
@@ -315,18 +311,18 @@ def process_plugins(fpath: 'str | Path', opts: 'Values'):
                 extra_vars[section].update(section_update)
 
         templating_detected = plugin_result.get(TEMPLATING_DETECTED, None)
-        if (
-            templating_detected is not None
-            and extra_vars[TEMPLATING_DETECTED] is not None
-            and extra_vars[TEMPLATING_DETECTED] != templating_detected
-        ):
-            # Don't allow subsequent plugins with different templating_detected
-            raise ParsecError(
-                "Can't merge templating languages "
-                f"{extra_vars[TEMPLATING_DETECTED]} and "
-                f"{templating_detected}"
-            )
-        else:
+        if templating_detected is not None:
+            if (
+                extra_vars[TEMPLATING_DETECTED] is not None
+                and extra_vars[TEMPLATING_DETECTED] != templating_detected
+            ):
+                # Don't allow subsequent plugins with different
+                # templating_detected
+                raise ParsecError(
+                    "Can't merge templating languages "
+                    f"{extra_vars[TEMPLATING_DETECTED]} and "
+                    f"{templating_detected}"
+                )
             extra_vars[TEMPLATING_DETECTED] = templating_detected
 
     return extra_vars

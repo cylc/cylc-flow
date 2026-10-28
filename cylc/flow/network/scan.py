@@ -104,7 +104,7 @@ REQUIRED_FIELDS = [
 ]
 
 
-def dir_is_flow(listing: Iterable[Path]) -> Optional[bool]:
+def dir_is_flow(listing: Iterable[Path]) -> bool | None:
     """Return True if a Path contains a flow at the top level.
 
     Args:
@@ -115,13 +115,11 @@ def dir_is_flow(listing: Iterable[Path]) -> Optional[bool]:
     Returns:
         - True if the directory:
           - Is a Cylc 8 workflow.
-          - Is a Cylc 7 workflow that has not yet been run.
-          - Is a Cylc 7 workflow running under Cylc 8 in compatibility mode.
+          - Is a Cylc 7 workflow running under Cylc <8.7 in compatibility mode.
         - False if the directory:
           - Is not a workflow.
-        - None if the directory:
           - Is an incompatible workflow (e.g. a Cylc 7 workflow running under
-            Cylc 7).
+            Cylc 7 or never run at all).
 
     """
     names = {path.name for path in listing}
@@ -131,35 +129,33 @@ def dir_is_flow(listing: Iterable[Path]) -> Optional[bool]:
     #   well as installing the flow.cylc or suite.rc, but only the workflow
     #   definition is needed for it to be runnable by Cylc 8.
 
-    # Cylc 7:
-    # - suites manually registered in-place do not have a suite.rc in the run
-    #   directory and cannot be run by Cylc 8
-    # - suites installed (manually or by "rose suite-run") can be run by Cylc 8
-    #   if not already run by Cylc 7
-    # - "rose suite-run --install-only" creates a "log/suite" directory
-    # - running with Cylc 7 creates "log/suite/log"
-
     if WorkflowFiles.FLOW_FILE in names:
-        # A Cylc 8 workflow.
         return True
 
+    # BACK COMPAT: suite.rc logic
+    # FROM: 8.0
+    # TO: 8.7
+    # REMOVE AT: 8.11
     elif WorkflowFiles.SUITE_RC in names:
-        # An installed Cylc 7 workflow ...
         for path in listing:
             if path.name == WorkflowFiles.LogDir.DIRNAME:
+                # - "rose suite-run --install-only" creates a "log/suite" dir
+                # - running with Cylc 7 creates "log/suite/log"
                 if (
                         (path / 'suite' / 'log').exists()
                         and not (path / 'scheduler').exists()
                 ):
-                    # ... already run by Cylc 7 (and not re-run by Cylc 8 after
+                    # already run by Cylc 7 (and not re-run by Cylc 8 after
                     # removing the DB)
                     return None
                 else:
-                    # ... can be run by Cylc 8
+                    # may be running / have run in Cylc <8.7 in c7 back compat
+                    # mode - should still show in UI/CLI
                     return True
 
-        # Has not been run (and not installed by "rose suite-run" or
-        # "cylc install"). Can be run by Cylc 8.
+        # Has not been run, but can be run in Cylc <8.7 in c7 back compat mode
+        # (which can be actioned from the GUI by specifying a different Cylc
+        # version in the play form)
         return True
 
     else:
