@@ -43,7 +43,7 @@ trap "" TERM
 ) &
 undead_pid=$!
 echo "undead child PID: $undead_pid" >&2
-trap "echo 'TERM got trapped' >>'${CYLC_TASK_LOG_DIR}/testout.log'; wait" TERM
+trap "echo 'TERM got trapped' >>'${CYLC_TASK_LOG_DIR}/testout.log'; wait $undead_pid" TERM
 # this child will be terminated if job script is a process leader
 (
     sleep 15
