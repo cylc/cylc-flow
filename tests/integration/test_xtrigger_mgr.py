@@ -760,3 +760,42 @@ async def test_xtrigger_modifiers(flow, scheduler, start):
         assert ds_fproxy.is_retry is False
         assert ds_fproxy.is_wallclock is False
         assert ds_fproxy.is_xtriggered is False
+
+
+async def test_orphaned_task_with_xtrigger_on_reload(
+    flow, start, scheduler, log_filter
+):
+    """Removing a task with an xtrigger dependency and reloading should not
+    crash.
+    """
+    conf = {
+        'scheduling': {
+            'xtriggers': {
+                'my_xtrig': 'xrandom(0)',
+            },
+            'graph': {
+                'R1': '''
+                    @my_xtrig => foo
+                    bar
+                '''
+            },
+        },
+    }
+    id_ = flow(conf)
+    schd: Scheduler = scheduler(id_)
+    async with start(schd):
+        # confirm the task with the xtrigger is in the pool
+        assert schd.pool._get_task_by_id('1/foo') is not None
+
+        # remove task with xtrigger dependency (no foo in R1)
+        conf['scheduling']['graph']['R1'] = 'bar'
+        flow(conf, workflow_id=id_)
+
+        # reload should not crash
+        await commands.run_cmd(commands.reload_workflow(schd))
+
+        # the orphaned task should have been removed
+        assert schd.pool._get_task_by_id('1/foo') is None
+
+        # the reload should have completed successfully
+        assert log_filter(contains='Reload completed')

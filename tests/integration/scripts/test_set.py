@@ -96,11 +96,12 @@ async def test_set_parentless_spawning(
             ['1'],
         )
 
-        # the parentless task "a" should be spawned out to the runahead limit
-        assert schd.pool.get_task_ids() == {'2/a', '3/a'}
+        # the parentless task "a" should be spawned out to the next cycle
+        assert schd.pool.get_task_ids() == {'2/a'}
 
         # the workflow should run on to the next cycle
         await complete(schd, '2/a', timeout=5)
+        assert schd.pool.get_task_ids() == {'2/z', '3/a'}
 
 
 async def test_rerun_incomplete(

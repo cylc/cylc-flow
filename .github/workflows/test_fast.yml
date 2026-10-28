@@ -40,10 +40,10 @@ jobs:
       PYTEST_ADDOPTS: --cov --cov-append -n 5 --color=yes
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Install System Dependencies
-        uses: mamba-org/setup-micromamba@v2
+        uses: mamba-org/setup-micromamba@v3
         with:
           cache-environment: true
           post-cleanup: 'all'
@@ -88,7 +88,7 @@ jobs:
 
       - name: Upload failed tests artifact
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: cylc-run (${{ matrix.os }} py-${{ matrix.python-version }})
           path: ~/cylc-run/
@@ -100,15 +100,15 @@ jobs:
           coverage report
 
       - name: Upload coverage artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage_${{ matrix.os }}_py-${{ matrix.python-version }}
           path: coverage.xml
           retention-days: 7
 
   lint:
-    runs-on: 'ubuntu-latest'
-    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
     strategy:
       matrix:
         python-version: ['3']
@@ -116,10 +116,10 @@ jobs:
       FORCE_COLOR: 2
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Install System Dependencies
-        uses: mamba-org/setup-micromamba@v2
+        uses: mamba-org/setup-micromamba@v3
         with:
           cache-environment: true
           post-cleanup: 'all'
@@ -134,21 +134,39 @@ jobs:
         run: |
           pip install -e ."[tests]"
 
-      - name: Flake8
-        run: flake8
+      - parallel:
+        - name: Flake8
+          run: flake8
 
-      - name: Bandit
-        run: |
-          bandit -r --ini .bandit cylc/flow
+        - name: Bandit
+          run: |
+            bandit -r --ini .bandit cylc/flow
 
-      - name: Shellchecker
-        run: etc/bin/shellchecker
+        - name: Shellchecker
+          run: etc/bin/shellchecker
 
-      - name: MyPy
-        run: mypy
+        - name: MyPy
+          run: mypy
 
-      - name: Towncrier - draft changelog
-        uses: cylc/release-actions/towncrier-draft@v1
+        - name: Towncrier - draft changelog
+          uses: cylc/release-actions/towncrier-draft@v1
+
+  linkcheck:
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.x"
+          cache: "pip"
+
+      - name: Install Python Dependencies
+        run: pip install ."[tests]"
 
       - name: Linkcheck
         env:
@@ -157,17 +175,17 @@ jobs:
 
   codecov:
     needs: test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     timeout-minutes: 2
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Download coverage artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
 
       - name: Codecov upload
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           name: ${{ github.workflow }}
           flags: fast-tests

@@ -872,7 +872,7 @@ class TaskEventsManager():
         elif output_completed:
             # Must be a message of a custom task output.
             # No state change.
-            # Log completion of o      (not needed for standard outputs)
+            # Log completion of output (not needed for standard outputs)
             trigger = itask.state.outputs.get_trigger(message)
             LOG.info(f"[{itask}] completed output {trigger}")
             self.setup_event_handlers(itask, trigger, message)

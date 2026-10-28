@@ -275,9 +275,9 @@ class Prerequisite:
     def satisfy_me(
         self,
         outputs: Iterable['Tokens'],
-        mode: Optional[RunMode] = None,
+        mode: RunMode | None = None,
         forced: bool = False,
-    ) -> None:
+    ) -> bool:
         """Set the given outputs as satisfied (if they are not already).
 
         Args:
@@ -285,7 +285,10 @@ class Prerequisite:
             mode: Task run mode.
             forced: If True, records that this should not be undone by
                 `cylc remove`.
+
+        Returns True if any outputs were newly satisfied.
         """
+        ret = False
         for output in outputs:
             output_tuple = PrereqTuple(
                 output['cycle'], output['task'], output['task_sel']
@@ -298,6 +301,8 @@ class Prerequisite:
                     else 'satisfied by skip mode' if mode == RunMode.SKIP
                     else 'satisfied naturally'
                 )
+                ret = True
+        return ret
 
     def api_dump(self) -> Optional[PbPrerequisite]:
         """Return list of populated Protobuf data objects."""

@@ -1656,8 +1656,8 @@ with Conf('global.cylc', desc='''
                    Cylc wrapper script rather than the ``cylc`` executable
                    itself.
 
-                   See :ref:`managing environments` for more information on
-                   the wrapper script.
+                   See :ref:`installation.distributed-installation` for more
+                   information on the wrapper script.
 
                 .. versionchanged:: 8.0.0
 

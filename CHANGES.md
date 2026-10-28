@@ -11,6 +11,36 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 <!-- towncrier release notes start -->
 
+## __cylc-8.6.7 (Released 2026-10-09)__
+
+### 🔧 Fixes
+
+[#7434](https://github.com/cylc/cylc-flow/pull/7434) - Fixed a bug where `cylc set` could clobber the history of a completed task.
+
+[#7447](https://github.com/cylc/cylc-flow/pull/7447) - Fixed an issue in `cylc.pre_configure` plugins where `templating_detected` could be set incorrectly when multiple plugins are run.
+
+[#7516](https://github.com/cylc/cylc-flow/pull/7516) - Fixed a bug introduced in 8.6.6 that prevented custom outputs from triggering dependent tasks immediately
+
+## __cylc-8.6.6 (Released 2026-09-10)__
+
+### 🚀 Enhancements
+
+[#7365](https://github.com/cylc/cylc-flow/pull/7365) - Python warnings raised during Jinja2 preprocessing are now logged.
+
+### 🔧 Fixes
+
+[#7237](https://github.com/cylc/cylc-flow/pull/7237) - Fixed stall or premature shutdown caused by parented tasks at the runahead limit that have no parents in some other cycles.
+
+[#7336](https://github.com/cylc/cylc-flow/pull/7336) - Report invalid cylc message formats instead of crashing.
+
+[#7349](https://github.com/cylc/cylc-flow/pull/7349) - Fixed a crash that could occur when removing an xtriggered task from the graph in a reload.
+
+[#7353](https://github.com/cylc/cylc-flow/pull/7353) - Fixed a bug causing preparing jobs to be reloaded.
+
+[#7379](https://github.com/cylc/cylc-flow/pull/7379) - Fixed bug where Cylc would not retry communicating with a remote job platform if the initial attempt failed.
+
+[#7426](https://github.com/cylc/cylc-flow/pull/7426) - Fixed a bug where the workflow server thread would hang on shutdown in the event of a rare `BrokenBarrierError`.
+
 ## __cylc-8.6.5 (Released 2026-06-17)__
 
 ### 🔧 Fixes

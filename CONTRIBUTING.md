@@ -102,6 +102,8 @@ requests_).
  - Christopher Bennett
  - Ryan Boult
  - Samuel Denton
+ - Scott Owen James
+ - James Frost
  - Matt Van Horn
 <!-- end-shortlog -->
 

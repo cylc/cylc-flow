@@ -14,35 +14,39 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from tempfile import NamedTemporaryFile
 from contextlib import suppress
-
 import os
+from pathlib import Path
+import re
+import sqlite3
+from tempfile import NamedTemporaryFile
+from textwrap import dedent
+from types import SimpleNamespace
+import warnings
+
 import pytest
 from pytest import param
-import sqlite3
-from types import SimpleNamespace
 
 from cylc.flow import __version__ as cylc_version
+from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.exceptions import (
     FileParseError,
     IncludeFileNotFoundError,
     Jinja2Error,
     ParsecError,
 )
-from cylc.flow.parsec.OrderedDict import OrderedDictWithDefaults
 from cylc.flow.parsec.fileparse import (
     EXTRA_VARS_TEMPLATE,
-    _prepend_old_templatevars,
     _get_fpath_for_source,
-    get_cylc_env_vars,
+    _prepend_old_templatevars,
     addict,
     addsect,
+    get_cylc_env_vars,
+    merge_template_vars,
     multiline,
     parse,
     process_plugins,
     read_and_proc,
-    merge_template_vars
 )
 
 
@@ -445,6 +449,61 @@ def test_read_and_proc_jinja2_error_missing_shebang():
         r = read_and_proc(fpath=fpath, template_vars=template_vars,
                           viewcfg=viewcfg)
         assert r == ['a={{ name }}']
+
+
+def test_read_and_proc_jinja2_warnings(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+):
+    """Warnings from users' custom jinja2 filters etc should be logged."""
+    (fpath := tmp_path / 'flow.cylc').write_text(r"#!jinja2\n")
+    msg = "Mock deprecation warning"
+
+    def mock_jinja2process(fpath, *a, **k):
+        if fpath.endswith('flow.cylc'):
+            warnings.warn(msg, category=DeprecationWarning)
+        return []
+
+    monkeypatch.setattr(
+        'cylc.flow.parsec.jinja2support.jinja2process', mock_jinja2process
+    )
+    read_and_proc(
+        fpath=str(fpath),
+        viewcfg={'jinja2': True, 'contin': False, 'inline': False},
+    )
+    assert len(caplog.records) == 1
+    rec = caplog.records[0]
+    assert rec.levelname == 'WARNING'
+    assert re.match(
+        (
+            r"The following warnings .* during Jinja2 preprocessing.*\s+"
+            rf"{__file__}:\d+: DeprecationWarning: {msg}"
+        ),
+        rec.message,
+    )
+
+
+def test_read_and_proc_jinja2_warnings_invalid_escape(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+):
+    """When a warning comes from a j2 template expression, it should be logged
+    with the cylc config filepath."""
+    (fpath := tmp_path / 'flow.cylc').write_text(
+        dedent(r"""
+            #!jinja2
+            {% from 'warnings' import warn %}
+            {% do warn('Mock warning') %}
+        """).lstrip()
+    )
+    read_and_proc(
+        fpath=str(fpath),
+        viewcfg={'jinja2': True, 'contin': False, 'inline': False},
+    )
+
+    assert (
+        f"{fpath}:<jinja2 template>: UserWarning: Mock warning" in caplog.text
+    )
 
 
 def test_parse_keys_only_singleline():

@@ -24,7 +24,8 @@ import pytest
 from cylc.flow.commands import (
     run_cmd,
     force_trigger_tasks,
-    remove_tasks
+    remove_tasks,
+    set_prereqs_and_outputs
 )
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.cycling.iso8601 import ISO8601Point
@@ -62,31 +63,11 @@ async def test_remove(sequential: Scheduler, start):
     chain causing future instances to be removed from the workflow.
     """
     async with start(sequential):
-        # the scheduler starts with one task in the pool
+        # starts with the first task in the first cycle
         assert list_cycles(sequential) == ['2000']
-
-        # it sequentially spawns out to the runahead limit
-        for year in range(2000, 2010):
-            foo = sequential.pool.get_task(ISO8601Point(f'{year}'), 'foo')
-            if foo.state(is_runahead=True):
-                break
-            sequential.xtrigger_mgr.call_xtriggers_async(foo)
-        assert list_cycles(sequential) == [
-            '2000',
-            '2001',
-            '2002',
-            '2003',
-        ]
-
-        # remove all tasks in the pool
-        await run_cmd(remove_tasks(sequential, ['*'], ["1"]))
-
-        # the next cycle should be automatically spawned
-        assert list_cycles(sequential) == ['2004']
-
-        # NOTE: You won't spot this issue in a functional test because the
-        # re-spawned tasks are detected as completed and automatically removed.
-        # So ATM not dangerous, but potentially inefficient.
+        # removing it should spawn the next sequential instance
+        await run_cmd(remove_tasks(sequential, ['2000'], ["1"]))
+        assert list_cycles(sequential) == ['2001']
 
 
 async def test_trigger(sequential, start):
@@ -101,12 +82,18 @@ async def test_trigger(sequential, start):
     async with start(sequential):
         assert list_cycles(sequential) == ['2000']
 
-        foo = sequential.pool.get_task(ISO8601Point('2000'), 'foo')
-        await run_cmd(force_trigger_tasks(sequential, [foo.identity], ["1"]))
-        foo.state_reset('succeeded')
-        sequential.pool.spawn_on_output(foo, 'succeeded')
+        foo1 = sequential.pool.get_task(ISO8601Point('2000'), 'foo')
+        await run_cmd(force_trigger_tasks(sequential, [foo1.identity], ["1"]))
 
-        assert list_cycles(sequential) == ['2000', '2001']
+        await sequential._main_loop()
+        assert list_cycles(sequential) == ['2001']
+
+        foo2 = sequential.pool.get_task(ISO8601Point('2001'), 'foo')
+        foo2.state_reset(is_runahead=False)
+        await run_cmd(
+            set_prereqs_and_outputs(sequential, [foo2.identity], ["1"]))
+
+        assert list_cycles(sequential) == ['2002']
 
 
 async def test_set_outputs(sequential, start):
@@ -138,6 +125,7 @@ async def test_set_prereqs(sequential, start):
         # satisfy foo's xtriggers - it should spawn next instance
         sequential.pool.set_prereqs_and_outputs(
             {TaskTokens('2000', 'foo')}, [], ['xtrigger/all:succeeded'], [])
+        await sequential._main_loop()
 
         assert list_cycles(sequential) == ['2000', '2001']
 

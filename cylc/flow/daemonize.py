@@ -38,7 +38,7 @@ def daemonize(schd):
     UNIX Environment" for details (ISBN 0201563177)
 
     ATTRIBUTION: base on a public domain code recipe by Jurgen Hermann:
-    http://code.activestate.com/recipes/66012-fork-a-daemon-process-on-unix/
+    https://github.com/ActiveState/code/blob/e6378c55515c45eb8eab07ca64c59ddefba9bf94/recipes/Python/66012_Fork_a_daemon_process_on_Unix/recipe-66012.py
 
     """
     logfname = get_workflow_run_scheduler_log_path(schd.workflow)

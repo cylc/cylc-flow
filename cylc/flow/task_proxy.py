@@ -471,10 +471,6 @@ class TaskProxy:
         except (AttributeError, KeyError):
             return 0
 
-    def next_point(self):
-        """Return the next cycle point."""
-        return self.tdef.next_point(self.point)
-
     def is_ready_to_run(self) -> bool:
         """Is this task ready to run?
 
@@ -576,7 +572,7 @@ class TaskProxy:
     def satisfy_me(
         self,
         task_messages: 'Iterable[Tokens]',
-        mode: Optional[RunMode] = RunMode.LIVE,
+        mode: RunMode | None = RunMode.LIVE,
     ) -> None:
         """Try to satisfy my prerequisites with given task output messages.
 
@@ -586,7 +582,9 @@ class TaskProxy:
         for prereq in (
             *self.state.prerequisites, *self.state.suicide_prerequisites
         ):
-            prereq.satisfy_me(task_messages, mode=mode)
+            if prereq.satisfy_me(task_messages, mode=mode):
+                # Signal to main loop that the task may need runahead release:
+                self.state.is_updated = True
 
     def force_satisfy(
         self, prereqs: 'Iterable[PrereqTuple]', set_all: bool = False
