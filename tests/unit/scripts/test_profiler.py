@@ -57,14 +57,14 @@ async def test_report_to_scheduler(monkeypatch, tmp_path):
     mem_file.write_text('total_rss=1234')
     cpu_file = tmp_path / "cpu_file.txt"
     cpu_file.write_text('5678000')
-    # NOTE: memory allocated is not available for cGroups v1
-    mem_allocated_file = tmp_path / "memory_allocated.txt"
-    mem_allocated_file.write_text('99999')
+    mem_allocated_dir = tmp_path / "memory_allocated"
+    mem_allocated_dir.mkdir()
+    (mem_allocated_dir / "memory.limit_in_bytes").write_text('99999')
 
     process_object = Process(
         cgroup_memory_path=mem_file,
         cgroup_cpu_path=cpu_file,
-        memory_allocated_path=mem_allocated_file,
+        memory_allocated_path=mem_allocated_dir,
         memory_version=1,
         cpu_version=1,
         max_rss=42,
@@ -82,7 +82,7 @@ async def test_report_to_scheduler(monkeypatch, tmp_path):
                     'DEBUG',
                     '_cylc_profiler:'
                     ' {"max_rss": 42, "cpu_time": 6,'
-                    ' "memory_allocated": null}',
+                    ' "memory_allocated": 99999}',
                 ]
             ],
             comms_timeout=1,
