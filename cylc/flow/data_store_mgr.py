@@ -806,11 +806,11 @@ class DataStoreMgr:
                 )
                 famcfg = config.cfg['runtime'][name]
                 user_defined_meta = {}
-                for key, val in famcfg.get('meta', {}).items():
-                    if key in ['title', 'description', 'URL']:
-                        setbuff(family.meta, key, val)
+                for meta_key, val in famcfg.get('meta', {}).items():
+                    if meta_key in ['title', 'description', 'URL']:
+                        setbuff(family.meta, meta_key, val)
                     else:
-                        user_defined_meta[key] = val
+                        user_defined_meta[meta_key] = val
                 family.meta.user_defined = json.dumps(user_defined_meta)
                 family.parents.extend(
                     self.definition_id(p_name)
