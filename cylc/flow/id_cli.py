@@ -509,16 +509,15 @@ async def _expand_workflow_tokens(tokens_list, match_active=True):
         if not contains_fnmatch(workflow):
             # no expansion to perform
             continue
-        else:
-            # remove the original entry
-            multi_mode = True
-            tokens_list.remove(tokens)
-            async for tokens in _expand_workflow_tokens_impl(
-                tokens,
-                match_active=match_active,
-            ):
-                # add the expanded tokens back onto the list
-                tokens_list.append(tokens)
+        # remove the original entry
+        multi_mode = True
+        tokens_list.remove(tokens)
+        async for expanded_tokens in _expand_workflow_tokens_impl(
+            tokens,
+            match_active=match_active,
+        ):
+            # add the expanded tokens back onto the list
+            tokens_list.append(expanded_tokens)
     return multi_mode
 
 
