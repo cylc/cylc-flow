@@ -47,10 +47,11 @@ jobs:
       fail-fast: false
       matrix:
         bash-version:
+          # Note: use strings to avoid YAML interpreting e.g. 1.0 as 1
           - '3.2'
           - '4.2'
-          # if you use a value like 5.0, YAML will round it to 5, which will cause an error later on
           - '5.0'
+          - '5.3'
     env:
       IMAGE: 'ghcr.io/cylc/cylc-bash-testing-2:master'
     steps:
