@@ -20,6 +20,7 @@ The tests in this module cover configuration changes made via reload/restart.
 """
 
 
+import logging
 import re
 from typing import TYPE_CHECKING, Literal
 
@@ -497,3 +498,33 @@ async def test_prereq_change(
         ),
         key=lambda d: tuple(d.keys())[0],
     ) == task_z_prereqs
+
+
+@pytest.mark.parametrize('change_type', ('reload', 'restart'))
+async def test_cycle_point_format_change(
+    change_type, flow, scheduler, start, log_filter, db_select_workflow_param
+):
+    """Cycle point format cannot be changed on restart/reload."""
+    await anext(
+        test_gen := _test_config_change(flow, scheduler, start, change_type)
+    )
+    before = 'CCYYMMDDThhmmZ'
+    after = 'CCYYMMDDThhZ'
+    conf = {
+        'scheduler': {'cycle point format': before},
+        'scheduling': {
+            'initial cycle point': '2026',
+            'graph': {'R1': 'foo'},
+        },
+    }
+    schd = await test_gen.asend(conf)
+    assert schd.config.cfg['scheduler']['cycle point format'] == before
+    assert db_select_workflow_param(schd, 'cycle_point_format') == before
+
+    conf['scheduler']['cycle point format'] = after
+    schd = await test_gen.asend(conf)
+    assert schd.config.cfg['scheduler']['cycle point format'] == before
+    assert db_select_workflow_param(schd, 'cycle_point_format') == before
+    assert log_filter(
+        level=logging.WARNING, contains="Cannot change cycle point format"
+    )
