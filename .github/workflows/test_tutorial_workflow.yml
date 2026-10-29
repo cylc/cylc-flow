@@ -19,7 +19,7 @@ concurrency:
 
 defaults:
   run:
-    shell: bash
+    shell: bash -c "exec $CONDA_PREFIX/bin/bash -elo pipefail {0}"
 
 env:
   FORCE_COLOR: 2
@@ -32,30 +32,35 @@ jobs:
       matrix:
         include:
           - os: 'ubuntu-latest'
-            # Temporary pinned while h5py doesn't have python 3.15 wheels.
-            # See https://github.com/cylc/cylc-flow/issues/7549
-            python-version: '3.14'
+            python-version: '3'
           - os: 'ubuntu-22.04'
             python-version: '3.12'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     steps:
-      - name: configure python
-        uses: actions/setup-python@v7
-        with:
-          python-version: ${{ matrix.python-version }}
-
       - name: checkout
         uses: actions/checkout@v7
 
-      - name: Install docs/tutorial dependencies
-        uses: cylc/cylc-doc/.github/actions/install-dependencies@master
+      - name: Install System Dependencies
+        uses: mamba-org/setup-micromamba@v3
+        with:
+          cache-environment: true
+          post-cleanup: 'all'
+          environment-name: cylc-tutorial-test
+          create-args: >-
+            python=${{ matrix.python-version }}
+            pip
+            bash
+            h5py
+          # h5py included here due to https://github.com/cylc/cylc-flow/issues/7549
 
       - name: install cylc-flow
-        run: pip install .[all]
+        run: pip install .[tutorials]
 
       # Useful debug info:
-      - run: pip list
+      - run: |
+          python --version
+          pip list
 
       - name: run tutorial workflow
         run: |

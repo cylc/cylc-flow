@@ -108,7 +108,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Configure Python
+      - name: Install system dependencies
         uses: mamba-org/setup-micromamba@v3
         with:
           cache-environment: true
@@ -124,6 +124,8 @@ jobs:
             sqlite
             subversion
             tree
+            h5py
+          # h5py included here due to https://github.com/cylc/cylc-flow/issues/7549
 
       - name: Create global config
         run: |
