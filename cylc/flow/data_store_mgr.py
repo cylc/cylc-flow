@@ -789,12 +789,9 @@ class DataStoreMgr:
 
         # Created family definition elements for first parent
         # ancestors of graphed tasks.
-        for key, names in ancestors.items():
-            for name in names:
-                if (
-                        key == name or
-                        name in families
-                ):
+        for names in ancestors.values():
+            for name in names[1:]:
+                if name in families:
                     continue
                 f_id = self.definition_id(name)
                 f_stamp = f'{f_id}@{update_time}'
