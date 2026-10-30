@@ -1715,7 +1715,6 @@ async def test_remove_by_expire_trigger(
     def _get_id(b_completion: str = "succeeded"):
         return flow({
             'scheduling': {
-                'expire triggers': True,
                 'graph': {
                     'R1': '''
                         a? => b
@@ -2013,7 +2012,6 @@ async def test_expire_dequeue_with_retries(
     conf = {
         'scheduling': {
             'initial cycle point': '2000',
-            'expire triggers': True,
             'graph': {
                 'R1': 'foo'
             },

@@ -300,7 +300,7 @@ class GraphParser:
         parameters: Optional[Dict] = None,
         task_output_opt:
             Optional[Dict[Tuple[str, str], Tuple[bool, bool, bool]]] = None,
-        expire_triggers: bool = False,
+        expire_triggers: bool = True,
     ) -> None:
         """Initialize the graph string parser.
 
