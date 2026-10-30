@@ -17,7 +17,6 @@
 
 """Extract named resources from the cylc.flow package."""
 
-from contextlib import suppress
 from pathlib import Path
 import re
 import shutil
@@ -89,13 +88,7 @@ def list_resources(write=print, headers=True):
 
 def path_is_source_workflow(src: Path) -> bool:
     """Returns True if the src path is a Cylc workflow."""
-    with suppress(ValueError):
-        src.relative_to(TUTORIAL_DIR)
-        return True
-    with suppress(ValueError):
-        src.relative_to(EXAMPLE_DIR)
-        return True
-    return False
+    return src.is_relative_to(TUTORIAL_DIR) or src.is_relative_to(EXAMPLE_DIR)
 
 
 def get_resources(
@@ -111,7 +104,6 @@ def get_resources(
         logger: Logger instance for logging messages.
 
     """
-    # get the resource path
     resource = Path(resource)
 
     src = RESOURCE_DIR / resource
@@ -135,10 +127,8 @@ def get_resources(
         else:
             # this is a regular resource => use $PWD
             target_dir = Path.cwd()
-    else:
-        target_dir = Path(target_dir).resolve()
 
-    tgt = (target_dir / name).expanduser().resolve()
+    tgt = Path(target_dir, name).expanduser().resolve()
 
     if logger:
         logger.info(f"Extracting {src.relative_to(RESOURCE_DIR)} to {tgt}")
