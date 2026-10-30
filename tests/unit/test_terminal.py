@@ -167,7 +167,7 @@ def test_cli_broken_pipe(verbosity, monkeypatch, capsys):
     pipe early, e.g. ``cylc config <flow> | less`` (then quit) or
     ``cylc config <flow> | grep -q '\\w'``. This is never user-actionable so
     the CLI wrapper should suppress the traceback at all verbosity levels and
-    exit with a non-zero return code, rather than dumping a Python traceback to
+    exit cleanly with return code 0, rather than dumping a Python traceback to
     stderr.
     """
     monkeypatch.setattr('cylc.flow.flags.verbosity', verbosity)
@@ -178,8 +178,8 @@ def test_cli_broken_pipe(verbosity, monkeypatch, capsys):
     with pytest.raises(SystemExit) as exc_ctx:
         cli(BrokenPipeError.__name__)
 
-    # exits non-zero, not via a propagated traceback
-    assert exc_ctx.value.args[0] == 1
+    # exits cleanly, not via a propagated traceback
+    assert exc_ctx.value.args[0] == 0
     # no Python traceback dumped to stderr
     assert 'Traceback' not in capsys.readouterr()[1]
 

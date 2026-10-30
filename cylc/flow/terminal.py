@@ -334,8 +334,8 @@ def cli_function(
                 # traceback at all verbosity levels and exit quietly.
                 # Redirect any remaining buffered stdout to /dev/null to
                 # avoid a second BrokenPipeError when Python flushes stdout
-                # during interpreter shutdown (see the Python docs note on
-                # handling BrokenPipeError).
+                # during interpreter shutdown. See
+                # https://docs.python.org/3/library/signal.html#note-on-sigpipe
                 try:
                     devnull = os.open(os.devnull, os.O_WRONLY)
                     os.dup2(devnull, sys.stdout.fileno())
@@ -344,7 +344,7 @@ def cli_function(
                     # (e.g. it has been replaced with a buffer); nothing to
                     # redirect in that case.
                     pass
-                sys.exit(1)
+                sys.exit(0)
             except UnicodeEncodeError as exc:
                 # this error can be raised from any code which attempts to
                 # write a UTF-8 character to a terminal which does not or is
