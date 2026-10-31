@@ -16,6 +16,7 @@
 
 """Functionality to assist working with terminals"""
 
+import contextlib
 import inspect
 import json
 import logging
@@ -329,21 +330,13 @@ def cli_function(
             except BrokenPipeError:
                 # The output pipe was closed early by the consumer, e.g:
                 #   $ cylc config <flow> | less  # then quit less
-                #   $ cylc config <flow> | grep -q '\\w'
+                #   $ cylc config <flow> | grep -q .
                 # A broken pipe is never user-actionable, so suppress the
-                # traceback at all verbosity levels and exit quietly.
-                # Redirect any remaining buffered stdout to /dev/null to
-                # avoid a second BrokenPipeError when Python flushes stdout
-                # during interpreter shutdown. See
+                # traceback at all verbosity levels and exit quietly. See
                 # https://docs.python.org/3/library/signal.html#note-on-sigpipe
-                try:
-                    devnull = os.open(os.devnull, os.O_WRONLY)
-                    os.dup2(devnull, sys.stdout.fileno())
-                except (OSError, ValueError):
-                    # stdout may not be backed by a real file descriptor
-                    # (e.g. it has been replaced with a buffer); nothing to
-                    # redirect in that case.
-                    pass
+                with contextlib.suppress(OSError):
+                    # Ignore failed flush.
+                    sys.stdout.close()
                 sys.exit(0)
             except UnicodeEncodeError as exc:
                 # this error can be raised from any code which attempts to

@@ -14,7 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import io
 from optparse import OptionParser, Values
+import sys
 
 import pytest
 
@@ -159,21 +161,12 @@ def test_cli(
         assert capsys.readouterr()[1] == stderr
 
 
-@pytest.mark.parametrize('verbosity', [0, 2])
-def test_cli_broken_pipe(verbosity, monkeypatch, capsys):
-    """A BrokenPipeError should exit quietly without a traceback.
-
-    A broken pipe is raised when the consumer of a piped command closes the
-    pipe early, e.g. ``cylc config <flow> | less`` (then quit) or
-    ``cylc config <flow> | grep -q '\\w'``. This is never user-actionable so
-    the CLI wrapper should suppress the traceback at all verbosity levels and
-    exit cleanly with return code 0, rather than dumping a Python traceback to
-    stderr.
-    """
-    monkeypatch.setattr('cylc.flow.flags.verbosity', verbosity)
+def test_cli_broken_pipe(monkeypatch, capsys):
+    """A BrokenPipeError exits quietly without a traceback."""
+    monkeypatch.setattr('cylc.flow.flags.verbosity', 2)  # Debug logging.
     monkeypatch.setattr('cylc.flow.terminal.supports_color', lambda: False)
-    # Under capsys, stdout is not backed by a real file descriptor, so the
-    # handler's stdout->/dev/null redirect is a no-op (handled gracefully).
+    tmp_stdout = io.StringIO()
+    monkeypatch.setattr(sys, "stdout", tmp_stdout)
 
     with pytest.raises(SystemExit) as exc_ctx:
         cli(BrokenPipeError.__name__)
@@ -182,6 +175,8 @@ def test_cli_broken_pipe(verbosity, monkeypatch, capsys):
     assert exc_ctx.value.args[0] == 0
     # no Python traceback dumped to stderr
     assert 'Traceback' not in capsys.readouterr()[1]
+    # Stdout file closed.
+    assert tmp_stdout.closed
 
 
 @pytest.fixture
