@@ -14,7 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import io
 from optparse import OptionParser, Values
+import sys
 
 import pytest
 
@@ -30,6 +32,7 @@ from cylc.flow.terminal import (
 # this puts Exception in globals() where we can easily find it later
 Exception = Exception
 SystemExit = SystemExit
+BrokenPipeError = BrokenPipeError
 
 
 def get_option_parser():
@@ -156,6 +159,24 @@ def test_cli(
 
     if stderr is not None:
         assert capsys.readouterr()[1] == stderr
+
+
+def test_cli_broken_pipe(monkeypatch, capsys):
+    """A BrokenPipeError exits quietly without a traceback."""
+    monkeypatch.setattr('cylc.flow.flags.verbosity', 2)  # Debug logging.
+    monkeypatch.setattr('cylc.flow.terminal.supports_color', lambda: False)
+    tmp_stdout = io.StringIO()
+    monkeypatch.setattr(sys, "stdout", tmp_stdout)
+
+    with pytest.raises(SystemExit) as exc_ctx:
+        cli(BrokenPipeError.__name__)
+
+    # exits cleanly, not via a propagated traceback
+    assert exc_ctx.value.args[0] == 0
+    # no Python traceback dumped to stderr
+    assert 'Traceback' not in capsys.readouterr()[1]
+    # Stdout file closed.
+    assert tmp_stdout.closed
 
 
 @pytest.fixture
