@@ -572,7 +572,6 @@ with Conf(
         time zone from
         :cylc:conf:`flow.cylc[scheduler]cycle point time zone`.
     '''):
-
         Conf('initial cycle point', VDR.V_CYCLE_POINT, desc='''
             The earliest cycle point at which any task can run.
 
