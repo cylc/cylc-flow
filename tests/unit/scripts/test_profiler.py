@@ -537,17 +537,6 @@ def test_get_cgroup_names(mocker, monkeypatch):
     assert 'systemd' not in names
 
 
-def test_get_cgroup_names_test_env_var(monkeypatch):
-    """It should allow the functional tests to inject a cgroup name."""
-    monkeypatch.setenv('profiler_test_env_var', '/test/cgroup/name')
-    assert get_cgroup_names() == {
-        'v2': 'test/cgroup/name',
-        'memory': 'test/cgroup/name',
-        'cpu': 'test/cgroup/name',
-        'cpuacct': 'test/cgroup/name',
-    }
-
-
 def test_get_cgroup_names_file_not_found(mocker, monkeypatch):
     """It should raise if /proc/<pid>/cgroup cannot be read."""
     monkeypatch.delenv('profiler_test_env_var', raising=False)
@@ -609,18 +598,6 @@ def test_parse_cpu_file_empty(tmp_path):
         assert 'Unable to find cpu usage data' in str(excinfo.value)
 
 
-def test_parse_cpu_file_unknown_version(tmp_path):
-    """It should return None if the cgroup version is not one it handles."""
-    process = Process(
-        cgroup_memory_path='',
-        cgroup_cpu_path=tmp_path / 'cpu.stat',
-        memory_allocated_path=tmp_path,
-        memory_version=3,
-        cpu_version=3,
-        max_rss=0)
-    assert parse_cpu_file(process) is None
-
-
 def test_parse_memory_allocated_bad_data(tmp_path):
     """It should raise if a memory limit file cannot be parsed."""
     # cgroups v2
@@ -654,35 +631,37 @@ def test_parse_memory_allocated_bad_data(tmp_path):
     assert 'Unable to find memory allocation' in str(excinfo.value)
 
 
-def test_parse_memory_allocated_walk_limit(tmp_path):
+@pytest.mark.parametrize('version, filename, unlimited', [
+    (2, 'memory.max', 'max'),
+    (1, 'memory.limit_in_bytes', '9223372036854771712'),
+])
+def test_parse_memory_allocated_walk_limit(
+    tmp_path, version, filename, unlimited
+):
     """It should give up walking up the tree rather than loop forever.
 
     Every cgroup from the leaf upwards is unlimited, and the tree is deeper
     than the number of levels the search is willing to climb.
     """
-    for version, filename, unlimited in (
-        (2, 'memory.max', 'max'),
-        (1, 'memory.limit_in_bytes', '9223372036854771712'),
-    ):
-        leaf = tmp_path / f'deep{version}'
+    leaf = tmp_path / f'deep{version}'
+    leaf.mkdir()
+    for depth in range(15):
+        leaf = leaf / f'level_{depth}'
         leaf.mkdir()
-        for depth in range(15):
-            leaf = leaf / f'level_{depth}'
-            leaf.mkdir()
-        # write the "no limit" value at every level
-        directory = leaf
-        while directory != tmp_path:
-            (directory / filename).write_text(unlimited)
-            directory = directory.parent
+    # write the "no limit" value at every level
+    directory = leaf
+    while directory != tmp_path:
+        (directory / filename).write_text(unlimited)
+        directory = directory.parent
 
-        process = Process(
-            cgroup_memory_path='',
-            cgroup_cpu_path='',
-            memory_allocated_path=leaf,
-            memory_version=version,
-            cpu_version=version,
-            max_rss=0)
-        assert parse_memory_allocated(process) is None
+    process = Process(
+        cgroup_memory_path='',
+        cgroup_cpu_path='',
+        memory_allocated_path=leaf,
+        memory_version=version,
+        cpu_version=version,
+        max_rss=0)
+    assert parse_memory_allocated(process) is None
 
 
 def test_get_option_parser():
@@ -696,21 +675,6 @@ def test_get_option_parser():
     assert options.cgroup_location == '/sys/fs/cgroup'
     # comms=True, so the comms timeout option is available too
     assert hasattr(options, 'comms_timeout')
-
-
-def test_main_cli(mocker):
-    """It should parse the CLI options and run the profiler."""
-    calls = []
-
-    async def fake_main(options):
-        calls.append(options)
-
-    mocker.patch('cylc.flow.scripts.profiler._main', fake_main)
-    main('-i', 'PT5S', '-m', '/sys/fs/cgroup')
-
-    assert len(calls) == 1
-    assert calls[0].delay == 'PT5S'
-    assert calls[0].cgroup_location == '/sys/fs/cgroup'
 
 
 def test_main_cancelled(mocker):

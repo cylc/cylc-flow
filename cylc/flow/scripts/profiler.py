@@ -73,8 +73,8 @@ class Process:
     # the cgroup version is tracked separately for each controller, a node
     # running cgroups in "hybrid" mode can provide v2 data for one and only
     # v1 data for the other
-    memory_version: int
-    cpu_version: int
+    memory_version: Literal[1, 2]
+    cpu_version: Literal[1, 2]
 
 
 async def report_to_scheduler(process: Process, comms_timeout: int):
