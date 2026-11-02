@@ -50,7 +50,7 @@ dependencies = [
     "psutil>=5.6.0",
     "pyzmq>=22",
     # NOTE: exclude two urwid versions that were not compatible with Tui
-    "urwid>=2.2,!=2.6.2,!=2.6.3,<5",
+    "urwid>=2.2,!=2.6.2,!=2.6.3,<6",
 ]
 dynamic = ["version"]
 
