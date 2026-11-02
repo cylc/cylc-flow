@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -201,14 +202,10 @@ def addict(cfig, key, val, parents, index):
         if (
             parents[0:2] == ['scheduling', 'graph'] or
             # BACK COMPAT: [scheduling][dependencies]
-            # url:
-            #     https://github.com/cylc/cylc-flow/pull/3191
-            # from:
-            #     Cylc<=7
-            # to:
-            #     Cylc8
-            # remove at:
-            #     Cylc8.x
+            # url: https://github.com/cylc/cylc-flow/pull/3191
+            # from: <=7
+            # to: 8.0
+            # remove at: 8.9
             parents[0:2] == ['scheduling', 'dependencies']
         ):
             # append the new graph string to the existing one
@@ -357,22 +354,19 @@ def merge_template_vars(
         >>> merge_template_vars(a, b)
         {'FOO': 42, 'BAZ': 3.14159, 'BAR': 'Hello World'}
     """
-    if plugin_result[TEMPLATING_DETECTED] is not None:
-        plugin_tvars = plugin_result[TEMPLATE_VARIABLES]
-        will_be_overwritten = (
-            native_tvars.keys() &
-            plugin_tvars.keys()
-        )
-        for key in will_be_overwritten:
-            if plugin_tvars[key] != native_tvars[key]:
-                LOG.warning(
-                    f'Overriding {key}: {plugin_tvars[key]} ->'
-                    f' {native_tvars[key]}'
-                )
-        plugin_tvars.update(native_tvars)
-        return plugin_tvars
-    else:
-        return native_tvars
+    plugin_tvars = plugin_result[TEMPLATE_VARIABLES]
+    will_be_overwritten = (
+        native_tvars.keys() &
+        plugin_tvars.keys()
+    )
+    for key in will_be_overwritten:
+        if plugin_tvars[key] != native_tvars[key]:
+            LOG.warning(
+                f'Overriding {key}: {plugin_tvars[key]} ->'
+                f' {native_tvars[key]}'
+            )
+    plugin_tvars.update(native_tvars)
+    return plugin_tvars
 
 
 def _prepend_old_templatevars(
@@ -525,8 +519,7 @@ def read_and_proc(
             if warns:
                 LOG.warning(
                     "The following warnings were raised during Jinja2 "
-                    "preprocessing (note: any Jinja 3.1 deprecations will "
-                    "break at Cylc 8.7):\n"
+                    "preprocessing:\n"
                     + "\n".join(
                         warnings.formatwarning(
                             w.message, w.category, w.filename, w.lineno

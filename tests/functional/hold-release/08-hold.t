@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) 2008-2019 NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) 2008-2019 Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -151,7 +152,6 @@ from cylc.flow.workflow_events import WorkflowEventHandler
 from cylc.flow.workflow_files import (
     NO_TITLE,
     WorkflowFiles,
-    check_deprecation,
 )
 from cylc.flow.xtrigger_mgr import XtriggerCollator
 
@@ -280,7 +280,6 @@ class WorkflowConfig:
         log_dir: Optional[str] = None,
         work_dir: Optional[str] = None,
         share_dir: Optional[str] = None,
-        force_compat_mode: bool = False,
     ) -> None:
         """
         Initialize the workflow config object.
@@ -289,13 +288,8 @@ class WorkflowConfig:
             workflow: workflow ID
             fpath: workflow config file path
             options: CLI options
-            force_compat_mode:
-                If True, forces Cylc to use compatibility mode
-                overriding compatibility mode checks.
-                See https://github.com/cylc/cylc-rose/issues/319
 
         """
-        check_deprecation(Path(fpath), force_compat_mode=force_compat_mode)
         self.mem_log = mem_log_func
         if self.mem_log is None:
             self.mem_log = lambda x: None
@@ -643,7 +637,7 @@ class WorkflowConfig:
     def _warn_if_queues_have_implicit_tasks(
         config, taskdefs, max_warning_lines
     ):
-        """Warn if queues contain implict tasks.
+        """Warn if queues contain implicit tasks.
         """
         implicit_q_msg = ''
 
@@ -729,10 +723,7 @@ class WorkflowConfig:
         """
 
         cfg_cp_tz = self.cfg['scheduler'].get('cycle point time zone')
-        if (
-            not cylc.flow.flags.cylc7_back_compat
-            and not cfg_cp_tz
-        ):
+        if not cfg_cp_tz:
             cfg_cp_tz = 'Z'
         # Get the original workflow run time zone if restart:
         orig_cp_tz = getattr(self.options, 'cycle_point_tz', None)
@@ -953,17 +944,10 @@ class WorkflowConfig:
             raise WorkflowConfigError(msg)
         # Otherwise "[scheduler]allow implicit tasks" is not set
 
-        if not cylc.flow.flags.cylc7_back_compat:
-            msg += (
-                "\nTo allow implicit tasks, use "
-                f"'{WorkflowFiles.FLOW_FILE}[scheduler]allow implicit tasks'"
-            )
-        # Allow implicit tasks in back-compat mode unless rose-suite.conf
-        # present (to maintain compat with Rose 2019)
-        elif not (self.fpath.parent / "rose-suite.conf").is_file():
-            LOG.debug(msg)
-            return
-
+        msg += (
+            "\nTo allow implicit tasks, use "
+            f"'{WorkflowFiles.FLOW_FILE}[scheduler]allow implicit tasks'"
+        )
         raise WorkflowConfigError(msg)
 
     def _check_circular(self):
@@ -1118,13 +1102,6 @@ class WorkflowConfig:
                 Does this task have any suicide triggers
 
         """
-        # check completion expressions are not being used in compat mode
-        if cylc.flow.flags.cylc7_back_compat:
-            raise WorkflowConfigError(
-                '[runtime][<namespace>]completion cannot be used'
-                ' in Cylc 7 compatibility mode.'
-            )
-
         # check for invalid triggers in the expression
         if 'submit-failed' in expr:
             raise WorkflowConfigError(
@@ -1852,7 +1829,7 @@ class WorkflowConfig:
     def get_task_name_list(self):
         """Return a sorted list of all tasks used in the dependency graph.
 
-        Note: the sort order may effect get_graph_raw ouput.
+        Note: the sort order may effect get_graph_raw output.
 
         """
         return sorted(self.taskdefs)
@@ -2089,6 +2066,7 @@ class WorkflowConfig:
         start_point_str=None,
         stop_point_str=None,
         grouping=None,
+        flatten_icp_dependence=False,
         sort=True,
     ):
         """Return concrete graph edges between specified cycle points.
@@ -2096,6 +2074,11 @@ class WorkflowConfig:
         Return a family-collapsed graph if the grouping arg is not None:
           * ['FAM1', 'FAM2']: group (collapse) specified families
           * ['<all>']: group (collapse) all families above root
+
+        The "flatten_icp_dependence" option detects ICP dependencies
+        (e.g. "start[^] => foo") and prefixes the cycle point on the left
+        side of the edge with "R1.". This allows graph visualisation tools
+        to handle these nodes differently.
 
         For validation, return non-suicide edges with left and right nodes.
         """
@@ -2200,7 +2183,22 @@ class WorkflowConfig:
                             cache[offset] = l_point
                     else:
                         l_point = point
-                    l_id = (name, l_point)
+
+                    if (
+                        flatten_icp_dependence
+                        and point != self.initial_point
+                        and offset
+                        and offset_is_from_icp
+                        and get_interval_cls()(offset)
+                        == get_interval_cls().get_null()
+                    ):
+                        # this is an R1 dependency (e.g, start[^] => foo). When
+                        # "collapse_icp = True", we prefix the point with "R1."
+                        # so graph visualization tools can apply special logic.
+                        l_id = (name, f'R1.{point}')
+                        # print('%', str(l_id))
+                    else:
+                        l_id = (name, l_point)
 
                     if actual_first_point > l_point:
                         # Check that l_id is not earlier than start time.
@@ -2384,7 +2382,7 @@ class WorkflowConfig:
             # dependencies are checked in generate_triggers:
             self.check_terminal_outputs(parser.terminals)
 
-        # set of all cycling intervals containined within the workflow
+        # set of all cycling intervals contained within the workflow
         cycling_intervals = {
             sequence.get_interval()
             for sequence in self.sequences
@@ -2497,7 +2495,7 @@ class WorkflowConfig:
                 if suicide:
                     suicides += 1
 
-        if suicides and not cylc.flow.flags.cylc7_back_compat:
+        if suicides:
             LOG.info(
                 f"{suicides} suicide trigger(s) detected. These are rarely "
                 "needed in Cylc 8 - see https://cylc.github.io/cylc-doc/"
@@ -2721,14 +2719,10 @@ class WorkflowConfig:
             try:
                 # Replace workflow and task name in workflow and task URLs.
                 # BACK COMPAT: suite_name
-                # url:
-                #     https://github.com/cylc/cylc-flow/pull/4724
-                # from:
-                #     Cylc7
-                # to:
-                #     Cylc8
-                # remove at:
-                #     Cylc8.x
+                # url: https://github.com/cylc/cylc-flow/pull/4724
+                # from: 7
+                # to: 8.0
+                # remove at: 8.9
                 self.cfg['meta']['URL'] = url % {
                     # cylc 7
                     'suite_name': self.workflow,
@@ -2741,7 +2735,8 @@ class WorkflowConfig:
                 ) from None
             else:
                 LOG.warning(
-                    'Detected deprecated template variables in [meta]URL.'
+                    'Detected deprecated template variables in [meta]URL. '
+                    'Support will be removed in Cylc 8.9.'
                     '\nSee the configuration documentation for details.'
                 )
 
@@ -2756,14 +2751,10 @@ class WorkflowConfig:
                 }
             except (KeyError, ValueError):
                 # BACK COMPAT: suite_name, task_name
-                # url:
-                #     https://github.com/cylc/cylc-flow/pull/4724
-                # from:
-                #     Cylc7
-                # to:
-                #     Cylc8
-                # remove at:
-                #     Cylc8.x
+                # url: https://github.com/cylc/cylc-flow/pull/4724
+                # from: 7
+                # to: 8.0
+                # remove at: 8.9
                 try:
                     cfg['meta']['URL'] = cfg['meta']['URL'] % {
                         # cylc 7
@@ -2780,7 +2771,8 @@ class WorkflowConfig:
                 else:
                     LOG.warning(
                         'Detected deprecated template variables in'
-                        f' [runtime][{name}][meta]URL.'
+                        f' [runtime][{name}][meta]URL. Support will be '
+                        'removed in Cylc 8.9.'
                         '\nSee the configuration documentation for details.'
                     )
             cfg['meta']['URL'] = RE_WORKFLOW_ID_VAR.sub(
@@ -2810,19 +2802,29 @@ class WorkflowConfig:
                 msg += f'\n  * {task}"'
             raise WorkflowConfigError(msg)
 
+    # BACK COMPAT: clock-trigger has been deprecated
+    # from: 7
+    # to: 8.0 (auto upgrader added in 8.2; warning added at 8.7)
+    # remove at: 8.9
     def upgrade_clock_triggers(self):
         """Convert old-style clock triggers to clock xtriggers.
 
         [[special tasks]]
-           clock-trigger = foo(PT1D)
+           clock-trigger = foo(PT1H)
 
         becomes:
 
         [[xtriggers]]
-           _cylc_wall_clock_foo = wallclock(PT1D)
+           _cylc_wall_clock_foo = wall_clock(PT1H)
 
         Not done by parsec upgrade because the graph has to be parsed first.
         """
+        if len(self.cfg['scheduling']['special tasks']['clock-trigger']) > 0:
+            LOG.warning(
+                "[scheduling][special tasks]clock-trigger is deprecated "
+                "and will be removed in Cylc 8.9; use the @wall_clock "
+                "xtrigger instead"
+            )
         for item in self.cfg['scheduling']['special tasks']['clock-trigger']:
             match = RE_CLOCK_OFFSET.match(item)
             # (Already validated during "special tasks" parsing above.)
@@ -2838,23 +2840,28 @@ class WorkflowConfig:
             for seq in taskdef.sequences:
                 taskdef.add_xtrig_label(label, seq)
 
+    # BACK COMPAT
+    # from: 7
+    # to: 8.0
+    # remove at: 8.9
     def _upg_wflow_event_names(self) -> None:
         """Upgrade any Cylc 7 workflow handler/mail events names."""
         for setting in ('handler events', 'mail events'):
-            event_names: Optional[List[str]] = self.cfg['scheduler']['events'][
+            event_names: list[str] | None = self.cfg['scheduler']['events'][
                 setting
             ]
             if not event_names:
                 continue
-            upgraded: Dict[str, str] = {}
+            upgraded: dict[str, str] = {}
             for i, event in enumerate(event_names):
                 if event in WorkflowEventHandler.EVENTS_DEPRECATED:
                     event_names[i] = upgraded[event] = (
                         WorkflowEventHandler.EVENTS_DEPRECATED[event]
                     )
-            if upgraded and not cylc.flow.flags.cylc7_back_compat:
+            if upgraded:
                 LOG.warning(
                     f"{upgrader.depr_msg}\n"
                     f" * (8.0.0) [scheduler][events][{setting}] "
                     + ', '.join(f'{k} -> {v}' for k, v in upgraded.items())
+                    + " - support for the old item will be removed at Cylc 8.9"
                 )

@@ -1,1 +1,0 @@
-12-bad-port-file-check.t

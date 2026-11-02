@@ -44,7 +44,8 @@ command line interfaces / outputs, etc.
 
 Tests are written in files with the `.t` extension. These are Bash scripts
 (despite the file extension). The tests are run with a tool called `prove`
-which is invoked via the `etc/bin/run-functional-tests` command.
+which is invoked via the `etc/bin/run-functional-tests` command. `prove` is
+typically installed as part of the `perl` package on most Linux distributions.
 
 Each test file starts by sourcing the file `lib/bash/test_header`, this
 contains various Bash functions which provide assertion functions, e.g.

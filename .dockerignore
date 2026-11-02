@@ -8,5 +8,5 @@ __pycache__
 !conda-environment.yml
 !cylc
 !dockerfiles/*
-!setup*
+!pyproject.toml
 !MANIFEST.in

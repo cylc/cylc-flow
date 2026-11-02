@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -198,7 +199,7 @@ def test_get_reload_number_no_logs(tmp_run_dir: Callable):
 
 
 def test_set_timestamps(capsys):
-    """The enable and disable timstamp methods do what they say"""
+    """The enable and disable timestamp methods do what they say"""
     # Setup log handler
     log_handler = logging.StreamHandler(sys.stderr)
     log_handler.setFormatter(CylcLogFormatter())

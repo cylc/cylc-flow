@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -85,8 +86,5 @@ async def test_validate_with_old_tvars(
         opts.reference = True
 
     async with mod_start(_setup):
-        if function in {view, cylclist, graph}:
-            await function(opts, _setup.workflow_name)
-        else:
-            await function(parser, opts, _setup.workflow_name)
+        await function(opts, _setup.workflow_name)
         assert expect in capsys.readouterr().out

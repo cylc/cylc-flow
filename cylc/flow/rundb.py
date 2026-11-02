@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,7 +38,6 @@ from typing import (
 )
 
 from cylc.flow import LOG
-from cylc.flow.exceptions import PlatformLookupError
 import cylc.flow.flags
 from cylc.flow.flow_mgr import stringify_flow_nums
 from cylc.flow.util import (
@@ -215,13 +215,6 @@ class CylcWorkflowDAO:
     TABLE_BROADCAST_STATES = "broadcast_states"
     TABLE_INHERITANCE = "inheritance"
     TABLE_WORKFLOW_PARAMS = "workflow_params"
-    # BACK COMPAT: suite_params
-    # This Cylc 7 DB table is needed to allow workflow-state
-    # xtriggers (and the `cylc workflow-state` command) to
-    # work with Cylc 7 workflows.
-    # url: https://github.com/cylc/cylc-flow/issues/5236
-    # remove at: 8.x
-    TABLE_SUITE_PARAMS = "suite_params"
     TABLE_WORKFLOW_FLOWS = "workflow_flows"
     TABLE_WORKFLOW_TEMPLATE_VARS = "workflow_template_vars"
     TABLE_TASK_JOBS = "task_jobs"
@@ -453,7 +446,9 @@ class CylcWorkflowDAO:
     def connect(self) -> sqlite3.Connection:
         """Connect to the database."""
         if self.conn is None:
-            self.conn = sqlite3.connect(self.db_file_name, self.CONN_TIMEOUT)
+            self.conn = sqlite3.connect(
+                self.db_file_name, timeout=self.CONN_TIMEOUT
+            )
         return self.conn
 
     def create_tables(self):
@@ -518,7 +513,7 @@ class CylcWorkflowDAO:
                 error_name = "Not available"
 
             if not self.is_public:
-                # incase this isn't a filesystem issue, log the statements
+                # in case this isn't a filesystem issue, log the statements
                 # which make up the transaction to assist debug
                 LOG.error(
                     'An error occurred when writing to the database %(file)s,'
@@ -929,17 +924,26 @@ class CylcWorkflowDAO:
         for row_idx, row in enumerate(self.connect().execute(stmt)):
             callback(row_idx, list(row))
 
-    def select_task_pool_for_restart(self, callback):
-        """Select from task_pool+task_states+task_jobs for restart.
-
-        Invoke callback(row_idx, row) on each row, where each row contains:
-        the fields in the SELECT statement below.
-
-        Raises:
-            PlatformLookupError: Do not start up if platforms for running
-            tasks cannot be found in global.cylc. This exception should
-            not be caught.
-        """
+    def select_task_pool_for_restart(
+        self,
+    ) -> Iterable[tuple[
+        str,
+        str,
+        str,
+        int,
+        int,
+        Any | None,
+        str,
+        int,
+        int,
+        int | None,
+        str | None,
+        str | None,
+        str | None,
+        float | None,
+        str,
+    ]]:
+        """Select from task_pool+task_states+task_jobs for restart."""
         form_stmt = r"""
             SELECT
                 %(task_pool)s.cycle,
@@ -992,24 +996,7 @@ class CylcWorkflowDAO:
             "task_outputs": self.TABLE_TASK_OUTPUTS,
         }
         stmt = form_stmt % form_data
-
-        # Run the callback, collecting any platform errors to be handled later:
-        platform_errors = []
-        for row_idx, row in enumerate(self.connect().execute(stmt)):
-            platform_error = callback(row_idx, list(row))
-            if platform_error:
-                platform_errors.append(platform_error)
-
-        # If any of the platforms could not be found, raise an exception
-        # and stop trying to play this workflow:
-        if platform_errors:
-            msg = (
-                "The following platforms are not defined in"
-                " the global.cylc file:"
-            )
-            for platform in platform_errors:
-                msg += f"\n * {platform}"
-            raise PlatformLookupError(msg)
+        return self.connect().execute(stmt)
 
     def select_task_prerequisites(
         self, cycle: str, name: str, flow_nums: str

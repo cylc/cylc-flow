@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -147,6 +148,8 @@
 #         with PRE and POST pre- and ap-pended.
 #         PRE and POST are strings.
 #         The global config starts with #!Jinja2 in case Jinja2 is used.
+#         To prevent the *entire* global test config from being installed into
+#         the test config, specify CYLC_INCLUDE_TEST_CONFIG=true
 #     localhost_fqdn
 #         Get the FQDN of the current host using the same mechanism Cylc uses.
 #     get_fqdn [TARGET]
@@ -457,13 +460,11 @@ __ERR__
 
 named_grep_ok() {
     # (Put extra grep options like '-E' at end of the command line)
-    local NAME="$1"
+    local TEST_NAME="$1"
     local BRE="$2"
     local FILE="$3"
     shift 3
     local OPTS="$*"
-    local TEST_NAME
-    TEST_NAME="grep-ok: ${NAME}"
     # shellcheck disable=SC2086
     if grep ${OPTS} -q -e "${BRE}" "${FILE}"; then
         ok "${TEST_NAME}"
@@ -939,7 +940,7 @@ create_test_global_config() {
 __HERE__
     # add global-tests.cylc
     USER_TESTS_CONF_FILE="$(_get_test_config_file)"
-    if [[ -n "${USER_TESTS_CONF_FILE}" ]]; then
+    if ${CYLC_INCLUDE_TEST_CONFIG:-true} && [[ -n "${USER_TESTS_CONF_FILE}" ]]; then
         cat "${USER_TESTS_CONF_FILE}" >>'etc/global.cylc'
     fi
     # add platform config
@@ -1057,7 +1058,7 @@ _get_test_platforms () {
 }
 
 _expand_test_platforms () {
-    # convert sting of space separated platforms to array
+    # convert string of space separated platforms to array
     read -r -a PLATFORMS <<< "${1}"
 
     local ret=()

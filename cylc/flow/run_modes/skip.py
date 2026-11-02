@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -160,7 +161,7 @@ def check_task_skip_config(tdef: 'TaskDef') -> None:
     if not skip_outputs:
         return
 
-    # Error if outputs include succeded and failed:
+    # Error if outputs include succeeded and failed:
     if (
         TASK_OUTPUT_SUCCEEDED in skip_outputs
         and TASK_OUTPUT_FAILED in skip_outputs

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -109,14 +110,10 @@ LINT_TABLE = ['tool', 'cylc', 'lint']
 LINT_SECTION = '.'.join(LINT_TABLE)
 
 # BACK COMPAT: DEPR_LINT_SECTION
-# url:
-#     https://github.com/cylc/cylc-flow/issues/5811
-# from:
-#    8.1.0
-# to:
-#    8.3.0
-# remove at:
-#    8.4.0 ?
+# url: https://github.com/cylc/cylc-flow/issues/5811
+# from: 8.1.0
+# to: 8.3.0
+# remove at: 8.8
 DEPR_LINT_SECTION = 'cylc-lint'
 
 IGNORE = 'ignore'
@@ -202,7 +199,7 @@ WALLCLOCK_DIRECTIVES = get_wallclock_directives()
 
 def check_wallclock_directives(line: str) -> Dict[str, str]:
     """Check for job runner specific directives
-    equivalent to exection time limit.
+    equivalent to execution time limit.
 
     It's recommended that users prefer execution time limit
     because it gives the Cylc scheduler awareness should communications
@@ -304,7 +301,7 @@ def check_dead_ends(line: str) -> bool:
 
 def check_for_deprecated_environment_variables(
     line: str
-) -> Union[bool, dict]:
+) -> dict[str, str] | dict[str, list[str]] | Literal[False]:
     """Warn that environment variables with SUITE in are deprecated
 
     Examples:
@@ -323,7 +320,9 @@ def check_for_deprecated_environment_variables(
     return False
 
 
-def check_for_obsolete_environment_variables(line: str) -> Dict[str, List]:
+def check_for_obsolete_environment_variables(
+    line: str,
+) -> dict[str, list[str]]:
     """Warn that environment variables are obsolete.
 
     Examples:
@@ -331,7 +330,7 @@ def check_for_obsolete_environment_variables(line: str) -> Dict[str, List]:
         >>> this = check_for_obsolete_environment_variables
         >>> this('script = echo $CYLC_SUITE_DEF_PATH')
         {'vars': ['CYLC_SUITE_DEF_PATH']}
-        >>> this('script = echo "irrelevent"')
+        >>> this('script = echo "irrelevant"')
         {}
     """
     vars_found = [i for i in OBSOLETE_ENV_VARS if i in line]
@@ -745,7 +744,7 @@ MANUAL_DEPRECATIONS = {
             ]
         ),
         'url': '''
-            https://cylc.github.io/cylc-doc/stable/html/reference/job-script-vars/index.html
+            https://cylc.github.io/cylc-doc/stable/html/reference/env-vars.html#job-script-environment-variables
         ''',
         FUNCTION: check_for_deprecated_environment_variables,
     },
@@ -757,7 +756,7 @@ MANUAL_DEPRECATIONS = {
             + ''.join([f'\n * ``{old}``' for old in OBSOLETE_ENV_VARS])
         ),
         'url': '''
-            https://cylc.github.io/cylc-doc/stable/html/reference/job-script-vars/index.html
+            https://cylc.github.io/cylc-doc/stable/html/reference/env-vars.html#job-script-environment-variables
         ''',
         FUNCTION: check_for_obsolete_environment_variables,
     },
@@ -807,6 +806,22 @@ MANUAL_DEPRECATIONS = {
             '``&`` and ``|`` imply line continuation without ``\\``'
         ),
         FUNCTION: re.compile(r'[&|]\s*\\').findall
+    },
+    'U018': {
+        'short': (
+            "[scheduling][special tasks]clock-trigger is deprecated "
+            "and will be removed in Cylc 8.9; use the @wall_clock "
+            "xtrigger instead"
+        ),
+        'rst': (
+            "The :cylc:conf:`[scheduling][special tasks]clock-trigger` "
+            "setting is deprecated and will be removed in Cylc 8.9; use the "
+            ":ref:`@wall_clock xtrigger <Built-in Clock Triggers>` instead."
+        ),
+        'url': '''
+            https://cylc.github.io/cylc-doc/stable/html/user-guide/writing-workflows/scheduling.html#clock-triggers
+        ''',
+        FUNCTION: re.compile(r'clock-trigger*=*').findall
     },
 }
 ALL_RULESETS = ['728', 'style', 'all']
@@ -902,11 +917,11 @@ def validate_toml_items(tomldata):
     return True
 
 
-def get_pyproject_toml(dir_: Path) -> Dict[str, Any]:
+def get_pyproject_toml(dir_: Path) -> dict[str, Any]:
     """if a pyproject.toml file is present open it and return settings.
     """
     tomlfile = dir_ / 'pyproject.toml'
-    tomldata: Dict[str, Union[List[str], int, None]] = {
+    tomldata: dict[str, list[str] | int | None] = {
         RULESETS: [],
         IGNORE: [],
         EXCLUDE: [],
@@ -925,7 +940,8 @@ def get_pyproject_toml(dir_: Path) -> Dict[str, Any]:
             if DEPR_LINT_SECTION in loadeddata:
                 LOG.warning(
                     f"The [{DEPR_LINT_SECTION}] section in pyproject.toml is "
-                    f"deprecated. Use [{LINT_SECTION}] instead."
+                    "deprecated and support will be removed in Cylc 8.8. "
+                    f"Use [{LINT_SECTION}] instead."
                 )
             data = loadeddata.get(DEPR_LINT_SECTION, {})
         tomldata.update(data)
@@ -972,7 +988,7 @@ def _merge_cli_with_tomldata(
     exclude: No CLI equivalent, return toml if any.
 
     Args:
-        override_cli_default_rules: If user doesn't specifiy a ruleset use the
+        override_cli_default_rules: If user doesn't specify a ruleset use the
             rules from the tomlfile - i.e: if we've set 'rulesets': 'style'
             we probably don't want to get warnings about 728 upgrades by
             default, but only if we ask for it on the CLI.
@@ -1203,11 +1219,11 @@ def no_qa(line: str, index: str):
         >>> no_qa('foo = bar # noqa', 'S001')
         True
 
-        # Comment, no relevent error codes, no checking:
+        # Comment, no relevant error codes, no checking:
         >>> no_qa('foo = bar # noqa: S999, 997', 'S001')
         False
 
-        # Comment, relevent error codes, checking:
+        # Comment, relevant error codes, checking:
         >>> no_qa('foo = bar # noqa: S001 S003', 'S001')
         True
     """
@@ -1312,7 +1328,7 @@ def lint(
             # get the next line
             line = next(lines)
         except StopIteration:
-            # end of interator
+            # end of iterator
             return
         line_no += 1
 

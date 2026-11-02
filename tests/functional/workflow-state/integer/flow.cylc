@@ -1,6 +1,6 @@
 [scheduling]
     cycling mode = integer
-    initial cycle point = 1
+    initial cycle point = 0
     final cycle point = 2
     [[graph]]
         P1 = """

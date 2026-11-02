@@ -1,4 +1,4 @@
-# Check targetting a specific flow works, with trigger --wait.
+# Check targeting a specific flow works, with trigger --wait.
 
 # At start-up, trigger f with --wait for flow 2
 # Then when flow 1 reaches d, trigger flow 2 at b.

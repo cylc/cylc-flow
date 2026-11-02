@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,7 +30,7 @@ TEST_NAME="${TEST_NAME_BASE}-run"
 workflow_run_ok "${TEST_NAME}" \
     cylc play --reference-test --debug --no-detach "${WORKFLOW_NAME}"
 #-------------------------------------------------------------------------------
-TEST_NAME=${TEST_NAME_BASE}-ps
+TEST_NAME="${TEST_NAME_BASE}-ps"
 for DIR in "${WORKFLOW_RUN_DIR}"/work/*/t*; do
     run_fail "${TEST_NAME}.$(basename "$DIR")" ps "$(cat "${DIR}/file")"
 done

@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -224,7 +225,7 @@ def test_documentation():
 
 
 def test_rewind():
-    """It should be possible to move throught the pipe stages."""
+    """It should be possible to move through the pipe stages."""
     pipe = a_range | mult | even
     assert pipe.fastforward().rewind() == pipe
 

@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -68,7 +69,7 @@ class upgrader:
 
     def deprecate(
         self, vn, oldkeys, newkeys=None,
-        cvtr=None, silent=False, is_section=False,
+        cvtr=None, is_section=False, remove_at=None
     ):
         """Replace a deprecated key from a config
         Args:
@@ -81,10 +82,10 @@ class upgrader:
             cvtr (cylc.flow.parsec.upgrade.Converter):
                 Converter object containing a conversion function and a
                 description of that function.
-            silent (bool):
-                Set silent mode for this upgrade.
             is_section (bool):
                 Is a section heading.
+            remove_at (str):
+                Cylc version when this upgrader will be removed
         """
         if vn not in self.upgrades:
             self.upgrades[vn] = []
@@ -93,28 +94,28 @@ class upgrader:
         self.upgrades[vn].append(
             {
                 'old': oldkeys, 'new': newkeys, 'cvt': cvtr,
-                'silent': silent, 'is_section': is_section
+                'is_section': is_section, 'remove_at': remove_at
             })
 
-    def obsolete(self, vn, oldkeys, silent=False, is_section=False):
+    def obsolete(self, vn, oldkeys, is_section=False, remove_at=None):
         """Remove an obsolete key from a config
         Args:
             vn (str):
                 Version at which this obsoletion occurs.
             oldkeys (list):
                 Path within config to be removed.
-            silent:
-                Set silent mode for this upgrade.
             is_section (bool):
                 Is a section heading.
+            remove_at (str):
+                Cylc version when this obsoletion will become an error
         """
         if vn not in self.upgrades:
             self.upgrades[vn] = []
         cvtr = converter(lambda x: x, "DELETED (OBSOLETE)")  # identity
         self.upgrades[vn].append(
             {
-                'old': oldkeys, 'new': None, 'cvt': cvtr, 'silent': silent,
-                'is_section': is_section
+                'old': oldkeys, 'new': None, 'cvt': cvtr,
+                'is_section': is_section, 'remove_at': remove_at
             })
 
     def get_item(self, keys):
@@ -185,8 +186,8 @@ class upgrader:
                         'old': pre + [m] + post,
                         'new': None,
                         'cvt': upg['cvt'],
-                        'silent': upg['silent'],
                         'is_section': upg['is_section'],
+                        'remove_at': upg.get('remove_at')
                     })
                 return exp_upgs
             npre = []
@@ -203,8 +204,8 @@ class upgrader:
                     'old': pre + [m] + post,
                     'new': npre + [m] + npost,
                     'cvt': upg['cvt'],
-                    'silent': upg['silent'],
                     'is_section': upg['is_section'],
+                    'remove_at': upg.get('remove_at')
                 })
         return exp_upgs
 
@@ -237,9 +238,15 @@ class upgrader:
                             old=old,
                             new=upg['cvt'].convert(old)
                         )
-                        if not upg['silent']:
-                            warnings.setdefault(vn, [])
-                            warnings[vn].append(msg)
+                        if (remove_at := upg.get('remove_at')) is not None:
+                            if upg['new']:
+                                msg += (f' - support for the old item will be '
+                                        f'removed at Cylc {remove_at}')
+                            else:
+                                msg += (f' - this will fail validation in '
+                                        f'Cylc {remove_at}')
+                        warnings.setdefault(vn, [])
+                        warnings[vn].append(msg)
                         self.del_item(upg['old'])
                         if upg['new']:
                             # check self.cfg does not already contain a

@@ -3,7 +3,8 @@
 #         the calling script, this just helps shellcheck lint the file
 
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -103,15 +104,15 @@ cylc__job__main() {
         CYLC_WORKFLOW_OWNER="$(sed -n 's/^CYLC_WORKFLOW_OWNER=//p' "${contact}")"
         export CYLC_WORKFLOW_HOST CYLC_WORKFLOW_OWNER
         # BACK COMPAT: DEPRECATED environment variables
-        # remove at:
-        #     Cylc8.x
+        #    (note we can't warn about their usage other than cylc lint)
+        # remove at: 9.0?
         export CYLC_SUITE_HOST="${CYLC_WORKFLOW_HOST}"
         export CYLC_SUITE_OWNER="${CYLC_WORKFLOW_OWNER}"
     fi
 
     # BACK COMPAT: DEPRECATED environment variables
-    # remove at:
-    #     Cylc8.x
+    #    (note we can't warn about their usage other than cylc lint)
+    # remove at: 9.0?
     export CYLC_SUITE_SHARE_DIR="${CYLC_WORKFLOW_SHARE_DIR}"
     export CYLC_SUITE_SHARE_PATH="${CYLC_WORKFLOW_SHARE_DIR}"
     export CYLC_SUITE_NAME="${CYLC_WORKFLOW_ID}"
@@ -133,12 +134,18 @@ cylc__job__main() {
     # System paths:
     # * workflow directory (installed run-dir first).
     export PATH="${CYLC_WORKFLOW_RUN_DIR}/share/bin:${CYLC_WORKFLOW_RUN_DIR}/bin:${PATH}"
-    export PYTHONPATH="${CYLC_WORKFLOW_RUN_DIR}/share/lib/python:${CYLC_WORKFLOW_RUN_DIR}/lib/python:${PYTHONPATH:-}"
+    export PYTHONPATH="${CYLC_WORKFLOW_RUN_DIR}/share/lib/python:${CYLC_WORKFLOW_RUN_DIR}/lib/python${PYTHONPATH:+:${PYTHONPATH}}"
     # Create share and work directories
     mkdir -p "${CYLC_TASK_SHARE_CYCLE_DIR}" || true
     mkdir -p "$(dirname "${CYLC_TASK_WORK_DIR}")" || true
     mkdir -p "${CYLC_TASK_WORK_DIR}"
     cd "${CYLC_TASK_WORK_DIR}"
+
+    if [[ "${CYLC_PROFILER}" == "True" ]] ; then
+       cylc profile -m "${CYLC_PROFILER_CGROUPS}" -i "${CYLC_PROFILER_POLL_INTERVAL}" &
+       export profiler_pid="$!"
+    fi
+
     # Env-Script, User Environment, Pre-Script, Script and Post-Script
     # Run user scripts in subshell to protect cylc job script from interference.
     # Waiting on background process allows signal traps to trigger immediately.
@@ -157,11 +164,15 @@ cylc__job__main() {
             cylc__set_return "$ret_code"
         fi
     }
+    # Grab the max rss and cpu_time and clean up before changing directory
+    cylc__kill_profiler
     # Empty work directory remove
     cd
     rmdir "${CYLC_TASK_WORK_DIR}" 2>'/dev/null' || true
     # Send task succeeded message
+
     wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
+
     cylc message -- "${CYLC_WORKFLOW_ID}" "${CYLC_TASK_JOB}" 'succeeded' || true
     # (Ignore shellcheck "globbing and word splitting" warning here).
     # shellcheck disable=SC2086
@@ -185,6 +196,15 @@ cylc__job__run_user_scripts() {
 # Set last return code (needed to work around Bash bugs in ERR trapping).
 cylc__set_return() {
     return "${1:-0}"
+}
+
+###############################################################################
+# Save the data using cylc message and exit the profiler
+cylc__kill_profiler() {
+    if [[ -n "${profiler_pid:-}" ]] && ps -p "$profiler_pid" > /dev/null; then
+      kill -s SIGTERM "${profiler_pid}" || true
+      wait "${profiler_pid}" 2>'/dev/null' || true
+    fi
 }
 
 ###############################################################################
@@ -268,6 +288,9 @@ cylc__job_finish_err() {
     # (Ignore shellcheck "globbing and word splitting" warning here).
     # shellcheck disable=SC2086
     trap '' ${CYLC_VACATION_SIGNALS:-} ${CYLC_FAIL_SIGNALS}
+
+    cylc__kill_profiler
+
     if [[ -n "${CYLC_TASK_MESSAGE_STARTED_PID:-}" ]]; then
         wait "${CYLC_TASK_MESSAGE_STARTED_PID}" 2>'/dev/null' || true
     fi

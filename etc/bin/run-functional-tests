@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -67,7 +68,7 @@ Options:
                        job runner: background
 
                    Can be set to a glob. e.g. '_local*' will match all
-                   configuted test platforms with local job submission.
+                   configured test platforms with local job submission.
 
                    '*' will match all configured test platforms.
 
@@ -102,7 +103,7 @@ Examples:
   $ run-functional-tests -p <test_platform> <path>
 
   # run tests using the first matching test platform from the test config
-  # (test platforms have names beggining with an underscore)
+  # (test platforms have names beginning with an underscore)
   $ run-functional-tests -p all <path>
 eof
 }

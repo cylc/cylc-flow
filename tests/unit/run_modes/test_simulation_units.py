@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -42,7 +43,7 @@ def test_get_simulated_run_len(
 ):
     """Test the logic of the presence or absence of config items.
 
-    Avoid testing the correct workign of DurationParser.
+    Avoid testing the correct working of DurationParser.
     """
     rtc = {
         'execution time limit': execution_time_limit,

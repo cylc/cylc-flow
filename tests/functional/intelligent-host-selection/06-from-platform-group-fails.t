@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,9 +16,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test that Cylc fails sensibly when a plaform group with no
+# Test that Cylc fails sensibly when a platform group with no
 # accessible hosts is selected.
-# n.b. We don't care about definition order in this test becuase all
+# n.b. We don't care about definition order in this test because all
 # hosts and platforms fail.
 . "$(dirname "$0")/test_header"
 set_test_number 12
@@ -53,7 +54,7 @@ logfile="${WORKFLOW_RUN_DIR}/log/scheduler/log"
 
 # Check workflow fails for the reason we want it to fail
 named_grep_ok \
-    "Workflow stalled with 1/bad (submit-failed)" \
+    "${TEST_NAME_BASE}-workflow-stalled-with-bad-submit-failed" \
     "1/bad did not complete the required outputs" \
     "$logfile"
 
@@ -80,7 +81,7 @@ done
 
 # Look for message indicating that remote init has failed.
 named_grep_ok \
-    "platform: badhostplatform. - initialisation did not complete (no hosts were reachable)" \
+    "${TEST_NAME_BASE}-initialisation-did-not-complete" \
     "platform: badhostplatform. - initialisation did not complete (no hosts were reachable)" \
     "${logfile}"
 

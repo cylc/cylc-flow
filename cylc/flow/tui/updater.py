@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -123,10 +124,10 @@ class Updater():
     """
 
     # the interval between workflow listing scans
-    BASE_SCAN_INTERVAL = 20
+    BASE_SCAN_INTERVAL: float = 20
 
     # the interval between workflow data updates
-    BASE_UPDATE_INTERVAL = 1
+    BASE_UPDATE_INTERVAL: float = 1
 
     # the command signal used to tell the updater to shut down
     SIGNAL_TERMINATE = 'terminate'

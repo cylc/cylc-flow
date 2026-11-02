@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,6 +21,7 @@ from collections import deque
 from contextlib import suppress
 import logging
 import os
+import shlex
 from pathlib import Path
 from queue import (
     Empty,
@@ -46,6 +48,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     AsyncGenerator,
+    Collection,
     Dict,
     Iterable,
     List,
@@ -78,6 +81,7 @@ from cylc.flow.exceptions import (
     CylcError,
     InputError,
     WorkflowConfigError,
+    PlatformLookupError,
 )
 import cylc.flow.flags
 from cylc.flow.flow_mgr import (
@@ -108,6 +112,7 @@ from cylc.flow.loggingutil import (
     get_sorted_logs_by_time,
     patch_log_level,
 )
+from cylc.flow.main_loop.health_check import HealthCheckFailed
 from cylc.flow.network import API
 from cylc.flow.network.authentication import key_housekeeping
 from cylc.flow.network.server import WorkflowRuntimeServer
@@ -161,7 +166,6 @@ from cylc.flow.templatevars import (
     get_template_vars,
 )
 from cylc.flow.timer import Timer
-from cylc.flow.util import cli_format
 from cylc.flow.wallclock import (
     get_current_time_string,
     get_time_string_from_unix_time as time2str,
@@ -517,7 +521,7 @@ class Scheduler:
 
         self.profiler.log_memory("scheduler.py: before load_tasks")
         if self.is_restart:
-            self._load_pool_from_db()
+            await self._load_pool_from_db()
             if self.restored_stop_task_id is not None:
                 self.pool.set_stop_task(self.restored_stop_task_id)
         elif self.options.starttask:
@@ -529,9 +533,10 @@ class Scheduler:
         # Not strictly necessary, it will spawn ahead per main loop iteration,
         # but useful back-compat for tests that expect this prior to
         # https://github.com/cylc/cylc-flow/pull/7237
+        # URL: https://github.com/cylc/cylc-flow/issues/7359
         # FROM: 8.6.x
         # TO: 8.7.0
-        # REMOVE AT: 8.7.0
+        # REMOVE AT: >=8.8
         self.pool.compute_runahead()
         for _ in range(10):
             # (Arbitrary limit to avoid infinite loop if something goes wrong)
@@ -727,7 +732,7 @@ class Scheduler:
             await self.shutdown(exc)
             try:
                 if self.auto_restart_mode == AutoRestartMode.RESTART_NORMAL:
-                    self.workflow_auto_restart()
+                    await self.workflow_auto_restart()
                 # run shutdown coros
                 await asyncio.gather(
                     *main_loop.get_runners(
@@ -745,8 +750,8 @@ class Scheduler:
         except asyncio.CancelledError as exc:
             await self.handle_exception(exc)
 
-        except CylcError as exc:  # Includes SchedulerError
-            # catch "expected" errors
+        except (CylcError, HealthCheckFailed) as exc:
+            # catch "expected" errors (includes SchedulerError)
             await self.handle_exception(exc)
 
         except Exception as exc:
@@ -880,15 +885,16 @@ class Scheduler:
         LOG.info(f"{start_type} start from {self.config.start_point}")
         self.pool.load_from_point()
 
-    def _load_pool_from_db(self):
+    async def _load_pool_from_db(self):
         """Load task pool from DB, for a restart."""
         self.workflow_db_mgr.pri_dao.select_broadcast_states(
             self.broadcast_mgr.load_db_broadcast_states)
         self.broadcast_mgr.post_load_db_coerce()
         self.workflow_db_mgr.pri_dao.select_task_job_run_times(
             self._load_task_run_times)
-        self.workflow_db_mgr.pri_dao.select_task_pool_for_restart(
-            self.pool.load_db_task_pool_for_restart)
+        await self.load_db_task_pool_for_restart(
+            self.workflow_db_mgr.pri_dao.select_task_pool_for_restart()
+        )
         self.workflow_db_mgr.pri_dao.select_jobs_for_restart(
             self.data_store_mgr.insert_db_job)
         self.workflow_db_mgr.pri_dao.select_task_action_timers(
@@ -900,6 +906,157 @@ class Scheduler:
 
         self.pool.load_db_tasks_to_hold()
         self.pool.update_flow_mgr()
+
+    async def load_db_task_pool_for_restart(self, tasks):
+        """Load tasks from DB task pool/states/jobs tables.
+
+        Output completion status is loaded from the DB, and tasks recorded
+        as submitted or running are polled to confirm their true status.
+        Tasks are added to queues again on release from runahead pool.
+
+        Raises:
+            PlatformLookupError:
+                If any tasks present in the database cannot be reloaded due to
+                missing platform definitions, unless the platform is only
+                required by orphan tasks which have been removed by reload.
+
+        """
+        LOG.info("LOADING task proxies")
+
+        # active tasks removed by restart
+        orphan_task_names: set[str] = set()
+
+        # platforms used by active tasks which are no longer present
+        missing_platform_names: set[str] = set()
+
+        # platforms used by active tasks that were removed by restart which are
+        # no longer present (non critical, but good to log)
+        missing_orphan_platform_names: set[str] = set()
+
+        # active tasks removed by restart which *can* and *should* be killed
+        orphans_to_kill: 'list[TaskProxy]' = []
+
+        for (
+            cycle,
+            name,
+            flow_nums,
+            flow_wait,
+            is_manual_submit,
+            is_late,
+            status,
+            is_held,
+            submit_num,
+            _,
+            platform_name,
+            time_submit,
+            time_run,
+            timeout,
+            outputs_str,
+        ) in tasks:
+            if name not in self.config.taskdefs:
+                # build a set of orphan tasks
+                # WARNING: TaskDefs may be created for orphan tasks via
+                # `load_restart_task`, so this test may only return `True`
+                # for the first instance of the task to pass through this code
+                orphan_task_names.add(name)
+            try:
+                if itask := self.pool.load_restart_task(
+                    cycle,
+                    name,
+                    flow_nums,
+                    flow_wait,
+                    is_manual_submit,
+                    is_late,
+                    status,
+                    is_held,
+                    submit_num,
+                    platform_name,
+                    time_submit,
+                    time_run,
+                    timeout,
+                    outputs_str,
+                    is_orphan=(name in orphan_task_names),
+                ):
+                    orphans_to_kill.append(itask)
+            except PlatformLookupError:
+                if platform_name:
+                    if name in orphan_task_names:
+                        missing_orphan_platform_names.add(platform_name)
+                    else:
+                        missing_platform_names.add(platform_name)
+
+        # If any of the platforms could not be found, raise an exception
+        # and stop trying to play this workflow:
+        if missing_platform_names or missing_orphan_platform_names:
+            msg = (
+                "The following platforms are not defined in"
+                " the global.cylc file:"
+            )
+            for platform in sorted((
+                *missing_platform_names, *missing_orphan_platform_names
+            )):
+                msg += f"\n * {platform}"
+            if missing_platform_names:
+                raise PlatformLookupError(msg)
+            else:
+                LOG.warning(msg)
+
+        if orphans_to_kill:
+            self.handle_graph_change('restart', orphans_to_kill)
+
+    def handle_graph_change(
+        self,
+        cause: Literal['reload'] | Literal['restart'],
+        orphan_itasks: 'Iterable[TaskProxy]',
+        added_tasks: 'Collection[str] | None' = None,
+    ) -> None:
+        """Handle a workflow graph configuration change.
+
+        * Kill and remove tasks orphaned by reload.
+        * Log any removed tasks.
+        * Log any added tasks.
+
+        If tasks are removed from the workflow graph by either reload or
+        restart, this method should be called on any lingering proxies left in
+        the pool.
+
+        Args:
+            itasks: Orphaned task proxies to remove.
+            cause: The reason the tasks were removed.
+
+        """
+        if not orphan_itasks and not added_tasks:
+            # no graph change to report
+            return
+
+        if cause == 'reload':
+            # NOTE: on restart these tasks are not added into the pool so do
+            # not require removing
+            for itask in orphan_itasks:
+                self.pool.remove(
+                    itask,
+                    f'removed by {cause}',
+                    # ensure parentless / sequential xtrigger tasks are not
+                    # spawned ahead into future cycles
+                    no_spawn=True,
+                )
+
+        msg = f'Graph changed due to {cause}'
+        if orphan_itasks:
+            msg += '\n' + '\n  * '.join(
+                ('Removed tasks:', *sorted(map(str, orphan_itasks)))
+            )
+        if added_tasks is not None:
+            if added_tasks:
+                msg += '\n' + '\n  * '.join(
+                    ('Added task definitions:', *sorted(added_tasks))
+                )
+            else:
+                msg += '\nAdded task definitions: None'
+
+        LOG.info(msg)
+
+        self.kill_tasks(orphan_itasks, warn=False)
 
     def restart_remote_init(self):
         """Remote init for all submitted/running tasks in the pool."""
@@ -1090,7 +1247,14 @@ class Scheduler:
             itasks: Tasks to kill.
             warn: Whether to warn about tasks that are not in a killable state.
 
-        Returns number of tasks that could not be killed.
+        Returns:
+            The number of tasks that could not be killed.
+
+        Warning:
+            This method may be called on tasks which have been removed by
+            reload or restart so do not belong to a family and may have a blank
+            taskdef.
+
         """
         jobless = self.get_run_mode() == RunMode.SIMULATION
         to_kill: List[TaskProxy] = []
@@ -1115,7 +1279,7 @@ class Scheduler:
                 "Tasks not killable: "
                 f"{', '.join(sorted(t.identity for t in unkillable))}"
             )
-        if not jobless:
+        if to_kill and not jobless:
             self.task_job_mgr.kill_task_jobs(to_kill)
 
         return len(unkillable)
@@ -1154,7 +1318,7 @@ class Scheduler:
             fields.PID:
                 str(proc.pid),
             fields.COMMAND:
-                cli_format(proc.cmdline()),
+                shlex.join(proc.cmdline()),
             fields.PUBLISH_PORT:
                 str(self.server.pub_port),
             fields.WORKFLOW_RUN_DIR_ON_WORKFLOW_HOST:
@@ -1484,6 +1648,33 @@ class Scheduler:
         if self.get_run_mode() != RunMode.SIMULATION:
             self.task_job_mgr.check_task_jobs(self.pool)
 
+    def can_stop(self) -> bool:
+        """Return True if workflow can stop."""
+        if self.stop_mode is None:
+            return False
+        if self.stop_mode == StopMode.REQUEST_NOW_NOW:
+            # Can stop irrespective of all other conditions
+            return True
+        if self.task_events_mgr._event_timers:
+            return False
+        if self.stop_mode in {
+            StopMode.REQUEST_NOW,
+            StopMode.AUTO,
+            StopMode.AUTO_ON_TASK_FAILURE,
+        }:
+            # Can stop as no pending event handlers
+            return True
+        # Else cannot stop if there are active tasks (unless they're
+        # ones we tried & failed to kill).
+        # NB preparing tasks get reset to waiting on restart.
+        return not any(
+            (
+                itask.state(*TASK_STATUSES_ACTIVE)
+                and not itask.state.kill_failed
+            )
+            for itask in self.pool.get_tasks()
+        )
+
     async def workflow_shutdown(self):
         """Determines if the workflow can be shutdown yet."""
         if self.pool.check_abort_on_task_fails():
@@ -1498,7 +1689,7 @@ class Scheduler:
             self._set_stop(StopMode.AUTO)
 
         # Is the workflow ready to shut down now?
-        if self.pool.can_stop(self.stop_mode):
+        if self.can_stop():
             await self.update_data_structure()
             self.proc_pool.close()
             if self.stop_mode != StopMode.REQUEST_NOW_NOW:
@@ -1583,7 +1774,7 @@ class Scheduler:
             time() >= self.auto_restart_time
         )
 
-    def workflow_auto_restart(self, max_retries: int = 3) -> bool:
+    async def workflow_auto_restart(self, max_retries: int = 3) -> bool:
         """Attempt to restart the workflow assuming it has already stopped."""
         cmd = [
             'cylc', 'play', quote(self.workflow),
@@ -1595,7 +1786,7 @@ class Scheduler:
             error: Optional[str] = None
             proc = None
             try:
-                new_host = select_workflow_host(cached=False)[0]
+                new_host, _ = await select_workflow_host(cached=False)
             except HostSelectException as exc:
                 error = str(exc)
             else:
@@ -1895,9 +2086,10 @@ class Scheduler:
             # Suppress the reason for shutdown, which is logged separately
             exc.__suppress_context__ = True
             if isinstance(exc, CylcError):
-                LOG.error(f"{exc.__class__.__name__}: {exc}")
-                if cylc.flow.flags.verbosity > 1:
-                    LOG.exception(exc)
+                LOG.error(
+                    f"{type(exc).__name__}: {exc}",
+                    exc_info=(exc if cylc.flow.flags.verbosity > 1 else None)
+                )
             else:
                 LOG.exception(exc)
             # Re-raise exception to be caught higher up (sets the exit code)
@@ -1909,10 +2101,7 @@ class Scheduler:
 
         if hasattr(self, 'proc_pool'):
             try:
-                self.proc_pool.close()
-                if self.proc_pool.is_not_done():
-                    self.proc_pool.terminate()
-                self.proc_pool.process()
+                self.proc_pool.terminate()
             except Exception as exc:
                 LOG.exception(exc)
 
@@ -1964,9 +2153,16 @@ class Scheduler:
             fname = workflow_files.get_contact_file_path(self.workflow)
             try:
                 os.unlink(fname)
+            except FileNotFoundError as exc:
+                LOG.warning(
+                    f"contact file missing on shutdown: {fname}",
+                    exc_info=(exc if cylc.flow.flags.verbosity > 1 else None)
+                )
             except OSError as exc:
-                LOG.warning(f"failed to remove workflow contact file: {fname}")
-                LOG.exception(exc)
+                LOG.critical(
+                    f"failed to remove workflow contact file: {fname}",
+                    exc_info=exc,
+                )
             else:
                 # Useful to identify that this Scheduler has shut down
                 # properly (e.g. in tests):
@@ -1984,6 +2180,7 @@ class Scheduler:
     def _log_shutdown_reason(self, reason: BaseException) -> None:
         """Appropriately log the reason for scheduler shutdown."""
         shutdown_msg = "Workflow shutting down"
+        exc_info = reason if cylc.flow.flags.verbosity > 1 else None
         with patch_log_level(LOG):
             if isinstance(reason, SchedulerStop):
                 LOG.info(f'{shutdown_msg} - {reason.args[0]}')
@@ -1997,11 +2194,14 @@ class Scheduler:
                 isinstance(reason, ParsecError) and reason.schd_expected
             ):
                 LOG.error(
-                    f"{shutdown_msg} - {type(reason).__name__}: {reason}"
+                    f"{shutdown_msg} - {type(reason).__name__}: {reason}",
+                    exc_info=exc_info,
                 )
-                if cylc.flow.flags.verbosity > 1:
-                    # Print traceback
-                    LOG.exception(reason)
+            elif isinstance(reason, HealthCheckFailed):
+                LOG.critical(
+                    f"{shutdown_msg} - health check failed: {reason}",
+                    exc_info=exc_info,
+                )
             else:
                 LOG.exception(reason)
                 if str(reason):
@@ -2018,10 +2218,10 @@ class Scheduler:
         self.workflow_db_mgr.put_workflow_stop_clock_time(self.stop_clock_time)
         self.update_data_store()
 
-    def stop_clock_done(self):
+    def stop_clock_done(self) -> bool:
         """Return True if wall clock stop time reached."""
         if self.stop_clock_time is None:
-            return
+            return False
         now = time()
         if now > self.stop_clock_time:
             LOG.info("Wall clock stop time reached: %s", time2str(
@@ -2033,7 +2233,7 @@ class Scheduler:
         LOG.debug("stop time=%d; current time=%d", self.stop_clock_time, now)
         return False
 
-    def check_auto_shutdown(self):
+    def check_auto_shutdown(self) -> bool:
         """Check if we should shut down now."""
         if (
             self.is_paused or

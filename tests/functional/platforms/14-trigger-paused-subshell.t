@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +22,9 @@
 # call, to check the platform does not change during a manual trigger.
 # https://github.com/cylc/cylc-flow/issues/6994
 
-export REQUIRE_PLATFORM='loc:remote'
+# NOTE: Hostname checks performed in this test are incompatible with job
+# runners which may execute jobs on remote nodes
+export REQUIRE_PLATFORM='loc:remote runner:?(background|at)'
 
 . "$(dirname "$0")/test_header"
 set_test_number 11

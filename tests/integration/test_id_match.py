@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,11 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Set, Tuple, cast, TYPE_CHECKING
+from typing import (
+    TYPE_CHECKING,
+    Set,
+    Tuple,
+    cast,
+)
 
 from cylc.flow import commands
 from cylc.flow.id import Tokens
 from cylc.flow.scheduler import Scheduler
+
 
 if TYPE_CHECKING:
     from cylc.flow.id import TaskTokens
@@ -37,7 +44,7 @@ async def test_id_match(flow, scheduler, start, caplog):
 
                     b1[-P1] => b1
                     b2[-P1] => b2
-                ''',
+            ''',
             },
         },
         'runtime': {
@@ -86,7 +93,7 @@ async def test_id_match(flow, scheduler, start, caplog):
         #   * n=1 b2 waiting
         #   * n=2 c2 waiting
 
-        # check the n=0 window matches expecations before proceeding
+        # check the n=0 window matches expectations before proceeding
         assert {
             itask.tokens.relative_id for itask in schd.pool.get_tasks()
         } == {'1/a1', '1/b2', '3/a1', '3/a2'}
@@ -176,7 +183,7 @@ async def test_id_match(flow, scheduler, start, caplog):
         assert match('1/a1', '2/a1', '3/a1') == ({'1/a1', '3/a1'}, {'2/a1'})
 
         # ensure warnings are raised for off-sequence tasks if the user
-        # explcitly specified them
+        # explicitly specified them
         # NOTE: 2/a1 should result in a warning (because the user asked for
         # this exact combination), however, "2/a*" should not (because there
         # may be a combination of tasks which are or are not valid at the given
@@ -184,37 +191,3 @@ async def test_id_match(flow, scheduler, start, caplog):
         caplog.clear()
         assert match('2/a1', '2/a*') == (set(), {'2/a1', '2/a*'})
         assert caplog.messages == ['Invalid cycle point for task: a1, 2']
-
-
-async def test_match_removed_task(flow, scheduler, run, complete):
-    """It should match and operate on tasks no longer in the config."""
-    config = {
-        'scheduling': {
-            'graph': {'R1': 'foo & bar'},
-        },
-    }
-    id_ = flow(config)
-    schd = scheduler(id_, paused_start=False)
-
-    def list_tasks():
-        return {
-            itask.tokens.relative_id for itask in schd.pool.get_tasks()
-        }
-
-    async with run(schd):
-        # workflow starts with "foo" and "bar" in the pool
-        assert list_tasks() == {'1/foo', '1/bar'}
-
-        # remove "bar" from the config and reload
-        config['scheduling']['graph']['R1'] = 'x => foo'
-        flow(config, name=id_)
-        await commands.run_cmd(commands.reload_workflow(schd))
-
-        # both "foo" and "bar" are still in the pool ("bar" is orphaned)
-        assert list_tasks() == {'1/foo', '1/bar'}
-
-        # remove all tasks from the workflow
-        await commands.run_cmd(commands.remove_tasks(schd, {'*'}, ['1']))
-
-        # this should match the orphaned task "bar"
-        assert list_tasks() == set()

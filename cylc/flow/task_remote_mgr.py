@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -172,8 +173,9 @@ class TaskRemoteMgr:
         return os.path.expandvars(eval_str)
 
     # BACK COMPAT: references to "host"
-        # remove at:
-        #     Cylc8.x
+    # from: 7
+    # to: 8.0
+    # remove at: 8.9
     def eval_host(self, host_str: str | None) -> str | None:
         """Evaluate a host from a possible subshell string.
 
@@ -287,7 +289,7 @@ class TaskRemoteMgr:
     ) -> Tuple[List[str], str]:
         """Return a remote-tidy SSH command.
 
-        Rasies:
+        Raises:
             NoHostsError: If the platform is not contactable.
         """
         cmd = ['remote-tidy']
@@ -387,10 +389,11 @@ class TaskRemoteMgr:
             else:
                 LOG.error(
                     NoPlatformsError(
-                        install_target,
                         set(),
-                        'install target',
-                        'remote tidy'))
+                        install_target=install_target,
+                        place='remote tidy',
+                    )
+                )
         # Wait for commands to complete for a max of 10 seconds
         timeout = time() + 10.0
         while queue and time() < timeout:

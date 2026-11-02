@@ -1,5 +1,5 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) 2008-2019 NIWA
+# Copyright (C) 2008-2019 Earth Sciences New Zealand
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +22,7 @@
 
 . "$(dirname "$0")/test_header"
 if [[ "$OSTYPE" != "linux-gnu"* ]]; then
-    skip_all "Tests not compatibile with $OSTYPE"
+    skip_all "Tests not compatible with $OSTYPE"
 fi
 set_test_number 7
 

@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,19 +15,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from functools import partial
 import logging
 
 import pytest
 
 from cylc.flow.commands import (
     force_trigger_tasks,
-    reload_workflow,
     remove_tasks,
     run_cmd,
 )
 from cylc.flow.cycling.integer import IntegerPoint
 from cylc.flow.id import TaskTokens
+from cylc.flow.network.multi import call_multi_async
+from cylc.flow.network.client_factory import get_client as org_get_client
 from cylc.flow.scheduler import Scheduler
+from cylc.flow.scripts import remove
 from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.task_proxy import TaskProxy
 from cylc.flow.task_state import TASK_STATUS_FAILED
@@ -481,40 +485,6 @@ async def test_kill_running(flow, scheduler, run, complete, reflog):
     }
 
 
-async def test_reload_changed_config(flow, scheduler, run, complete):
-    """Test that a task is removed from the pool if its configuration changes
-    to make it no longer match the graph."""
-    wid = flow({
-        'scheduling': {
-            'graph': {
-                'R1': '''
-                    a => b
-                    a:started => s & b
-                ''',
-            },
-        },
-        'runtime': {
-            'a': {
-                'simulation': {
-                    # Ensure 1/a still in pool during reload
-                    'fail cycle points': 'all',
-                },
-            },
-        },
-    })
-    schd: Scheduler = scheduler(wid, paused_start=False)
-    async with run(schd):
-        await complete(schd, '1/s')
-        # Change graph then reload
-        flow('b', workflow_id=wid)
-        await run_cmd(reload_workflow(schd))
-        assert schd.config.cfg['scheduling']['graph']['R1'] == 'b'
-        assert schd.pool.get_task_ids() == {'1/a', '1/b'}
-
-        await run_cmd(remove_tasks(schd, ['1/a'], []))
-        await complete(schd, '1/b')
-
-
 async def test_remove_triggered(flow, scheduler, start):
     """It should remove tasks from pool and from to_trigger set."""
     conf = {
@@ -544,3 +514,115 @@ async def test_remove_triggered(flow, scheduler, start):
         )
         assert not schd.pool.get_tasks()
         assert not schd.pool.tasks_to_trigger_now
+
+
+async def test_remove_spawn(flow, scheduler, start):
+    """Test the no-spawn removal of parentless tasks."""
+    schd: Scheduler = scheduler(
+        flow({
+            'scheduler': {
+                'cycle point format': 'CCYY',
+            },
+            'scheduling': {
+                'initial cycle point': '2000',
+                'runahead limit': 'P0',
+                'graph': {
+                    'R3//P1Y': '''
+                        @wall_clock => a
+                        b
+                        c
+                    ''',
+                },
+            },
+        })
+    )
+    async with start(schd):
+        assert schd.pool.get_task_ids() == {
+            '2000/a',
+            '2000/b',
+            '2000/c',
+            '2001/b',
+            '2001/c',
+        }
+
+        # Normal removal of parentless runahead and sequential xtrigger (PSX)
+        # spawned.
+        await run_cmd(remove_tasks(schd, ['2000/a', '2000/b', '2001/b'], []))
+        assert schd.pool.get_task_ids() == {
+            '2000/c',
+            '2001/a',
+            '2001/c',
+            '2002/b',
+        }
+
+        # no spawn removal
+        await run_cmd(remove_tasks(schd, ['2001/a', '2001/c'], [], True))
+        assert schd.pool.get_task_ids() == {'2000/c', '2002/b'}
+
+        # empty the workflow
+        await run_cmd(remove_tasks(schd, ['2002/b', '2000/c'], [], True))
+        assert schd.pool.get_task_ids() == set()
+
+
+async def test_remove_script(monkeypatch, flow, scheduler, start):
+    """Test script and back-compat handling."""
+
+    parser = remove.get_option_parser()
+
+    conf = {
+        'scheduling': {
+            'graph': {
+                'R1': 'a & b'
+            },
+        },
+    }
+    schd: Scheduler = scheduler(flow(conf))
+    async with start(schd):
+        a, b = schd.pool.get_tasks()
+
+        # test script works
+        opts, args = parser.parse_args(
+            ['--no-spawn', a.tokens.id]
+        )
+        rets = await call_multi_async(
+            partial(remove.run, opts),
+            *args,
+        )
+        assert True in rets.values()
+        await schd._main_loop()
+        assert a not in schd.pool.get_tasks()
+
+        # test back-compat
+        def mod_get_client(*args, **kwargs):
+            client = org_get_client(*args, **kwargs)
+            client.scheduler_version = '8.6.6'
+            return client
+
+        monkeypatch.setattr(
+            'cylc.flow.scripts.remove.get_client',
+            mod_get_client
+        )
+
+        # test old version with --no-spawn
+        opts, args = parser.parse_args(
+            ['--no-spawn', b.tokens.id]
+        )
+        rets = await call_multi_async(
+            partial(remove.run, opts),
+            *args,
+        )
+        assert False in rets.values()
+        await schd._main_loop()
+        assert b in schd.pool.get_tasks()
+
+        # test old version without --no-spawn
+        opts, args = parser.parse_args(
+            [b.tokens.id]
+        )
+        rets = await call_multi_async(
+            partial(remove.run, opts),
+            *args,
+        )
+        assert True in rets.values()
+        await schd._main_loop()
+        assert not schd.pool.get_tasks()

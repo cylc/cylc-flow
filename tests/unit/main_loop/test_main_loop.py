@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,7 +25,6 @@ from cylc.flow import CYLC_LOG
 from cylc.flow.exceptions import CylcError
 from cylc.flow.main_loop import (
     CoroTypes,
-    MainLoopPluginException,
     _wrapper,
     get_runners,
     load,
@@ -143,7 +143,7 @@ def test_wrapper_passes_cylc_error():
         None,
         None
     )
-    with pytest.raises(MainLoopPluginException):
+    with pytest.raises(CylcError):
         asyncio.run(coro)
 
 
@@ -255,7 +255,7 @@ def test_state(basic_plugins):
     """It should pass the same state object with each function call.
 
     * Run the same plugin function twice.
-    * Ensure that the state object recieved by each call is the same object.
+    * Ensure that the state object received by each call is the same object.
 
     """
     plugins, calls, capture = basic_plugins

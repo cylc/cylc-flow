@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,14 +16,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from cylc.flow import LOG
-import cylc.flow.flags
 from cylc.flow.xtriggers.workflow_state import _workflow_state_backcompat
 
-if not cylc.flow.flags.cylc7_back_compat:
-    LOG.warning(
-        "The suite_state xtrigger is deprecated and will be removed "
-        "in Cylc 8.9. Please use the workflow_state xtrigger instead."
-    )
+
+LOG.warning(
+    "The suite_state xtrigger is deprecated and will be removed "
+    "in Cylc 8.9. Please use the workflow_state xtrigger instead."
+)
 
 
 # BACK COMPAT: suite_state
@@ -75,6 +75,9 @@ def suite_state(suite, task, point, offset=None, status='succeeded',
             Dictionary containing the args / kwargs which were provided
             to this xtrigger.
 
+    .. deprecated:: 8.0.0
+
+       ``suite_state`` will be removed in Cylc 8.9.
     """
     return _workflow_state_backcompat(
         suite, task, point, offset, status, message, cylc_run_dir

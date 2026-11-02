@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,14 +19,24 @@
 from enum import Enum
 import os
 from shlex import quote
-from typing import Any, Dict, List, Union, TYPE_CHECKING
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    List,
+    cast,
+)
 
 from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
-from cylc.flow.hostuserutil import get_host, get_user
+from cylc.flow.hostuserutil import (
+    get_host,
+    get_user,
+)
 from cylc.flow.log_diagnosis import run_reftest
 from cylc.flow.parsec.config import DefaultList
 from cylc.flow.subprocctx import SubProcContext
+
 
 if TYPE_CHECKING:
     from cylc.flow.config import WorkflowConfig
@@ -83,12 +94,10 @@ class EventData(Enum):
     """The URL defined in :cylc:conf:`flow.cylc[meta]URL`."""
 
     # BACK COMPAT: "suite" deprecated
-    # url:
-    #     https://github.com/cylc/cylc-flow/pull/4724 (& 4714)
-    # from:
-    #     Cylc 8
-    # remove at:
-    #     Cylc 8.x
+    # url: https://github.com/cylc/cylc-flow/pull/4724 (& 4714)
+    # from: 7
+    # to: 8.0
+    # remove at: 8.9
     Suite = 'suite'
     """The workflow ID
 
@@ -98,12 +107,10 @@ class EventData(Enum):
     """
 
     # BACK COMPAT: "suite_uuid" deprecated
-    # url:
-    #     https://github.com/cylc/cylc-flow/pull/4724 (& 4714)
-    # from:
-    #     Cylc 8
-    # remove at:
-    #     Cylc 8.x
+    # url: https://github.com/cylc/cylc-flow/pull/4724 (& 4714)
+    # from: 7
+    # to: 8.0
+    # remove at: 8.9
     Suite_UUID = 'suite_uuid'
     """The unique identification string for this workflow run.
 
@@ -113,12 +120,10 @@ class EventData(Enum):
     """
 
     # BACK COMPAT: "suite_url" deprecated
-    # url:
-    #     https://github.com/cylc/cylc-flow/pull/4724 (& 4714)
-    # from:
-    #     Cylc 8
-    # remove at:
-    #     Cylc 8.x
+    # url: https://github.com/cylc/cylc-flow/pull/4724 (& 4714)
+    # from: 7
+    # to: 8.0
+    # remove at: 8.9
     SuiteURL = 'suite_url'
     """The URL defined in :cylc:conf:`flow.cylc[meta]URL`.
 
@@ -144,8 +149,8 @@ def get_template_variables(
     schd: 'Scheduler',
     event: str,
     reason: str
-) -> Dict[str, Union[str, int]]:
-    """Return a dictionary of template varaibles for a workflow event."""
+) -> dict[str, str | int]:
+    """Return a dictionary of template variables for a workflow event."""
     workflow_url: str = schd.config.cfg['meta'].get('URL', '')
     return {
         # scheduler properties
@@ -158,7 +163,7 @@ def get_template_variables(
         EventData.Host.value:
             schd.host,
         EventData.Port.value:
-            (schd.server.port if schd.server else -1),
+            (cast('int', schd.server.port) if schd.server else -1),
         EventData.Owner.value:
             schd.owner,
         EventData.UUID.value:
@@ -166,13 +171,6 @@ def get_template_variables(
         EventData.WorkflowURL.value:
             workflow_url,
 
-        # BACK COMPAT: "suite", "suite_uuid", "suite_url"
-        # url:
-        #     https://github.com/cylc/cylc-flow/pull/4724 (&4714)
-        # from:
-        #     Cylc 8
-        # remove at:
-        #     Cylc 8.x
         EventData.Suite.value:
             schd.workflow,
         EventData.Suite_UUID.value:
@@ -228,6 +226,10 @@ class WorkflowEventHandler():
         EVENT_INACTIVITY_TIMEOUT,
         EVENT_RESTART_TIMEOUT,
     ]
+    # BACK COMPAT: Deprecated event names
+    # from: 7
+    # to: 8.0
+    # remove at: 8.9
     EVENTS_DEPRECATED = {
         'aborted': EVENT_ABORTED,
         'inactivity': EVENT_INACTIVITY_TIMEOUT,

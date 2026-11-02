@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +21,7 @@ from pathlib import Path
 import re
 from shutil import rmtree
 import time
-from typing import Callable, List, Optional, Tuple
+from typing import Callable
 
 import pytest
 
@@ -36,7 +37,6 @@ from cylc.flow.parsec.validate import cylc_config_validate
 def before_each():
     """Reset global state before every test."""
     flags.verbosity = 0
-    flags.cylc7_back_compat = False
     LOG.setLevel(logging.NOTSET)
     # Reset graph node parser singleton:
     GraphNodeParser.get_inst().clear()
@@ -60,13 +60,13 @@ def mock_glbl_cfg(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 
     Args:
         pypath (str):
-            The python-like path to the global configuation object you want
+            The python-like path to the global configuration object you want
             to fiddle.
             E.G. if you want to hack the `glbl_cfg` in
             `cylc.flow.scheduler` you would provide
             `cylc.flow.scheduler.glbl_cfg`
         global_config (str):
-            The globlal configuration as a multi-line string.
+            The global configuration as a multi-line string.
 
     Example:
         Change the value of `UTC mode` in the global config as seen from
@@ -111,12 +111,12 @@ def log_filter(caplog: pytest.LogCaptureFixture):
         log: A caplog instance.
     """
     def _log_filter(
-        level: Optional[int] = None,
-        contains: Optional[str] = None,
-        regex: Optional[str] = None,
-        exact_match: Optional[str] = None,
-        log: Optional[pytest.LogCaptureFixture] = None
-    ) -> List[Tuple[int, str]]:
+        level: int | None = None,
+        contains: str | None = None,
+        regex: str | None = None,
+        exact_match: str | None = None,
+        log: pytest.LogCaptureFixture | None = None
+    ) -> list[tuple[int, str]]:
         if log is None:
             log = caplog
         return [
@@ -279,7 +279,7 @@ def set_timezone(monkeypatch):
 
     Will use a very implausible timezone if none is provided.
     """
-    def patch(time_zone: str = 'XXX-19:17'):
+    def patch(time_zone: str):
         monkeypatch.setenv('TZ', time_zone)
         time.tzset()
 

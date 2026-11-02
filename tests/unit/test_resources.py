@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,7 +32,7 @@ def test_get_resources_one(tmpdir):
     """Test extraction of a specific resource.
 
     Check that a file of the right name gets extracted.
-    Do not check file content becuase there is no assurance that it will
+    Do not check file content because there is no assurance that it will
     remain constant.
     """
     get_resources('job.sh', tmpdir)

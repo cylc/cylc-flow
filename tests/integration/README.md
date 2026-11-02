@@ -21,7 +21,7 @@ The general approach is:
 
 1) Start a workflow.
 2) Put it in a funny state.
-3) Test how components interract to handle this state.
+3) Test how components interact to handle this state.
 
 I.e., the integration test framework runs the scheduler. The only thing it's
 really cutting out is the CLI.
@@ -70,7 +70,7 @@ Don't write unit tests here:
 * No testing of odd methods and functions.
 * If it runs *really* quickly, it's likely a unit test.
 
-## How To Write Integation Tests
+## How To Write Integration Tests
 
 Common test patterns are documented in `test_examples.py`.
 
@@ -90,5 +90,5 @@ with run(schd):
 
 These methods both shut down the workflow / clean up after themselves.
 
-It is necessary to shut down workflows correctly to clean up resorces and
+It is necessary to shut down workflows correctly to clean up resources and
 running tasks.

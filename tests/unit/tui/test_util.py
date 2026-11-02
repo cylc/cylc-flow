@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +18,8 @@
 
 from datetime import (
     datetime,
-    timedelta
+    timedelta,
+    timezone
 )
 from unittest.mock import Mock
 
@@ -171,7 +173,7 @@ def test_get_task_icon(
     start_time = None
     if start_offset is not None:
         start_time = get_time_string(
-            datetime.utcnow() - timedelta(seconds=start_offset)
+            datetime.now(timezone.utc) - timedelta(seconds=start_offset)
         )
     assert (
         (
@@ -191,7 +193,7 @@ def test_get_task_icon(
 def test_compute_tree():
     """It computes a tree in the right structure for urwid.
 
-    Note this test doesn't use full data or propper ids because it's
+    Note this test doesn't use full data or proper ids because it's
     purpose is not to test the GraphQL interface but to ensure the
     assumptions made by compute_tree check out.
 

@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,14 +17,21 @@
 
 """Functionality to assist working with terminals"""
 
-import contextlib
+from contextlib import (
+    contextmanager,
+    suppress,
+)
+from functools import wraps
 import inspect
 import json
 import logging
 import os
+import signal
+from subprocess import (  # nosec
+    PIPE,
+    Popen,
+)
 import sys
-from functools import wraps
-from subprocess import PIPE, Popen  # nosec
 from textwrap import wrap
 from typing import (
     TYPE_CHECKING,
@@ -31,6 +39,7 @@ from typing import (
     Callable,
     Dict,
     List,
+    NoReturn,
     Optional,
     Sequence,
     TypeVar,
@@ -42,15 +51,18 @@ from typing import (
 from ansimarkup import parse as cparse
 from colorama import init as color_init
 
-import cylc.flow.flags
 from cylc.flow import CYLC_LOG
 from cylc.flow.exceptions import CylcError
+import cylc.flow.flags
 from cylc.flow.loggingutil import CylcLogFormatter
 from cylc.flow.parsec.exceptions import ParsecError
 
 
 if TYPE_CHECKING:
-    from optparse import OptionParser, Values
+    from optparse import (
+        OptionParser,
+        Values,
+    )
 
     T = TypeVar('T')
     StrFunc = Callable[[str], str]
@@ -334,7 +346,7 @@ def cli_function(
                 # A broken pipe is never user-actionable, so suppress the
                 # traceback at all verbosity levels and exit quietly. See
                 # https://docs.python.org/3/library/signal.html#note-on-sigpipe
-                with contextlib.suppress(OSError):
+                with suppress(OSError):
                     # Ignore failed flush.
                     sys.stdout.close()
                 sys.exit(0)
@@ -410,7 +422,7 @@ def prompt(
             A value to be chosen if the user presses <return> without first
             typing anything.
         process:
-            A function to run the user's input through before comparision.
+            A function to run the user's input through before comparison.
             E.G. string.lower.
 
     Returns:
@@ -464,3 +476,29 @@ def flatten_cli_lists(lsts: List[str]) -> List[str]:
         for lst in (lsts or [])
         for item in lst.strip().split(',')
     })
+
+
+@contextmanager
+def handle_sigint(handler: Callable | None = None):
+    """Context manager to handle if Ctrl+C happens while in input().
+
+    If no handler is specified, it will print "Aborted" and exit 1.
+
+    Sets the SIGINT handler inside the context and restores the previous
+    handler after.
+    """
+    prev_handler = signal.signal(signal.SIGINT, handler or abort)
+    try:
+        yield
+    finally:
+        signal.signal(signal.SIGINT, prev_handler)
+
+
+def abort(*args) -> NoReturn:
+    print("\nAborted")
+    sys.exit(1)
+
+
+def interrupt(*args) -> NoReturn:
+    print()  # go to next line after `^C`
+    raise KeyboardInterrupt()

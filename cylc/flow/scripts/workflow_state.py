@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -168,6 +169,7 @@ class WorkflowPoller(Poller):
         is_message: bool,
         old_format: bool = False,
         pretty_print: bool = False,
+        accept_pre_start_tasks: bool = False,
         **kwargs
     ):
         self.id_ = id_
@@ -178,6 +180,7 @@ class WorkflowPoller(Poller):
         self.pretty_print = pretty_print
         self.is_message = is_message
         self.is_trigger = is_trigger
+        self.accept_pre_start_tasks = accept_pre_start_tasks
 
         try:
             tokens = Tokens(self.id_)
@@ -228,7 +231,8 @@ class WorkflowPoller(Poller):
             try:
                 self._db_checker = CylcWorkflowDBChecker(
                     get_cylc_run_dir(self.alt_cylc_run_dir),
-                    self.workflow_id
+                    self.workflow_id,
+                    accept_pre_start_tasks=self.accept_pre_start_tasks,
                 )
             except (OSError, sqlite3.Error):
                 LOG.debug("DB not connected")
@@ -303,6 +307,15 @@ def get_option_parser() -> COP:
         "--messages",
         help="Task selector should match output messages rather than status.",
         action="store_true", dest="is_message", default=False)
+
+    parser.add_option(
+        "--accept-pre-start-tasks",
+        help=(
+            "Assume queried task statuses or outputs before the "
+            "start cycle point are succeeded or complete."
+        ),
+        action="store_true", dest="accept_pre_start_tasks", default=False
+    )
 
     parser.add_option(
         "--pretty",
@@ -450,7 +463,8 @@ def main(parser: COP, options: 'Values', *ids: str) -> None:
         condition=id_,
         interval=options.interval,
         max_polls=options.max_polls,
-        args=None
+        args=None,
+        accept_pre_start_tasks=options.accept_pre_start_tasks,
     )
 
     if not asyncio.run(

@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -78,7 +79,7 @@ async def test_is_tasks(set_cycling_type):
     ):
         is_tasks({'(42)/answer', '2000Z', 'abc', '2000/a'})  # last ID is valid
 
-    # job IDs reuslt in errors
+    # job IDs result in errors
     with pytest.raises(
         InputError,
         match=re.escape('This command does not take job IDs: */b/02, 1/a/01'),

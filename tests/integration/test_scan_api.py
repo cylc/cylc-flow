@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -303,7 +304,7 @@ async def test_scan_fail_well_when_client_unreachable(
     caplog,
 ):
     """It handles WorkflowRuntimeClient.async_request raising a WorkflowStopped
-    elegently.
+    elegantly.
     """
     # create a flow
     id_ = flow(one_conf, name='-crashed-')

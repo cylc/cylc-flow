@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -104,7 +105,6 @@ from cylc.flow.install import (
     install_workflow,
     parse_cli_sym_dirs,
     search_install_source_dirs,
-    check_deprecation,
 )
 from cylc.flow.scripts.scan import (
     get_pipe,
@@ -291,10 +291,6 @@ async def install(
             "options --no-run-name and --run-name are mutually exclusive."
         )
     source = get_source_location(id_)
-
-    # Check deprecation to allow plugins to have access to correct flags
-    # for compatibility mode:
-    check_deprecation(source)
 
     async for _entry_point, _plugin_result in run_plugins_async(
         'cylc.pre_configure',

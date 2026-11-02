@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,7 +47,7 @@ def init_flows(tmp_run_path=None, running=None, registered=None,
                un_registered=None, tmp_src_path=None, src=None):
     """Create some dummy workflows for scan to discover.
 
-    Assume "run1, run2, ..., runN" structure if flow name constains "run".
+    Assume "run1, run2, ..., runN" structure if flow name contains "run".
     Optionally create workflow source dirs in a give location too.
 
     """
@@ -430,7 +431,7 @@ async def test_scan_sigstop(
 def cylc7_run_dir(tmp_path):
     """A run directory containing three Cylc 7 workflows."""
     # a workflow that has not yet been run
-    # (could be run by either cylc 7 or 8 so should appear in scan results)
+    # (could be run by Cylc <8.7 so should appear in scan results)
     either = tmp_path / 'either'
     either.mkdir()
     (either / WorkflowFiles.SUITE_RC).touch()

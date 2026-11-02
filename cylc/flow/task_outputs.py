@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -130,7 +131,7 @@ def get_completion_expression(tdef: 'TaskDef') -> str:
 
     If there is *not* a user provided completion statement:
 
-    1. Create a completion expression that ensures all required ouputs are
+    1. Create a completion expression that ensures all required outputs are
        completed.
     2. If success is optional add "or succeeded or failed" onto the end.
     3. If submission is optional add "or submit-failed" onto the end of it.

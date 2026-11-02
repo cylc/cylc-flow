@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -43,7 +44,7 @@ cat > "${RND_WORKFLOW_SOURCE}/flow.cylc" <<__HEREDOC__
         platform = localhost_spice
 __HEREDOC__
 
-ERR_STR='Unable to find valid host for localhost_spice'
+ERR_STR='Unable to find contactable host for platform: localhost_spice'
 
 TEST_NAME="${TEST_NAME_BASE}-vip-workflow"
 run_fail "${TEST_NAME}" cylc vip "${RND_WORKFLOW_SOURCE}" --no-detach

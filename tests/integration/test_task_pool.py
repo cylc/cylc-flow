@@ -1,5 +1,6 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
-# Copyright (C) NIWA & British Crown (Met Office) & Contributors.
+# Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
+# & Contributors.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -472,21 +473,6 @@ async def test_runahead_after_remove(
     assert int(task_pool.runahead_limit_point) == 5
 
 
-async def test_load_db_bad_platform(
-    flow: Callable, scheduler: Callable, start: Callable, one_conf: Callable
-):
-    """Test that loading an unavailable platform from the database doesn't
-    cause calamitous failure."""
-    schd: 'Scheduler' = scheduler(flow(one_conf))
-
-    async with start(schd):
-        result = schd.pool.load_db_task_pool_for_restart(0, (
-            '1', 'one', '{"1": 1}', "0", False, False, "failed",
-            False, 1, '', 'culdee-fell-summit', '', '', '', '{}'
-        ))
-        assert result == 'culdee-fell-summit'
-
-
 def list_tasks(schd):
     """Return a sorted list of task pool tasks.
 
@@ -500,241 +486,6 @@ def list_tasks(schd):
         (itask.tokens['cycle'], itask.tokens['task'], itask.state.status)
         for itask in schd.pool.get_tasks()
     )
-
-
-@pytest.mark.parametrize(
-    'graph_1, graph_2, '
-    'expected_1, expected_2, expected_3, expected_4',
-    [
-        param(  # Restart after adding a prerequisite to task z
-            '''a => z
-               b => z''',
-            '''a => z
-               b => z
-               c => z''',
-            [
-                ('1', 'a', 'running'),
-                ('1', 'b', 'running'),
-            ],
-            [
-                ('1', 'b', 'running'),
-                ('1', 'z', 'waiting'),
-            ],
-            [
-                ('1', 'b', 'running'),
-                ('1', 'z', 'waiting'),
-            ],
-            [
-                {('1', 'a', 'succeeded'): 'satisfied naturally'},
-                {('1', 'b', 'succeeded'): False},
-                {('1', 'c', 'succeeded'): False},
-            ],
-            id='added'
-        ),
-        param(  # Restart after removing a prerequisite from task z
-            '''a => z
-               b => z
-               c => z''',
-            '''a => z
-               b => z''',
-            [
-                ('1', 'a', 'running'),
-                ('1', 'b', 'running'),
-                ('1', 'c', 'running'),
-            ],
-            [
-                ('1', 'b', 'running'),
-                ('1', 'c', 'running'),
-                ('1', 'z', 'waiting'),
-            ],
-            [
-                ('1', 'b', 'running'),
-                ('1', 'c', 'running'),
-                ('1', 'z', 'waiting'),
-            ],
-            [
-                {('1', 'a', 'succeeded'): 'satisfied naturally'},
-                {('1', 'b', 'succeeded'): False},
-            ],
-            id='removed'
-        )
-    ]
-)
-async def test_restart_prereqs(
-    flow, scheduler, start,
-    graph_1, graph_2,
-    expected_1, expected_2, expected_3, expected_4
-):
-    """It should handle graph prerequisites change on restart.
-
-    Prerequisite changes must be applied to tasks already in the pool.
-    See https://github.com/cylc/cylc-flow/pull/5334
-
-    """
-    conf = {
-        'scheduler': {'allow implicit tasks': 'True'},
-        'scheduling': {
-            'graph': {
-                'R1': graph_1
-            }
-        }
-    }
-    id_ = flow(conf)
-    schd: Scheduler = scheduler(id_, paused_start=False)
-
-    async with start(schd):
-        # Release tasks 1/a and 1/b
-        schd.pool.release_runahead_tasks()
-        schd.release_tasks_to_run()
-        assert list_tasks(schd) == expected_1
-
-        # Mark 1/a as succeeded and spawn 1/z
-        task_a = schd.pool.get_tasks()[0]
-        schd.pool.task_events_mgr.process_message(task_a, 1, 'succeeded')
-        assert list_tasks(schd) == expected_2
-
-        # Save our progress
-        schd.workflow_db_mgr.put_task_pool(schd.pool)
-
-    # Edit the workflow to add a new dependency on "z"
-    conf['scheduling']['graph']['R1'] = graph_2
-    id_ = flow(conf, workflow_id=id_)
-
-    # Restart it
-    schd = scheduler(id_, run_mode='simulation', paused_start=False)
-    async with start(schd):
-        # Load jobs from db
-        schd.workflow_db_mgr.pri_dao.select_jobs_for_restart(
-            schd.data_store_mgr.insert_db_job
-        )
-        assert list_tasks(schd) == expected_3
-
-        # To cover some code for loading prereqs from the DB at restart:
-        schd.data_store_mgr.update_data_structure()
-
-        # Check resulting dependencies of task z
-        task_z = [
-            t for t in schd.pool.get_tasks() if t.tdef.name == "z"
-        ][0]
-        assert sorted(
-            (
-                p._satisfied
-                for p in task_z.state.prerequisites
-            ),
-            key=lambda d: tuple(d.keys())[0],
-        ) == expected_4
-
-
-@pytest.mark.parametrize(
-    'graph_1, graph_2, '
-    'expected_1, expected_2, expected_3, expected_4',
-    [
-        param(  # Reload after adding a prerequisite to task z
-            '''a => z
-               b => z''',
-            '''a => z
-               b => z
-               c => z''',
-            [
-                ('1', 'a', 'running'),
-                ('1', 'b', 'running'),
-            ],
-            [
-                ('1', 'b', 'running'),
-                ('1', 'z', 'waiting'),
-            ],
-            [
-                ('1', 'b', 'running'),
-                ('1', 'z', 'waiting'),
-            ],
-            [
-                {('1', 'a', 'succeeded'): 'satisfied naturally'},
-                {('1', 'b', 'succeeded'): False},
-                {('1', 'c', 'succeeded'): False},
-            ],
-            id='added'
-        ),
-        param(  # Reload after removing a prerequisite from task z
-            '''a => z
-               b => z
-               c => z''',
-            '''a => z
-               b => z''',
-            [
-                ('1', 'a', 'running'),
-                ('1', 'b', 'running'),
-                ('1', 'c', 'running'),
-            ],
-            [
-                ('1', 'b', 'running'),
-                ('1', 'c', 'running'),
-                ('1', 'z', 'waiting'),
-            ],
-            [
-                ('1', 'b', 'running'),
-                ('1', 'c', 'running'),
-                ('1', 'z', 'waiting'),
-            ],
-            [
-                {('1', 'a', 'succeeded'): 'satisfied naturally'},
-                {('1', 'b', 'succeeded'): False},
-            ],
-            id='removed'
-        )
-    ]
-)
-async def test_reload_prereqs(
-    flow, scheduler, start,
-    graph_1, graph_2,
-    expected_1, expected_2, expected_3, expected_4
-):
-    """It should handle graph prerequisites change on reload.
-
-    Prerequisite changes must be applied to tasks already in the pool.
-    See https://github.com/cylc/cylc-flow/pull/5334
-
-    """
-    conf = {
-        'scheduler': {'allow implicit tasks': 'True'},
-        'scheduling': {
-            'graph': {
-                'R1': graph_1
-            }
-        }
-    }
-    id_ = flow(conf)
-    schd: Scheduler = scheduler(id_, paused_start=False)
-
-    async with start(schd):
-        # Release tasks 1/a and 1/b
-        schd.pool.release_runahead_tasks()
-        schd.release_tasks_to_run()
-        assert list_tasks(schd) == expected_1
-
-        # Mark 1/a as succeeded and spawn 1/z
-        task_a = schd.pool.get_tasks()[0]
-        schd.pool.task_events_mgr.process_message(task_a, 1, 'succeeded')
-        assert list_tasks(schd) == expected_2
-
-        # Modify flow.cylc to add a new dependency on "z"
-        conf['scheduling']['graph']['R1'] = graph_2
-        flow(conf, workflow_id=id_)
-
-        # Reload the workflow config
-        await commands.run_cmd(commands.reload_workflow(schd))
-        assert list_tasks(schd) == expected_3
-
-        # Check resulting dependencies of task z
-        task_z = [
-            t for t in schd.pool.get_tasks() if t.tdef.name == "z"
-        ][0]
-        assert sorted(
-            (
-                p._satisfied
-                for p in task_z.state.prerequisites
-            ),
-            key=lambda d: tuple(d.keys())[0],
-        ) == expected_4
 
 
 async def _test_restart_prereqs_sat():
@@ -807,7 +558,7 @@ async def test_graph_change_prereq_satisfaction(
     """It should handle graph prerequisites change on reload/restart.
 
     If the graph is changed to add a dependency which has been previously
-    satisfied, then Cylc should perform a DB check and mark the prerequsite
+    satisfied, then Cylc should perform a DB check and mark the prerequisite
     as satisfied accordingly.
 
     See https://github.com/cylc/cylc-flow/pull/5334
@@ -835,7 +586,7 @@ async def test_graph_change_prereq_satisfaction(
             # start the workflow and run part 1 of the tests
             await test.asend(schd)
 
-        # shutdown and change the workflow definiton
+        # shutdown and change the workflow definition
         conf['scheduling']['graph']['R1'] += '\nb => c'
         flow(conf, workflow_id=id_)
         schd = scheduler(id_, run_mode='simulation', paused_start=False)
@@ -1498,8 +1249,14 @@ async def test_set_outputs_future(
     id_ = flow(
         {
             'scheduling': {
+                'cycling mode': 'integer',
+                'initial cycle point': '1',
+                'runahead limit': 'P0',
                 'graph': {
-                    'R1': "a:x & a:y => b => c"
+                    'P1': """
+                        a:x & a:y => b => c
+                        a:y => f
+                    """
                 }
             },
             'runtime': {
@@ -1516,13 +1273,31 @@ async def test_set_outputs_future(
 
     async with start(schd):
 
-        # it should start up with just 1/a
-        assert schd.pool.get_task_ids() == {"1/a"}
+        # It should start up with just 1/a and 2/a.
+        assert schd.pool.get_task_ids() == {"1/a", "2/a"}
 
-        # setting inactive task b succeeded should spawn c but not b
+        # Setting inactive future task b succeeded should
+        # spawn c but not b.
         schd.pool.set_prereqs_and_outputs(
             {TaskTokens('1', 'b')}, ["succeeded"], [], [])
-        assert schd.pool.get_task_ids() == {"1/a", "1/c"}
+        assert schd.pool.get_task_ids() == {"1/a", "2/a", "1/c"}
+
+        # Setting inactive future task f failed should
+        # add it to n=0 as final incomplete.
+        # See https://github.com/cylc/cylc-flow/pull/7248
+        schd.pool.set_prereqs_and_outputs(
+            {TaskTokens('1', 'f')}, ["failed"], [], [])
+        assert schd.pool.get_task_ids() == {"1/a", "2/a", "1/c", "1/f"}
+
+        # Setting inactive future parentless task a failed should
+        # add it to n=0 as final, and spawn its next instance.
+        # (A failed task has passed runahead release, which is when next
+        # instances are spawned).
+        # See https://github.com/cylc/cylc-flow/pull/7248
+        schd.pool.set_prereqs_and_outputs(
+            {TaskTokens('5', 'a')}, ["failed"], [], [])
+        assert schd.pool.get_task_ids() == {
+            "1/a", "2/a", "1/c", "1/f", "5/a", "6/a"}
 
         schd.pool.set_prereqs_and_outputs(
             items={TaskTokens('1', 'a')},
@@ -1661,17 +1436,14 @@ async def test_prereq_satisfaction(
         assert b.prereqs_are_satisfied()
 
 
-@pytest.mark.parametrize('compat_mode', ['compat-mode', 'normal-mode'])
 @pytest.mark.parametrize('cycling_mode', ['integer', 'datetime'])
 @pytest.mark.parametrize('runahead_format', ['P3Y', 'P3'])
 async def test_compute_runahead(
     cycling_mode,
-    compat_mode,
     runahead_format,
     flow,
     scheduler,
     start,
-    monkeypatch,
 ):
     """Test the calculation of the runahead limit.
 
@@ -1715,11 +1487,6 @@ async def test_compute_runahead(
         }
         point = ISO8601Point
 
-    monkeypatch.setattr(
-        'cylc.flow.flags.cylc7_back_compat',
-        compat_mode == 'compat-mode',
-    )
-
     id_ = flow(config)
     schd = scheduler(id_)
     async with start(schd):
@@ -1739,24 +1506,18 @@ async def test_compute_runahead(
         schd.pool.compute_runahead(force=True)
         assert int(str(schd.pool.runahead_limit_point)) == 4  # no change
 
-        # In Cylc 8 all incomplete tasks hold back runahead.
-
-        # In Cylc 7, submit-failed tasks hold back runahead..
+        # any incomplete tasks hold back runahead.
         schd.pool.get_task(point('0001'), 'a').state.reset(
             TASK_STATUS_SUBMIT_FAILED
         )
         schd.pool.compute_runahead(force=True)
-        assert int(str(schd.pool.runahead_limit_point)) == 4
+        assert int(str(schd.pool.runahead_limit_point)) == 4  # no change
 
-        # ... but failed ones don't. Go figure.
         schd.pool.get_task(point('0001'), 'a').state.reset(
             TASK_STATUS_FAILED
         )
         schd.pool.compute_runahead(force=True)
-        if compat_mode == 'compat-mode':
-            assert int(str(schd.pool.runahead_limit_point)) == 5
-        else:
-            assert int(str(schd.pool.runahead_limit_point)) == 4  # no change
+        assert int(str(schd.pool.runahead_limit_point)) == 4  # no change
 
         # mark cycle 1 as complete
         # (via task message so the task gets removed before runahead compute)
@@ -1821,14 +1582,12 @@ async def test_compute_runahead_with_no_sequences(
 
 
 @pytest.mark.parametrize('rhlimit', ['P2D', 'P2'])
-@pytest.mark.parametrize('compat_mode', ['compat-mode', 'normal-mode'])
 async def test_runahead_future_trigger(
     flow,
     scheduler,
     start,
     monkeypatch,
     rhlimit,
-    compat_mode,
 ):
     """Equivalent time interval and cycle count runahead limits should yield
     the same limit point, even if there is a future trigger.
@@ -1852,10 +1611,6 @@ async def test_runahead_future_trigger(
         }
     })
 
-    monkeypatch.setattr(
-        'cylc.flow.flags.cylc7_back_compat',
-        compat_mode == 'compat-mode',
-    )
     schd = scheduler(id_,)
     async with start(schd, level=logging.DEBUG):
         assert str(schd.pool.runahead_limit_point) == '20010103'
@@ -1893,52 +1648,6 @@ async def mod_blah(
     schd: 'Scheduler' = mod_scheduler(id_, paused_start=True)
     async with mod_run(schd):
         yield schd
-
-
-@pytest.mark.parametrize(
-    'status, expected',
-    [
-        # (Status, Are we expecting an update?)
-        (TASK_STATUS_WAITING, False),
-        (TASK_STATUS_EXPIRED, False),
-        (TASK_STATUS_PREPARING, False),
-        (TASK_STATUS_SUBMIT_FAILED, False),
-        (TASK_STATUS_SUBMITTED, False),
-        (TASK_STATUS_RUNNING, False),
-        (TASK_STATUS_FAILED, True),
-        (TASK_STATUS_SUCCEEDED, True)
-    ]
-)
-async def test_runahead_c7_compat_task_state(
-    status,
-    expected,
-    mod_blah,
-    monkeypatch,
-):
-    """For each task status check whether changing the oldest task
-    to that status will cause compute_runahead to make a change.
-
-    Compat mode: Cylc 7 ignored failed tasks but not submit-failed!
-
-    """
-
-    def max_cycle(tasks):
-        return max([int(t.tokens.get("cycle")) for t in tasks])
-
-    monkeypatch.setattr(
-        'cylc.flow.flags.cylc7_back_compat', True)
-    monkeypatch.setattr(
-        'cylc.flow.task_events_mgr.TaskEventsManager._insert_task_job',
-        lambda *_: True)
-
-    mod_blah.pool.compute_runahead()
-    before_pt = max_cycle(mod_blah.pool.get_tasks())
-    before = mod_blah.pool.runahead_limit_point
-    itask = mod_blah.pool.get_task(ISO8601Point(f'{before_pt - 2:04}'), 'a')
-    itask.state_reset(status, is_queued=False)
-    mod_blah.pool.compute_runahead()
-    after = mod_blah.pool.runahead_limit_point
-    assert bool(before != after) == expected
 
 
 async def test_fast_respawn(

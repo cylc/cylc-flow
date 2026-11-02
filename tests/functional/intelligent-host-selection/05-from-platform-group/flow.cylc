@@ -13,7 +13,7 @@
         Ugly
         ----
         - Fails entirely on a duff platform.
-        - Fails on the first host of a mixed platfrom.
+        - Fails on the first host of a mixed platform.
         - Succeeds on the second host of the second platform.
     """
 

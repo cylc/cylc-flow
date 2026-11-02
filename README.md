@@ -50,11 +50,6 @@ cylc tui integer-cycling
 [Migration Guide](https://cylc.github.io/cylc-doc/stable/html/7-to-8/index.html)
 | [Migration Support](https://cylc.discourse.group/c/cylc/7-to-8/13)
 
-Cylc 8 can run most Cylc 7 workflows in compatibility mode with little to no
-changes, go through the
-[migration guide](https://cylc.github.io/cylc-doc/stable/html/7-to-8/index.html)
-for more details.
-
 Quick summary of major changes:
 
 * Python 2 -> 3.
@@ -68,7 +63,7 @@ Quick summary of major changes:
   * `cylc restart <id>` -> `cylc play <id>`
   * `rose suite-run` -> `cylc install; cylc play <id>`
 * The core package containing Cylc scheduler program has been renamed cylc-flow.
-* Cylc review has been removed, the Cylc 7 version remains Cylc 8 compatible.
+* Cylc Review has been moved to [cylc-uiserver](https://github.com/cylc/cylc-uiserver).
 
 
 ### Citations & Publications
@@ -81,7 +76,7 @@ Quick summary of major changes:
 
 [![License](https://img.shields.io/github/license/cylc/cylc-flow.svg?color=lightgrey)](https://github.com/cylc/cylc-flow/blob/master/COPYING)
 
-Copyright (C) 2008-<span actions:bind='current-year'>2026</span> NIWA & British Crown (Met Office) & Contributors.
+Copyright (C) 2008-<span actions:bind='current-year'>2026</span> Earth Sciences New Zealand & British Crown (Met Office) & Contributors.
 
 Cylc is free software: you can redistribute it and/or modify it under the terms
 of the GNU General Public License as published by the Free Software Foundation,
