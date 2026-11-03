@@ -15,8 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
+
 from cylc.flow.job_runner_mgr import (
-    JobRunnerManager, JOB_FILES_REMOVED_MESSAGE)
+    JOB_FILES_REMOVED_MESSAGE,
+    JobRunnerManager,
+)
+
 
 jrm = JobRunnerManager()
 
@@ -77,3 +82,24 @@ def test__job_poll_status_files_ioerror(tmp_path, capsys):
     jrm._jobs_poll_status_files(str(tmp_path), 'sub')
     cap = capsys.readouterr()
     assert '[Errno 2] No such file or directory' in cap.err
+
+
+def test_format_directives_incompat(log_filter):
+    """It should warn if the job runner hander doesn't support directives."""
+    JobRunnerManager().format_directives(
+        {
+            # job runner handler that doesn't support directives
+            'platform': {'job runner': 'background'},
+            'job_runner_name': 'background',
+
+            # directives that aren't supported
+            'directives': {'foo': 'bar'},
+
+            # stuff:
+            'job_d': '1/a/01',
+        }
+    )
+    assert log_filter(
+        contains='Directives were specified for this task',
+        level=logging.WARNING,
+    )

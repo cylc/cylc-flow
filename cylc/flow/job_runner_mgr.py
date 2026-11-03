@@ -36,6 +36,7 @@ from shutil import rmtree
 from signal import SIGKILL
 from subprocess import DEVNULL  # nosec
 
+from cylc.flow import LOG
 from cylc.flow.task_message import (
     CYLC_JOB_PID, CYLC_JOB_INIT_TIME, CYLC_JOB_EXIT_TIME, CYLC_JOB_EXIT,
     CYLC_MESSAGE)
@@ -175,6 +176,13 @@ class JobRunnerManager():
                 )
             }
             return job_runner.format_directives(job_conf)
+        elif job_conf['directives']:
+            LOG.warning(
+                f'[{job_conf['job_d']}:preparing]]: Directives ignored.'
+                '\nDirectives were specified for this task, but it is being'
+                f' submitted with {job_conf['job_runner_name']}'
+                ' which does not support directives'
+            )
 
     def get_fail_signals(self, job_conf):
         """Return a list of failure signal names to trap in the job file."""
