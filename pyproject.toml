@@ -88,7 +88,7 @@ tests = [
     # https://github.com/flake8-implicit-str-concat/flake8-implicit-str-concat/issues/82
     "flake8-implicit-str-concat>=0.4,!=0.7.0",
     "flake8-mutable>=1.2.0",
-    "flake8-simplify>=0.14.0; python_version<'3.14'",
+    "flake8-simplify>=0.14.0",
     "flake8-type-checking",
     "flake8>=3.0.0",
     "mypy>=0.910",
