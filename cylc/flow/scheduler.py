@@ -550,6 +550,7 @@ class Scheduler:
         if self.options.starttask:
             # Ignoring dependencies prior to the oldest start task cycle point
             # requires storing that point as a workflow parameter for restart.
+            # https://github.com/cylc/cylc-flow/pull/7543
             self.options.startcp = str(self.config.start_point)
         self.workflow_db_mgr.put_workflow_params(self)
         self.workflow_db_mgr.put_workflow_template_vars(self.template_vars)
