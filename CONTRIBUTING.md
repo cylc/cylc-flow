@@ -116,6 +116,7 @@ requests_).
  - Scott Owen James
  - James Frost
  - Kolen Cheung
+ - Matt Van Horn
 <!-- end-shortlog -->
 
 (All contributors are identifiable with email addresses in the git version
