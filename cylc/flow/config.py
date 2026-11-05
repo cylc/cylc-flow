@@ -155,7 +155,6 @@ from cylc.flow.workflow_files import (
 )
 from cylc.flow.xtrigger_mgr import XtriggerCollator
 
-
 if TYPE_CHECKING:
     from optparse import Values
 
@@ -1248,11 +1247,9 @@ class WorkflowConfig:
                 if (
                     any_suicide
                     and trigger == "expired"
-                    and self.experimental.expire_triggers
                 ):
                     msg += (
-                        "\nThis may be due to use of an expire "
-                        "(formerly suicide) trigger."
+                        "\nThis may be due to use of an expire trigger."
                     )
                 msg += f'\nTry: completion = "{expr} or {compvar}"'
                 raise WorkflowConfigError(msg)
@@ -2370,7 +2367,6 @@ class WorkflowConfig:
                 family_map,
                 self.parameters,
                 task_output_opt=task_output_opt,
-                expire_triggers=self.experimental.expire_triggers,
             )
             parser.parse_graph(graph)
             task_output_opt.update(parser.task_output_opt)
