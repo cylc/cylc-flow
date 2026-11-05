@@ -300,7 +300,6 @@ class GraphParser:
         parameters: Optional[Dict] = None,
         task_output_opt:
             Optional[Dict[Tuple[str, str], Tuple[bool, bool, bool]]] = None,
-        expire_triggers: bool = True,
     ) -> None:
         """Initialize the graph string parser.
 
@@ -319,7 +318,6 @@ class GraphParser:
         self.triggers: Dict = {}
         self.original: Dict = {}
         self.workflow_state_polling_tasks: Dict = {}
-        self.expire_triggers = expire_triggers
         self.end_of_chain_nodes: set[str] = set()
 
         # Record task outputs as optional or required:
@@ -792,7 +790,7 @@ class GraphParser:
         self.original.setdefault(name, {})
         self.original[name][expr] = orig_expr
 
-        if suicide and self.expire_triggers:
+        if suicide:
             # Make expiry optional for suicide triggered tasks.
             self._set_output_opt(name, TASK_OUTPUT_EXPIRED, True, False, False)
 
