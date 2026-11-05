@@ -56,8 +56,8 @@ For more info see: https://github.com/cylc/cylc-flow/issues/3329
 from contextlib import suppress
 import itertools
 from time import (
+    monotonic,
     sleep,
-    time,
 )
 from typing import (
     TYPE_CHECKING,
@@ -83,7 +83,10 @@ from cylc.flow.exceptions import (
     CylcConfigError,
 )
 import cylc.flow.flags
-from cylc.flow.flow_mgr import FLOW_NONE, repr_flow_nums
+from cylc.flow.flow_mgr import (
+    FLOW_NONE,
+    repr_flow_nums,
+)
 from cylc.flow.id import TaskTokens
 from cylc.flow.log_level import log_level_to_verbosity
 from cylc.flow.parsec.exceptions import ParsecError
@@ -366,7 +369,7 @@ async def stop(
             raise CommandFailedError(f"Invalid stop mode: '{mode}'") from None
         schd._set_stop(mode)
         if mode is StopMode.REQUEST_KILL:
-            schd.time_next_kill = time()
+            schd.time_next_kill = monotonic()
 
 
 @_command('release')
