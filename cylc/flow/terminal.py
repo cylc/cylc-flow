@@ -17,7 +17,10 @@
 
 """Functionality to assist working with terminals"""
 
-from contextlib import contextmanager
+from contextlib import (
+    contextmanager,
+    suppress,
+)
 from functools import wraps
 import inspect
 import json
@@ -336,6 +339,17 @@ def cli_function(
                         )
                         sys.exit(1)
                     raise
+            except BrokenPipeError:
+                # The output pipe was closed early by the consumer, e.g:
+                #   $ cylc config <flow> | less  # then quit less
+                #   $ cylc config <flow> | grep -q .
+                # A broken pipe is never user-actionable, so suppress the
+                # traceback at all verbosity levels and exit quietly. See
+                # https://docs.python.org/3/library/signal.html#note-on-sigpipe
+                with suppress(OSError):
+                    # Ignore failed flush.
+                    sys.stdout.close()
+                sys.exit(0)
             except UnicodeEncodeError as exc:
                 # this error can be raised from any code which attempts to
                 # write a UTF-8 character to a terminal which does not or is
