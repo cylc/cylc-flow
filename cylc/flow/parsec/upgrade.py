@@ -17,7 +17,7 @@
 """Support automatic deprecation and obsoletion of parsec config items."""
 
 import contextlib
-from logging import DEBUG, WARNING
+from logging import DEBUG, ERROR, WARNING
 
 from cylc.flow import LOG
 from cylc.flow.parsec.exceptions import UpgradeError
@@ -271,7 +271,14 @@ class upgrader:
             else:
                 # User level configuration, user should be able to fix.
                 # Log at warning level.
-                level = WARNING
+
+                # BACK COMPAT: In Cylc 8.8 display Errors for
+                # deprecations but allow workflow to run and be upgraded
+                # remove after: 8.9 has workflows failing to validate
+                if upg.get('remove_at') == '8.9':
+                    level = ERROR
+                else:
+                    level = WARNING
             if obsoletions:
                 LOG.log(level, self.obslt_msg)
             if deprecations:
