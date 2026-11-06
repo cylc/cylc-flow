@@ -15,13 +15,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import asyncio
+import json
 import logging
+import pickle
 from threading import BrokenBarrierError
 from typing import Callable
 
 import pytest
 
 from cylc.flow import __version__ as CYLC_VERSION
+from cylc.flow.data_store_mgr import WORKFLOW
 from cylc.flow.network.server import PB_METHOD_MAP, WorkflowRuntimeServer
 from cylc.flow.scheduler import Scheduler
 
@@ -81,6 +84,51 @@ def test_pb_entire_workflow(myflow):
         myflow.server.pb_entire_workflow()
     )
     assert data.workflow.id == myflow.id
+
+
+async def test_reqpub(
+    one: Scheduler, start: Callable
+):
+    """Test the reqpub endpoint."""
+    async with asyncio.timeout(5):
+        async with start(one):
+            # start with a message that works
+            msg = {
+                'command': 'reqpub',
+                'user': 'bono',
+                'args': {
+                    'topic': 'ping',
+                    'payload': 'pong'
+                }
+            }
+            res = one.server.receiver(msg)
+            assert not res.get('error')
+            assert res['data'] == 'ping'
+            assert (
+                [(b'ping', b'pong', None)]
+                in list(one.server.publish_queue.queue)
+            )
+
+            msg['args']['payload'] = 42.0
+            res = one.server.receiver(msg)
+            assert not res.get('error')
+            assert (
+                [(b'ping', pickle.dumps(42.0), None)]
+                in list(one.server.publish_queue.queue)
+            )
+
+            msg['args']['payload'] = 'status'
+            res = one.server.receiver(msg)
+            assert not res.get('error')
+            data = one.data_store_mgr.data[one.id]
+            payload = json.dumps({
+                'status': data[WORKFLOW].status,
+                'status_msg': data[WORKFLOW].status_msg,
+            })
+            assert (
+                [(b'ping', payload.encode('utf-8'), None)]
+                in list(one.server.publish_queue.queue)
+            )
 
 
 async def test_stop(one: Scheduler, start):

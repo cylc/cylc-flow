@@ -93,6 +93,10 @@ class WorkflowSubscriber(ZMQSocketBase):
         for topic in self.topics:
             self.socket.setsockopt(zmq.SUBSCRIBE, topic)
 
+        # allow more time for connect/reconnect
+        self.socket.setsockopt(zmq.CONNECT_TIMEOUT, 10 * 1000)
+        self.socket.setsockopt(zmq.RECONNECT_IVL_MAX, 5000)
+
     async def subscribe(self, msg_handler, *args, **kwargs):
         """Subscribe to updates from the provided socket."""
         while True:
