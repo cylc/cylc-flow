@@ -20,6 +20,7 @@ from abc import (
     abstractmethod,
 )
 import asyncio
+import getpass
 import os
 from shutil import which
 import socket
@@ -390,6 +391,17 @@ class WorkflowRuntimeClient(  # type: ignore[misc]
 
             if cmd.startswith(cylc_bin_dir):
                 cmd = cmd.replace(cylc_bin_dir, '')
+
+        try:
+            actor = getpass.getuser()
+        except:
+            actor = "unknown"
+
+        try:
+            user = os.getlogin()
+        except:
+            user = "unknown"
+
         return {
             'meta': {
                 'prog': cmd,
@@ -398,6 +410,7 @@ class WorkflowRuntimeClient(  # type: ignore[misc]
                     os.getenv(
                         "CLIENT_COMMS_METH",
                         default=CommsMeth.ZMQ.value
-                    )
+                    ),
+                'auth_user': f'{actor} (possibly on behalf of {user})'
             }
         }
