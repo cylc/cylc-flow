@@ -1,13 +1,13 @@
 [meta]
     description = """
         If the workflow runs slowly and the cycle time gets behind the real
-        world (wallclock) time, then it will skip tasks until it catches up.
+        world (wall-clock) time, then it will skip tasks until it catches up.
 
         A cycle may be skipped part way through to allow the workflow to catch
         up faster.
 
         When this workflow starts up, the first cycle will be one minute ahead
-        of the wallclock time. At some point in the cycle, the wallclock time
+        of the wall-clock time. At some point in the cycle, the wall-clock time
         will overtake the cycle time and the next task in the chain will
         expire. The workflow will then move onto the next cycle.
     """
@@ -20,7 +20,7 @@
     initial cycle point = PT1M
 
     # any task in the workflow will "expire" rather than run if the cycle
-    # time falls behind the wallclock time
+    # time falls behind the wall-clock time
     [[special tasks]]
         clock-expire = start, a, b, c, d, housekeep
 

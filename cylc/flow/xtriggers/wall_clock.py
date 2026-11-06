@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""xtrigger function to trigger off of a wall clock time."""
+"""xtrigger function to trigger off of a wall-clock time."""
 
 from time import time
 from typing import Any, Dict
@@ -24,7 +24,7 @@ from cylc.flow.exceptions import WorkflowConfigError
 
 
 def wall_clock(offset: str = 'PT0S', sequential: bool = True):
-    """Trigger at a specific real "wall clock" time relative to the cycle point
+    """Trigger at a specific real "wall-clock" time relative to the cycle point
     in the graph.
 
     Clock triggers, unlike other trigger functions, are executed synchronously
@@ -51,7 +51,7 @@ def wall_clock(offset: str = 'PT0S', sequential: bool = True):
 def _wall_clock(trigger_time: int) -> bool:
     """Actual implementation of wall_clock.
 
-    Return True after the desired wall clock time, or False before.
+    Return True after the desired wall-clock time, or False before.
 
     Args:
         trigger_time:
