@@ -2095,6 +2095,19 @@ class FlowMutationArguments:
     )
 
 
+class MatchLimitArguments:
+    ignore_match_limit = Boolean(
+        default_value=False,
+        description=sstrip('''
+            Act on the matched tasks even if there are more than the
+            `[scheduler]task match limit` set in the global configuration.
+
+            Acting on a large number of tasks can make the scheduler slow
+            to respond and use a lot of memory.
+        ''')
+    )
+
+
 class Hold(Mutation, TaskMutation):
     class Meta:
         description = sstrip('''
@@ -2105,6 +2118,9 @@ class Hold(Mutation, TaskMutation):
             Valid for: paused, running workflows.
         ''')
         resolver = mutator
+
+    class Arguments(TaskMutation.Arguments, MatchLimitArguments):
+        pass
 
 
 class Release(Mutation, TaskMutation):
@@ -2159,7 +2175,7 @@ class Remove(Mutation, TaskMutation):
         ''')
         resolver = partial(mutator, command='remove_tasks')
 
-    class Arguments(TaskMutation.Arguments):
+    class Arguments(TaskMutation.Arguments, MatchLimitArguments):
         flow = graphene.List(
             graphene.NonNull(Flow),
             default_value=[],
@@ -2214,7 +2230,9 @@ class SetPrereqsAndOutputs(Mutation, TaskMutation):
         """)
         resolver = partial(mutator, command='set')
 
-    class Arguments(TaskMutation.Arguments, FlowMutationArguments):
+    class Arguments(
+        TaskMutation.Arguments, FlowMutationArguments, MatchLimitArguments
+    ):
         outputs = graphene.List(
             OutputLabel,
             description='List of task outputs to set complete.'
@@ -2246,7 +2264,9 @@ class Trigger(Mutation, TaskMutation):
         ''')
         resolver = partial(mutator, command='force_trigger_tasks')
 
-    class Arguments(TaskMutation.Arguments, FlowMutationArguments):
+    class Arguments(
+        TaskMutation.Arguments, FlowMutationArguments, MatchLimitArguments
+    ):
         pass
 
 

@@ -61,6 +61,8 @@ from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import (
     FULL_ID_MULTI_ARG_DOC,
     CylcOptionParser as COP,
+    add_match_limit_option,
+    apply_match_limit_option,
 )
 from cylc.flow.terminal import cli_function
 from cylc.flow.flow_mgr import add_flow_opts_for_trigger_and_set
@@ -101,6 +103,7 @@ def get_option_parser() -> COP:
     )
 
     add_flow_opts_for_trigger_and_set(parser)
+    add_match_limit_option(parser)
 
     return parser
 
@@ -121,6 +124,9 @@ async def run(options: 'Values', workflow_id: str, *tokens_list):
             'flowDescr': options.flow_descr,
         }
     }
+    apply_match_limit_option(
+        mutation_kwargs, 'trigger', options, pclient.scheduler_version
+    )
     return await pclient.async_request('graphql', mutation_kwargs)
 
 

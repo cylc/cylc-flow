@@ -77,14 +77,17 @@ from cylc.flow import LOG
 from cylc.flow.cfgspec.glbl_cfg import glbl_cfg
 import cylc.flow.command_validation as validate
 from cylc.flow.cycling.loader import get_point
+from cylc.flow.data_store_mgr import TASK_PROXIES
 from cylc.flow.exceptions import (
     CommandFailedError,
     CyclingError,
     CylcConfigError,
+    InputError,
 )
 import cylc.flow.flags
 from cylc.flow.flow_mgr import FLOW_NONE, repr_flow_nums
 from cylc.flow.id import TaskTokens
+from cylc.flow.id_match import id_match
 from cylc.flow.log_level import log_level_to_verbosity
 from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.prerequisite import PrereqTuple
@@ -138,6 +141,71 @@ def _report_unmatched(unmatched: Set[TaskTokens]):
                 sorted([id_.relative_id_with_selectors for id_ in unmatched])
             )
         )
+
+
+def check_task_match_limit(
+    schd: 'Scheduler',
+    ids: Set[TaskTokens],
+    ignore_match_limit: bool = False,
+) -> None:
+    """Refuse commands which would match a large number of tasks.
+
+    Globs (e.g. "2026*/*") are expanded against every task name in the
+    workflow, so can match far more tasks than the user expects. Acting on a
+    large number of tasks outside of the task pool can make the scheduler
+    unresponsive and use a lot of memory.
+
+    This runs at command validation time, so the user gets told before the
+    command is queued.
+
+    NOTE: Validation runs in the server thread, so we use the data store
+    (rather than the task pool) to find the active tasks.
+
+    Args:
+        schd: The scheduler.
+        ids: The task IDs/globs provided to the command.
+        ignore_match_limit: If True, skip this check.
+
+    Raises:
+        InputError: If the IDs match more tasks than the configured limit.
+
+    """
+    if ignore_match_limit:
+        return
+    limit = glbl_cfg().get(['scheduler', 'task match limit'])
+    if not limit:
+        return
+
+    tproxies = schd.data_store_mgr.data.get(
+        schd.data_store_mgr.workflow_id, {}
+    ).get(TASK_PROXIES, {})
+    active = {
+        TaskTokens(cycle=tproxy.cycle_point, task=tproxy.name,
+                   task_sel=tproxy.state)
+        for tproxy in list(tproxies.values())
+        if tproxy.graph_depth == 0
+    }
+    matched, _ = id_match(schd.config, active, ids)
+    if len(matched) <= limit:
+        return
+
+    matched_ids = {id_.duplicate(task_sel=None) for id_ in matched}
+    n_active = len(
+        matched_ids & {id_.duplicate(task_sel=None) for id_ in active}
+    )
+    n_cycles = len({id_['cycle'] for id_ in matched_ids})
+    raise InputError(
+        f'This would act on {len(matched_ids)} tasks'
+        f' ({len(matched_ids) - n_active} not in the task pool)'
+        f' across {n_cycles} cycle point(s).'
+        f' This is more than the task match limit ({limit}).'
+        '\nActing on this many tasks can make the scheduler slow to respond'
+        ' and use a lot of memory.'
+        '\nCheck the IDs: a glob in the task name matches every task in the'
+        ' workflow, and a glob in the cycle point matches every cycle point'
+        ' in the task pool.'
+        '\nTo go ahead anyway, re-run with --yes.'
+    )
 
 
 def _remove_matched_tasks(
@@ -291,6 +359,7 @@ async def set_prereqs_and_outputs(
     prerequisites: list[str] | None = None,
     flow_wait: bool = False,
     flow_descr: str | None = None,
+    ignore_match_limit: bool = False,
 ) -> AsyncGenerator:
     """Force spawn task successors.
 
@@ -302,6 +371,7 @@ async def set_prereqs_and_outputs(
     prerequisites = validate.prereqs(prerequisites)
     validate.flow_opts(flow, flow_wait)
     ids = validate.is_tasks(tasks)
+    check_task_match_limit(schd, ids, ignore_match_limit)
 
     yield
 
@@ -425,9 +495,14 @@ async def kill_tasks(schd: 'Scheduler', tasks: Iterable[str]):
 
 
 @_command('hold')
-async def hold(schd: 'Scheduler', tasks: Iterable[str]):
+async def hold(
+    schd: 'Scheduler',
+    tasks: Iterable[str],
+    ignore_match_limit: bool = False,
+):
     """Hold specified tasks."""
     ids = validate.is_tasks(tasks)
+    check_task_match_limit(schd, ids, ignore_match_limit)
     yield
     yield schd.pool.hold_tasks(ids)
 
@@ -470,7 +545,8 @@ async def remove_tasks(
     schd: 'Scheduler',
     tasks: Iterable[str],
     flow: list[str],
-    no_spawn: bool = False
+    no_spawn: bool = False,
+    ignore_match_limit: bool = False,
 ):
     """Match and remove tasks (`cylc remove` command).
 
@@ -478,9 +554,11 @@ async def remove_tasks(
         tasks: Relative IDs or globs to match.
         flow: flows to remove the tasks from.
         no_spawn: Do not spawn successors before removal.
+        ignore_match_limit: Skip the task match limit check.
     """
     ids = validate.is_tasks(tasks)
     validate.flow_opts(flow, flow_wait=False, allow_new_or_none=False)
+    check_task_match_limit(schd, ids, ignore_match_limit)
     yield
 
     matched, unmatched = schd.pool.id_match(ids)
@@ -639,6 +717,7 @@ async def force_trigger_tasks(
     flow: list[str],
     flow_wait: bool = False,
     flow_descr: str | None = None,
+    ignore_match_limit: bool = False,
 ):
     """Match and trigger a group of tasks (`cylc trigger` command).
 
@@ -652,6 +731,7 @@ async def force_trigger_tasks(
     """
     ids = validate.is_tasks(tasks)
     validate.flow_opts(flow, flow_wait)
+    check_task_match_limit(schd, ids, ignore_match_limit)
     yield
 
     matched, unmatched = schd.pool.id_match(ids)

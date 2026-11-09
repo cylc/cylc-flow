@@ -65,6 +65,8 @@ from cylc.flow.network.multi import call_multi
 from cylc.flow.option_parsers import (
     FULL_ID_MULTI_ARG_DOC,
     CylcOptionParser as COP,
+    add_match_limit_option,
+    apply_match_limit_option,
 )
 from cylc.flow.terminal import cli_function
 
@@ -129,6 +131,7 @@ cuts tasks from the future graph; it could cause your workflow to shut
 down prematurely as complete.
         """,
         action="store_true", default=False, dest="no_spawn")
+    add_match_limit_option(parser)
     return parser
 
 
@@ -164,6 +167,9 @@ async def run(options: 'Values', workflow_id: str, *tokens_list):
     else:
         mutation_kwargs['request_string'] = MUTATION
         mutation_kwargs['variables']['noSpawn'] = options.no_spawn
+    apply_match_limit_option(
+        mutation_kwargs, 'remove', options, pclient.scheduler_version
+    )
 
     return await pclient.async_request('graphql', mutation_kwargs)
 

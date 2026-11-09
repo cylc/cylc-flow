@@ -871,6 +871,25 @@ with Conf('global.cylc', desc='''
 
                Moved into the ``[scheduler]`` section from the top level.
         ''')
+        Conf('task match limit', VDR.V_INTEGER, 1000, desc='''
+            Maximum number of tasks the ``cylc set``, ``cylc trigger``,
+            ``cylc remove`` and ``cylc hold`` commands will act on without
+            confirmation.
+
+            Task IDs containing globs can match far more tasks than intended.
+            For example, ``cylc set '2026*/*'`` matches every task in the
+            workflow at every cycle point in the task pool that starts with
+            ``2026``. Acting on a large number of tasks can make the scheduler
+            slow to respond and use a lot of memory.
+
+            If a command matches more tasks than this, the scheduler will
+            refuse it and tell the user how many tasks it matched. Re-run the
+            command with ``--yes`` to go ahead anyway.
+
+            Set to ``0`` to turn this check off.
+
+            .. versionadded:: 8.8.0
+        ''')
         Conf('process pool timeout', VDR.V_INTERVAL, DurationFloat(600),
              desc='''
             After this interval Cylc will kill long running commands in the

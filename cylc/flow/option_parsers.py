@@ -649,6 +649,92 @@ class Options:
         return opts
 
 
+# The first Cylc version whose scheduler supports "ignoreMatchLimit".
+MATCH_LIMIT_MIN_VERSION = '8.8.0.dev0'
+
+
+def add_match_limit_option(parser: 'CylcOptionParser') -> None:
+    """Add the --yes option for commands which check the task match limit."""
+    parser.add_option(
+        '--yes', '-y',
+        help=(
+            'Act on the matched tasks even if there are more than the'
+            ' task match limit (global.cylc[scheduler]task match limit).'
+            ' Acting on a large number of tasks can make the scheduler'
+            ' slow to respond and use a lot of memory.'
+        ),
+        action='store_true',
+        default=False,
+        dest='ignore_match_limit',
+    )
+
+
+def apply_match_limit_option(
+    mutation_kwargs: Dict[str, Any],
+    mutation_name: str,
+    options: 'Values',
+    scheduler_version: Optional[str],
+) -> None:
+    """Add the "ignoreMatchLimit" argument to a mutation if requested.
+
+    The argument is only added if --yes was used and the scheduler supports
+    it. Schedulers running older Cylc versions have no task match limit and
+    would reject the unknown argument.
+
+    Args:
+        mutation_kwargs: The GraphQL request kwargs (modified in place).
+        mutation_name: The name of the mutation field, e.g. "set".
+        options: The command line options.
+        scheduler_version: The Cylc version of the scheduler.
+
+    Examples:
+        >>> kwargs = {
+        ...     'request_string': 'mutation ($a: Int) { set (a: $a) { x } }',
+        ...     'variables': {'a': 1},
+        ... }
+        >>> apply_match_limit_option(
+        ...     kwargs, 'set', Values({'ignore_match_limit': True}), '8.8.0'
+        ... )
+        >>> kwargs['variables']
+        {'a': 1, 'ignoreMatchLimit': True}
+        >>> print(kwargs['request_string'])
+        mutation ($ignoreMatchLimit: Boolean, $a: Int) {
+          set (ignoreMatchLimit: $ignoreMatchLimit, a: $a) { x } }
+
+        Not added for older schedulers:
+        >>> kwargs = {'request_string': 'x', 'variables': {}}
+        >>> apply_match_limit_option(
+        ...     kwargs, 'set', Values({'ignore_match_limit': True}), '8.7.0'
+        ... )
+        >>> kwargs
+        {'request_string': 'x', 'variables': {}}
+
+    """
+    from packaging.version import Version
+
+    if not getattr(options, 'ignore_match_limit', False):
+        return
+    if (
+        scheduler_version is None
+        or Version(str(scheduler_version)) < Version(MATCH_LIMIT_MIN_VERSION)
+    ):
+        return
+    request = mutation_kwargs['request_string']
+    for old, new in (
+        ('mutation (', 'mutation ($ignoreMatchLimit: Boolean, '),
+        (
+            f'{mutation_name} (',
+            f'{mutation_name} (ignoreMatchLimit: $ignoreMatchLimit, ',
+        ),
+    ):
+        if old not in request:
+            raise ValueError(f'Could not find "{old}" in the GraphQL request')
+        # NOTE: commas are optional in GraphQL so a trailing comma is fine
+        request = request.replace(old, new, 1)
+    mutation_kwargs['request_string'] = request
+    mutation_kwargs['variables']['ignoreMatchLimit'] = True
+
+
 def appendif(list_, item):
     """Avoid duplicating items in output list"""
     if item not in list_:

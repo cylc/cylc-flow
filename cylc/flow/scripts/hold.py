@@ -71,6 +71,8 @@ from cylc.flow.network.client_factory import get_client
 from cylc.flow.option_parsers import (
     FULL_ID_MULTI_ARG_DOC,
     CylcOptionParser as COP,
+    add_match_limit_option,
+    apply_match_limit_option,
 )
 from cylc.flow.terminal import cli_function
 from cylc.flow.network.multi import call_multi
@@ -121,6 +123,7 @@ def get_option_parser() -> COP:
         "--after",
         help="Hold all tasks after this cycle point.",
         metavar="CYCLE_POINT", action="store", dest="hold_point_string")
+    add_match_limit_option(parser)
 
     return parser
 
@@ -162,6 +165,10 @@ async def run(options, workflow_id, *tokens_list):
             **args
         }
     }
+    if not options.hold_point_string:
+        apply_match_limit_option(
+            mutation_kwargs, 'hold', options, pclient.scheduler_version
+        )
 
     return await pclient.async_request('graphql', mutation_kwargs)
 
