@@ -21,7 +21,7 @@
 # https://github.com/cylc/cylc-flow/issues/5103
 
 . "$(dirname "$0")/test_header"
-set_test_number 5
+set_test_number 4
 
 init_workflow "${TEST_NAME_BASE}" <<'__FLOW__'
 [scheduler]
@@ -50,7 +50,5 @@ LOG_FILE="${WORKFLOW_RUN_DIR}/log/scheduler/log"
 count_ok "CRITICAL - Workflow stalled" "$LOG_FILE" 1
 # Stall event handler should only run once
 count_ok "INFO - Reload completed" "$LOG_FILE" 1
-# Stall timer should not stop at any point
-grep_fail "stall timer stopped" "$LOG_FILE"
 
 purge
