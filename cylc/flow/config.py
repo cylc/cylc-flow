@@ -1246,8 +1246,7 @@ class WorkflowConfig:
                 )
                 if (
                     any_suicide
-                    and trigger == "expired"
-                ):
+                    and trigger == "expired"):
                     msg += (
                         "\nThis may be due to use of an expire trigger."
                     )
