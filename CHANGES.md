@@ -21,6 +21,8 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 [#7556](https://github.com/cylc/cylc-flow/pull/7556) - Fixed an empty entry being added to `PYTHONPATH` in job scripts when `PYTHONPATH` is unset, which put the task's work directory on `sys.path`.
 
+[#7493](https://github.com/cylc/cylc-flow/pull/7493) - Fixed a bug in the new job profiler; enabled support for hybrid cgroup hierarchy.
+
 ## __cylc-8.7.0 (Released 2026-10-12)__
 
 ### ⚠ Breaking Changes
