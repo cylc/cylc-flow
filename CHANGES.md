@@ -11,6 +11,16 @@ $ towncrier create <PR-number>.<break|feat|fix>.md --content "Short description"
 
 <!-- towncrier release notes start -->
 
+## __cylc-8.7.1 (Released 2026-11-10)__
+
+### 🔧 Fixes
+
+[#7247](https://github.com/cylc/cylc-flow/pull/7247) - Fixed a `BrokenPipeError` traceback when piping Cylc command output into a consumer that closes the pipe early (e.g. `less`, `grep -q`).
+
+[#7543](https://github.com/cylc/cylc-flow/pull/7543) - Fixed bug causing stall after restart for workflows originally started from start-tasks.
+
+[#7556](https://github.com/cylc/cylc-flow/pull/7556) - Fixed an empty entry being added to `PYTHONPATH` in job scripts when `PYTHONPATH` is unset, which put the task's work directory on `sys.path`.
+
 ## __cylc-8.7.0 (Released 2026-10-12)__
 
 ### ⚠ Breaking Changes
