@@ -1246,7 +1246,8 @@ class WorkflowConfig:
                 )
                 if (
                     any_expire
-                    and trigger == "expired"):
+                    and trigger == "expired"
+                ):
                     msg += (
                         "\nThis may be due to use of an expire trigger."
                     )
@@ -2486,7 +2487,6 @@ class WorkflowConfig:
                 right = parser.REC_QUAL.sub('', right)
                 self.generate_triggers(
                     expr, lefts, right, seq, expire, task_triggers)
-
 
     def set_required_outputs(
         self, task_output_opt: Dict[Tuple[str, str], Tuple[bool, bool, bool]]
