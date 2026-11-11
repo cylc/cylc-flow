@@ -292,7 +292,7 @@ message PbEdge {
     optional string id = 2;
     optional string source = 3;
     optional string target = 4;
-    optional bool suicide = 5;
+    optional bool suicide = 5;  // unused and deprecated
     optional bool cond = 6;
 }
 

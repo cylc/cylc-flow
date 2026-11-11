@@ -1058,13 +1058,13 @@ class WorkflowConfig:
         for name, taskdef in self.taskdefs.items():
             expr = taskdef.rtconfig['completion']
             if expr:
-                any_suicide = any(
-                    dep.suicide
+                any_expire = any(
+                    dep.expire
                     for d in taskdef.dependencies.values()
                     for dep in d
                 )
                 # check the user-defined expression
-                self._check_completion_expression(name, expr, any_suicide)
+                self._check_completion_expression(name, expr, any_expire)
             else:
                 # derive a completion expression for this taskdef
                 expr = get_completion_expression(taskdef)
@@ -1088,7 +1088,7 @@ class WorkflowConfig:
             taskdef.rtconfig['completion'] = expr
 
     def _check_completion_expression(
-        self, task_name: str, expr: str, any_suicide: bool
+        self, task_name: str, expr: str, any_expire: bool
     ) -> None:
         """Checks a user-defined completion expression.
 
@@ -1097,8 +1097,8 @@ class WorkflowConfig:
                 The name of the task we are checking.
             expr:
                 The completion expression as defined in the config.
-            any_suicide:
-                Does this task have any suicide triggers
+            any_expire:
+                Does this task have any expire triggers
 
         """
         # check for invalid triggers in the expression
@@ -1245,7 +1245,7 @@ class WorkflowConfig:
                     ' but is not referenced in the completion.'
                 )
                 if (
-                    any_suicide
+                    any_expire
                     and trigger == "expired"):
                     msg += (
                         "\nThis may be due to use of an expire trigger."
@@ -1831,7 +1831,7 @@ class WorkflowConfig:
         return sorted(self.taskdefs)
 
     def generate_edges(self, lexpr, orig_lexpr, left_nodes, right, seq,
-                       suicide=False):
+                       expire=False):
         """Generate edges.
 
         Add nodes from this graph section to the abstract graph edges
@@ -1846,7 +1846,7 @@ class WorkflowConfig:
             self.edges[seq] = set()
         if not left_nodes:
             # Right is a lone node.
-            self.edges[seq].add((right, None, suicide, conditional))
+            self.edges[seq].add((right, None, expire, conditional))
 
         conditional_xtriggers = []
         for left in left_nodes:
@@ -1858,7 +1858,7 @@ class WorkflowConfig:
             if left == right or left.startswith(right + ':'):
                 # (This passes inter-cycle offsets: left[-P1D] => left)
                 # (TODO - but not explicit null offsets like [-P0D]!)
-                if suicide:
+                if expire:
                     continue
                 if orig_lexpr != lexpr:
                     LOG.error(f"{orig_lexpr} => {right}")
@@ -1867,7 +1867,7 @@ class WorkflowConfig:
             if left.startswith('@') and conditional:
                 conditional_xtriggers.append(f'{lexpr} => {right}')
             else:
-                self.edges[seq].add((left, right, suicide, conditional))
+                self.edges[seq].add((left, right, expire, conditional))
         if conditional_xtriggers:
             raise WorkflowConfigError(
                 'Xtriggers cannot be used in conditional graph'
@@ -1886,7 +1886,7 @@ class WorkflowConfig:
                 'status': self.workflow_polling_tasks[name][2]
             }
 
-    def add_sequence(self, nodes, seq, suicide):
+    def add_sequence(self, nodes, seq, expire):
         """Add valid sequences to taskdefs."""
         graph_node_parser = GraphNodeParser.get_inst()
         for node in nodes:
@@ -1895,12 +1895,12 @@ class WorkflowConfig:
             # Only add sequence to taskdef if explicit (not an offset).
             if offset:
                 taskdef.used_in_offset_trigger = True
-            elif not suicide:
+            elif not expire:
                 # "foo => !bar" does not define a sequence for bar
                 taskdef.add_sequence(seq)
 
     def generate_triggers(self, lexpression, left_nodes, right, seq,
-                          suicide, task_triggers):
+                          expire, task_triggers):
         """Create Dependency and TaskTrigger objects.
 
         Register dependency with the relevant TaskDef object.
@@ -1976,7 +1976,7 @@ class WorkflowConfig:
                     item_list[i] = triggers[item]
 
         if triggers:
-            dependency = Dependency(expr_list, set(triggers.values()), suicide)
+            dependency = Dependency(expr_list, set(triggers.values()), expire)
             self.taskdefs[right].add_dependency(dependency, seq)
 
         validator = XtriggerNameValidator.validate
@@ -2076,7 +2076,7 @@ class WorkflowConfig:
         side of the edge with "R1.". This allows graph visualisation tools
         to handle these nodes differently.
 
-        For validation, return non-suicide edges with left and right nodes.
+        For validation, return non-expire edges with left and right nodes.
         """
         start_point = get_point(
             start_point_str or
@@ -2149,8 +2149,8 @@ class WorkflowConfig:
                     break
 
                 point_offset_cache = {}
-                for left, right, suicide, cond in edges:
-                    if is_validate and (not right or suicide):
+                for left, right, expire, cond in edges:
+                    if is_validate and (not right or expire):
                         continue
                     if right:
                         r_id = (right, point)
@@ -2214,7 +2214,7 @@ class WorkflowConfig:
                     else:
                         lstr, rstr = self._close_families(l_id, r_id, clf_map)
                         gr_edges[point].append(
-                            (lstr, rstr, None, suicide, cond))
+                            (lstr, rstr, None, expire, cond))
                 # Increment the cycle point.
                 point = sequence.get_next_point_on_sequence(point)
 
@@ -2452,11 +2452,10 @@ class WorkflowConfig:
 
     def _proc_triggers(self, parser, seq, task_triggers):
         """Define graph edges, taskdefs, and triggers, from graph sections."""
-        suicides = 0
         for right, val in parser.triggers.items():
             for expr, trigs in val.items():
                 orig = parser.original[right][expr]
-                lefts, suicide = trigs
+                lefts, expire = trigs
 
                 # (lefts, right) e.g.:
                 # for """
@@ -2467,7 +2466,7 @@ class WorkflowConfig:
                 # - ([], bar)
                 # - (['foo:succeeded', 'bar:succeeded'], baz)
                 # - (['@x'], baz)
-                self.generate_edges(expr, orig, lefts, right, seq, suicide)
+                self.generate_edges(expr, orig, lefts, right, seq, expire)
 
                 # Lefts can be null; all appear on RHS once so can generate
                 # taskdefs with right only. Right is never None or @xtrigger.
@@ -2480,22 +2479,14 @@ class WorkflowConfig:
                         if node and not node.startswith('@')
                     ],
                     seq,
-                    suicide
+                    expire
                 )
 
                 # RHS quals not needed now (used already for taskdef outputs)
                 right = parser.REC_QUAL.sub('', right)
                 self.generate_triggers(
-                    expr, lefts, right, seq, suicide, task_triggers)
-                if suicide:
-                    suicides += 1
+                    expr, lefts, right, seq, expire, task_triggers)
 
-        if suicides:
-            LOG.info(
-                f"{suicides} suicide trigger(s) detected. These are rarely "
-                "needed in Cylc 8 - see https://cylc.github.io/cylc-doc/"
-                "stable/html/7-to-8/major-changes/suicide-triggers.html"
-            )
 
     def set_required_outputs(
         self, task_output_opt: Dict[Tuple[str, str], Tuple[bool, bool, bool]]

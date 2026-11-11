@@ -210,8 +210,8 @@ class TaskState:
             List of prerequisites of the task.
         .status (str):
             The current status of the task.
-        .suicide_prerequisites (list<cylc.flow.prerequisite.Prerequisite>):
-            List of prerequisites that will cause the task to suicide.
+        .expire_prerequisites (list<cylc.flow.prerequisite.Prerequisite>):
+            List of prerequisites that will cause the task to expire.
         .time_updated (str):
             Time string of latest update time.
         .xtriggers (dict):
@@ -229,7 +229,7 @@ class TaskState:
         "outputs",
         "prerequisites",
         "status",
-        "suicide_prerequisites",
+        "expire_prerequisites",
         "time_updated",
         "xtriggers",
     ]
@@ -244,7 +244,7 @@ class TaskState:
 
         # Prerequisites.
         self.prerequisites: List[Prerequisite] = []
-        self.suicide_prerequisites: List[Prerequisite] = []
+        self.expire_prerequisites: List[Prerequisite] = []
         self._add_prerequisites(point, tdef)
 
         # External Triggers.
@@ -327,17 +327,17 @@ class TaskState:
         return all(self.external_triggers.values())
 
     def prerequisites_all_satisfied(self):
-        """Return True if (non-suicide) prerequisites are fully satisfied."""
+        """Return True if (non-expire) prerequisites are fully satisfied."""
         return all(preq.is_satisfied() for preq in self.prerequisites)
 
     def prerequisites_are_not_all_satisfied(self):
         """Return True if (any) prerequisites are not fully satisfied."""
         return (not self.prerequisites_all_satisfied() or
-                not self.suicide_prerequisites_all_satisfied())
+                not self.expire_prerequisites_all_satisfied())
 
-    def suicide_prerequisites_all_satisfied(self):
-        """Return True if all suicide prerequisites are satisfied."""
-        return all(preq.is_satisfied() for preq in self.suicide_prerequisites)
+    def expire_prerequisites_all_satisfied(self):
+        """Return True if all expire prerequisites are satisfied."""
+        return all(preq.is_satisfied() for preq in self.expire_prerequisites)
 
     def prerequisites_get_target_points(self):
         """Return a list of cycle points targeted by each prerequisite."""
@@ -349,11 +349,11 @@ class TaskState:
 
     def prerequisites_eval_all(self) -> None:
         """Evaluate satisfaction of all prerequisites and
-        suicide prerequisites.
+        expire prerequisites.
 
         Provides validation - will abort on illegal trigger expressions.
         """
-        for preqs in [self.prerequisites, self.suicide_prerequisites]:
+        for preqs in [self.prerequisites, self.expire_prerequisites]:
             for preq in preqs:
                 preq.is_satisfied()
 
@@ -453,15 +453,15 @@ class TaskState:
         # Use dicts to avoid generating duplicate prerequisites from sequences
         # with coincident cycle points.
         prerequisites: Dict[int, Prerequisite] = {}
-        suicide_prerequisites: Dict[int, Prerequisite] = {}
+        expire_prerequisites: Dict[int, Prerequisite] = {}
 
         for sequence, dependencies in tdef.dependencies.items():
             if not sequence.is_valid(point):
                 continue
             for dependency in dependencies:
                 cpre = dependency.get_prerequisite(point, tdef)
-                if dependency.suicide:
-                    suicide_prerequisites[cpre.instantaneous_hash()] = cpre
+                if dependency.expire:
+                    expire_prerequisites[cpre.instantaneous_hash()] = cpre
                 else:
                     prerequisites[cpre.instantaneous_hash()] = cpre
 
@@ -482,7 +482,7 @@ class TaskState:
                 cpre.set_conditional_expr(tdef.name)
                 prerequisites[cpre.instantaneous_hash()] = cpre
 
-        self.suicide_prerequisites = list(suicide_prerequisites.values())
+        self.expire_prerequisites = list(expire_prerequisites.values())
         self.prerequisites = list(prerequisites.values())
 
     def add_xtrigger(self, label, satisfied=False):

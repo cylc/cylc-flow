@@ -480,20 +480,20 @@ class PbFamilyProxy(_message.Message):
     def __init__(self, stamp: _Optional[str] = ..., id: _Optional[str] = ..., cycle_point: _Optional[str] = ..., name: _Optional[str] = ..., family: _Optional[str] = ..., state: _Optional[str] = ..., depth: _Optional[int] = ..., first_parent: _Optional[str] = ..., child_tasks: _Optional[_Iterable[str]] = ..., child_families: _Optional[_Iterable[str]] = ..., is_held: bool = ..., ancestors: _Optional[_Iterable[str]] = ..., states: _Optional[_Iterable[str]] = ..., state_totals: _Optional[_Mapping[str, int]] = ..., is_held_total: _Optional[int] = ..., is_queued: bool = ..., is_queued_total: _Optional[int] = ..., is_runahead: bool = ..., is_runahead_total: _Optional[int] = ..., runtime: _Optional[_Union[PbRuntime, _Mapping]] = ..., graph_depth: _Optional[int] = ..., is_retry: bool = ..., is_wallclock: bool = ..., is_xtriggered: bool = ...) -> None: ...
 
 class PbEdge(_message.Message):
-    __slots__ = ("stamp", "id", "source", "target", "suicide", "cond")
+    __slots__ = ("stamp", "id", "source", "target", "expire", "cond")
     STAMP_FIELD_NUMBER: _ClassVar[int]
     ID_FIELD_NUMBER: _ClassVar[int]
     SOURCE_FIELD_NUMBER: _ClassVar[int]
     TARGET_FIELD_NUMBER: _ClassVar[int]
-    SUICIDE_FIELD_NUMBER: _ClassVar[int]
+    EXPIRE_FIELD_NUMBER: _ClassVar[int]
     COND_FIELD_NUMBER: _ClassVar[int]
     stamp: str
     id: str
     source: str
     target: str
-    suicide: bool
+    expire: bool
     cond: bool
-    def __init__(self, stamp: _Optional[str] = ..., id: _Optional[str] = ..., source: _Optional[str] = ..., target: _Optional[str] = ..., suicide: bool = ..., cond: bool = ...) -> None: ...
+    def __init__(self, stamp: _Optional[str] = ..., id: _Optional[str] = ..., source: _Optional[str] = ..., target: _Optional[str] = ..., expire: bool = ..., cond: bool = ...) -> None: ...
 
 class PbEdges(_message.Message):
     __slots__ = ("id", "edges", "workflow_polling_tasks", "leaves", "feet")

@@ -2,7 +2,7 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
 # & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test that a suicide-triggered family plots as a collapsed family node (#1526).
+# Test that a expire-triggered family plots as a collapsed family node (#1526).
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 3
@@ -29,7 +29,7 @@ run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 graph_workflow "${WORKFLOW_NAME}" 'graph.plain' "--group=<all>"
 cmp_ok graph.plain "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph.plain.ref"
 #-------------------------------------------------------------------------------
-graph_workflow "${WORKFLOW_NAME}" 'graph.plain.suicide' --show-suicide "--group=<all>"
-cmp_ok 'graph.plain.suicide' "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph.plain.suicide.ref"
+graph_workflow "${WORKFLOW_NAME}" 'graph.plain.expire' --show-expire "--group=<all>"
+cmp_ok 'graph.plain.expire' "${TEST_SOURCE_DIR}/${TEST_NAME_BASE}/graph.plain.expire.ref"
 #-------------------------------------------------------------------------------
 purge

@@ -1398,7 +1398,9 @@ class Edge(ObjectType):
         delta_store=DELTA_STORE_DEFAULT,
         delta_type=DELTA_TYPE_DEFAULT,
         resolver=get_node_by_id)
-    suicide = Boolean()
+    suicide = Boolean(
+        deprecation_reason='Unused field removed without replacement'
+    )
     cond = Boolean()
 
 

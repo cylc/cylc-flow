@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test "and" outputs from same task triggering suicide.
+# Test "and" outputs from same task triggering expire.
 . "$(dirname "$0")/test_header"
 set_test_number 3
 install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"

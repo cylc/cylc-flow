@@ -79,7 +79,7 @@ class GraphParser:
     """Class for extracting dependency information from cylc graph strings.
 
     For each task in the graph string, results are stored as:
-        self.triggers[task_name][expression] = ([expr_task_names], suicide)
+        self.triggers[task_name][expression] = ([expr_task_names], expire)
         self.original[task_name][expression] = original_expression
 
     (original_expression is separated out to allow comparison of triggers
@@ -147,7 +147,7 @@ class GraphParser:
     OP_OR = '|'
     OP_AND_ERR = '&&'
     OP_OR_ERR = '||'
-    SUICIDE = '!'
+    EXPIRE = '!'
     OPTIONAL = '?'
     QUALIFIER = ':'
     ARROW = '=>'
@@ -196,8 +196,8 @@ class GraphParser:
         QUAL_FAM_FINISH_ALL: [TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED]
     }
 
-    _RE_SUICIDE = r'(?:!)?'
-    _RE_NODE = _RE_SUICIDE + TaskID.NAME_RE
+    _RE_EXPIRE = r'(?:!)?'
+    _RE_NODE = _RE_EXPIRE + TaskID.NAME_RE
     _RE_NODE_OR_XTRIG = r'(?:[!@])?' + TaskID.NAME_RE
     _RE_PARAMS = r'<[\w,=\-+]+>'
     _RE_OFFSET = r'\[[\w\-\+\^:]+\]'
@@ -225,7 +225,7 @@ class GraphParser:
     # Match fully qualified parameterized single nodes.
     REC_NODE_FULL = re.compile(
         rf"""
-        {_RE_SUICIDE}
+        {_RE_EXPIRE}
         (?:(?:{TaskID.NAME_RE}             # node name
         (?:{_RE_PARAMS})?|{_RE_PARAMS}))+  # allow task<param> to repeat
         (?:{_RE_OFFSET})?                  # cycle point offset
@@ -285,7 +285,7 @@ class GraphParser:
 
     REC_RHS_NODE = re.compile(
         rf"""
-        (!)?           # suicide mark
+        (!)?           # expire mark
         ({_RE_NODE})   # node name
         ({_RE_OFFSET})?  # cycle point offset
         ({_RE_QUAL})?  # trigger qualifier
@@ -447,7 +447,7 @@ class GraphParser:
                 self.__class__.ARROW,
                 self.__class__.OP_OR,
                 self.__class__.OP_AND,
-                self.__class__.SUICIDE,
+                self.__class__.EXPIRE,
                 '(',
                 ')',
             ]:
@@ -584,10 +584,10 @@ class GraphParser:
         if self.__class__.OP_OR in right:
             raise GraphParseError(f"Illegal OR on right side: {right}")
 
-        # Raise error if suicide triggers on the left of the trigger.
-        if left and self.__class__.SUICIDE in left:
+        # Raise error if expire triggers on the left of the trigger.
+        if left and self.__class__.EXPIRE in left:
             raise GraphParseError(
-                "Suicide markers must be"
+                "Expire markers must be"
                 f" on the right of a trigger: {left}")
 
         # Check that parentheses match.
@@ -754,7 +754,7 @@ class GraphParser:
     def _set_triggers(
         self,
         name: str,
-        suicide: bool,
+        expire: bool,
         trigs: List[str],
         expr: str,
         orig_expr: str
@@ -763,22 +763,22 @@ class GraphParser:
 
         Args:
             name: task name
-            suicide: whether this is a suicide trigger or not
+            expire: whether this is a expire trigger or not
             trigs: parsed trigger info
             expr: the associated graph expression
             orig_expr: the original associated graph expression
         """
 
-        # Check suicide triggers
+        # Check expire triggers
         with contextlib.suppress(KeyError):
-            osuicide = self.triggers[name][expr][1]
+            oexpire = self.triggers[name][expr][1]
             # This trigger already exists, so we must have both
             # "expr => member" and "expr => !member" in the graph,
             # or simply a duplicate trigger not recognized earlier
             # because of parameter offsets.
             if not expr:
                 pass
-            elif suicide is not osuicide:
+            elif expire is not oexpire:
                 oexp = re.sub(r'(&|\|)', r' \1 ', orig_expr)
                 oexp = re.sub(r':succeeded', '', oexp)
                 raise GraphParseError(
@@ -786,12 +786,12 @@ class GraphParser:
 
         # Record triggers
         self.triggers.setdefault(name, {})
-        self.triggers[name][expr] = (trigs, suicide)
+        self.triggers[name][expr] = (trigs, expire)
         self.original.setdefault(name, {})
         self.original[name][expr] = orig_expr
 
-        if suicide:
-            # Make expiry optional for suicide triggered tasks.
+        if expire:
+            # Make expiry optional for expire triggered tasks.
             self._set_output_opt(name, TASK_OUTPUT_EXPIRED, True, False, False)
 
     def _set_output_opt(
@@ -799,7 +799,7 @@ class GraphParser:
         name: str,
         output: str,
         optional: bool,
-        suicide: bool,
+        expire: bool,
         fam_member: bool = False
     ) -> None:
         """Set or check consistency of optional/required output.
@@ -808,12 +808,12 @@ class GraphParser:
             name: task name
             output: task output name
             optional: is the output optional?
-            suicide: is this from a suicide trigger?
+            expire: is this from a expire trigger?
             fam_member: is this from an expanded family trigger?
 
         """
-        # Do not infer output optionality from suicide triggers:
-        if suicide:
+        # Do not infer output optionality from expire triggers:
+        if expire:
             return
 
         if (
@@ -834,7 +834,7 @@ class GraphParser:
             optional = True
             for outp in [TASK_OUTPUT_SUCCEEDED, TASK_OUTPUT_FAILED]:
                 self._set_output_opt(
-                    name, outp, optional, suicide, fam_member)
+                    name, outp, optional, expire, fam_member)
             return
 
         try:
@@ -947,8 +947,8 @@ class GraphParser:
                 raise ValueError(  # pragma: no cover
                     f"Unexpected graph expression: '{right}'"
                 )
-            suicide_char, name, offset, output, opt_char = m.groups()
-            suicide = (suicide_char == self.__class__.SUICIDE)
+            expire_char, name, offset, output, opt_char = m.groups()
+            expire = (expire_char == self.__class__.EXPIRE)
             optional = (opt_char == self.__class__.OPTIONAL)
             if output:
                 output = output.strip(self.__class__.QUALIFIER)
@@ -998,9 +998,9 @@ class GraphParser:
             for mem in rhs_members:
                 if not offset:
                     # Nodes with offsets on the RHS do not define triggers.
-                    self._set_triggers(mem, suicide, trigs, expr, orig_expr)
+                    self._set_triggers(mem, expire, trigs, expr, orig_expr)
                 for output in outputs:
                     if output:
                         # Infer optionality for explicit outputs on RHS.
                         self._set_output_opt(
-                            mem, output, optional, suicide, fam)
+                            mem, output, optional, expire, fam)

@@ -129,7 +129,7 @@ def get_nodes_and_edges(
             start,
             stop,
             grouping=opts.grouping,
-            show_suicide=opts.show_suicide,
+            show_expire=opts.show_expire,
             flatten_icp_dependence=opts.flatten_icp_dependence,
         )
     return nodes, edges
@@ -140,7 +140,7 @@ def _get_graph_nodes_edges(
     start_point_str=None,
     stop_point_str=None,
     grouping=None,
-    show_suicide=False,
+    show_expire=False,
     flatten_icp_dependence=False,
 ) -> Tuple[List[Node], List[Edge]]:
     """Return nodes and edges for a workflow graph."""
@@ -170,10 +170,10 @@ def _get_graph_nodes_edges(
     nodes = sorted(
         {
             node
-            for left, right, _, suicide, _ in graph
+            for left, right, _, expire, _ in graph
             for node in (left, right)
             if node
-            if show_suicide or not suicide
+            if show_expire or not expire
         },
         key=node_sort,
     )
@@ -182,9 +182,9 @@ def _get_graph_nodes_edges(
     edges = sorted(
         {
             (left, right)
-            for left, right, _, suicide, _ in graph
+            for left, right, _, expire, _ in graph
             if right
-            if show_suicide or not suicide
+            if show_expire or not expire
         },
         key=edge_sort,
     )
@@ -532,9 +532,9 @@ def get_option_parser() -> COP:
         action='store_true', default=False, dest='reference')
 
     parser.add_option(
-        '--show-suicide',
-        help='Show suicide triggers. Not shown by default.',
-        action='store_true', default=False, dest='show_suicide')
+        '--show-expire',
+        help='Show expire triggers. Not shown by default.',
+        action='store_true', default=False, dest='show_expire')
 
     parser.add_option(
         '--flatten-icp',

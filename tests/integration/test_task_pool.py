@@ -1705,9 +1705,9 @@ async def test_remove_by_expire_trigger(
     start,
     log_filter
 ):
-    """Test task removal by suicide trigger.
+    """Test task removal by expire trigger.
 
-    * Suicide triggers should remove tasks from the pool.
+    * expire triggers should remove tasks from the pool.
     * It should be possible to bring them back by manually triggering them.
     * Removing a task manually (cylc remove) should work the same.
     """

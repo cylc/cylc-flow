@@ -415,7 +415,7 @@ async def test_prune_data_store(flow, scheduler, start):
     """Test prune_data_store. This method will expand and reduce the data-store
     to invoke pruning.
 
-    Also test rapid addition and removal of families (as happens with suicide
+    Also test rapid addition and removal of families (as happens with expire
     triggers):
     https://github.com/cylc/cylc-ui/issues/1999
 
