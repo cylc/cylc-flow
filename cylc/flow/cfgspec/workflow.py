@@ -2311,7 +2311,7 @@ def upg(
         is_section=True,
         remove_at='8.9'
     )
-    u.obsolete('8.7.0', ['scheduler', 'experimental', 'expire triggers'])
+    u.obsolete('8.8.0', ['scheduler', 'experimental', 'expire triggers'])
     u.upgrade()
 
     if broadcast != "cancel":
