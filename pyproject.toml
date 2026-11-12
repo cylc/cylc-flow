@@ -91,7 +91,7 @@ tests = [
     "flake8-type-checking",
     "flake8>=3.0.0",
     "mypy>=0.910",
-    "pytest-asyncio>=1.4",
+    "pytest-asyncio>=1.5",
     "pytest-cov>=2.8.0",
     "pytest-xdist>=2",
     "pytest-mock>=3.7",
