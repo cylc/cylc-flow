@@ -41,11 +41,15 @@ poll_workflow_stopped
 
 grep_workflow_log_ok "${TEST_NAME_BASE}-grep" "Removed tasks: 1/foo (flows=1)"
 
-# Simple additional test of DB:
+# Removed task is not returned by workflow-state query (it is now flows=none).
 TEST_NAME="${TEST_NAME_BASE}-workflow-state"
-run_ok "$TEST_NAME" cylc workflow-state "$WORKFLOW_NAME"
-cmp_ok "${TEST_NAME}.stdout" <<__EOF__
-1/foo:waiting(flows=none)
+run_fail "$TEST_NAME" cylc workflow-state "$WORKFLOW_NAME"
+
+DB_FILE="${WORKFLOW_RUN_DIR}/log/db"
+NAME='schema.out'
+sqlite3 "${DB_FILE}" 'SELECT * FROM task_pool' \
+    >"${NAME}"
+cmp_ok "${NAME}" << __EOF__
 __EOF__
 
-purge
+#purge
