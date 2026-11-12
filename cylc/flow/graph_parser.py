@@ -763,7 +763,7 @@ class GraphParser:
 
         Args:
             name: task name
-            expire: whether this is a expire trigger or not
+            expire: whether this is an expire trigger or not
             trigs: parsed trigger info
             expr: the associated graph expression
             orig_expr: the original associated graph expression
