@@ -2493,8 +2493,8 @@ class WorkflowConfig:
         if expiries:
             LOG.info(
                 f"{expiries} expire trigger(s) detected. These are rarely "
-                "needed in Cylc 8 - see https://cylc.github.io/cylc-doc/"
-                "stable/html/7-to-8/major-changes/expire-triggers.html"
+                "needed in Cylc 8 - see https://cylc.github.io"
+                "/7-to-8/major-changes/expire-triggers.html"
             )
 
 
