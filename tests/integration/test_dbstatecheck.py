@@ -25,6 +25,7 @@ from cylc.flow.commands import (
 )
 from cylc.flow.dbstatecheck import CylcWorkflowDBChecker
 from cylc.flow.scheduler import Scheduler
+from cylc.flow.commands import remove_tasks
 
 
 @pytest.fixture(scope='module')
@@ -42,6 +43,7 @@ async def checker(
             'final cycle point': '1001',
             'graph': {
                 'P1Y': '''
+                    remove:succeeded
                     good:succeeded
                     bad:failed?
                     output:custom_output
@@ -63,6 +65,7 @@ async def checker(
 
         # trigger a new task in flow 2
         await run_cmd(force_trigger_tasks(schd, ['1000/good'], ['2']))
+        await run_cmd((remove_tasks(schd, ['1000/remove', '1001/remove'], [])))
 
         # update the database
         schd.process_workflow_db_queue()

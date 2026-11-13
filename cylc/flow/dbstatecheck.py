@@ -301,7 +301,7 @@ class CylcWorkflowDBChecker:
 
         """
         stmt_args = []
-        stmt_wheres = []
+        stmt_wheres = ['flow_nums!="[]"']
 
         check_polling_config(selector, is_trigger, is_message)
 
