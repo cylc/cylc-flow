@@ -74,6 +74,11 @@ def get_option_parser():
         action="store_true", default=False, dest="all_namespaces")
 
     parser.add_option(
+        "-u", "--unused-namespaces",
+        help="Print any runtime namespaces not used in the graph.",
+        action="store_true", default=False, dest="unused_namespaces")
+
+    parser.add_option(
         "-m", "--mro",
         help="Print the linear \"method resolution order\" for each namespace "
              "(the multiple-inheritance precedence order as determined by the "
@@ -165,8 +170,17 @@ async def _main(options: 'Values', workflow_id: str) -> None:
     )
     template_vars = get_template_vars(options)
 
-    if options.all_tasks and options.all_namespaces:
-        raise InputError("Choose either -a or -n")
+    if len(
+        [
+            opt for opt in
+            [
+                options.all_tasks,
+                options.all_namespaces,
+                options.unused_namespaces
+            ] if opt is not False
+        ]
+    ) not in {0, 1}:
+        raise InputError("Choose either -a or -n or -u")
     if (options.all_tasks or options.all_namespaces) and options.prange:
         raise InputError(
             '--points cannot be used with --all-tasks or --all-namespaces'
@@ -178,6 +192,8 @@ async def _main(options: 'Values', workflow_id: str) -> None:
         which = "all tasks"
     elif options.all_namespaces:
         which = "all namespaces"
+    elif options.unused_namespaces:
+        which = "unused namespaces"
     elif options.prange:
         which = "prange"
         if options.prange == ",":
