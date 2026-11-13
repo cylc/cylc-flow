@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test that a expire-triggered family plots as a collapsed family node (#1526).
+# Test that an expire-triggered family plots as a collapsed family node (#1526).
 . "$(dirname "$0")/test_header"
 #-------------------------------------------------------------------------------
 set_test_number 3
