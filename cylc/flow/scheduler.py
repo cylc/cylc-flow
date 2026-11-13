@@ -285,7 +285,6 @@ class Scheduler:
     is_updated = False
     is_stalled = False
     is_restart_timeout_wait = False
-    is_reloaded = False
 
     # main loop
     main_loop_intervals: deque = deque(maxlen=10)
@@ -1939,12 +1938,10 @@ class Scheduler:
             self.pool.compute_runahead()
             self.pool.release_runahead_tasks()
 
-            if not self.is_reloaded and self.is_stalled:
-                # (A reload cannot un-stall workflow by itself)
+            if self.is_stalled:
                 self.is_stalled = False
                 self.update_data_store()
 
-            self.is_reloaded = False
             self.pool.tasks_removed = False
             # Reset workflow and task updated flags.
             self.is_updated = False
