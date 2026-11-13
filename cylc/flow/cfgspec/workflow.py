@@ -2348,6 +2348,10 @@ def upg(
     return u
 
 
+# BACK COMPAT
+# from: 7
+# to: 8.0
+# remove at: 8.9
 def upgrade_graph_section(cfg: Dict[str, Any], descr: str) -> None:
     """Upgrade Cylc 7 `[scheduling][dependencies][X]graph` format to
     `[scheduling][graph]X`."""
@@ -2396,7 +2400,7 @@ def upgrade_graph_section(cfg: Dict[str, Any], descr: str) -> None:
                     )
                     if list_cp:
                         msg += f"\n       {', '.join(sorted(keys))}"
-                    LOG.warning(msg + note)
+                    LOG.error(msg + note)
 
 
 # BACK COMPAT
@@ -2415,9 +2419,9 @@ def upgrade_param_env_templates(cfg, descr):
             if 'parameter environment templates' not in task_items:
                 continue
             if first_warn:
-                LOG.warning(upgrader.depr_msg)
+                LOG.error(upgrader.depr_msg)
                 first_warn = False
-            LOG.warning(
+            LOG.error(
                 f' * (8.0.0) {dep % task_name} contents prepended to '
                 f'{new % task_name} - support for parameter environment '
                 'templates will be removed at Cylc 8.9'
@@ -2437,6 +2441,10 @@ def upgrade_param_env_templates(cfg, descr):
             task_items.pop('parameter environment templates')
 
 
+# BACK COMPAT
+# from: 7
+# to: 8.0
+# remove at: 8.9
 def warn_about_depr_platform(cfg):
     """Validate platforms config.
 
@@ -2457,7 +2465,7 @@ def warn_about_depr_platform(cfg):
             depr = get_platform_deprecated_settings(task_cfg, task_name)
             if depr:
                 msg = "\n".join(depr)
-                LOG.warning(
+                LOG.error(
                     "deprecated settings found "
                     f"(replace with [runtime][{task_name}]platform "
                     "before Cylc 8.9):"
