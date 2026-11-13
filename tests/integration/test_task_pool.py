@@ -1707,7 +1707,7 @@ async def test_remove_by_expire_trigger(
 ):
     """Test task removal by expire trigger.
 
-    * expire triggers should remove tasks from the pool.
+    * Expire triggers should remove tasks from the pool.
     * It should be possible to bring them back by manually triggering them.
     * Removing a task manually (cylc remove) should work the same.
     """
