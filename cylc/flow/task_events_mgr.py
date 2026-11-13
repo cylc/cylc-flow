@@ -540,7 +540,7 @@ class TaskEventsManager():
         self.reset_inactivity_timer_func = reset_inactivity_timer_func
         # NOTE: do not mutate directly
         # use the {add,remove,unset_waiting}_event_timers methods
-        self._event_timers: Dict[EventKey, Any] = {}
+        self._event_timers: Dict[EventKey, TaskActionTimer] = {}
         # NOTE: flag for DB use
         self.event_timers_updated = True
         self.timestamp = timestamp
@@ -637,18 +637,21 @@ class TaskEventsManager():
                 msg = None
                 if timer.num > 1:
                     msg = (
-                        f"handler:{id_key.handler}"
-                        f" for task event:{id_key.event} failed,"
+                        f"handler '{id_key.handler}' failed"
+                        f" for task event '{id_key.event}';"
                         f" retrying in {timer.delay_timeout_as_str()}"
                     )
                 elif timer.delay:
                     msg = (
-                        f"handler:{id_key.handler}"
-                        f" for task event:{id_key.event} will"
+                        f"handler '{id_key.handler}'"
+                        f" for task event '{id_key.event}' will"
                         f" run after {timer.delay_timeout_as_str()}"
                     )
                 if msg:
-                    LOG.debug("%s %s", id_key.tokens.relative_id, msg)
+                    LOG.log(
+                        logging.INFO if schd.stop_mode else logging.DEBUG,
+                        f"{id_key.tokens.relative_id}: {msg}"
+                    )
             # Ready to run?
             if not timer.is_delay_done() or (
                 # Avoid flooding user's mail box with mail notification.

@@ -21,12 +21,12 @@ from collections import deque
 from contextlib import suppress
 import logging
 import os
-import shlex
 from pathlib import Path
 from queue import (
     Empty,
     Queue,
 )
+import shlex
 from shlex import quote
 import signal
 from subprocess import (
@@ -40,6 +40,7 @@ from threading import (
     Thread,
 )
 from time import (
+    monotonic,
     sleep,
     time,
 )
@@ -50,14 +51,12 @@ from typing import (
     AsyncGenerator,
     Collection,
     Dict,
-    Iterable,
     List,
     Literal,
     NoReturn,
     Optional,
     Set,
     Tuple,
-    Union,
 )
 from uuid import uuid4
 
@@ -80,8 +79,8 @@ from cylc.flow.exceptions import (
     CommandFailedError,
     CylcError,
     InputError,
-    WorkflowConfigError,
     PlatformLookupError,
+    WorkflowConfigError,
 )
 import cylc.flow.flags
 from cylc.flow.flow_mgr import (
@@ -116,8 +115,8 @@ from cylc.flow.main_loop.health_check import HealthCheckFailed
 from cylc.flow.network import API
 from cylc.flow.network.authentication import key_housekeeping
 from cylc.flow.network.server import WorkflowRuntimeServer
-from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.parsec.OrderedDict import DictTree
+from cylc.flow.parsec.exceptions import ParsecError
 from cylc.flow.parsec.validate import DurationFloat
 from cylc.flow.pathutil import (
     get_workflow_name_from_id,
@@ -181,6 +180,7 @@ from cylc.flow.xtrigger_mgr import XtriggerManager
 
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
     from optparse import Values
 
     from cylc.flow.network.resolvers import TaskMsg
@@ -275,10 +275,11 @@ class Scheduler:
     flow_file_update_time: Optional[float] = None
 
     # workflow params
-    stop_mode: Optional[StopMode] = None
-    stop_task: Optional[str] = None
-    stop_clock_time: Optional[int] = None
-    reload_pending: 'Union[Literal[False], str]' = False
+    stop_mode: StopMode | None = None
+    stop_task: str | None = None
+    stop_clock_time: int | None = None
+    reload_pending: Literal[False] | str = False
+    time_next_kill: float | None = None
 
     # task event loop
     is_paused = False
@@ -298,8 +299,6 @@ class Scheduler:
     _profile_update_times: Optional[dict] = None
     previous_profile_point: float = 0
     count: int = 0
-
-    time_next_kill: Optional[float] = None
 
     def __init__(self, id_: str, options: 'Values') -> None:
         # flow information
@@ -1262,8 +1261,8 @@ class Scheduler:
 
         """
         jobless = self.get_run_mode() == RunMode.SIMULATION
-        to_kill: List[TaskProxy] = []
-        unkillable: List[TaskProxy] = []
+        to_kill: list[TaskProxy] = []
+        unkillable: list[TaskProxy] = []
         for itask in itasks:
             if not itask.state(TASK_STATUS_PREPARING, *TASK_STATUSES_ACTIVE):
                 unkillable.append(itask)
@@ -1419,7 +1418,7 @@ class Scheduler:
         })
 
     def _set_workflow_params(
-        self, params: Iterable[tuple[str, str | None]]
+        self, params: 'Iterable[tuple[str, str | None]]'
     ) -> None:
         """Set workflow params on restart/reload.
 
@@ -1720,11 +1719,10 @@ class Scheduler:
                 raise SchedulerStop(self.stop_mode.value)
         elif (
             self.time_next_kill is not None
-            and time() > self.time_next_kill
+            and monotonic() > self.time_next_kill
         ):
-            self.task_job_mgr.poll_task_jobs(self.pool.get_tasks())
             self.kill_tasks(self.pool.get_tasks(), warn=False)
-            self.time_next_kill = time() + self.INTERVAL_STOP_KILL
+            self.time_next_kill = monotonic() + self.INTERVAL_STOP_KILL
 
         # Is the workflow set to auto stop [+restart] now ...
         if not self.should_auto_restart_now():
