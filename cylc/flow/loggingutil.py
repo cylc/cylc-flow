@@ -378,7 +378,7 @@ def setup_segregated_log_streams(
 def close_log(logger: logging.Logger) -> None:
     """Close log handlers for the specified logger."""
     for handler in logger.handlers:
-        with suppress(IOError):
+        with suppress(OSError):
             # suppress traceback which `logging` might try to write to the
             # log we are trying to close
             handler.close()

@@ -673,7 +673,7 @@ class TaskJobManager:
         try:
             with open(os.path.expandvars(job_activity_log), "a") as handle:
                 handle.write(line)
-        except IOError as exc:
+        except OSError as exc:
             LOG.warning("%s: write failed\n%s" % (job_activity_log, exc))
             LOG.warning(f"[{itask}] {host}{line}")
 
@@ -1268,7 +1268,7 @@ class TaskJobManager:
                 check_syntax=check_syntax,
             )
         except Exception as exc:
-            # Could be a bad command template, IOError, etc
+            # Could be a bad command template, OSError, etc
             itask.waiting_on_job_prep = False
             self._prep_submit_task_job_error(itask, '(prepare job file)', exc)
             return False

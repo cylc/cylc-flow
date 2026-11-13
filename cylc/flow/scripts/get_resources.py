@@ -88,4 +88,4 @@ def main(parser, opts, resource=None, tgt_dir=None):
     if not resource or opts.list:
         list_resources()
         sys.exit(0)
-    get_resources(resource, tgt_dir)
+    get_resources(resource, tgt_dir, logger=LOG)

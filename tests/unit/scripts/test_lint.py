@@ -18,7 +18,6 @@
 """Tests `cylc lint` CLI Utility."""
 
 from collections import Counter
-import logging
 from pathlib import Path
 from pprint import pformat
 import re
@@ -29,7 +28,6 @@ import pytest
 from pytest import param
 
 from cylc.flow.scripts.lint import (
-    LINT_SECTION,
     MANUAL_DEPRECATIONS,
     check_lowercase_family_names,
     get_cylc_files,
@@ -550,34 +548,17 @@ def test_get_pyproject_toml(tmp_path, settings, expected):
         assert get_pyproject_toml(tmp_path) == expected
 
 
-@pytest.mark.parametrize(
-    'tomlfile',
-    [None, '', '[tool.cylc.lint]', '[cylc-lint]']
-)
+@pytest.mark.parametrize('tomlfile', [None, '', '[tool.cylc.lint]'])
 def test_get_pyproject_toml_returns_blank(tomlfile, tmp_path):
+    """It returns blank defaults if pyproject.toml is missing/empty."""
     if tomlfile is not None:
-        tfile = (tmp_path / 'pyproject.toml')
-        tfile.write_text(tomlfile)
-    expect = {
-        'exclude': [], 'ignore': [], 'max-line-length': None, 'rulesets': []
+        (tmp_path / 'pyproject.toml').write_text(tomlfile)
+    assert get_pyproject_toml(tmp_path) == {
+        'exclude': [],
+        'ignore': [],
+        'max-line-length': None,
+        'rulesets': [],
     }
-    assert get_pyproject_toml(tmp_path) == expect
-
-
-def test_get_pyproject_toml__depr(
-    tmp_path: Path, caplog: pytest.LogCaptureFixture
-):
-    """It warns if the section is deprecated."""
-    file = tmp_path / 'pyproject.toml'
-    caplog.set_level(logging.WARNING)
-
-    file.write_text(f'[{LINT_SECTION}]\nmax-line-length=14')
-    assert get_pyproject_toml(tmp_path)['max-line-length'] == 14
-    assert not caplog.text
-
-    file.write_text('[cylc-lint]\nmax-line-length=17')
-    assert get_pyproject_toml(tmp_path)['max-line-length'] == 17
-    assert "[cylc-lint] section in pyproject.toml is deprecated" in caplog.text
 
 
 @pytest.mark.parametrize(

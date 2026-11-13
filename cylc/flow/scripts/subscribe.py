@@ -90,7 +90,7 @@ def main(_, options, *args):
         while True:
             try:
                 host, _, port, _ = get_location(workflow_id)
-            except (ClientError, IOError, TypeError, ValueError) as exc:
+            except (ClientError, OSError, TypeError, ValueError) as exc:
                 print(exc)
                 time.sleep(3)
                 continue

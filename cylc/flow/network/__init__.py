@@ -122,7 +122,7 @@ def get_location(workflow: str) -> Tuple[str, int, int, str]:
     """
     try:
         contact = load_contact_file(workflow)
-    except (IOError, ValueError, ServiceFileError):
+    except (OSError, ValueError, ServiceFileError):
         # Contact file does not exist or corrupted, workflow should be dead
         raise WorkflowStopped(workflow) from None
 
