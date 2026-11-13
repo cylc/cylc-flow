@@ -2323,3 +2323,71 @@ async def test_add_new_flow_rows_on_spawn(
         assert db_select(
             schd, True, 'task_outputs', 'outputs', cycle='1', name='foo'
         ) == [('{"x": "(manually completed)"}',)]
+
+async def test_start_tasks_restart(flow, scheduler, start):
+    """It should ignore pre start-task dependencies after restart.
+
+    Example has relative and absolute (ICP) intercycle triggers.
+    See https://github.com/cylc/cylc-flow/pull/7543
+
+    """
+    cfg = {
+        'scheduler': {
+            'UTC mode': True,
+        },
+        'scheduling': {
+            'initial cycle point': '20100101T0000Z',
+            'final cycle point': '20200101T0000Z',
+            'graph': {
+                'R1': "prep",
+                'PT12H': """
+                    prep[^] => foo
+                    foo[-PT12H] => foo => bar
+                    bar[-P30D] => foo
+                """
+            }
+        }
+    }
+    id_ = flow(cfg)
+    # start from mid-graph foo instance.
+    one = scheduler(
+        id_,
+        starttask=['20150101T0000Z/foo'],
+        paused_start=False
+    )
+
+    # start
+    async with start(one):
+        assert set(
+            str(itask) for itask in one.pool.get_tasks()
+        ) == set(
+            ["20150101T0000Z/foo:waiting(queued)"]
+        )
+
+    # restart: newly spawned tasks should ignore pre start-task dependencies.
+    one = scheduler(id_)
+    async with start(one):
+        itasks = one.pool.get_tasks()
+        assert set(
+            str(itask) for itask in itasks
+        ) == set(
+            ["20150101T0000Z/foo:waiting(queued)"]
+        )
+
+        # set foo succeeded, to spawn bar and next foo
+        foo = itasks[0]
+        one.pool.set_prereqs_and_outputs(
+            {foo.tokens}, [], [], [1]
+        )
+
+        itasks = one.pool.get_tasks()
+        assert set(
+            str(itask) for itask in itasks
+        ) == set(
+            ["20150101T0000Z/bar:waiting(runahead)",
+             "20150101T1200Z/foo:waiting(runahead)"]
+        )
+
+        # next foo should ignore pre start-task dependencies
+        next_foo = one.pool._get_task_by_id('20150101T1200Z/foo')
+        assert next_foo.state.prerequisites_all_satisfied()

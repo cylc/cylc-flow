@@ -163,10 +163,9 @@ LOG_RETR_SETTINGS = {
         subsequent retrieval attempts.
 
         Job log retrieval will be retried until the expected job files have
-        been retrieved, see
-        :cylc:conf:`
-        global.cylc[platforms][<platform name>]retrieve job log expected files`
-        for details
+        been retried, see
+        :cylc:conf:`global.cylc[platforms][<platform name>]
+        retrieve job log expected files` for details.
     ''')
 }
 
@@ -450,7 +449,7 @@ variables see :ref:`workflow_event_template_variables`.
 
 Example::
 
-   footer = see http://ahost/%(owner)s/notes/%(workflow)s``
+   footer = see http://ahost/%(owner)s/notes/%(workflow)s
 
 .. versionchanged:: 8.0.0
 
@@ -2111,21 +2110,15 @@ with Conf('global.cylc', desc='''
             ''')
             with Conf(
                 'selection', meta=Selection,
-                desc=(
-                    'How to select a host on the "localhost" platform.'
-                    'You are unlikely to need to change this.'
-                    ':cylc:conf:`global.cylc[platforms][<platform name>]'
-                    '[selection]`'
-                )
+                desc='''
+                    How to select a host on the "localhost" platform.
+
+                    You are unlikely to need to change this.
+                '''
             ):
                 Conf('method', VDR.V_STRING, default='definition order',
                      desc='''
                         Host selection method for the "localhost" platform.
-
-                        .. seealso::
-
-                           :cylc:conf:`global.cylc[platforms][<platform name>]
-                           [selection]method`
                 ''')
 
     # Platform Groups

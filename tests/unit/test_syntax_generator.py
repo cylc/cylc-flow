@@ -15,40 +15,43 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import importlib
-
 from pathlib import Path
 
-
-# Fake up the module.
-path = Path(__file__).parent.parent.parent / 'etc/bin/syntax_generator.py'
-loader = importlib.machinery.SourceFileLoader(
-    'syntaxgenerator', str(path)
-)
-syntax = loader.load_module()
+import pytest
 
 
-def test_get_keywords_from_workflow_cfg():
+@pytest.fixture(scope='module')
+def syntax_module():
+    """Fixture to import the syntax_generator module."""
+    with pytest.MonkeyPatch.context() as mp:
+        mp.syspath_prepend(
+            str(Path(__file__).parent.parent.parent / 'etc' / 'bin')
+        )
+        import syntax_generator  # pyright: ignore[reportMissingImports]
+        yield syntax_generator
+
+
+def test_get_keywords_from_workflow_cfg(syntax_module):
     """It gets a list of config items.
 
     Not a thorough check, but ensure type is sensible and some unlikely-to
     change items are present.
     """
-    result = syntax.get_keywords_from_workflow_cfg()
+    result = syntax_module.get_keywords_from_workflow_cfg()
     assert isinstance(result, list)
     assert 'meta' in result
     assert 'scheduling' in result
     assert 'cycle point format' in result
 
 
-def test_update_cylc_lang_new_section(tmp_path):
+def test_update_cylc_lang_new_section(tmp_path, syntax_module):
     test_file = tmp_path / 'testfile'
-    test_file.write_text((
+    test_file.write_text(
         "<!--TAG_FOR_AUTO_UPDATE-->\n"
         "some stuff"
         "<!--END_TAG_FOR_AUTO_UPDATE-->"
-    ))
-    syntax.update_cylc_lang(
+    )
+    syntax_module.update_cylc_lang(
         ['gamma', 'nu'], test_file, '#kword#{word}#kword# - '
     )
     assert test_file.read_text() == (

@@ -508,7 +508,7 @@ def detect_old_contact_file(
     if not contact_data:
         try:
             contact_data = load_contact_file(id_)
-        except (IOError, ValueError, ServiceFileError):
+        except (OSError, ValueError, ServiceFileError):
             # Contact file does not exist or corrupted, workflow should be dead
             return
 
@@ -677,7 +677,7 @@ def load_contact_file(
     try:
         with open(path) as f:
             file_content = f.read()
-    except IOError as exc:
+    except OSError as exc:
         raise ServiceFileError("Couldn't load contact file") from exc
     data: dict[str, str] = {}
     for line in file_content.splitlines():

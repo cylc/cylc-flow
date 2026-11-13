@@ -372,7 +372,7 @@ class JobRunnerManager():
                                 proc.communicate()[1].decode()
                             )
             return (1, f"Cannot determine job ID from {JOB_LOG_STATUS} file")
-        except IOError as exc:
+        except OSError as exc:
             return (1, str(exc))
 
     @classmethod
@@ -483,7 +483,7 @@ class JobRunnerManager():
                             ctx.run_signal = value
                     elif key == CYLC_MESSAGE:
                         ctx.messages.append(value)
-        except IOError as exc:
+        except OSError as exc:
             sys.stderr.write(f"{exc}\n")
             return
 
@@ -568,7 +568,7 @@ class JobRunnerManager():
                             self.CYLC_JOB_RUNNER_EXIT_POLLED,
                             get_current_time_string())
                         )
-                except IOError as exc:
+                except OSError as exc:
                     sys.stderr.write(f"{exc}\n")
 
                 # Re-read the status file in case the job started and exited
@@ -665,7 +665,7 @@ class JobRunnerManager():
                     return 1, "", str(exc), ""
             out, err = (f.decode() for f in proc.communicate(proc_stdin_value))
             ret_code = proc.wait()
-            with suppress(AttributeError, IOError):
+            with suppress(AttributeError, OSError):
                 proc_stdin_arg.close()
 
         # Filter submit command output, if relevant

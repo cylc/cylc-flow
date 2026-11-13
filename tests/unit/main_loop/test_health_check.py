@@ -57,12 +57,12 @@ def test_check_contact_file_data(monkeypatch):
 
 
 def test_check_contact_file_io(monkeypatch):
-    """Ensure unexpected IOError retrieving the contact file raises
+    """Ensure unexpected OSError retrieving the contact file raises
     MainLoopPluginException."""
     sched = Mock(workflow='foo')
 
     def whoopsie(*_):
-        raise IOError('')
+        raise OSError('')
 
     monkeypatch.setattr(
         'cylc.flow.main_loop.health_check.workflow_files.load_contact_file',

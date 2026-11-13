@@ -22,7 +22,7 @@
 set_test_number 5
 
 init_workflow "${TEST_NAME_BASE}" <<'__WORKFLOW__'
-[cylc]
+[scheduler]
     [[events]]
         abort on inactivity timeout = True
         abort on stall timeout = True
@@ -39,45 +39,48 @@ trap "" TERM
 (
     cylc__job__poll_grep_workflow_log "Workflow shutting down"
     sleep 5
-    echo "The undead child shall speak" >>"${CYLC_TASK_LOG_ROOT}.testout"
+    echo "The undead child shall speak" >>"${CYLC_TASK_LOG_DIR}/testout.log"
 ) &
-trap "echo 'TERM got trapped' >>'${CYLC_TASK_LOG_ROOT}.testout'; wait" TERM
+undead_pid=$!
+echo "undead child PID: $undead_pid" >&2
+trap "echo 'TERM got trapped' >>'${CYLC_TASK_LOG_DIR}/testout.log'; wait $undead_pid" TERM
 # this child will be terminated if job script is a process leader
 (
     sleep 15
-    echo "You shall never see this" >>"${CYLC_TASK_LOG_ROOT}.testout"
+    echo "You shall never see this" >>"${CYLC_TASK_LOG_DIR}/testout.log"
 ) &
-echo "Here we go..." >>"${CYLC_TASK_LOG_ROOT}.testout"
+echo "next child PID: $!" >&2
+echo "Here we go..." >>"${CYLC_TASK_LOG_DIR}/testout.log"
 wait
 """
         err-script = """
 wait
 echo "Exit with code ${CYLC_TASK_USER_SCRIPT_EXITCODE:-unknown}" \
-    >>"${CYLC_TASK_LOG_ROOT}.testout"
+    >>"${CYLC_TASK_LOG_DIR}/testout.log"
 """
 __WORKFLOW__
 
 
 run_ok "${TEST_NAME_BASE}-validate" cylc validate "${WORKFLOW_NAME}"
 # Needs to be detaching:
-workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}"
+workflow_run_ok "${TEST_NAME_BASE}-run" cylc play "${WORKFLOW_NAME}" --debug
 
-JOB_LOG_ROOT="${WORKFLOW_RUN_DIR}/log/job/1/foo/01/job"
+JOB_LOG_DIR="${WORKFLOW_RUN_DIR}/log/job/1/foo/01"
 
 # Kill the job and see what happened
-poll_grep "CYLC_JOB_PID=" "${JOB_LOG_ROOT}.status"
-JOB_PID=$(awk -F= '/CYLC_JOB_PID=/{print $2}' "${JOB_LOG_ROOT}.status")
+poll_grep "CYLC_JOB_PID=" "${JOB_LOG_DIR}/job.status"
+JOB_PID=$(awk -F= '/CYLC_JOB_PID=/{print $2}' "${JOB_LOG_DIR}/job.status")
 kill -s "TERM" "${JOB_PID}"
 poll_workflow_stopped
 
 # Workflow is down after failed message
-grep_ok "CYLC_JOB_EXIT=TERM" "${JOB_LOG_ROOT}.status"
+grep_ok "CYLC_JOB_EXIT=TERM" "${JOB_LOG_DIR}/job.status"
 
 # The job should be still running and waiting for the user script
-grep_fail "The undead child shall speak" "${JOB_LOG_ROOT}.testout"
+grep_fail "The undead child shall speak" "${JOB_LOG_DIR}/testout.log"
 
-poll_grep "Exit with code" "${JOB_LOG_ROOT}.testout"
-cmp_ok "${JOB_LOG_ROOT}.testout" - <<__EOF__
+poll_grep "Exit with code" "${JOB_LOG_DIR}/testout.log"
+cmp_ok "${JOB_LOG_DIR}/testout.log" - <<__EOF__
 Here we go...
 TERM got trapped
 The undead child shall speak

@@ -730,16 +730,25 @@ with Conf(
         ''')
 
         with Conf('queues', desc='''
-            Internal task queues to limit job activity.
+            Internal queues limit how many tasks can have active jobs at once.
 
-            Queues delay job submission in member tasks, until the active
-            job count (for members) drops below the queue limit.
+            Tasks become queued when they are ready to run, and are released
+            on a first in, first out basis when the number of
+            :term:`active jobs <active job>` within that queue drops below
+            the queue limit.
 
-            There is a ``default`` queue with a configurable limit of 100, for
-            all tasks that are not assigned to other queues.
+            All tasks that are not assigned to other queues belong to the
+            :cylc:conf:`[default]` queue with a default limit of 100.
 
-            You can define custom queues to limit job activity across other
-            groups of tasks.
+            You can define custom queues to limit job activity across groups
+            of tasks. The default limit for custom queues is 0 (no limit).
+
+            Tasks can be assigned en masse to queues by family name.
+
+            A given task can only be in one queue. If a task is assigned to
+            multiple queues, only the last assignment will take effect.
+
+            .. rubric:: Example:
 
             .. code-block:: cylc
 
@@ -876,7 +885,7 @@ with Conf(
 
                 Example::
 
-                ``my_trigger(arg1, arg2, kwarg1, kwarg2):PT10S``
+                   my_trigger(arg1, arg2, kwarg1, kwarg2):PT10S
             ''')
 
         with Conf('graph', desc=f'''
@@ -1505,10 +1514,10 @@ with Conf(
 
                         See also :cylc:conf:`[meta]URL <flow.cylc[meta]URL>`.
 
-                        Example:
+                        Example::
 
-                        ``http://my-site.com/workflows/%(workflow)s/'''
-                    '%(task)s.html``')
+                           http://my-site.com/workflows/%(workflow)s/%(task)s.html
+                    ''')
                 Conf('<custom metadata>', VDR.V_STRING, '', desc='''
                     Any user-defined metadata item.
 
@@ -1574,13 +1583,10 @@ with Conf(
                     speedup factor` are not set.
                 ''')
                 Conf('speedup factor', VDR.V_FLOAT, desc='''
-                    Simulated run length = speedup factor * execution time
-                    limit.
-
                     If :cylc:conf:`flow.cylc[runtime][<namespace>]
                     execution time limit` is set, the task
-                    simulated run length is computed by dividing it by this
-                    factor.
+                    simulated run length is computed by dividing the limit
+                    by this factor.
                 ''')
                 Conf('time limit buffer', VDR.V_INTERVAL, DurationFloat(30),
                      desc='''
