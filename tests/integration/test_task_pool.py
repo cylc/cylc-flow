@@ -2276,6 +2276,7 @@ async def test_parentless_spawning(flow, scheduler, run, complete):
         # The task pool should not be empty now.
         assert len(schd.pool.get_tasks())
 
+
 async def test_add_new_flow_rows_on_spawn(
     flow,
     scheduler,
@@ -2323,6 +2324,7 @@ async def test_add_new_flow_rows_on_spawn(
         assert db_select(
             schd, True, 'task_outputs', 'outputs', cycle='1', name='foo'
         ) == [('{"x": "(manually completed)"}',)]
+
 
 async def test_start_tasks_restart(flow, scheduler, start):
     """It should ignore pre start-task dependencies after restart.

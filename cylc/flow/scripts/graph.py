@@ -111,6 +111,11 @@ def sort_datetime_edge(item):
 Node = str  # node ID
 Edge = Tuple[str, str]   # left, right
 
+# TODO: REMOVE at 89
+SHOW_SUICIDE_DEPR_MSG = (
+    "DEPRECATED: the --show-suicide option will be removed at Cylc 8.9; "
+    "Please use --show-expire instead."
+)
 
 def get_nodes_and_edges(
     opts,
@@ -537,6 +542,11 @@ def get_option_parser() -> COP:
         action='store_true', default=False, dest='show_expire')
 
     parser.add_option(
+        '--show-suicide',
+        help=SHOW_SUICIDE_DEPR_MSG,
+        action='store_true', default=False, dest='show_suicide')
+
+    parser.add_option(
         '--flatten-icp',
         help=(
             'Flatten dependence on tasks at the initial cycle point.'
@@ -591,6 +601,10 @@ async def _main(
         raise InputError('Cannot combine --group and --namespaces.')
     if opts.cycles and opts.namespaces:
         raise InputError('Cannot combine --cycles and --namespaces.')
+
+    if opts.show_suicide:
+        cprint(f'<yellow>{SHOW_SUICIDE_DEPR_MSG}</yellow>', file=sys.stderr)
+        opts.show_expire = True
 
     workflow_id, _, flow_file = await parse_id_async(
         workflow_id,
