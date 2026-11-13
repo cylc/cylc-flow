@@ -157,7 +157,6 @@ class TaskPool:
 
     ERR_TMPL_NO_TASKID_MATCH = "No matching tasks found: {0}"
     ERR_PREFIX_TASK_NOT_ON_SEQUENCE = "Invalid cycle point for task: {0}, {1}"
-    EXPIRE_MSG = "expire trigger"
     REMOVED_BY_PREREQ = "prerequisite task(s) removed"
 
     def __init__(
@@ -1715,24 +1714,6 @@ class TaskPool:
             flow_wait=flow_wait,
         )
         if itask is None:
-            return None
-
-        if (
-            prev_status is not None
-            and not itask.state.outputs.get_completed_outputs()
-        ):
-            # If itask has any history but no completed outputs, it must have
-            # been removed by expire trigger (not by `cylc remove` which
-            # erases task history).
-            #
-            # This was a bodge to prevent expired tasks from respawning via
-            # other dependencies, given that expire leaves no DB record.
-            # The bodge fails if any outputs were completed before expire.
-            #
-            # The reimplementation of expire triggers as expire triggers
-            # renders this bodge obsolete. TODO: remove this code block on
-            # migrating expire triggers from "experimental" to standard.
-            LOG.info(f"Not respawning {point}/{name} - task was removed")
             return None
 
         if prev_status in TASK_STATUSES_FINAL:

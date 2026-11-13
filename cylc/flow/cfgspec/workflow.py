@@ -971,7 +971,7 @@ with Conf(
                      # bar triggers if foo[-PT6H] fails
                      foo[-PT6H]:fail => bar
 
-                     # Y suicides if X succeeds
+                     # Y expires if X succeeds
                      X => !Y
 
                      # Z triggers if X succeeds or fails

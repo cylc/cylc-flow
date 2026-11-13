@@ -2275,3 +2275,51 @@ async def test_parentless_spawning(flow, scheduler, run, complete):
         await complete(schd, "2/b")
         # The task pool should not be empty now.
         assert len(schd.pool.get_tasks())
+
+async def test_add_new_flow_rows_on_spawn(
+    flow,
+    scheduler,
+    start,
+    db_select,
+) -> None:
+    """Spawning a task with history should not overwrite its DB outputs.
+
+    E.g. when an expire trigger spawns a task that had outputs manually set.
+
+    See https://github.com/cylc/cylc-flow/pull/6821
+    """
+    id_ = flow({
+        'scheduling': {
+            'graph': {
+                'R1': '''
+                    slow:fail? => foo
+                    slow? => foo
+                    foo:x => x
+                ''',
+            },
+        },
+        'runtime': {
+            'foo': {
+                'outputs': {'x': 'xxx'}
+            },
+        },
+    })
+    schd = scheduler(id_)
+    async with start(schd):
+        await commands.run_cmd(
+            commands.set_prereqs_and_outputs(
+                schd, ['1/foo'], ['1'], ['x'], None
+            )
+        )
+        assert db_select(
+            schd, True, 'task_outputs', 'outputs', cycle='1', name='foo'
+        ) == [('{"x": "(manually completed)"}',)]
+
+        # re-spawn 1/foo (as the expire trigger would)
+        assert schd.pool.spawn_task('foo', IntegerPoint('1'), {1})
+        schd.workflow_db_mgr.process_queued_ops()
+
+        # the manually completed output should not have been overwritten
+        assert db_select(
+            schd, True, 'task_outputs', 'outputs', cycle='1', name='foo'
+        ) == [('{"x": "(manually completed)"}',)]
