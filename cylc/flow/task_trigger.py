@@ -213,7 +213,7 @@ class Dependency:
             [<TaskTrigger("foo")>, "&", <TaskTrigger("Bar")>].
         task_triggers (set): A set of TaskTrigger objects contained in the
             expression (exp).
-        expire (bool): True if this is a expire trigger else False.
+        expire (bool): True if this is an expire trigger else False.
 
     """
 
