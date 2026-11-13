@@ -100,7 +100,7 @@ async def test_validate_against_source_gets_old_tvars(
         validate(src_dir)
 
 
-def test_validate_simple_graph(flow, validate, caplog):
+def test_validate_simple_graph(flow, validate, log_filter):
     """Test deprecation notice for Cylc 7 simple graph (no recurrence section)
     """
     id_ = flow({
@@ -108,16 +108,16 @@ def test_validate_simple_graph(flow, validate, caplog):
         'scheduling': {'dependencies': {'graph': 'foo'}}
     })
     validate(id_)
-    expect = (
+    assert log_filter(
+        logging.ERROR,
         'graph items were automatically upgraded'
         ' in "workflow definition" - support for the old item will be '
         'removed at Cylc 8.9:'
         '\n * (8.0.0) [scheduling][dependencies]graph -> [scheduling][graph]R1'
     )
-    assert expect in caplog.messages
 
 
-def test_pre_cylc8(flow, validate, caplog):
+def test_pre_cylc8(flow, validate, log_filter):
     """Test all current non-silent workflow obsoletions and deprecations.
     """
     id_ = flow({
@@ -145,7 +145,7 @@ def test_pre_cylc8(flow, validate, caplog):
         }
     }, defaults=False)
     validate(id_)
-    for warning in (
+    for msg in (
         (
             ' * (7.8.0) [runtime][foo, cat, dog][suite state polling]template'
             ' - DELETED (OBSOLETE)'
@@ -165,10 +165,10 @@ def test_pre_cylc8(flow, validate, caplog):
         (' * (8.0.0) [cylc] -> [scheduler] - value unchanged'
          ' - support for the old item will be removed at Cylc 8.9')
     ):
-        assert warning in caplog.messages
+        assert log_filter(logging.ERROR, msg)
 
 
-def test_graph_upgrade_msg_default(flow, validate, caplog, log_filter):
+def test_graph_upgrade_msg_default(flow, validate, log_filter):
     """It lists Cycling definitions which need upgrading."""
     id_ = flow({
         'scheduler': {'allow implicit tasks': True},
@@ -181,11 +181,13 @@ def test_graph_upgrade_msg_default(flow, validate, caplog, log_filter):
         },
     })
     validate(id_)
-    assert log_filter(contains='[scheduling][dependencies][X]graph')
+    assert log_filter(
+        logging.ERROR, contains='[scheduling][dependencies][X]graph'
+    )
     assert log_filter(contains='for X in:\n       P1Y, R1')
 
 
-def test_graph_upgrade_msg_graph_equals(flow, validate, caplog, log_filter):
+def test_graph_upgrade_msg_graph_equals(flow, validate, log_filter):
     """It gives a more useful message in special case where graph is
     key rather than section:
 
@@ -199,11 +201,12 @@ def test_graph_upgrade_msg_graph_equals(flow, validate, caplog, log_filter):
     })
     validate(id_)
     assert log_filter(
-        contains='[scheduling][dependencies]graph -> [scheduling][graph]R1'
+        logging.ERROR,
+        contains='[scheduling][dependencies]graph -> [scheduling][graph]R1',
     )
 
 
-def test_graph_upgrade_msg_graph_equals2(flow, validate, caplog, log_filter):
+def test_graph_upgrade_msg_graph_equals2(flow, validate, log_filter):
     """Both an implicit R1 and explicit reccurance exist:
     It appends a note.
     """
@@ -224,7 +227,7 @@ def test_graph_upgrade_msg_graph_equals2(flow, validate, caplog, log_filter):
         '\n       P1Y, graph'
         '\n   ([scheduling][dependencies]graph moves to [scheduling][graph]R1)'
     )
-    assert log_filter(contains=expect)
+    assert log_filter(logging.ERROR, contains=expect)
 
 
 def test_undefined_parent(flow, validate):

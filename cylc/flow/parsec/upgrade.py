@@ -210,7 +210,7 @@ class upgrader:
         return exp_upgs
 
     def upgrade(self):
-        warnings = OrderedDict()
+        warnings: dict[str, list[str]] = {}
         deprecations = False
         obsoletions = False
         for vn, upgs in self.upgrades.items():
@@ -245,8 +245,7 @@ class upgrader:
                             else:
                                 msg += (f' - this will fail validation in '
                                         f'Cylc {remove_at}')
-                        warnings.setdefault(vn, [])
-                        warnings[vn].append(msg)
+                        warnings.setdefault(vn, []).append(msg)
                         self.del_item(upg['old'])
                         if upg['new']:
                             # check self.cfg does not already contain a
@@ -274,7 +273,7 @@ class upgrader:
 
                 # BACK COMPAT: In Cylc 8.8 display Errors for
                 # deprecations but allow workflow to run and be upgraded
-                # remove after: 8.9 has workflows failing to validate
+                # remove at: 8.9
                 if upg.get('remove_at') == '8.9':
                     level = ERROR
                 else:

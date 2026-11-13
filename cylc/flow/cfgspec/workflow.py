@@ -2336,6 +2336,10 @@ def upg(
     return u
 
 
+# BACK COMPAT
+# from: 7
+# to: 8.0
+# remove at: 8.9
 def upgrade_graph_section(cfg: Dict[str, Any], descr: str) -> None:
     """Upgrade Cylc 7 `[scheduling][dependencies][X]graph` format to
     `[scheduling][graph]X`."""
@@ -2425,6 +2429,10 @@ def upgrade_param_env_templates(cfg, descr):
             task_items.pop('parameter environment templates')
 
 
+# BACK COMPAT
+# from: 7
+# to: 8.0
+# remove at: 8.9
 def warn_about_depr_platform(cfg):
     """Validate platforms config.
 
