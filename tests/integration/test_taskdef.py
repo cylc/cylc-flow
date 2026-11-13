@@ -23,8 +23,8 @@ from cylc.flow.task_outputs import TASK_OUTPUT_SUCCEEDED
 from cylc.flow.workflow_files import WorkflowFiles
 
 
-async def test_almost_self_suicide(flow, scheduler, start):
-    """Suicide triggers should not count as upstream tasks when looking
+async def test_almost_self_expire(flow, scheduler, start):
+    """Expire triggers should not count as upstream tasks when looking
     to spawn parentless tasks.
 
     https://github.com/cylc/cylc-flow/issues/6594

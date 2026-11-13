@@ -188,7 +188,7 @@ def _remove_matched_tasks(
             prereqs_changed = False
             for prereq in (
                 *child_itask.state.prerequisites,
-                *child_itask.state.suicide_prerequisites,
+                *child_itask.state.expire_prerequisites,
             ):
                 # Unset any prereqs naturally satisfied by these tasks
                 # (do not unset those satisfied by `cylc set --pre`):

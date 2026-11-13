@@ -213,18 +213,18 @@ class Dependency:
             [<TaskTrigger("foo")>, "&", <TaskTrigger("Bar")>].
         task_triggers (set): A set of TaskTrigger objects contained in the
             expression (exp).
-        suicide (bool): True if this is a suicide trigger else False.
+        expire (bool): True if this is an expire trigger else False.
 
     """
 
-    __slots__ = ['_exp', 'task_triggers', 'suicide']
+    __slots__ = ['_exp', 'task_triggers', 'expire']
 
-    def __init__(self, exp, task_triggers, suicide):
+    def __init__(self, exp, task_triggers, expire):
         self._exp = exp
         self.task_triggers: Tuple[
             TaskTrigger
         ] = tuple(task_triggers)  # More memory efficient.
-        self.suicide = suicide
+        self.expire = expire
 
     def get_prerequisite(
         self, point: 'PointBase', tdef: 'TaskDef'
@@ -292,7 +292,7 @@ class Dependency:
 
     def __str__(self):
         ret = []
-        if self.suicide:
+        if self.expire:
             ret.append('!')
         for item in self._exp:
             if isinstance(item, list):
@@ -304,7 +304,7 @@ class Dependency:
     def __repr__(self) -> str:
         """
         >>> from unittest.mock import Mock
-        >>> Dependency(exp=[Mock()], task_triggers=[Mock()], suicide=False)
+        >>> Dependency(exp=[Mock()], task_triggers=[Mock()], expire=False)
         <Dependency ...>
         """
         return f"<{type(self).__name__} {self}>"

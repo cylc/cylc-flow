@@ -3,7 +3,7 @@
     description = """
         Task A fails silently - it will be stuck in 'running'
         unless polled. Task B then polls A to find it has failed, allowing A to
-        suicide via a :fail trigger, and the workflow to shut down successfully.
+        expire via a :fail trigger, and the workflow to shut down successfully.
     """
 
 [scheduler]

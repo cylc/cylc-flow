@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 
-# Check that absolute suicide triggers clean up unsatisfied prerequisites.
+# Check that absolute expire triggers clean up unsatisfied prerequisites.
 # See explanatory comments in the workflow config.
 
 . "$(dirname "$0")/test_header"

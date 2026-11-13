@@ -1,5 +1,5 @@
 # Spawn on Demand variant of 00-recovery
-# No need for suicide triggers.
+# No need for expire triggers.
 
 [meta]
     title = "automated failure recovery example"

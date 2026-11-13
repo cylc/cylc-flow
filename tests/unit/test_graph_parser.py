@@ -96,7 +96,7 @@ def test_graph_syntax_errors_2(seq, graph, expected_err):
         ),
         (
             "!foo => bar",
-            "Suicide markers must be on the right of a trigger:"
+            "Expire markers must be on the right of a trigger:"
         ),
         (
             "( foo & bar => baz",

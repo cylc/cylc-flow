@@ -418,8 +418,8 @@ async def test_downstream_other_flows(flow, scheduler, run, complete):
         assert schd.pool._get_task_by_id('1/x').flow_nums == {1, 2}
 
 
-async def test_suicide(flow, scheduler, run, reflog, complete):
-    """Test that suicide prereqs are unset by `cylc remove`."""
+async def test_expire(flow, scheduler, run, reflog, complete):
+    """Test that expire prereqs are unset by `cylc remove`."""
     schd: Scheduler = scheduler(
         flow('''
             a => b => c => d => x
@@ -438,7 +438,7 @@ async def test_suicide(flow, scheduler, run, reflog, complete):
         ('1/b', ('1/a',)),
         ('1/c', ('1/b',)),
         ('1/d', ('1/c',)),
-        # 1/x not suicided as 1/a was removed:
+        # 1/x not expired as 1/a was removed:
         ('1/x', ('1/d',)),
     }
 

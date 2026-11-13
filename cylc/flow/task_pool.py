@@ -157,7 +157,6 @@ class TaskPool:
 
     ERR_TMPL_NO_TASKID_MATCH = "No matching tasks found: {0}"
     ERR_PREFIX_TASK_NOT_ON_SEQUENCE = "Invalid cycle point for task: {0}, {1}"
-    SUICIDE_MSG = "suicide trigger"
     REMOVED_BY_PREREQ = "prerequisite task(s) removed"
 
     def __init__(
@@ -1408,7 +1407,7 @@ class TaskPool:
             # task has begun submission -> clear all xtriggers
             self.xtrigger_mgr.force_satisfy_all(itask, log=False)
 
-        suicide = []
+        expire = []
         for c_name, c_point, is_abs in children:
             if is_abs:
                 self.abs_outputs_done.add(
@@ -1421,7 +1420,7 @@ class TaskPool:
             in_pool = c_task is not None
 
             if c_task is not None and c_task != itask:
-                # (Avoid self-suicide: A => !A)
+                # (Avoid self-expire: A => !A)
                 self.merge_flows(c_task, itask.flow_nums)
             elif c_task is None and itask.flow_nums:
                 # If child is not in the pool already, and parent belongs to a
@@ -1457,23 +1456,20 @@ class TaskPool:
                     if not in_pool:
                         self.add_to_pool(t)
 
-                    # Event-driven suicide.
+                    # Event-driven expire.
                     if (
-                        t.state.suicide_prerequisites and
-                        t.state.suicide_prerequisites_all_satisfied()
+                        t.state.expire_prerequisites and
+                        t.state.expire_prerequisites_all_satisfied()
                     ):
-                        suicide.append(t)
+                        expire.append(t)
 
-        for c_task in suicide:
-            if self.config.experimental.expire_triggers:
-                self.task_queue_mgr.remove_task(c_task)
-                self.task_events_mgr.process_message(
-                    c_task, logging.WARNING, TASK_OUTPUT_EXPIRED
-                )
-            else:
-                self.remove(c_task, self.__class__.SUICIDE_MSG)
+        for c_task in expire:
+            self.task_queue_mgr.remove_task(c_task)
+            self.task_events_mgr.process_message(
+                c_task, logging.WARNING, TASK_OUTPUT_EXPIRED
+            )
 
-        if suicide:
+        if expire:
             # Update DB now in case of very quick respawn attempt.
             # See https://github.com/cylc/cylc-flow/issues/6066
             self.workflow_db_mgr.process_queued_ops()
@@ -1718,25 +1714,6 @@ class TaskPool:
             flow_wait=flow_wait,
         )
         if itask is None:
-            return None
-
-        if (
-            prev_status is not None
-            and not itask.state.outputs.get_completed_outputs()
-            and not self.config.experimental.expire_triggers
-        ):
-            # If itask has any history but no completed outputs, it must have
-            # been removed by suicide trigger (not by `cylc remove` which
-            # erases task history).
-            #
-            # This was a bodge to prevent suicided tasks from respawning via
-            # other dependencies, given that suicide leaves no DB record.
-            # The bodge fails if any outputs were completed before suicide.
-            #
-            # The reimplementation of suicide triggers as expire triggers
-            # renders this bodge obsolete. TODO: remove this code block on
-            # migrating expire triggers from "experimental" to standard.
-            LOG.info(f"Not respawning {point}/{name} - task was removed")
             return None
 
         if prev_status in TASK_STATUSES_FINAL:
@@ -2372,7 +2349,7 @@ class TaskPool:
             # 2. same flow (no merge needed); can arise
             # downstream of an AND trigger (if "A & B => C"
             # and A spawns C first, B will find C is already in the pool),
-            # and via suicide triggers ("A =>!A": A tries to spawn itself).
+            # and via expire triggers ("A =>!A": A tries to spawn itself).
             return
 
         merge_with_no_flow = not itask.flow_nums

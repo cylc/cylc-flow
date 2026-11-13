@@ -2,7 +2,7 @@
 # THIS FILE IS PART OF THE CYLC WORKFLOW ENGINE.
 # Copyright (C) Earth Sciences New Zealand & British Crown (Met Office)
 # & Contributors.
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
 
-# Check branching without suicide triggers.
+# Check branching without expire triggers.
 . "$(dirname "$0")/test_header"
 set_test_number 2
 reftest
