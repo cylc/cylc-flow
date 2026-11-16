@@ -18,6 +18,9 @@
 """Tests for reload behaviour in the scheduler."""
 
 
+import asyncio
+from unittest.mock import Mock
+
 from cylc.flow import (
     commands,
     flags,
@@ -463,3 +466,76 @@ async def test_data_store_tproxy(flow, scheduler, start):
 
         await commands.run_cmd(commands.reload_workflow(schd))
         assert str(get_ds_tproxy('bar').runtime)
+
+
+async def test_reload_unstall(flow, scheduler, start, run, complete, capcall):
+    """Reload should be able unstall a workflow.
+
+    A reload can unstall a workflow because active instances of tasks deleted
+    by reload are removed from the pool.
+
+    See https://github.com/cylc/cylc-flow/issues/7064
+    """
+    conf = {
+        'scheduling': {
+            'graph': {
+                # run all tasks in FAM
+                'R1': 'FAM'
+            }
+        },
+        'runtime': {
+            'FAM': {},
+            # two tasks which succeed
+            'a, b': {'inherit': 'FAM'},
+            # one task which fails
+            'c': {
+                'inherit': 'FAM',
+                'simulation': {
+                    'fail cycle points': 'all',
+                },
+            },
+        },
+    }
+    id_ = flow(conf)
+    schd: 'Scheduler' = scheduler(id_, paused_start=False)
+
+    # capture event handler calls
+    schd.run_event_handlers = Mock()
+
+    def get_event_handler_calls():
+        return [x.args for x in schd.run_event_handlers.mock_calls if x.args]
+
+    async with run(schd):
+        # run the workflow until it stalls
+        async with asyncio.timeout(1):
+            while True:
+                await schd._main_loop()
+                if schd.is_stalled:
+                    break
+        assert schd.is_stalled
+
+        # stall event handler should have been run
+        assert get_event_handler_calls() == [
+            ('startup', 'workflow starting'),
+            ('stall', 'workflow stalled'),
+        ]
+
+        # remove the failed task and reload
+        conf['runtime'].pop('c')
+        flow(conf, workflow_id=id_)
+        await commands.run_cmd(commands.reload_workflow(schd))
+
+        # scheduler unstalled by reload
+        assert not schd.is_stalled
+
+        # the scheduler should detect that it is no longer stalled and the
+        # workflow should shut down naturally
+        await complete(schd, timeout=1)
+        assert not schd.is_stalled
+
+        # stall event handler should *not* have been re-run
+        # (the workflow only stalled once)
+        assert get_event_handler_calls() == [
+            ('startup', 'workflow starting'),
+            ('stall', 'workflow stalled'),
+        ]
