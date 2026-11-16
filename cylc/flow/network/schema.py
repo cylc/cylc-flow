@@ -1145,12 +1145,12 @@ class TaskProxy(ObjectType):
         description='True if this task has a scheduled retry.',
     )
     is_wallclock = Boolean(
-        description='True if this task has an unsatisfied wallclock trigger.',
+        description='True if this task has an unsatisfied wall-clock trigger.',
     )
     is_xtriggered = Boolean(
         description=sstrip(
             'True if this task has an unsatisfied xtrigger'
-            ' (excluding retry and wallclock xtriggers).'
+            ' (excluding retry and wall-clock xtriggers).'
         ),
     )
     flow_nums = String(
@@ -1319,13 +1319,13 @@ class FamilyProxy(ObjectType):
     is_wallclock = Boolean(
         description=(
             'True if this family contains a task that has an'
-            ' unsatisfied wallclock trigger.'
+            ' unsatisfied wall-clock trigger.'
         ),
     )
     is_xtriggered = Boolean(
         description=sstrip(
             'True if this family contains a task that has an unsatisfied'
-            ' xtrigger (excluding retry and wallclock xtriggers).'
+            ' xtrigger (excluding retry and wall-clock xtriggers).'
         ),
     )
     depth = Int()

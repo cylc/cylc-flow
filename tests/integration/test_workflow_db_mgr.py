@@ -143,7 +143,7 @@ async def test_record_only_non_clock_triggers(
     https://github.com/cylc/cylc-flow/issues/5911
 
     Includes:
-        - Not in DB: A normal wall clock xtrigger (wall_clock).
+        - Not in DB: A normal wall-clock xtrigger (wall_clock).
         - In DB: An xrandom mis-labelled as wall_clock trigger  DB).
         - Not in DB: An execution retry xtrigger.
 
@@ -160,7 +160,7 @@ async def test_record_only_non_clock_triggers(
             "initial cycle point": rawpoint,
             "xtriggers": {
                 "another": "xrandom(100)",
-                "wall_clock": "xrandom(100, _=Not a real wall clock trigger)",
+                "wall_clock": "xrandom(100, _=Not a real wall-clock trigger)",
                 "real_wall_clock": "wall_clock()"
             },
             "graph": {
@@ -179,7 +179,7 @@ async def test_record_only_non_clock_triggers(
     # Assert that (only) the real clock trigger is not in the db:
     assert db_select(schd, False, 'xtriggers', 'signature') == [
         ('xrandom(100)',),
-        ('xrandom(100, _=Not a real wall clock trigger)',)]
+        ('xrandom(100, _=Not a real wall-clock trigger)',)]
 
 
 async def test_time_zone_writing(

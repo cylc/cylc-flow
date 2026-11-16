@@ -290,7 +290,7 @@ async def test_settings_restart(monkeytime, flow, scheduler, start):
 
             og_timeouts[itask.identity] = itask.mode_settings.timeout
 
-        # Mock wallclock < sim end timeout
+        # Mock wall-clock < sim end timeout
         monkeytime(itask.mode_settings.timeout - 1)
         assert sim_time_check(
             schd.task_events_mgr, [itask], schd.workflow_db_mgr
