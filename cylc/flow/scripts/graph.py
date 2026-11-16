@@ -111,7 +111,7 @@ def sort_datetime_edge(item):
 Node = str  # node ID
 Edge = Tuple[str, str]   # left, right
 
-# TODO: REMOVE at 89
+# REMOVE AT: 8.9
 SHOW_SUICIDE_DEPR_MSG = (
     "DEPRECATED: the --show-suicide option will be removed at Cylc 8.9; "
     "Please use --show-expire instead."
