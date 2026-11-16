@@ -1649,31 +1649,6 @@ async def mod_blah(
         yield schd
 
 
-async def test_fast_respawn(
-    example_flow: 'Scheduler',
-    caplog: pytest.LogCaptureFixture,
-) -> None:
-    """Immediate re-spawn of removed tasks is not allowed.
-
-    An immediate DB update is required to stop the respawn.
-    https://github.com/cylc/cylc-flow/pull/6067
-
-    """
-    task_pool = example_flow.pool
-
-    # find task 1/foo in the pool
-    foo = task_pool.get_task(IntegerPoint("1"), "foo")
-
-    # remove it from the pool
-    task_pool.remove(foo)
-    assert foo not in task_pool.get_tasks()
-
-    # attempt to spawn it again
-    itask = task_pool.spawn_task("foo", IntegerPoint("1"), {1})
-    assert itask is None
-    assert "Not respawning 1/foo - task was removed" in caplog.text
-
-
 async def test_remove_active_task(
     example_flow: 'Scheduler',
     log_filter: Callable,

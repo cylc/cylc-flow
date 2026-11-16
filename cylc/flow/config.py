@@ -2497,7 +2497,6 @@ class WorkflowConfig:
                 "/7-to-8/major-changes/expire-triggers.html"
             )
 
-
     def set_required_outputs(
         self, task_output_opt: Dict[Tuple[str, str], Tuple[bool, bool, bool]]
     ) -> None:

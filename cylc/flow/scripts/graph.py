@@ -117,6 +117,7 @@ SHOW_SUICIDE_DEPR_MSG = (
     "Please use --show-expire instead."
 )
 
+
 def get_nodes_and_edges(
     opts,
     workflow_id,
