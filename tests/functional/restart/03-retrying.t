@@ -40,8 +40,7 @@ init_workflow "${TEST_NAME_BASE}" <<'__FLOW_CONFIG__'
                 exit 1
             fi
         """
-        [[[job]]]
-            execution retry delays = 3*PT0S
+        execution retry delays = 3*PT0S
 __FLOW_CONFIG__
 
 #-------------------------------------------------------------------------------
