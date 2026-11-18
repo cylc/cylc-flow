@@ -1469,10 +1469,6 @@ class TaskPool:
                 c_task, logging.WARNING, TASK_OUTPUT_EXPIRED
             )
 
-        # Update DB now in case of very quick respawn attempt.
-        # See https://github.com/cylc/cylc-flow/issues/6066
-        self.workflow_db_mgr.process_queued_ops()
-
         self.remove_if_complete(itask, output)
 
     def remove_if_complete(
