@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #-------------------------------------------------------------------------------
-# Test "and" outputs from 2 tasks triggering suicide.
+# Test "and" outputs from 2 tasks triggering expire.
 # https://github.com/cylc/cylc-flow/issues/2655
 . "$(dirname "$0")/test_header"
 set_test_number 3

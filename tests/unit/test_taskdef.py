@@ -137,7 +137,7 @@ def test_generate_graph_parents__sequential(tmp_flow_config):
             'bar',
             IntegerPoint("2"),
             [],
-            id='it.does-not-return-suicide-prereqs',
+            id='it.does-not-return-expire-prereqs',
         ),
     ],
 )
@@ -234,7 +234,7 @@ def test_get_xtrigs(tmp_flow_config):
             'bar',
             IntegerPoint("2"),
             [],
-            id='it.does-not-return-suicide-triggers',
+            id='it.does-not-return-expire-triggers',
         ),
     ],
 )

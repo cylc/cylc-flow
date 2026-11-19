@@ -51,7 +51,7 @@ def test_check_with_no_cycle_point_or_offset():
     assert actual == expected
 
 
-def test_check_for_false_suicide():
+def test_check_for_false_expire():
     task_trigger = TaskTrigger(
         'fake_task_name', 1, 'fakeOutput', None, None, None, None)
     dependency = Dependency(
@@ -63,7 +63,7 @@ def test_check_for_false_suicide():
     assert actual == expected
 
 
-def test_check_for_true_suicide():
+def test_check_for_true_expire():
     task_trigger = TaskTrigger(
         'fake_task_name', None, 'fakeOutput', None, None, None, None)
     dependency = Dependency(

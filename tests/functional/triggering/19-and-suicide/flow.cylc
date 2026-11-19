@@ -1,4 +1,4 @@
-# This is an explicit test of suicide triggers.
+# This is an explicit test of expire triggers.
 # Under SoD it isn't really a useful test.
 
 [scheduler]
@@ -15,7 +15,7 @@
 [runtime]
     [[t0]]
         # https://github.com/cylc/cylc-flow/issues/2655
-        # "1/t2" should not suicide on "1/t1:failed"
+        # "1/t2" should not expire on "1/t1:failed"
         script = cylc__job__poll_grep_workflow_log -E '1/t1.* failed'
     [[t1]]
         script = false
