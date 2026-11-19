@@ -2453,7 +2453,6 @@ class WorkflowConfig:
 
     def _proc_triggers(self, parser, seq, task_triggers):
         """Define graph edges, taskdefs, and triggers, from graph sections."""
-        expiries = 0
         for right, val in parser.triggers.items():
             for expr, trigs in val.items():
                 orig = parser.original[right][expr]
@@ -2488,14 +2487,6 @@ class WorkflowConfig:
                 right = parser.REC_QUAL.sub('', right)
                 self.generate_triggers(
                     expr, lefts, right, seq, expire, task_triggers)
-                if expire:
-                    expiries += 1
-        if expiries:
-            LOG.info(
-                f"{expiries} expire trigger(s) detected. These are rarely "
-                "needed in Cylc 8 - see https://cylc.github.io"
-                "/7-to-8/major-changes/expire-triggers.html"
-            )
 
     def set_required_outputs(
         self, task_output_opt: Dict[Tuple[str, str], Tuple[bool, bool, bool]]
