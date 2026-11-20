@@ -28,15 +28,21 @@ Environment Variables:
     DOMAIN: The area in which to generate forecasts for in the format
         (lng1, lat1, lng2, lat2).
     RESOLUTION: The length/width of each grid cell in degrees.
+    CANNED_DATA (optional): Path to a radar data file to use instead of
+        fetching live data.
+
+If the live radar data cannot be fetched or is bad, the canned data in
+etc/canned-rainfall.h5 is used instead so that the tutorial still works.
 
 """
 
 from datetime import datetime
 import math
 import os
-import shutil
+import sys
 
 import h5py
+import numpy as np
 from pathlib import Path
 import urllib
 import requests   # noqa: F401 - required implicitly by urllib.
@@ -48,6 +54,10 @@ S3URL = (
     'https://met-office-radar-obs-data.s3-eu-west-2.amazonaws.com/radar/'
     '{Y}/{m}/{d}/{YYYYmmddHHMM}_ODIM_ng_radar_rainrate_composite_1km_UK.h5'
 )
+S3_TIMEOUT = 30  # seconds
+# The projection used in process_rainfall_data is tuned to this grid.
+RADAR_GRID_SHAPE = (2175, 1725)
+RADAR_NODATA = -1
 DEBUG=os.environ['CYLC_DEBUG']=='true'
 CYLC_TASK_LOG_DIR=os.environ['CYLC_TASK_LOG_DIR']
 
@@ -115,20 +125,6 @@ class Rainfall(object):
         return self.data
 
 
-def get_archived_radar_image(filename, time):
-    """Retrieve a png image from the archived data in the workflow directory.
-
-    Args:
-        filename (str): The path to write the image file to.
-        time (str): The datetime of the image to retrieve in ISO8601 format.
-
-    """
-    shutil.copyfile(
-        os.path.join(os.environ['CYLC_WORKFLOW_RUN_DIR'], 'data', time,
-                     filename),
-        filename)
-
-
 def get_amazon_radar_data(filename, time):
     time = datetime.strptime(time, '%Y%m%dT%H%MZ')
     url = S3URL.format(
@@ -138,17 +134,33 @@ def get_amazon_radar_data(filename, time):
         YYYYmmddHHMM=time.strftime('%Y%m%d%H%M')
     )
     print(f'[INFO] Getting data from {url=}')
-    data = urllib.request.urlopen(url).read()
+    data = urllib.request.urlopen(url, timeout=S3_TIMEOUT).read()
     with open(filename, 'wb') as fh:
         fh.write(data)
 
 
-# def process_rainfall_data(filename, resolution, domain):
+def read_radar_data(filename):
+    """Read rainfall rates from a radar data file, rejecting bad data.
+
+    Raises:
+        ValueError: If the data is not usable.
+
+    """
+    with h5py.File(filename, 'r') as h5file:
+        data = h5file['dataset1']['data1']['data'][:]
+    if data.shape != RADAR_GRID_SHAPE:
+        raise ValueError(
+            f'Radar data has shape {data.shape}, expected {RADAR_GRID_SHAPE}')
+    if not ((data != RADAR_NODATA) & np.isfinite(data)).any():
+        raise ValueError('Radar data contains no valid values')
+    return data
+
+
 def process_rainfall_data(filename, resolution, domain):
-    """get_amazon_radar_dataGenerate a 2D matrix of data from the rainfall data in the image.
+    """Generate a 2D matrix of data from the rainfall data in the file.
 
     Args:
-        filename (str): Path to the png image to process.
+        filename (str): Path to the radar data file to process.
         resolution (float): The length/weight of each grid cell in degrees.
         domain (dict): The bounds of the domain as returned by
             util.parse_domain.
@@ -158,7 +170,7 @@ def process_rainfall_data(filename, resolution, domain):
 
     """
     print(f'[INFO] Analysing data from {filename}')
-    data = h5py.File(filename)['dataset1']['data1']['data']
+    data = read_radar_data(filename)
     rainfall = Rainfall(domain, resolution)
 
     _height, width = data.shape
@@ -183,7 +195,7 @@ def process_rainfall_data(filename, resolution, domain):
             )
             val = float(col)
             # Original data uses -1 to indicate radar mask
-            val = 0 if val == -1 else val
+            val = 0 if val == RADAR_NODATA else val
             rainfall.add(lng, lat, val)
     data = rainfall.compute_bins()
 
@@ -202,16 +214,29 @@ def main():
     canned_data = os.environ.get('CANNED_DATA', 'fetch')
 
     if canned_data == 'fetch':
-        print('[INFO] Attempting to get rainfall data from S3 bucket')
-        get_amazon_radar_data('radardata.h5', time)
-        canned_data = 'radardata.h5'
+        try:
+            print('[INFO] Attempting to get rainfall data from S3 bucket')
+            get_amazon_radar_data('radardata.h5', time)
+            data = process_rainfall_data('radardata.h5', resolution, domain)
+        except Exception as exc:
+            # The live data is sometimes unavailable, rate limited or bad.
+            print(
+                f'[WARN] Could not use live rainfall data: {exc!r}\n'
+                '[WARN] Falling back to canned rainfall data',
+                file=sys.stderr,
+            )
+            data = process_rainfall_data(
+                os.path.join(
+                    os.environ['CYLC_WORKFLOW_RUN_DIR'],
+                    'etc',
+                    'canned-rainfall.h5',
+                ),
+                resolution,
+                domain,
+            )
     else:
-        raise Exception('Not currently provided functionality')
-        # Not currently used.
-        #print(f'[INFO] Canned data provided: {canned_data}')
-        #get_archived_radar_data(canned_data, time)
-
-    data = process_rainfall_data(canned_data, resolution, domain)
+        print(f'[INFO] Canned data provided: {canned_data}')
+        data = process_rainfall_data(canned_data, resolution, domain)
 
     util.write_csv('rainfall.csv', data)
 
