@@ -321,7 +321,15 @@ class ZMQSocketBase:
 
         i.e. self.socket.sndhwm
         """
+        # Limit the number of in-flight messages.
         self.socket.sndhwm = 10000
+
+        # Allow more time for reconnects (exponential backoff up to 5 seconds.)
+        self.socket.setsockopt(zmq.RECONNECT_IVL_MAX, 5000)
+
+        # Send a heartbeat every 20 seconds to ensure the connection is not
+        # closed by intermediate firewalls.
+        self.socket.setsockopt(zmq.HEARTBEAT_IVL, 20_000)
 
     def _bespoke_start(self):
         """Initiate bespoke items at start."""

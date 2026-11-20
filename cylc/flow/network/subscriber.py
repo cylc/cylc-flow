@@ -88,9 +88,15 @@ class WorkflowSubscriber(ZMQSocketBase):
         """Set options after socket instantiation and before connect.
 
         Overwrites Base method.
-
         """
-        # setup topics to receive.
+        # Allow more time for reconnects (exponential backoff up to 5 seconds.)
+        self.socket.setsockopt(zmq.RECONNECT_IVL_MAX, 5000)
+
+        # Send a heartbeat every 20 seconds to ensure the connection is not
+        # closed by intermediate firewalls.
+        self.socket.setsockopt(zmq.HEARTBEAT_IVL, 20_000)
+
+        # Setup topics to receive.
         for topic in self.topics:
             self.socket.setsockopt(zmq.SUBSCRIBE, topic)
 

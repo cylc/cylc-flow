@@ -54,16 +54,6 @@ class WorkflowPublisher(ZMQSocketBase):
         super().__init__(zmq.PUB, workflow, bind=True, context=context)
         self.topics: Set[bytes] = set()
 
-    def _socket_options(self):
-        """Set socket options after socket instantiation and before bind.
-
-        Overwrites Base method.
-
-        """
-        # this limit on messages in queue is more than enough,
-        # as messages correspond to scheduler loops (*messages/loop):
-        self.socket.sndhwm = 1000
-
     def _bespoke_stop(self):
         """Bespoke stop items."""
         LOG.debug('stopping zmq publisher...')
