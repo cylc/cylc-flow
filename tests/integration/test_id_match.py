@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from cylc.flow.id import TaskTokens
 
 
-async def test_id_match(flow, scheduler, start, caplog):
+async def test_id_match(flow, scheduler, start, caplog, spawn_ahead_and_queue):
     id_ = flow({
         'scheduling': {
             'cycling mode': 'integer',
@@ -76,6 +76,7 @@ async def test_id_match(flow, scheduler, start, caplog):
                 schd, ['1/b2'], ['1'], ['failed'], None
             )
         )
+        spawn_ahead_and_queue(schd.pool)
 
         # task pool state:
         # * cycle 1

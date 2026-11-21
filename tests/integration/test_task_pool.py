@@ -333,9 +333,12 @@ async def test_release_held_tasks(
 async def test_hold_point(
     hold_after_point: str,
     expected_held_task_ids: List[str],
-    example_flow: 'Scheduler', db_select: Callable
+    example_flow: 'Scheduler',
+    db_select: Callable,
+    spawn_ahead_and_queue,
 ) -> None:
     """Test TaskPool.set_hold_point() and .release_hold_point()"""
+    spawn_ahead_and_queue(example_flow.pool)
     expected_held_task_ids = sorted(expected_held_task_ids)
     task_pool = example_flow.pool
 
@@ -456,11 +459,13 @@ async def test_reload_stopcp(
 
 
 async def test_runahead_after_remove(
-    example_flow: 'Scheduler'
+    example_flow: 'Scheduler',
+    spawn_ahead_and_queue,
 ) -> None:
     """The runahead limit should be recomputed after tasks are removed.
 
     """
+    spawn_ahead_and_queue(example_flow.pool)
     task_pool = example_flow.pool
     assert int(task_pool.runahead_limit_point) == 4
 
@@ -936,12 +941,14 @@ async def test_set_failed_complete(
     start,
     one_conf,
     log_filter,
-    db_select: Callable
+    db_select: Callable,
+    spawn_ahead_and_queue,
 ):
     """Test manual completion of an incomplete failed task."""
     id_ = flow(one_conf)
     schd: Scheduler = scheduler(id_)
     async with start(schd, level=logging.DEBUG):
+        spawn_ahead_and_queue(schd.pool)
         one = schd.pool.get_tasks()[0]
         one.state_reset(is_queued=False)
 
@@ -1242,6 +1249,7 @@ async def test_set_outputs_future(
     scheduler,
     start,
     log_filter,
+    spawn_ahead_and_queue,
 ):
     """Check manual setting of inactive task outputs.
 
@@ -1272,6 +1280,7 @@ async def test_set_outputs_future(
     schd: Scheduler = scheduler(id_)
 
     async with start(schd):
+        spawn_ahead_and_queue(schd.pool)
 
         # It should start up with just 1/a and 2/a.
         assert schd.pool.get_task_ids() == {"1/a", "2/a"}
@@ -1444,6 +1453,7 @@ async def test_compute_runahead(
     flow,
     scheduler,
     start,
+    spawn_ahead_and_queue,
 ):
     """Test the calculation of the runahead limit.
 
@@ -1490,6 +1500,8 @@ async def test_compute_runahead(
     id_ = flow(config)
     schd = scheduler(id_)
     async with start(schd):
+        spawn_ahead_and_queue(schd.pool)
+
         schd.pool.compute_runahead(force=True)
         assert int(str(schd.pool.runahead_limit_point)) == 4
 
@@ -1586,8 +1598,8 @@ async def test_runahead_future_trigger(
     flow,
     scheduler,
     start,
-    monkeypatch,
     rhlimit,
+    spawn_ahead_and_queue,
 ):
     """Equivalent time interval and cycle count runahead limits should yield
     the same limit point, even if there is a future trigger.
@@ -1613,6 +1625,7 @@ async def test_runahead_future_trigger(
 
     schd = scheduler(id_,)
     async with start(schd, level=logging.DEBUG):
+        spawn_ahead_and_queue(schd.pool)
         assert str(schd.pool.runahead_limit_point) == '20010103'
         schd.pool.release_runahead_tasks()
         for itask in schd.pool.get_tasks():
@@ -1899,7 +1912,9 @@ async def test_set_future_flow(flow, scheduler, start, log_filter):
         )
 
 
-async def test_trigger_queue(one, run, db_select, complete):
+async def test_trigger_queue(
+    one, run, db_select, complete, spawn_ahead_and_queue
+):
     """It should handle triggering tasks in the queued state.
 
     Triggering a queued task with a new flow number should result in the
@@ -1908,6 +1923,7 @@ async def test_trigger_queue(one, run, db_select, complete):
     See https://github.com/cylc/cylc-flow/pull/6241
     """
     async with run(one):
+        spawn_ahead_and_queue(one.pool)
         # the workflow should start up with one task in the original flow
         task = one.pool.get_tasks()[0]
         assert task.state(TASK_STATUS_WAITING, is_queued=True)
@@ -2108,6 +2124,7 @@ async def test_clock_expire_with_sequential_xtriggers(
     run,
     complete,
     log_filter,
+    spawn_ahead_and_queue,
 ):
     """Clock expire should play nicely with sequential xtriggers.
 
@@ -2136,6 +2153,7 @@ async def test_clock_expire_with_sequential_xtriggers(
     })
     schd = scheduler(id_, paused_start=False)
     async with run(schd):
+        spawn_ahead_and_queue(schd.pool)
         # each cycle should expire and spawn in turn
         await complete(schd, '2005/a')
         for cycle in range(2000, 2006):
@@ -2235,6 +2253,7 @@ async def test_start_tasks(
     scheduler,
     start,
     capture_submission,
+    spawn_ahead_and_queue
 ):
     """Check starting from "start-tasks" with and without clock-triggers.
 
@@ -2268,6 +2287,7 @@ async def test_start_tasks(
     )
 
     async with start(schd):
+        spawn_ahead_and_queue(schd.pool)
         # capture any job submissions
         submitted_tasks = capture_submission(schd)
         assert submitted_tasks == set()
