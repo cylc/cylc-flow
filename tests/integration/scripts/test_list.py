@@ -111,6 +111,11 @@ async def test_plain(cylc_list, supports_utf8, capsys):
         'root',
     ]
 
+    assert await cylc_list(capsys, unused_namespaces=True) == [
+        'B',
+        'b1',
+    ]
+
     with pytest.raises(InputError):
         await cylc_list(capsys, all_tasks=True, all_namespaces=True)
 
