@@ -121,6 +121,9 @@ from cylc.flow.task_state import (
     TASK_STATUS_RUNNING,
     TASK_STATUS_SUBMITTED,
     TASK_STATUS_WAITING,
+    TASK_STATUS_SUCCEEDED,
+    TASK_STATUS_EXPIRED,
+    TASK_STATUS_FAILED,
 )
 from cylc.flow.util import serialise_set
 from cylc.flow.wallclock import (
@@ -243,7 +246,11 @@ class TaskJobManager:
                     # is dangerous because a task waiting to rerun has the
                     # submit number of its previous job, which can be polled).
                     itask for itask in itasks
-                    if itask.state.status != TASK_STATUS_WAITING
+                    if (itask.state.status != TASK_STATUS_WAITING
+                        and itask.state.status != TASK_STATUS_EXPIRED
+                        and itask.state.status != TASK_STATUS_FAILED
+                        and itask.state.status != TASK_STATUS_PREPARING
+                        and itask.state.status != TASK_STATUS_SUCCEEDED)
                 ],
                 self._poll_task_jobs_callback,
                 self._poll_task_jobs_callback_255
