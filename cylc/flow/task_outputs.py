@@ -631,8 +631,7 @@ class TaskOutputs:
         for message, _compvar in self._message_to_compvar.items():
             if _compvar == compvar:
                 return self.is_message_complete(message)
-        else:
-            raise KeyError(compvar)
+        raise KeyError(compvar)
 
     def iter_required_messages(
         self,

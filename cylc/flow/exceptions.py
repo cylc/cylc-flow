@@ -103,14 +103,6 @@ class TriggerExpressionError(GraphParseError):
     """Trigger expression syntax issue."""
 
 
-class TaskProxySequenceBoundsError(CylcError):
-    """Error on TaskProxy.__init__ with out of sequence bounds start point."""
-
-    def __init__(self, msg):
-        CylcError.__init__(
-            self, 'Not loading %s (out of sequence bounds)' % msg)
-
-
 class ParamExpandError(WorkflowConfigError):
     """Exception for errors in Cylc parameter expansion."""
 

@@ -37,7 +37,6 @@ from cylc.flow import LOG, __version__ as CYLC_VERSION
 from cylc.flow.config import WorkflowConfig
 from cylc.flow.exceptions import (
     WorkflowConfigError,
-    TaskProxySequenceBoundsError,
     TriggerExpressionError
 )
 import cylc.flow.flags
@@ -187,12 +186,6 @@ async def run(
                 taskdef,
                 cfg.start_point,
             )
-        except TaskProxySequenceBoundsError:
-            # Should already failed above
-            mesg = 'Task out of bounds for %s: %s\n' % (cfg.start_point, name)
-            if cylc.flow.flags.verbosity > 0:
-                sys.stderr.write(' + %s\n' % mesg)
-            continue
         except Exception as exc:
             raise WorkflowConfigError(
                 'failed to instantiate task %s: %s' % (name, exc)
