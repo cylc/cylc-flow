@@ -581,7 +581,7 @@ class TaskProxy:
 
         """
         for prereq in (
-            *self.state.prerequisites, *self.state.suicide_prerequisites
+            *self.state.prerequisites, *self.state.expire_prerequisites
         ):
             if prereq.satisfy_me(task_messages, mode=mode):
                 # Signal to main loop that the task may need runahead release:

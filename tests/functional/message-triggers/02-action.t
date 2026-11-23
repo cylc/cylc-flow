@@ -28,7 +28,7 @@ install_workflow "${TEST_NAME_BASE}" "${TEST_NAME_BASE}"
 TEST_NAME="${TEST_NAME_BASE}-validate"
 run_ok "${TEST_NAME}" cylc validate "${WORKFLOW_NAME}"
 
-# The workflow tests that two tasks suicide immediately on message triggers.
+# The workflow tests that two tasks expire immediately on message triggers.
 TEST_NAME="${TEST_NAME_BASE}-run"
 workflow_run_ok "${TEST_NAME}" cylc play --no-detach --abort-if-any-task-fails "${WORKFLOW_NAME}"
 

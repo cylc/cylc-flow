@@ -311,7 +311,7 @@ class TaskDef:
             if seq in self.dependencies:
                 # task has prereqs in this sequence
                 for dep in self.dependencies[seq]:
-                    if dep.suicide:
+                    if dep.expire:
                         continue
                     for trig in dep.task_triggers:
                         parent_points.add(trig.get_parent_point(point))
@@ -326,7 +326,7 @@ class TaskDef:
             if seq in self.dependencies:
                 # task has prereqs in this sequence
                 for dep in self.dependencies[seq]:
-                    if dep.suicide:
+                    if dep.expire:
                         continue
                     prereqs.add(dep.get_prerequisite(point, self))
         return prereqs
@@ -351,7 +351,7 @@ class TaskDef:
             if seq in self.dependencies:
                 # task has prereqs in this sequence
                 for dep in self.dependencies[seq]:
-                    if dep.suicide:
+                    if dep.expire:
                         continue
                     for trig in dep.task_triggers:
                         triggers.add(trig)
@@ -371,8 +371,8 @@ class TaskDef:
                     if (
                         trig.offset_is_absolute or
                         trig.offset_is_from_icp or
-                        # Don't count suicide as a normal trigger:
-                        dep.suicide
+                        # Don't count expire as a normal trigger:
+                        dep.expire
                     ):
                         has_abs = True
                     else:
