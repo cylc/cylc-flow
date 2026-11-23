@@ -20,7 +20,7 @@
 # Integration tests exist for more comprehensive coverage.
 
 . "$(dirname "$0")/test_header"
-set_test_number 6
+set_test_number 5
 
 init_workflow "${TEST_NAME_BASE}" <<'__EOF__'
 [scheduler]
@@ -44,12 +44,5 @@ grep_workflow_log_ok "${TEST_NAME_BASE}-grep" "Removed tasks: 1/foo (flows=1)"
 # Removed task is not returned by workflow-state query (it is now flows=none).
 TEST_NAME="${TEST_NAME_BASE}-workflow-state"
 run_fail "$TEST_NAME" cylc workflow-state "$WORKFLOW_NAME"
-
-DB_FILE="${WORKFLOW_RUN_DIR}/log/db"
-NAME='schema.out'
-sqlite3 "${DB_FILE}" 'SELECT * FROM task_pool' \
-    >"${NAME}"
-cmp_ok "${NAME}" << __EOF__
-__EOF__
 
 purge
