@@ -2324,6 +2324,9 @@ class GlobalConfig(ParsecConfig):
         try:
             self.loadcfg(fname, conf_type)
             self._validate_source_dirs()
+            # Expand platforms needs to be performed for each loaded file
+            # (note it manipulates the sparse config):
+            self._expand_commas()
         except ParsecError:
             LOG.error(f'bad {conf_type} {fname}')
             raise
@@ -2349,10 +2352,6 @@ class GlobalConfig(ParsecConfig):
             for conf_type, conf_dir in self.conf_dir_hierarchy:
                 fname = os.path.join(conf_dir, self.CONF_BASENAME)
                 self._load(fname, conf_type)
-
-        # Expand platforms needs to be performed first because it
-        # manipulates the sparse config.
-        self._expand_commas()
 
         # Flesh out with defaults
         self.expand()
