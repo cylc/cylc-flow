@@ -52,4 +52,4 @@ sqlite3 "${DB_FILE}" 'SELECT * FROM task_pool' \
 cmp_ok "${NAME}" << __EOF__
 __EOF__
 
-#purge
+purge
