@@ -16,17 +16,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Tests for the Cylc GlobalConfig object."""
 
-from typing import TYPE_CHECKING, Callable
+from pathlib import Path
+from typing import Callable
 
 import pytest
 
-from cylc.flow.cfgspec.globalcfg import GlobalConfig, SPEC
+from cylc.flow.cfgspec.globalcfg import (
+    SPEC,
+    GlobalConfig,
+)
 from cylc.flow.parsec.exceptions import ValidationError
 from cylc.flow.parsec.validate import cylc_config_validate
-
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 
 TEST_CONF = '''
@@ -127,6 +127,40 @@ def test_expand_commas(tmp_path: 'Path', mock_global_config: Callable):
     assert glblcfg.get(["install", "symlink dirs", "foo", "share"]) == "/y"
     assert glblcfg.get(["install", "symlink dirs", "bar", "run"]) == "/x"
     assert glblcfg.get(["install", "symlink dirs", "bar", "share"]) == "/z"
+
+
+def test_expand_commas_multiple_configs(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    """See https://github.com/cylc/cylc-flow/issues/7596"""
+    monkeypatch.delenv('CYLC_CONF_PATH', raising=False)
+    site_dir = tmp_path / 'site' / 'flow'
+    monkeypatch.setenv('CYLC_SITE_CONF_PATH', str(site_dir.parent))
+    (site_dir / '8').mkdir(parents=True)
+    (user_dir := tmp_path / 'home' / '.cylc' / 'flow').mkdir(parents=True)
+    monkeypatch.setattr(GlobalConfig, 'USER_CONF_PATH', str(user_dir))
+
+    (site_dir / 'global.cylc').write_text("""
+    [platforms]
+        [[picard]]
+            job runner = a
+    """)
+    (site_dir / '8' / 'global.cylc').write_text("""
+    [platforms]
+        [[picard,kirk]]
+            job runner = b
+    """)
+    (user_dir / 'global.cylc').write_text("""
+    [platforms]
+        [[picard]]
+            job runner = c
+    """)
+
+    glblcfg = GlobalConfig(SPEC)
+    glblcfg.load()
+
+    assert glblcfg.get(['platforms', 'kirk', 'job runner']) == 'b'
+    assert glblcfg.get(['platforms', 'picard', 'job runner']) == 'c'
 
 
 @pytest.mark.parametrize(
