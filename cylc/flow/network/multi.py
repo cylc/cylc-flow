@@ -124,7 +124,7 @@ async def call_multi_async(
 
     # run coros
     results: Dict[str, bool] = {}
-    async for (workflow_id, *args), response in unordered_map(
+    async for (workflow_id, *_), response in unordered_map(
         fcn,
         (
             (workflow_id, *args)
