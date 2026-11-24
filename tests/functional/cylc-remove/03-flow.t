@@ -43,6 +43,6 @@ grep_workflow_log_ok "${TEST_NAME_BASE}-grep" "Removed tasks: 1/foo (flows=1)"
 
 # Removed task is not returned by workflow-state query (it is now flows=none).
 TEST_NAME="${TEST_NAME_BASE}-workflow-state"
-run_fail "$TEST_NAME" cylc workflow-state "$WORKFLOW_NAME"
+run_fail "$TEST_NAME" cylc workflow-state "$WORKFLOW_NAME" --max-polls 1
 
 purge
