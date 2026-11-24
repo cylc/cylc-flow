@@ -645,8 +645,6 @@ async def reload_workflow(schd: 'Scheduler', reload_global: bool = False):
 
         if schd.is_stalled and not schd.pool.is_stalled():
             LOG.info('Workflow unstalled by reload')
-
-            # workflow has become unstalled by reload
             schd.is_stalled = False
 
             # Stop the stalled timer.
