@@ -385,6 +385,8 @@ async def test_clock_expire_partially_satisfied_task(
         schd.pool.clock_expire_tasks()
 
         # the task should now be in the expired state
+        await schd._main_loop()
+        await schd._main_loop()
         assert e.state(TASK_STATUS_EXPIRED)
 
 
