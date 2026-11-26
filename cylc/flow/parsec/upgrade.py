@@ -210,7 +210,8 @@ class upgrader:
         return exp_upgs
 
     def upgrade(self):
-        warnings: dict[str, list[str]] = {}
+        # Example: {"8.7": [("message", "8.9")]}
+        warnings: dict[str, list[tuple[str, str]]] = {}
         deprecations = False
         obsoletions = False
         for vn, upgs in self.upgrades.items():
@@ -245,7 +246,9 @@ class upgrader:
                             else:
                                 msg += (f' - this will fail validation in '
                                         f'Cylc {remove_at}')
-                        warnings.setdefault(vn, []).append(msg)
+                        warnings.setdefault(vn, []).append(
+                            (msg, upg.get('remove_at'))
+                        )
                         self.del_item(upg['old'])
                         if upg['new']:
                             # check self.cfg does not already contain a
@@ -270,19 +273,17 @@ class upgrader:
             else:
                 # User level configuration, user should be able to fix.
                 # Log at warning level.
+                level = WARNING
 
-                # BACK COMPAT: In Cylc 8.8 display Errors for
-                # deprecations but allow workflow to run and be upgraded
-                # remove at: 8.9
-                if upg.get('remove_at') == '8.9':
-                    level = ERROR
-                else:
-                    level = WARNING
             if obsoletions:
                 LOG.log(level, self.obslt_msg)
             if deprecations:
                 LOG.log(level, self.depr_msg)
 
             for vn, msgs in warnings.items():
-                for msg in msgs:
-                    LOG.log(level, ' * (%s) %s', vn, msg)
+                for msg, remove_at in msgs:
+                    # BACK COMPAT: In Cylc 8.8 display Errors for
+                    # deprecations but allow workflow to run and be upgraded
+                    # remove at: 8.9
+                    item_warn_level = ERROR if remove_at == '8.9' else level
+                    LOG.log(item_warn_level, ' * (%s) %s', vn, msg)
