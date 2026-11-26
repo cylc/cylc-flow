@@ -165,7 +165,7 @@ def test_pre_cylc8(flow, validate, log_filter):
         (' * (8.0.0) [cylc] -> [scheduler] - value unchanged'
          ' - support for the old item will be removed at Cylc 8.9')
     ):
-        assert log_filter(logging.ERROR, msg)
+        assert log_filter(logging.WARNING, msg)
 
 
 def test_graph_upgrade_msg_default(flow, validate, log_filter):
