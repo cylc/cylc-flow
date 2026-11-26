@@ -1,7 +1,7 @@
 [meta]
     description = """
         If the workflow runs slowly and the cycle time gets behind the real
-        world (wallclock) time, then it will skip selected tasks until it
+        world (wall-clock) time, then it will skip selected tasks until it
         catches up.
 
         In this case, the tasks "b", "c" and "d" will be skipped to help the
@@ -21,7 +21,7 @@
     final cycle point = +P0D
 
     # the "start" task will "expire" if the cycle time falls behind
-    # the wallclock time
+    # the wall-clock time
     [[special tasks]]
         clock-expire = start
 
