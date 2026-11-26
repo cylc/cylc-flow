@@ -1,5 +1,5 @@
-ERROR - Obsolete config items were automatically deleted. Please check your workflow and remove them permanently.
-ERROR - Deprecated config items were automatically upgraded. Please alter your workflow to use the new syntax.
+WARNING - Obsolete config items were automatically deleted. Please check your workflow and remove them permanently.
+WARNING - Deprecated config items were automatically upgraded. Please alter your workflow to use the new syntax.
 ERROR -  * (8.0.0) [cylc]force run mode - DELETED (OBSOLETE) - this will fail validation in Cylc 8.9
 ERROR -  * (8.0.0) [cylc][authentication] - DELETED (OBSOLETE) - this will fail validation in Cylc 8.9
 ERROR -  * (8.0.0) [cylc]log resolved dependencies - DELETED (OBSOLETE) - this will fail validation in Cylc 8.9
@@ -48,6 +48,7 @@ ERROR -  * (8.0.0) [cylc][events]abort if timeout handler fails - DELETED (OBSOL
 ERROR -  * (8.0.0) [cylc][events]abort if inactivity handler fails - DELETED (OBSOLETE) - this will fail validation in Cylc 8.9
 ERROR -  * (8.0.0) [cylc][events]abort if stalled handler fails - DELETED (OBSOLETE) - this will fail validation in Cylc 8.9
 ERROR -  * (8.0.0) [cylc] -> [scheduler] - value unchanged - support for the old item will be removed at Cylc 8.9
+WARNING -  * (8.8.0) [scheduler][experimental]expire triggers - DELETED (OBSOLETE)
 ERROR - graph items were automatically upgraded in "workflow definition" - support for the old item will be removed at Cylc 8.9:
      * (8.0.0) [scheduling][dependencies][X]graph -> [scheduling][graph]X - for X in:
            P1D

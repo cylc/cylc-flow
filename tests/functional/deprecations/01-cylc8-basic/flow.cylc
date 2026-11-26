@@ -45,6 +45,8 @@
         disable suite event handlers =
     [[parameters]]
     [[parameter templates]]
+    [[experimental]]
+        expire triggers =
 [scheduling]
     max active cycle points = 2
     hold after point =
