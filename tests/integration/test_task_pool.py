@@ -2485,3 +2485,74 @@ async def test_start_tasks_restart(flow, scheduler, start):
         # next foo should ignore pre start-task dependencies
         next_foo = one.pool._get_task_by_id('20150101T1200Z/foo')
         assert next_foo.state.prerequisites_all_satisfied()
+
+
+async def test_clock_expire_with_runahead(
+    flow,
+    scheduler,
+    run,
+    complete,
+    log_filter,
+):
+    """Clock expire should not happen above the runahead limit.
+
+    See https://github.com/cylc/cylc-flow/issues/7583
+    """
+    id_ = flow({
+        'scheduler': {
+            'cycle point format': 'CCYY',
+        },
+        'scheduling': {
+            'initial cycle point': '2000',
+            'runahead limit': 'P2',  # 2000, 2001, 2002, 2003(runahead)
+            'special tasks': {
+                'clock-expire': 'a',
+            },
+            'graph': {
+                'P1Y': """
+                    @wall_clock => a
+                    a:expired? => c
+                    a => b
+                """
+            },
+        },
+        'runtime': {
+            'a': {
+                'completion': 'succeeded or expired',
+            },
+        },
+    })
+    schd = scheduler(id_, paused_start=True)
+    async with run(schd):
+        # Instances of "a" should expire out to the runahead limit.
+        # Expired tasks get removed from the pool, so check the log.
+        # 2000/a expires
+        await schd._main_loop()
+        assert log_filter(regex=r'2000/a:waiting.*expired')
+
+        # 2001/a expires
+        await schd._main_loop()
+        assert log_filter(regex=r'2001/a:waiting.*expired')
+
+        # 2002/a expires
+        await schd._main_loop()
+        assert log_filter(regex=r'2002/a:waiting.*expired')
+
+        # 2003/a is runahead limited and does not expire
+        await schd._main_loop()
+        assert not log_filter(regex=r'2003/a:waiting.*expired')
+        a = schd.pool._get_task_by_id('2003/a')
+        assert a.state.is_runahead
+
+        # remove 2000/c to extend the runahead limit by one cycle
+        # now 2003/a expires
+        schd.pool.remove(schd.pool._get_task_by_id('2000/c'))
+        await schd._main_loop()
+        await schd._main_loop()
+        assert log_filter(regex=r'2003/a:waiting.*expired')
+
+        # but 2004/a does not
+        await schd._main_loop()
+        assert not log_filter(regex=r'2004/a:waiting.*expired')
+        a = schd.pool._get_task_by_id('2004/a')
+        assert a.state.is_runahead

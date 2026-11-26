@@ -2286,6 +2286,10 @@ class TaskPool:
                 # (note retrying tasks will be in the waiting state)
                 and itask.state(TASK_STATUS_WAITING)
 
+                # Don't apply expiry logic until below the runahead limit.
+                # See https://github.com/cylc/cylc-flow/issues/7583.
+                and not itask.state.is_runahead
+
                 # check if this task is clock expired
                 and itask.clock_expire()
             ):
