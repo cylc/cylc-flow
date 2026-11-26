@@ -627,12 +627,10 @@ async def reload_workflow(schd: 'Scheduler', reload_global: bool = False):
         schd.workflow_db_mgr.put_runtime_inheritance(schd.config)
         schd.workflow_db_mgr.put_workflow_params(schd)
         schd.process_workflow_db_queue()  # see #5593
-        schd.is_updated = True
-        schd.is_reloaded = True
         schd._update_workflow_state()
 
         # Re-initialise data model on reload
-        schd.data_store_mgr.initiate_data_model(schd.is_reloaded)
+        schd.data_store_mgr.initiate_data_model(True)
 
         # Reset the remote init map to trigger fresh file installation
         schd.task_job_mgr.task_remote_mgr.remote_init_map.clear()
@@ -644,8 +642,18 @@ async def reload_workflow(schd: 'Scheduler', reload_global: bool = False):
         )
         if schd.pool.compute_runahead(force=True):
             schd.pool.release_runahead_tasks()
-        schd.is_reloaded = True
-        schd.is_updated = True
+
+        if schd.is_stalled and not schd.pool.is_stalled():
+            LOG.info('Workflow unstalled by reload')
+            schd.is_stalled = False
+
+            # Stop the stalled timer.
+            with suppress(KeyError):
+                schd.timers[schd.EVENT_STALL_TIMEOUT].stop()
+
+        # The runahead limit might need recomputing.
+        schd.pool.compute_runahead()
+        schd.pool.release_runahead_tasks()
 
         # flush out data store changes
         await schd.update_data_structure()

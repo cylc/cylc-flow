@@ -285,7 +285,6 @@ class Scheduler:
     is_updated = False
     is_stalled = False
     is_restart_timeout_wait = False
-    is_reloaded = False
 
     # main loop
     main_loop_intervals: deque = deque(maxlen=10)
@@ -1233,7 +1232,13 @@ class Scheduler:
                     )
                 else:
                     LOG.info(msg.format(result="actioned"))
-                self.is_updated = True
+
+            # any user-interaction should reset the stall timeout (if engaged)
+            # to allow the user to intervene before the timeout elapses and the
+            # workflow shuts down
+            # see https://github.com/cylc/cylc-flow/issues/7589
+            with suppress(KeyError):
+                self.timers[self.EVENT_STALL_TIMEOUT].stop()
 
             self.command_queue.task_done()
 
@@ -1942,12 +1947,10 @@ class Scheduler:
             self.pool.compute_runahead()
             self.pool.release_runahead_tasks()
 
-            if not self.is_reloaded and self.is_stalled:
-                # (A reload cannot un-stall workflow by itself)
+            if self.is_stalled:
                 self.is_stalled = False
                 self.update_data_store()
 
-            self.is_reloaded = False
             self.pool.tasks_removed = False
             # Reset workflow and task updated flags.
             self.is_updated = False
