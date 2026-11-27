@@ -294,8 +294,14 @@ class WorkflowRuntimeClient(  # type: ignore[misc]
         """Set socket options after socket instantiation before connect.
 
         Overwrites Base method.
-
         """
+        # Allow more time for reconnects (exponential backoff up to 5 seconds.)
+        self.socket.setsockopt(zmq.RECONNECT_IVL_MAX, 5000)
+
+        # Send a heartbeat every 20 seconds to ensure the connection is not
+        # closed by intermediate firewalls.
+        self.socket.setsockopt(zmq.HEARTBEAT_IVL, 20_000)
+
         # if there is no server don't keep the client hanging around
         self.socket.setsockopt(zmq.LINGER, int(self.DEFAULT_TIMEOUT))
 
